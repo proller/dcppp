@@ -25,16 +25,26 @@ package dcppp;
   use strict;
 
 # func:
+
 # connect
 # disconnect
 # ..
 
+
 # options:
+
 # host 
 # port
 # name
 # pass
 
+
+
+sub connect {
+
+  my ($host, $port, $name, $pass) = @_;
+
+}
 
 sub import {
     shift;
