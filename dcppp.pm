@@ -45,22 +45,8 @@ sub connect {
 
   my ($host, $port, $name, $pass) = @_;
 
-<<<<<<< .mine
   my $sockres = new IO::Socket::INET->new(PeerAddr=>$host, PeerPort => $port, Proto => 'tcp', 
                                 Type => SOCK_STREAM)	 or return "socket: $@";
-=======
-my $sockres = IO::Socket::INET->new(PeerAddr=>$host, PeerPort => $port, Proto => 'tcp', 
-                                Type => SOCK_STREAM)
-                                or return "socket: $@";
-#my $MAXLEN = 1024;
-#$sockres->send($wh)
-#  $ret = $sockres->recv($rmsg{recieved}, $MAXLEN);
-#  return $ret unless ($ret);
-#print "\n[[$ret]]\n";
-#  ($rmsg{port}, $rmsg{ipaddr}) = sockaddr_in($sockres->peername);
-#   $rmsg{hisip} = inet_ntoa($rmsg{ipaddr});
->>>>>>> .r28
-
 
   close($sockres);
 
