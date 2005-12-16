@@ -22,6 +22,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
 package dcppp;
 
+  use io::Socket;
   use strict;
 
 # func:
