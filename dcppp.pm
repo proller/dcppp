@@ -29,7 +29,7 @@ package dcppp;
 # disconnect
 # ..
 
-# options
+# options:
 # host 
 # port
 # name
