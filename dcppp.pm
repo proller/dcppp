@@ -40,10 +40,17 @@ package dcppp;
 # pass
 
 
+sub new {
+  my $class = shift;
+  my $self = {};
+  bless($self, $class);
+  return $self;
+}
 
 sub connect {
+  my ($self, $host, $port, $name, $pass) = @_;
 
-  my ($host, $port, $name, $pass) = @_;
+print "connecting to $host, $port, $name, $pass";
 
   my $sockres = new IO::Socket::INET->new(PeerAddr=>$host, PeerPort => $port, Proto => 'tcp', 
                                 Type => SOCK_STREAM)	 or return "socket: $@";
@@ -53,6 +60,7 @@ sub connect {
 }
 
 sub disconnect {
+    shift;
 
 
 }
@@ -62,6 +70,7 @@ sub import {
 }
 
 sub unimport {
+    shift;
 }
 
 1;
