@@ -45,8 +45,8 @@ sub connect {
 
   my ($host, $port, $name, $pass) = @_;
 
-my $sockres = IO::Socket::INET->new(LocalPort => $port, Proto => 'tcp', 
-                                Reuse => 1)
+my $sockres = IO::Socket::INET->new(PeerAddr=>$host, PeerPort => $port, Proto => 'tcp', 
+                                Type => SOCK_STREAM)
                                 or return "socket: $@";
 #my $MAXLEN = 1024;^
 #$sockres->send($wh)
