@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 my $Id = '$Id$';
 =copyright
 dcpp for perl 
@@ -22,4 +22,6 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   use strict;
 
-  use 'dcppp.pm';
+  require 'dcppp.pm';
+
+  print 'hello world';
