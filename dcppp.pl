@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-my $Id = '$Id: crawler.pl 1702 2005-12-15 14:36:54Z pro $';
+my $Id = '$Id$';
 =copyright
 dcpp for perl 
 Copyright (C) 2003-2005 !!CONTACTS HERE!!
