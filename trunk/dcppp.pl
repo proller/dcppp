@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 my $Id = '$Id$';
 =copyright
 dcpp for perl 
@@ -24,8 +24,9 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   require 'dcppp.pm';
 
-  print reverse split '', 'hello world from Boris dna orP';
+#  print reverse split '', 'hello world from Boris dna orP';
 
+  my $dc = dcppp->new();
 
-  dcppp::connect('dc.setun.net','4111');
+  $dc->connect('dc.setun.net','4111');
  
