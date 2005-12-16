@@ -48,7 +48,7 @@ sub connect {
 my $sockres = IO::Socket::INET->new(PeerAddr=>$host, PeerPort => $port, Proto => 'tcp', 
                                 Type => SOCK_STREAM)
                                 or return "socket: $@";
-#my $MAXLEN = 1024;^
+#my $MAXLEN = 1024;
 #$sockres->send($wh)
 #  $ret = $sockres->recv($rmsg{recieved}, $MAXLEN);
 #  return $ret unless ($ret);
