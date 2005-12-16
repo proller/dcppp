@@ -24,8 +24,6 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   require 'dcppp.pm';
 
-#  print reverse split '', 'hello world from Boris dna orP';
-
   my $dc = dcppp->new();
 
   $dc->connect('host'=>'dc.setun.net');

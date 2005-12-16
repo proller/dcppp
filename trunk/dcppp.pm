@@ -52,11 +52,13 @@ sub connect {
   my %args = ('host' => 'localhost', 'port' => 4111, 
 	      'name' => 'dcpppBot', 'pass' => '', @_);
 
-print "connecting to $args{'host'}, $args{'port'}, $args{'name'}, $args{'pass'}";
+  print "connecting to $args{'host'}, $args{'port'}, $args{'name'}, $args{'pass'}";
 
   my $self->{'hubsock'} = new IO::Socket::INET->new(PeerAddr=>$args{'host'}, PeerPort => $args{'port'}, Proto => 'tcp', 
                                 Type => SOCK_STREAM)	 or return "socket: $@";
 
+
+  close($sockres);
 
 }
 
