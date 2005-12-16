@@ -22,5 +22,17 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   use strict;
 
+# func:
+# connect
+# disconnect
+# ..
+
+# options
+# host 
+# port
+# name
+# pass
+
+
 
 1;
