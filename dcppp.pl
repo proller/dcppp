@@ -22,3 +22,4 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   use strict;
 
+  use 'dcppp.pm';
