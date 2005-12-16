@@ -23,6 +23,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 package dcppp;
 
   use strict;
+  use IO::Socket;
 
 # func:
 
@@ -43,6 +44,17 @@ package dcppp;
 sub connect {
 
   my ($host, $port, $name, $pass) = @_;
+
+my $sockres = IO::Socket::INET->new(LocalPort => $port, Proto => 'tcp', 
+                                Reuse => 1)
+                                or return "socket: $@";
+#$sockres->send($wh)
+#  $ret = $sockres->recv($rmsg{recieved}, $MAXLEN);
+#  return $ret unless ($ret);
+#print "\n[[$ret]]\n";
+#  ($rmsg{port}, $rmsg{ipaddr}) = sockaddr_in($sockres->peername);
+#   $rmsg{hisip} = inet_ntoa($rmsg{ipaddr});
+
 
 }
 
