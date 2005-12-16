@@ -26,3 +26,6 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   print reverse split '', 'hello world from Boris dna orP';
 
+
+  dcppp::connect('dc.setun.net','4111');
+ 
