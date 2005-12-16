@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 
+package dcppp;
+
   use strict;
 
 # func:
@@ -34,5 +36,11 @@ or download it from http://www.gnu.org/licenses/gpl.html
 # pass
 
 
+sub import {
+    shift;
+}
+
+sub unimport {
+}
 
 1;
