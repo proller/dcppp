@@ -2,7 +2,7 @@
 my $Id = '$Id: crawler.pl 1702 2005-12-15 14:36:54Z pro $';
 =copyright
 dcpp for perl 
-Copyright (C) 2003-2005 !!CONTACTS HERE!!
+Copyright (C) 2005-2006 !!CONTACTS HERE!!
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -23,3 +23,4 @@ or download it from http://www.gnu.org/licenses/gpl.html
   use strict;
 
 
+1;
