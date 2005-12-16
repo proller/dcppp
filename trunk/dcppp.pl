@@ -28,5 +28,5 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   my $dc = dcppp->new();
 
-  $dc->connect('dc.setun.net','4111');
+  $dc->connect('host'=>'dc.setun.net');
  
