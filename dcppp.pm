@@ -53,6 +53,7 @@ sub connect {
   
   my %args = ('host' => 'localhost', 'port' => 4111, 
 	      'name' => 'dcpppBot', 'pass' => '', @_);
+  $self->{'name'} = $args{'name'};
 
   print "connecting to $args{'host'}, $args{'port'}, $args{'name'}, $args{'pass'}";
 
@@ -61,19 +62,22 @@ sub connect {
 
 $self->{'MAXLEN'} = 1024;
 my  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "($ret){$self->{'recieved'}}\n";
+print "1($ret){$self->{'recieved'}}\n";
 
 $self->{'hubsock'}->send('$Key zzzzzz|$ValidateNick '.$self->{'name'}.'|');
  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "($ret){$self->{'recieved'}}\n";
+print "2($ret){$self->{'recieved'}}\n";
 
-$self->{'hubsock'}->send('$MyINFO $ALL '.$self->{'name'}.' interest$ $speed$e-mail$LAN(T3)$');
+$self->{'hubsock'}->send('$Version ++ V:0.673,M:P,H:0/1/0,S:2|$MyINFO $ALL '.$self->{'name'}.' interest$ $LAN(T3)1$e-mail@mail.ru$0$|$GetNickList|');
  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "($ret){$self->{'recieved'}}\n";
+print "3($ret){$self->{'recieved'}}\n";
+sleep 3;
+$self->{'hubsock'}->send('Hello '.$self->{'name'}."|");
 
-$self->{'hubsock'}->send("heloall\n");
+sleep 3;
+
  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "($ret){$self->{'recieved'}}\n";
+print "4($ret){$self->{'recieved'}}\n";
 
 
 
