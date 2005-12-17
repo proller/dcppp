@@ -60,7 +60,9 @@ sub connect {
   $self->{'hubsock'} = new IO::Socket::INET(PeerAddr=>$args{'host'}, PeerPort => $args{'port'}, Proto => 'tcp', 
                                 Type => SOCK_STREAM)	 or return "socket: $@";
 
-$self->{'MAXLEN'} = 1024;
+  $self->{'MAXLEN'} = 1024;
+  $self->recv();
+=really worked code 8) join and post chatline
 my  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
 print "1($ret){$self->{'recieved'}}\n";
 
@@ -78,7 +80,7 @@ sleep 3;
 
  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
 print "4($ret){$self->{'recieved'}}\n";
-
+=cut
 
 
 
@@ -92,10 +94,37 @@ sub disconnect {
 
 }
 
+sub recv {
+  my $self = shift;
+  my $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
+print "($ret){$self->{'recieved'}}\n";
+  for(split(/\|/, $self->{'recieved'})) {
+    $self->parsehub($_), next if /^\$/;
+    $self->chatrecv($_);
+  }
+}
+
 
 sub chatline {
   my $self = shift;
   $self->{'hubsock'}->send("<$self->{'name'}> $_|") for(@_);
+}
+
+sub chatrecv {
+  my $self = shift;
+  print "CHATLINE:", @_, "\n";
+}
+
+
+sub parsehub {
+  my $self = shift;
+  for(@_) {
+    s/^\$(\w+)//;
+    my $cmd = $1;
+    print "HUBCMD:[$cmd]{$_}\n";
+#..
+  }
+
 }
 
 
