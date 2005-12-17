@@ -28,5 +28,6 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   $dc->connect('host'=>'dc.setun.net');
 #  $dc->connect('host'=>'dcpp.migtel.ru');
+  $dc->chatline('hello world');
 
 #sleep 10; 
