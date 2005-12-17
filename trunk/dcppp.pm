@@ -71,8 +71,8 @@ print "2($ret){$self->{'recieved'}}\n";
 $self->{'hubsock'}->send('$Version ++ V:0.673,M:P,H:0/1/0,S:2|$MyINFO $ALL '.$self->{'name'}.' interest$ $LAN(T3)1$e-mail@mail.ru$0$|$GetNickList|');
  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
 print "3($ret){$self->{'recieved'}}\n";
-sleep 3;
-$self->{'hubsock'}->send('Hello '.$self->{'name'}."|");
+#sleep 3;
+#$self->{'hubsock'}->send("<$self->{'name'}> wooozaa|");
 
 sleep 3;
 
@@ -91,6 +91,16 @@ sub disconnect {
   close($self->{'hubsock'});
 
 }
+
+
+sub chatline {
+  my $self = shift;
+  $self->{'hubsock'}->send("<$self->{'name'}> $_|") for(@_);
+}
+
+
+
+
 
 sub import {
     shift;
