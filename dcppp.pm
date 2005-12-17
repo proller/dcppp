@@ -59,6 +59,19 @@ sub connect {
   $self->{'hubsock'} = new IO::Socket::INET(PeerAddr=>$args{'host'}, PeerPort => $args{'port'}, Proto => 'tcp', 
                                 Type => SOCK_STREAM)	 or return "socket: $@";
 
+$self->{'MAXLEN'} = 1024;
+my  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
+print "($ret){$self->{'recieved'}}\n";
+$self->{'hubsock'}->send('$Key zzzzzz|$ValidateNick '.$self->{'name'}.'|');
+ $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
+print "($ret){$self->{'recieved'}}\n";
+$self->{'hubsock'}->send('$MyINFO $ALL '.$self->{'name'}.' interest$ $speed$e-mail$LAN(T3)$');
+ $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
+print "($ret){$self->{'recieved'}}\n";
+
+
+
+
 
 }
 
