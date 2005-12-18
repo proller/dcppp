@@ -100,7 +100,7 @@ package dcppp;
 #print "zz";
     ++$self->{'mustrecv'};
     $self->checkrecv();
-    $self->recv();
+#    $self->recv();
   }
 
   sub disconnect {
