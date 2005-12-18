@@ -33,6 +33,7 @@ package dcppp;
 	'port'	=> 4111, 
 	'Nick'	=> 'dcpppBot', 
 	'pass'	=> '', 
+        'MAXLEN' => 1024*1024,
 	'Version'	=> '++ V:0.673,M:P,H:0/1/0,S:2', 
 	'Key'	=> 'zzz', 
 	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$0$',
@@ -53,19 +54,29 @@ package dcppp;
       },
       'Hello' => sub { $self->{'sendbuf'} = 1;
 	$self->{'cmd'}{'Version'}->();
-	$self->{'cmd'}{'MyINFO'}->();
 	$self->{'sendbuf'} = 0;
-	$self->{'cmd'}{'GetNickList'}->();
+	$self->{'cmd'}{'MyINFO'}->();
 	$self->checkrecv();
       },
-      'To' => sub { print "Private message to", @_;  },
-      'MyINFO' => sub { },
+      'To' => sub { print "Private message to", @_, "\n";  },
+      'MyINFO' => sub { 
+        my ($nick, $info) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
+        $self->{'NickList'}{$nick}{'info'} = $info;
+        $self->{'NickList'}{$nick}{'online'} = 1;
+        print  "info:$nick [$info]\n";
+      }, 
       'HubName' => sub { print 'HubName is [', ($self->{'HubName'} = @_[0]), "]\n";},
+      'HubTopic' => sub { print 'HubTopic is [', ($self->{'HubTopic'} = @_[0]), "]\n";},
       'NickList' => sub { 
-        @{$self->{'NickList'}} = grep $_, split /\$\$/, @_[0];
-        print 'nicklist:', join(';', @{$self->{'NickList'}}), "\n"
+        $self->{'NickList'}{$_}{'online'} = 1 for grep $_, split /\$\$/, @_[0];
+        print 'nicklist:', join(';', sort keys %{$self->{'NickList'}}), "\n"
       },
-      'OpList' => sub { },
+      'OpList' => sub { }, #todo
+      'Search' => sub { }, #todo
+      'Quit' => sub { }, #todo
+      'UserIP' => sub { }, #todo
+      'ConnectToMe' => sub { }, #todo
+
     );
   
     %{$self->{'cmd'}} = (
@@ -74,15 +85,17 @@ package dcppp;
       'Version' => sub { $self->sendcmd('Version', $self->{'Version'}); },
       'MyINFO' => sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
       'GetNickList' => sub { $self->sendcmd('GetNickList'); ++$self->{'mustrecv'};},
+      'GetINFO' => sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); ++$self->{'mustrecv'};},
     );
   }
  
   sub connect {
     my $self = shift;
     print "connecting to $self->{'host'}, $self->{'port'}, $self->{'Nick'}, $self->{'pass'}\n"  if $self->{'debug'};
+
     $self->{'hubsock'} = new IO::Socket::INET(PeerAddr=>$self->{'host'}, PeerPort => $self->{'port'}, Proto => 'tcp', 
-                                  Type => SOCK_STREAM)	 or return "socket: $@";
-    $self->{'MAXLEN'} = 1024;
+                                  Type => SOCK_STREAM, )	 or return "socket: $@";
+#print "zz";
     ++$self->{'mustrecv'};
     $self->checkrecv();
     $self->recv();
@@ -95,7 +108,9 @@ package dcppp;
 
   sub recv {
     my $self = shift;
+#print "[b", $self->{'hubsock'}->atmark  , "]";
     my $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
+#print "[a", $self->{'hubsock'}->atmark  , "]";
     print "($ret){$self->{'recieved'}}\n" if $self->{'debug'};
     for(grep $_, split(/\|/, $self->{'recieved'})) {
       $self->parsehub($_), next if /^\$/;

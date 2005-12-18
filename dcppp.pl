@@ -32,10 +32,13 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->{'debug'} = 1;
   $dc->connect();
 #  $dc->connect();
-  $dc->chatline('hello world');
-  sleep 1;
+#  $dc->chatline('hello world');
+  $dc->{'cmd'}{'GetNickList'}->();
   $dc->recv();
-  sleep 1;
-  $dc->recv();
+  $dc->{'cmd'}{'GetINFO'}->('pro');
+#  sleep 1;
+  $dc->recv() while 1;
+#  sleep 1;
+#  $dc->recv();
 
 #sleep 10; 
