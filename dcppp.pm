@@ -61,6 +61,11 @@ package dcppp;
       'To' => sub { print "Private message to", @_;  },
       'MyINFO' => sub { },
       'HubName' => sub { print 'HubName is [', ($self->{'HubName'} = @_[0]), "]\n";},
+      'NickList' => sub { 
+        @{$self->{'NickList'}} = grep $_, split /\$\$/, @_[0];
+        print 'nicklist:', join(';', @{$self->{'NickList'}}), "\n"
+      },
+      'OpList' => sub { },
     );
   
     %{$self->{'cmd'}} = (
