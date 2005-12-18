@@ -26,10 +26,9 @@ package dcppp;
   use IO::Socket;
 
 
-sub new {
-  my $class = shift;
-#  my %args = ();
-  my $self = {
+  sub new {
+    my $class = shift;
+    my $self = {
 	'host'	=> 'localhost', 
 	'port'	=> 4111, 
 	'Nick'	=> 'dcpppBot', 
@@ -37,128 +36,117 @@ sub new {
 	'Version'	=> '++ V:0.673,M:P,H:0/1/0,S:2', 
 	'Key'	=> 'zzz', 
 	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$0$',
-	@_};
-#  $self->{'name'} = $args{'name'};
-  bless($self, $class);
-  $self->init();
-  return $self;
-}
+	@_ };
+    bless($self, $class);
+    $self->init();
+    return $self;
+  }
 
-sub init {
-  my $self = shift;
-
-%{$self->{'parse'}} = (
-  'Lock' => sub { $self->{'cmd'}{'Key'}->();
-                  $self->{'cmd'}{'ValidateNick'}->();
-		  $self->checkrecv();
-
-  },
-  'Hello' => sub { $self->{'cmd'}{'Version'}->();
-                   $self->{'cmd'}{'MyINFO'}->();
-                   $self->{'cmd'}{'GetNickList'}->();
-		  $self->checkrecv();
-  },
-  'To' => sub { print "Private message to", @_;
-  },
-);
-
-%{$self->{'cmd'}} = (
-  'Key' => sub { $self->sendcmd('Key', $self->{'Key'}); },
-  'ValidateNick' => sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); ++$self->{'mustrecv'};},
-  'Version' => sub { $self->sendcmd('Version', $self->{'Version'}); },
-  'MyINFO' => sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
-  'GetNickList' => sub { $self->sendcmd('GetNickList'); ++$self->{'mustrecv'};},
-);
-
-}
-
-sub connect {
-
-  my $self = shift;
+  sub init {
+    my $self = shift;
+    %{$self->{'parse'}} = (
+      'Lock' => sub { $self->{'sendbuf'} = 1;
+	$self->{'cmd'}{'Key'}->();
+	$self->{'sendbuf'} = 0;
+	$self->{'cmd'}{'ValidateNick'}->();
+	$self->checkrecv();
+      },
+      'Hello' => sub { $self->{'sendbuf'} = 1;
+	$self->{'cmd'}{'Version'}->();
+	$self->{'cmd'}{'MyINFO'}->();
+	$self->{'sendbuf'} = 0;
+	$self->{'cmd'}{'GetNickList'}->();
+	$self->checkrecv();
+      },
+      'To' => sub { print "Private message to", @_;  },
+      'MyINFO' => sub { },
+      'HubName' => sub { print 'HubName is [', ($self->{'HubName'} = @_[0]), "]\n";},
+    );
+  
+    %{$self->{'cmd'}} = (
+      'Key' => sub { $self->sendcmd('Key', $self->{'Key'}); },
+      'ValidateNick' => sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); ++$self->{'mustrecv'};},
+      'Version' => sub { $self->sendcmd('Version', $self->{'Version'}); },
+      'MyINFO' => sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
+      'GetNickList' => sub { $self->sendcmd('GetNickList'); ++$self->{'mustrecv'};},
+    );
+  }
  
-
-  print "connecting to $self->{'host'}, $self->{'port'}, $self->{'name'}, $self->{'pass'}";
-
-  $self->{'hubsock'} = new IO::Socket::INET(PeerAddr=>$self->{'host'}, PeerPort => $self->{'port'}, Proto => 'tcp', 
-                                Type => SOCK_STREAM)	 or return "socket: $@";
-
-  $self->{'MAXLEN'} = 1024;
-  ++$self->{'mustrecv'};
-  $self->checkrecv();
-
-
-  $self->recv();
-}
-
-sub disconnect {
-
-  my $self = shift;
-  close($self->{'hubsock'});
-
-}
-
-sub recv {
-  my $self = shift;
-  my $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "($ret){$self->{'recieved'}}\n";
-  for(grep $_, split(/\|/, $self->{'recieved'})) {
-    $self->parsehub($_), next if /^\$/;
-    $self->chatrecv($_);
-  }
-}
-
-sub checkrecv {
-  my $self = shift;
-  $self->recv(), $self->{'mustrecv'} = 0 if $self->{'mustrecv'};
-
-}
-
-sub chatline {
-  my $self = shift;
-  $self->{'hubsock'}->send("<$self->{'name'}> $_|") for(@_);
-}
-
-sub chatrecv {
-  my $self = shift;
-  print "CHATLINE:", @_, "\n";
-}
-
-
-sub parsehub {
-  my $self = shift;
-  for(@_) {
-    s/^\$(\w+)\s*//;
-    my $cmd = $1;
-    if($self->{'parse'}{$cmd}) {
-      $self->{'parse'}{$cmd}->($_) ;
-    } else {
-      print "UNKHUBCMD:[$cmd]{$_}\n";
-    }                                                 
+  sub connect {
+    my $self = shift;
+    print "connecting to $self->{'host'}, $self->{'port'}, $self->{'Nick'}, $self->{'pass'}\n"  if $self->{'debug'};
+    $self->{'hubsock'} = new IO::Socket::INET(PeerAddr=>$self->{'host'}, PeerPort => $self->{'port'}, Proto => 'tcp', 
+                                  Type => SOCK_STREAM)	 or return "socket: $@";
+    $self->{'MAXLEN'} = 1024;
+    ++$self->{'mustrecv'};
+    $self->checkrecv();
+    $self->recv();
   }
 
-}
+  sub disconnect {
+    my $self = shift;
+    close($self->{'hubsock'});
+  }
+
+  sub recv {
+    my $self = shift;
+    my $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
+    print "($ret){$self->{'recieved'}}\n" if $self->{'debug'};
+    for(grep $_, split(/\|/, $self->{'recieved'})) {
+      $self->parsehub($_), next if /^\$/;
+      $self->chatrecv($_);
+    }
+  }
+
+  sub checkrecv {
+    my $self = shift;
+    $self->recv(), $self->{'mustrecv'} = 0 if $self->{'mustrecv'};
+  }
+  
+  sub chatline {
+    my $self = shift;
+    $self->{'hubsock'}->send("<$self->{'Nick'}> $_|") for(@_);
+  }
+    
+  sub chatrecv {
+    my $self = shift;
+    print "CHATLINE:", @_, "\n";
+  }
+  
+    
+  sub parsehub {
+    my $self = shift;
+    for(@_) {
+      s/^\$(\w+)\s*//;
+      my $cmd = $1;
+      if($self->{'parse'}{$cmd}) {
+        $self->{'parse'}{$cmd}->($_) ;
+      } else {
+        print "UNKHUBCMD:[$cmd]{$_}\n";
+      }                                                 
+    }
+  }
 
 { my @sendbuf;
-sub sendcmdbuf {
-  my $self = shift;
-  push @sendbuf , '$' . join(' ', @_) . '|';
+  sub sendcmd {
+    my $self = shift;
+    if ($self->{'sendbuf'})  {
+      push @sendbuf , '$' . join(' ', @_) . '|';
+    } else {
+      $self->{'hubsock'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
+      @sendbuf = ();
+      print"we send [$_]\n" if $self->{'debug'};
+    }
+  }
 }
 
-sub sendcmd {
-  my $self = shift;
-  $self->{'hubsock'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
-  @sendbuf = ();
-print"we send [$_]\n";
-}
-}
 
-
-sub import {
+  sub import {
     shift;
-}
+  }
 
-sub unimport {
+  sub unimport {
     shift;
-}
+  }
 
 1;
