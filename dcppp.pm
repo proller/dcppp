@@ -138,12 +138,19 @@ sub parsehub {
 
 }
 
-sub sendcmd {
+{ my @sendbuf;
+sub sendcmdbuf {
   my $self = shift;
-  $self->{'hubsock'}->send($_ = '$' . join(' ', @_) . '|'); 
-print"we send [$_]\n";
+  push @sendbuf , '$' . join(' ', @_) . '|';
 }
 
+sub sendcmd {
+  my $self = shift;
+  $self->{'hubsock'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
+  @sendbuf = ();
+print"we send [$_]\n";
+}
+}
 
 
 sub import {
