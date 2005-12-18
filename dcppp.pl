@@ -24,10 +24,11 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   require 'dcppp.pm';
 
-  my $dc = dcppp->new();
+  my $dc = dcppp->new('host'=>'dc.setun.net');
 
-  $dc->connect('host'=>'dc.setun.net');
+  $dc->connect();
 #  $dc->connect('host'=>'dcpp.migtel.ru');
   $dc->chatline('hello world');
+  $dc->checkrecv();
 
 #sleep 10; 
