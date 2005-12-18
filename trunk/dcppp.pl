@@ -25,13 +25,12 @@ or download it from http://www.gnu.org/licenses/gpl.html
   require 'dcppp.pm';
 
   my $dc = dcppp->new(
-   'host'=>'dc.setun.net'
-#   'host'=>'dcpp.migtel.ru'
+   'host'=>'dc.setun.net',
+#   'host'=>'dcpp.migtel.ru',
   );
 
-  $dc->{'debug'} = 1;
+#  $dc->{'debug'} = 1;
   $dc->connect();
-#  $dc->connect();
 #  $dc->chatline('hello world');
   $dc->{'cmd'}{'GetNickList'}->();
   $dc->recv();

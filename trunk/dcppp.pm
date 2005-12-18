@@ -34,9 +34,9 @@ package dcppp;
 	'Nick'	=> 'dcpppBot', 
 	'pass'	=> '', 
         'MAXLEN' => 1024*1024,
-	'Version'	=> '++ V:0.673,M:P,H:0/1/0,S:2', 
+	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
 	'Key'	=> 'zzz', 
-	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$0$',
+	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$1$',
 	@_ };
     bless($self, $class);
     $self->init();
@@ -71,11 +71,13 @@ package dcppp;
         $self->{'NickList'}{$_}{'online'} = 1 for grep $_, split /\$\$/, @_[0];
         print 'nicklist:', join(';', sort keys %{$self->{'NickList'}}), "\n"
       },
-      'OpList' => sub { }, #todo
+      'OpList' => sub { $self->{'NickList'}{$_}{'oper'} = 1 for grep $_, split /\$\$/, @_[0]; },
+      'ForceMove' => sub { print "ForceMove to $_[0]  \n"},
+
       'Search' => sub { }, #todo
-      'Quit' => sub { }, #todo
-      'UserIP' => sub { }, #todo
-      'ConnectToMe' => sub { }, #todo
+      'Quit' => sub { $self->{'NickList'}{$_[0]}{'online'} = 0; }, #todo
+      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
+      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
 
     );
   
