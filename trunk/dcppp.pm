@@ -25,66 +25,69 @@ package dcppp;
   use strict;
   use IO::Socket;
 
-# func:
-
-# connect
-# disconnect
-# ..
-
-
-# options:
-
-# host 
-# port
-# name
-# pass
-
 
 sub new {
   my $class = shift;
-  my $self = {};
+#  my %args = ();
+  my $self = {
+	'host'	=> 'localhost', 
+	'port'	=> 4111, 
+	'Nick'	=> 'dcpppBot', 
+	'pass'	=> '', 
+	'Version'	=> '++ V:0.673,M:P,H:0/1/0,S:2', 
+	'Key'	=> 'zzz', 
+	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$0$',
+	@_};
+#  $self->{'name'} = $args{'name'};
   bless($self, $class);
+  $self->init();
   return $self;
+}
+
+sub init {
+  my $self = shift;
+
+%{$self->{'parse'}} = (
+  'Lock' => sub { $self->{'cmd'}{'Key'}->();
+                  $self->{'cmd'}{'ValidateNick'}->();
+		  $self->checkrecv();
+
+  },
+  'Hello' => sub { $self->{'cmd'}{'Version'}->();
+                   $self->{'cmd'}{'MyINFO'}->();
+                   $self->{'cmd'}{'GetNickList'}->();
+		  $self->checkrecv();
+  },
+  'To' => sub { print "Private message to", @_;
+  },
+);
+
+%{$self->{'cmd'}} = (
+  'Key' => sub { $self->sendcmd('Key', $self->{'Key'}); },
+  'ValidateNick' => sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); ++$self->{'mustrecv'};},
+  'Version' => sub { $self->sendcmd('Version', $self->{'Version'}); },
+  'MyINFO' => sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
+  'GetNickList' => sub { $self->sendcmd('GetNickList'); ++$self->{'mustrecv'};},
+);
+
 }
 
 sub connect {
 
   my $self = shift;
-  
-  my %args = ('host' => 'localhost', 'port' => 4111, 
-	      'name' => 'dcpppBot', 'pass' => '', @_);
-  $self->{'name'} = $args{'name'};
+ 
 
-  print "connecting to $args{'host'}, $args{'port'}, $args{'name'}, $args{'pass'}";
+  print "connecting to $self->{'host'}, $self->{'port'}, $self->{'name'}, $self->{'pass'}";
 
-  $self->{'hubsock'} = new IO::Socket::INET(PeerAddr=>$args{'host'}, PeerPort => $args{'port'}, Proto => 'tcp', 
+  $self->{'hubsock'} = new IO::Socket::INET(PeerAddr=>$self->{'host'}, PeerPort => $self->{'port'}, Proto => 'tcp', 
                                 Type => SOCK_STREAM)	 or return "socket: $@";
 
   $self->{'MAXLEN'} = 1024;
+  ++$self->{'mustrecv'};
+  $self->checkrecv();
+
+
   $self->recv();
-=really worked code 8) join and post chatline
-my  $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "1($ret){$self->{'recieved'}}\n";
-
-$self->{'hubsock'}->send('$Key zzzzzz|$ValidateNick '.$self->{'name'}.'|');
- $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "2($ret){$self->{'recieved'}}\n";
-
-$self->{'hubsock'}->send('$Version ++ V:0.673,M:P,H:0/1/0,S:2|$MyINFO $ALL '.$self->{'name'}.' interest$ $LAN(T3)1$e-mail@mail.ru$0$|$GetNickList|');
- $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "3($ret){$self->{'recieved'}}\n";
-#sleep 3;
-#$self->{'hubsock'}->send("<$self->{'name'}> wooozaa|");
-
-sleep 3;
-
- $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-print "4($ret){$self->{'recieved'}}\n";
-=cut
-
-
-
-
 }
 
 sub disconnect {
@@ -98,12 +101,17 @@ sub recv {
   my $self = shift;
   my $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
 print "($ret){$self->{'recieved'}}\n";
-  for(split(/\|/, $self->{'recieved'})) {
+  for(grep $_, split(/\|/, $self->{'recieved'})) {
     $self->parsehub($_), next if /^\$/;
     $self->chatrecv($_);
   }
 }
 
+sub checkrecv {
+  my $self = shift;
+  $self->recv(), $self->{'mustrecv'} = 0 if $self->{'mustrecv'};
+
+}
 
 sub chatline {
   my $self = shift;
@@ -119,15 +127,22 @@ sub chatrecv {
 sub parsehub {
   my $self = shift;
   for(@_) {
-    s/^\$(\w+)//;
+    s/^\$(\w+)\s*//;
     my $cmd = $1;
-    print "HUBCMD:[$cmd]{$_}\n";
-#..
+    if($self->{'parse'}{$cmd}) {
+      $self->{'parse'}{$cmd}->($_) ;
+    } else {
+      print "UNKHUBCMD:[$cmd]{$_}\n";
+    }                                                 
   }
 
 }
 
-
+sub sendcmd {
+  my $self = shift;
+  $self->{'hubsock'}->send($_ = '$' . join(' ', @_) . '|'); 
+print"we send [$_]\n";
+}
 
 
 
