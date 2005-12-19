@@ -1,6 +1,8 @@
 
-package client;
+package dcppp::client;
+
 use dcppp;
+
 our @ISA = ('dcppp');
 
   sub init {
