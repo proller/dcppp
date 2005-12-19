@@ -20,11 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 
-package dcppp;
-
   use strict;
   use IO::Socket;
 
+
+package dcppp;
 
   sub new {
     my $class = shift;
@@ -163,13 +163,9 @@ package dcppp;
   }
 }
 
+package dcpppclient;
 
-  sub import {
-    shift;
-  }
 
-  sub unimport {
-    shift;
-  }
+
 
 1;
