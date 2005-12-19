@@ -1,12 +1,23 @@
 
 package dcppp::client;
 
-use dcppp;
+#use dcppp;
 
 our @ISA = ('dcppp');
 
   sub init {
     my $self = shift;
+    %$self = (%$self,
+	'host'	=> 'localhost', 
+	'port'	=> 4111, 
+	'Nick'	=> 'dcpppBot', 
+	'pass'	=> '', 
+	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
+	'Key'	=> 'zzz', 
+	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$1$',
+        @_);
+
+
     %{$self->{'parse'}} = (
       'Lock' => sub { $self->{'sendbuf'} = 1;
 	$self->{'cmd'}{'Key'}->();

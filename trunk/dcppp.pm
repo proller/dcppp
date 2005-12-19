@@ -24,22 +24,15 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
 package dcppp;
   use IO::Socket;
-  use strict;
+#  use strict;
 
   sub new {
     my $class = shift;
     my $self = {
-	'host'	=> 'localhost', 
-	'port'	=> 4111, 
-	'Nick'	=> 'dcpppBot', 
-	'pass'	=> '', 
         'MAXLEN' => 1024*1024,
-	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
-	'Key'	=> 'zzz', 
-	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$1$',
 	@_ };
     bless($self, $class);
-    $self->init();
+    $self->init(@_);
     return $self;
   }
 
@@ -48,7 +41,7 @@ package dcppp;
     my $self = shift;
     print "connecting to $self->{'host'}, $self->{'port'}, $self->{'Nick'}, $self->{'pass'}\n"  if $self->{'debug'};
 
-    $self->{'hubsock'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, Proto => 'tcp', 
+    $self->{'hubsock'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 
                                   'Type' => SOCK_STREAM, )	 or return "socket: $@";
 #print "zz";
     ++$self->{'mustrecv'};
