@@ -23,8 +23,12 @@ or download it from http://www.gnu.org/licenses/gpl.html
 #  our SOCK_STREAM;
 
 package dcppp;
+#  use Socket;
+#  use Fcntl;
   use IO::Socket;
-#  use strict;
+  use IO::Select;
+  use POSIX;
+  use strict;
 
   sub new {
     my $class = shift;
@@ -41,8 +45,10 @@ package dcppp;
     my $self = shift;
     print "connecting to $self->{'host'}, $self->{'port'}, $self->{'Nick'}, $self->{'pass'}\n"  if $self->{'debug'};
 
-    $self->{'hubsock'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 
+    $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 
                                   'Type' => SOCK_STREAM, )	 or return "socket: $@";
+#    nonblock($self->{'socket'});
+    $self->{'select'} = IO::Select->new($self->{'socket'});
 #print "zz";
     ++$self->{'mustrecv'};
     $self->checkrecv();
@@ -51,14 +57,19 @@ package dcppp;
 
   sub disconnect {
     my $self = shift;
-    close($self->{'hubsock'});
+    close($self->{'socket'});
   }
 
   sub recv {
     my $self = shift;
-#print "[b", $self->{'hubsock'}->atmark  , "]";
-    my $ret = $self->{'hubsock'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-#print "[a", $self->{'hubsock'}->atmark  , "]";
+##    my $ret = $self->{'socket'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
+    for $client ($self->{'select'}->can_read(1)) {
+      if ($client == $self->{'socket'}) {
+      } else {
+qqqq write hereee        
+        $client
+      }
+    }
     print "($ret){$self->{'recieved'}}\n" if $self->{'debug'};
     for(grep $_, split(/\|/, $self->{'recieved'})) {
       $self->parsehub($_), next if /^\$/;
@@ -73,7 +84,7 @@ package dcppp;
   
   sub chatline {
     my $self = shift;
-    $self->{'hubsock'}->send("<$self->{'Nick'}> $_|") for(@_);
+    $self->{'socket'}->send("<$self->{'Nick'}> $_|") for(@_);
   }
     
   sub chatrecv {
@@ -102,16 +113,12 @@ package dcppp;
     if ($self->{'sendbuf'})  {
       push @sendbuf , '$' . join(' ', @_) . '|';
     } else {
-      $self->{'hubsock'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
+      $self->{'socket'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
       @sendbuf = ();
       print"we send [$_]\n" if $self->{'debug'};
     }
   }
 }
-
-#package dcpppclient;
-
-
 
 
 1;

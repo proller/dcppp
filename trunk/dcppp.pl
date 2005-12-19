@@ -31,7 +31,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 #   'host'=>'dcpp.migtel.ru',
   );
 
-  $dc->{'debug'} = 1;
+#  $dc->{'debug'} = 1;
   $dc->connect();
   $dc->chatline('hello world');
   $dc->{'cmd'}{'GetNickList'}->();
