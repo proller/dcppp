@@ -20,11 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 
-  use strict;
-  use IO::Socket;
-
+#  our SOCK_STREAM;
 
 package dcppp;
+  use IO::Socket;
+  use strict;
 
   sub new {
     my $class = shift;
@@ -48,8 +48,8 @@ package dcppp;
     my $self = shift;
     print "connecting to $self->{'host'}, $self->{'port'}, $self->{'Nick'}, $self->{'pass'}\n"  if $self->{'debug'};
 
-    $self->{'hubsock'} = new IO::Socket::INET(PeerAddr=>$self->{'host'}, PeerPort => $self->{'port'}, Proto => 'tcp', 
-                                  Type => SOCK_STREAM, )	 or return "socket: $@";
+    $self->{'hubsock'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, Proto => 'tcp', 
+                                  'Type' => SOCK_STREAM, )	 or return "socket: $@";
 #print "zz";
     ++$self->{'mustrecv'};
     $self->checkrecv();
