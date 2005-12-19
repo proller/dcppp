@@ -22,9 +22,11 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   use strict;
 
-  require 'dcppp.pm';
+#  require 'dcppp.pm';
+  use dcppp; 
+  use dcppp::client;
 
-  my $dc = dcppp->new(
+  my $dc = dcppp::client->new(
    'host'=>'dc.setun.net',
 #   'host'=>'dcpp.migtel.ru',
   );
