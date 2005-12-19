@@ -142,7 +142,8 @@ package dcppp;
       s/^\$(\w+)\s*//;
       my $cmd = $1;
       if($self->{'parse'}{$cmd}) {
-        $self->{'parse'}{$cmd}->($_) ;
+        $self->{'parse'}{$cmd}->($_);
+        $self->{'handler'}{$cmd}->($_) if $self->{'handler'}{$cmd}->($_);
       } else {
         print "UNKHUBCMD:[$cmd]{$_}\n";
       }                                                 
