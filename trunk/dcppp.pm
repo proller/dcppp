@@ -32,21 +32,17 @@ package dcppp;
 
   sub new {
     my $class = shift;
-    my $self = {
-#        'MAXLEN' => 1024*1024,
-	@_ };
+    my $self = { };
     bless($self, $class);
     $self->init(@_);
     return $self;
   }
-
  
   sub connect {
     my $self = shift;
     print "connecting to $self->{'host'}, $self->{'port'}, $self->{'Nick'}, $self->{'pass'}\n"  if $self->{'debug'};
-
-    $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 
-                                  'Type' => SOCK_STREAM, )	 or return "socket: $@";
+    $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
+	 or return "socket: $@";
     $self->{'select'} = IO::Select->new($self->{'socket'});
     $self->recv();
   }
@@ -54,6 +50,7 @@ package dcppp;
   sub disconnect {
     my $self = shift;
     close($self->{'socket'});
+print "[$self->{'socket'}]";
   }
 
   sub recv {

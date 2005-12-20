@@ -38,6 +38,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
 #  sleep 1;
+$dc->disconnect();
   $dc->recv(), sleep 0.1 while 1;
 #  sleep 1;
 #  $dc->recv();
