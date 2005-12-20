@@ -80,14 +80,7 @@ print "CLOSEME" if $self->{'debug'};
       }
     } while ($readed);
   }
-
-
-  sub chatline {
-    my $self = shift;
-    $self->{'socket'}->send("<$self->{'Nick'}> $_|") for(@_);
-  }
-  
-    
+ 
   sub parsehub {
     my $self = shift;
     for(@_) {
