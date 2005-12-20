@@ -47,11 +47,7 @@ package dcppp;
 
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 
                                   'Type' => SOCK_STREAM, )	 or return "socket: $@";
-#    nonblock($self->{'socket'});
     $self->{'select'} = IO::Select->new($self->{'socket'});
-#print "zz";
-#    ++$self->{'mustrecv'};
-#    $self->checkrecv();
     $self->recv();
   }
 
@@ -76,12 +72,12 @@ print "CLOSEME" if $self->{'debug'};
          #TODO close
         }
         $buf =~ s/(.*\|)//;
-        $self->parsehub(/^\$/ ? $_ : ($_ = '$chatline ' . $_))for(grep $_, split(/\|/, $1));
+        $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for (grep $_, split(/\|/, $1));
       }
     } while ($readed);
   }
  
-  sub parsehub {
+  sub parse {
     my $self = shift;
     for(@_) {
       s/^\$(\w+)\s*//;
@@ -89,7 +85,8 @@ print "CLOSEME" if $self->{'debug'};
       if($self->{'parse'}{$cmd}) {
         $self->{'parse'}{$cmd}->($_);
       } else {
-        print "UNKHUBCMD:[$cmd]{$_}\n";
+        print "UNKNOWN HUBCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
+        $self->{'parse'}{$cmd} = sub { };
       }                                                 
       $self->{'handler'}{$cmd}->($_) if $self->{'handler'}{$cmd};
     }
