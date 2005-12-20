@@ -34,12 +34,14 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->{'debug'} = 1;
   $dc->connect();
 #  $dc->{'cmd'}{'chatline'}->('hello world');
-  $dc->{'cmd'}{'GetNickList'}->();
+  $dc->cmd('GetNickList');
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
 #  sleep 1;
-$dc->disconnect();
-  $dc->recv(), sleep 0.1 while 1;
+#print "DIS\n";
+#$dc->disconnect();
+#print "OK\n";
+  print"R\n",$dc->recv(), sleep 0.1 while 1;
 #  sleep 1;
 #  $dc->recv();
 
