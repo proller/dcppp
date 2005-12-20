@@ -38,11 +38,13 @@ package dcppp;
  
   sub connect {
     my $self = shift;
-    print "connecting to $self->{'host'}, $self->{'port'}, $self->{'Nick'}, $self->{'pass'}\n"  if $self->{'debug'};
+    print "connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
 	 or return "socket: $@";
     $self->{'select'} = IO::Select->new($self->{'socket'});
+print "connect to $self->{'host'} ok"  if $self->{'debug'};
     $self->recv();
+print "rec fr $self->{'host'} ok"  if $self->{'debug'};
   }
 
   sub disconnect {
@@ -59,7 +61,7 @@ package dcppp;
 { my $buf;
   sub recv {
     my $self = shift;
-print "TRYREAD" if $self->{'debug'};
+print "TRYREAD $self->{'host'}" if $self->{'debug'};
     return unless $self->{'socket'};
     my ($databuf, $readed);
     do {

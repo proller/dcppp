@@ -1,7 +1,7 @@
 
 package dcppp::client;
 
-#eval { use dcppp; };
+#use dcppp;
 
 our @ISA = ('dcppp');
 
@@ -48,6 +48,16 @@ our @ISA = ('dcppp');
       'OpList' => sub { $self->{'NickList'}{$_}{'oper'} = 1 for grep $_, split /\$\$/, @_[0]; },
       'ForceMove' => sub { print "ForceMove to $_[0]  \n"},
       'Quit' => sub { $self->{'NickList'}{$_[0]}{'online'} = 0; },
+      'ConnectToMe' => sub { 
+         my ($nick, $host, $port) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
+#print "ALREADY CONNECTED",         
+         return if $self->{'clients'}{$host .':'. $port}->{'socket'};
+         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new( 'host'=>$host, 'port'=>$port, 
+'debug'=>1,
+);
+         $self->{'clients'}{$host .':'. $port}->connect();
+      },
+
 #      'Search' => sub { }, #todo
 #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
 #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
@@ -62,6 +72,13 @@ our @ISA = ('dcppp');
       'GetNickList'	=> sub { $self->sendcmd('GetNickList'); ++$self->{'mustrecv'};},
       'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); ++$self->{'mustrecv'};},
     );
+  }
+
+  sub recv {
+    my $self = shift;
+print "CLIREAD";
+    $self->{'clients'}{$_}->recv() for keys %{$self->{'clients'}};
+    $self->SUPER::recv();
   }
 
 1;
