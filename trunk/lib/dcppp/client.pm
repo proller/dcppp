@@ -1,7 +1,7 @@
 
 package dcppp::client;
 
-#use dcppp;
+#eval { use dcppp; };
 
 our @ISA = ('dcppp');
 
