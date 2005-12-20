@@ -51,6 +51,11 @@ package dcppp;
     delete $self->{'socket'};
   }
 
+  sub DESTROY {
+    my $self = shift;
+    $self->disconnect();
+  }
+
 { my $buf;
   sub recv {
     my $self = shift;
