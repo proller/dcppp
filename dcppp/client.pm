@@ -19,17 +19,21 @@ our @ISA = ('dcppp');
 
 
     %{$self->{'parse'}} = (
+       'chatline' => sub {
+#        shift;
+        print "CHAT:", @_, "\n";
+      },
       'Lock' => sub { $self->{'sendbuf'} = 1;
 	$self->{'cmd'}{'Key'}->();
 	$self->{'sendbuf'} = 0;
 	$self->{'cmd'}{'ValidateNick'}->();
-	$self->checkrecv();
+	$self->recv();
       },
       'Hello' => sub { $self->{'sendbuf'} = 1;
 	$self->{'cmd'}{'Version'}->();
 	$self->{'sendbuf'} = 0;
 	$self->{'cmd'}{'MyINFO'}->();
-	$self->checkrecv();
+	$self->recv();
       },
       'To' => sub { print "Private message to", @_, "\n";  },
       'MyINFO' => sub { 
@@ -63,5 +67,7 @@ our @ISA = ('dcppp');
       'GetINFO' => sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); ++$self->{'mustrecv'};},
     );
   }
+
+
 
 1;

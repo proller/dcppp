@@ -33,7 +33,7 @@ package dcppp;
   sub new {
     my $class = shift;
     my $self = {
-        'MAXLEN' => 1024*1024,
+#        'MAXLEN' => 1024*1024,
 	@_ };
     bless($self, $class);
     $self->init(@_);
@@ -50,9 +50,9 @@ package dcppp;
 #    nonblock($self->{'socket'});
     $self->{'select'} = IO::Select->new($self->{'socket'});
 #print "zz";
-    ++$self->{'mustrecv'};
-    $self->checkrecv();
-#    $self->recv();
+#    ++$self->{'mustrecv'};
+#    $self->checkrecv();
+    $self->recv();
   }
 
   sub disconnect {
@@ -62,34 +62,29 @@ package dcppp;
 
   sub recv {
     my $self = shift;
-##    my $ret = $self->{'socket'}->recv($self->{'recieved'}, $self->{'MAXLEN'});
-    for $client ($self->{'select'}->can_read(1)) {
-      if ($client == $self->{'socket'}) {
-      } else {
-qqqq write hereee        
-        $client
+    my ($buf, $databuf, $readed);
+    do {
+      $readed = 0;
+      for my $client ($self->{'select'}->can_read(1)) {
+        ++$readed;
+        $databuf = '';
+        my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
+        $buf .= $databuf;
+print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
+        unless (defined($rv) && length($databuf)) {
+print "CLOSEME" if $self->{'debug'};
+         #TODO close
+        }
+        $buf =~ s/(.*\|)//;
+        $self->parsehub(/^\$/ ? $_ : ($_ = '$chatline ' . $_))for(grep $_, split(/\|/, $1));
       }
-    }
-    print "($ret){$self->{'recieved'}}\n" if $self->{'debug'};
-    for(grep $_, split(/\|/, $self->{'recieved'})) {
-      $self->parsehub($_), next if /^\$/;
-      $self->chatrecv($_);
-    }
+    } while ($readed);
   }
 
-  sub checkrecv {
-    my $self = shift;
-    $self->recv(), $self->{'mustrecv'} = 0 if $self->{'mustrecv'};
-  }
-  
+
   sub chatline {
     my $self = shift;
     $self->{'socket'}->send("<$self->{'Nick'}> $_|") for(@_);
-  }
-    
-  sub chatrecv {
-    my $self = shift;
-    print "CHATLINE:", @_, "\n";
   }
   
     
