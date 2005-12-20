@@ -33,7 +33,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   $dc->{'debug'} = 1;
   $dc->connect();
-#  $dc->{'cmd'}{'chatline'}->('hello world');
+  $dc->cmd('chatline','hello world');
   $dc->cmd('GetNickList');
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
