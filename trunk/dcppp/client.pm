@@ -59,6 +59,7 @@ our @ISA = ('dcppp');
     );
   
     %{$self->{'cmd'}} = (
+      'chatline' => sub { $self->{'socket'}->send("<$self->{'Nick'}> $_|") for(@_); },
       'Key' => sub { $self->sendcmd('Key', $self->{'Key'}); },
       'ValidateNick' => sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); ++$self->{'mustrecv'};},
       'Version' => sub { $self->sendcmd('Version', $self->{'Version'}); },
