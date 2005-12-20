@@ -20,8 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 
-#  our SOCK_STREAM;
-
 package dcppp;
 #  use Socket;
 #  use Fcntl;
@@ -50,12 +48,15 @@ package dcppp;
   sub disconnect {
     my $self = shift;
     close($self->{'socket'});
-print "[$self->{'socket'}]";
+    delete $self->{'socket'};
   }
 
+{ my $buf;
   sub recv {
     my $self = shift;
-    my ($buf, $databuf, $readed);
+print "TRYREAD" if $self->{'debug'};
+    return unless $self->{'socket'};
+    my ($databuf, $readed);
     do {
       $readed = 0;
       for my $client ($self->{'select'}->can_read(1)) {
@@ -66,6 +67,8 @@ print "[$self->{'socket'}]";
 print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
         unless (defined($rv) && length($databuf)) {
 print "CLOSEME" if $self->{'debug'};
+         $self->{'select'}->remove($client);
+         $self->disconnect();
          #TODO close
         }
         $buf =~ s/(.*\|)//;
@@ -73,6 +76,7 @@ print "CLOSEME" if $self->{'debug'};
       }
     } while ($readed);
   }
+}
  
   sub parse {
     my $self = shift;
@@ -92,6 +96,7 @@ print "CLOSEME" if $self->{'debug'};
 { my @sendbuf;
   sub sendcmd {
     my $self = shift;
+    return unless $self->{'socket'};
     if ($self->{'sendbuf'})  {
       push @sendbuf , '$' . join(' ', @_) . '|';
     } else {
@@ -102,5 +107,15 @@ print "CLOSEME" if $self->{'debug'};
   }
 }
 
+  sub cmd {
+    my $self = shift;
+    my $cmd = shift;
+    if($self->{'cmd'}{$cmd}) {
+      $self->{'cmd'}{$cmd}->(@_);
+    } else {
+      print "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };\n";
+      $self->{'cmd'}{$cmd} = sub { };
+    }
+  }
 
 1;
