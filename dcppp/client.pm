@@ -51,10 +51,10 @@ our @ISA = ('dcppp');
       'OpList' => sub { $self->{'NickList'}{$_}{'oper'} = 1 for grep $_, split /\$\$/, @_[0]; },
       'ForceMove' => sub { print "ForceMove to $_[0]  \n"},
 
-      'Search' => sub { }, #todo
-      'Quit' => sub { $self->{'NickList'}{$_[0]}{'online'} = 0; }, #todo
-      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
-      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
+#      'Search' => sub { }, #todo
+      'Quit' => sub { $self->{'NickList'}{$_[0]}{'online'} = 0; },
+#      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
+#      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
 
     );
   
