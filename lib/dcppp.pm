@@ -61,8 +61,8 @@ print "rec fr $self->{'host'} ok"  if $self->{'debug'};
 { my $buf;
   sub recv {
     my $self = shift;
-print "TRYREAD $self->{'host'}" if $self->{'debug'};
     return unless $self->{'socket'};
+print "TRYREAD $self->{'host'}" if $self->{'debug'};
     my ($databuf, $readed);
     do {
       $readed = 0;
@@ -70,16 +70,17 @@ print "TRYREAD $self->{'host'}" if $self->{'debug'};
         ++$readed;
         $databuf = '';
         my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
-        $buf .= $databuf;
+          $buf .= $databuf;
 print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
         unless (defined($rv) && length($databuf)) {
 print "CLOSEME" if $self->{'debug'};
-         $self->{'select'}->remove($client);
-         $self->disconnect();
-         #TODO close
+          $self->{'select'}->remove($client);
+          $self->disconnect();
         }
-        $buf =~ s/(.*\|)//;
-        $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for (grep $_, split(/\|/, $1));
+        if ($buf) {
+          $buf =~ s/(.*\|)//;
+          $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for (grep $_, split(/\|/, $1));
+        }
       }
     } while ($readed);
   }
@@ -93,7 +94,7 @@ print "CLOSEME" if $self->{'debug'};
       if($self->{'parse'}{$cmd}) {
         $self->{'parse'}{$cmd}->($_);
       } else {
-        print "UNKNOWN HUBCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
+        print "UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
         $self->{'parse'}{$cmd} = sub { };
       }                                                 
       $self->{'handler'}{$cmd}->($_) if $self->{'handler'}{$cmd};
