@@ -34,6 +34,11 @@ or download it from http://www.gnu.org/licenses/gpl.html
   );
 
 #  $dc->{'debug'} = 1;
+  $dc->{'handler'}{'MyINFO'} = sub {
+    ($_) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
+    print "my cool info parser gets info about $1\n";
+  }, 
+ 
   $dc->connect();
   $dc->cmd('chatline','hello world');
   $dc->cmd('GetNickList');
