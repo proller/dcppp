@@ -28,7 +28,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 #  use dcppp; 
 #  use dcppp::client;
 
-  my $dc = dcppp::client->new(
+  my $dc = dcppp::clihub->new(
    'host'=>'dc.setun.net',
    'ip'=>'10.20.199.104',
 #   'host'=>'dcpp.migtel.ru',
