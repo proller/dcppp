@@ -19,7 +19,7 @@ our @ISA = ('dcppp');
 
 
     %{$self->{'parse'}} = (
-       'chatline' => sub { print "CHAT:", @_, "\n"; },
+      'chatline' => sub { print "CHAT:", @_, "\n"; },
       'Lock' => sub { $self->{'sendbuf'} = 1;
 	$self->{'cmd'}{'Key'}->();
 	$self->{'sendbuf'} = 0;
@@ -56,6 +56,7 @@ our @ISA = ('dcppp');
 'debug'=>1,
 );
          $self->{'clients'}{$host .':'. $port}->connect();
+         $self->{'clients'}{$host .':'. $port}->cmd('MyNick');
       },
 
 #      'Search' => sub { }, #todo
@@ -76,8 +77,12 @@ our @ISA = ('dcppp');
 
   sub recv {
     my $self = shift;
-print "CLIREAD";
-    $self->{'clients'}{$_}->recv() for keys %{$self->{'clients'}};
+#print "CLIREAD";
+    for (keys %{$self->{'clients'}}) {
+#print "\n!! $_ !!\n" unless $self->{'clients'}{$_}->{'socket'};
+      delete $self->{'clients'}{$_}, last unless $self->{'clients'}{$_}->{'socket'};
+      $self->{'clients'}{$_}->recv();
+    }
     $self->SUPER::recv();
   }
 
