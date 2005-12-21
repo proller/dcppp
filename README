@@ -4,3 +4,11 @@ svn co svn://svn.setun.net/dcppp/trunk/ search
 
 http://www.dcpp.net/wiki/index.php
 http://www.teamfair.info/DC-Protocol.htm
+
+
+        me peer
+dcppp \        
+        clihub  client to hub
+        clicli  client to client
+        hubcli
+        hubhub 
