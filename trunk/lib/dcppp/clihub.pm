@@ -1,5 +1,5 @@
 
-package dcppp::client;
+package dcppp::clihub;
 
 #use dcppp;
 
