@@ -45,6 +45,9 @@ our @ISA = ('dcppp');
       'Key'	=> sub { $self->sendcmd('Key', $self->{'Key'}); },
       'FileLength' =>  sub { $self->sendcmd('FileLength', $_[0]); },
     );
+
+   $self->cmd('MyNick');
+
   }
 
 1;
