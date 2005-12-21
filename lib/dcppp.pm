@@ -47,6 +47,17 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 print "rec fr $self->{'host'} ok"  if $self->{'debug'};
   }
 
+  sub listen {
+    my $self = shift;
+    print "listening $self->{'LocalPort'}\n"  if $self->{'debug'};
+    $self->{'socketin'} = new IO::Socket::INET('LocalPort'=> $self->{'LocalPort'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
+	 or return "socket: $@";
+    $self->{'selectin'} = IO::Select->new($self->{'socketin'});
+    print "listening $self->{'LocalPort'} ok\n"  if $self->{'debug'};
+    $self->recv();
+  }
+
+
   sub disconnect {
     my $self = shift;
     close($self->{'socket'});
