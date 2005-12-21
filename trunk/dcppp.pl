@@ -30,10 +30,14 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   my $dc = dcppp::client->new(
    'host'=>'dc.setun.net',
+   'ip'=>'10.20.199.104',
 #   'host'=>'dcpp.migtel.ru',
+   'LocalPort' => '6778',
+
   );
 
-#  $dc->{'debug'} = 1;
+  $dc->{'debug'} = 1;
+
   $dc->{'handler'}{'MyINFO'} = sub {
     ($_) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
     print "my cool info parser gets info about $1\n";
@@ -42,6 +46,9 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->connect();
   $dc->cmd('chatline','hello world');
   $dc->cmd('GetNickList');
+  $dc->listen();
+  $dc->cmd('ConnectToMe', 'pro');
+
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
 #  sleep 1;

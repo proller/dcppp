@@ -9,12 +9,14 @@ our @ISA = ('dcppp');
     my $self = shift;
     %$self = (%$self,
 	'host'	=> 'localhost', 
+        'LocalPort' => '6779',
 	'port'	=> 4111, 
 	'Nick'	=> 'dcpppBot', 
 	'pass'	=> '', 
 	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
 	'Key'	=> 'zzz', 
 	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$1$',
+	'incomingclass' => 'dcppp::clicli',
       @_);
 
 
@@ -67,11 +69,12 @@ our @ISA = ('dcppp');
     %{$self->{'cmd'}} = (
       'chatline'	=> sub { $self->{'socket'}->send("<$self->{'Nick'}> $_|") for(@_); },
       'Key'	=> sub { $self->sendcmd('Key', $self->{'Key'}); },
-      'ValidateNick'	=> sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); ++$self->{'mustrecv'};},
+      'ValidateNick'	=> sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); },
       'Version'	=> sub { $self->sendcmd('Version', $self->{'Version'}); },
       'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
-      'GetNickList'	=> sub { $self->sendcmd('GetNickList'); ++$self->{'mustrecv'};},
-      'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); ++$self->{'mustrecv'};},
+      'GetNickList'	=> sub { $self->sendcmd('GetNickList'); },
+      'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); },
+      'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'ip'}:$self->{'LocalPort'}"); },
     );
   }
 
