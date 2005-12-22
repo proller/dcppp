@@ -158,6 +158,7 @@ print "CLOSEME" if $self->{'debug'};
       print "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };\n";
       $self->{'cmd'}{$cmd} = sub { };
     }
+    $self->recv() if $self->{'autorecv'};
   }
 
 1;
