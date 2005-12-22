@@ -76,17 +76,23 @@ our @ISA = ('dcppp');
       'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); },
       'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'ip'}:$self->{'LocalPort'}"); },
     );
+
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'debug'=>1,);
+    $self->{'clients'}{''}->listen();
+
   }
 
+=x
   sub recv {
     my $self = shift;
 #print "CLIREAD";
     for (keys %{$self->{'clients'}}) {
-#print "\n!! $_ !!\n" unless $self->{'clients'}{$_}->{'socket'};
+print "\n!! $self->{'clients'}{$_}->{'socket'} !!\n" ;
       delete $self->{'clients'}{$_}, last unless $self->{'clients'}{$_}->{'socket'};
       $self->{'clients'}{$_}->recv();
     }
     $self->SUPER::recv();
   }
+=cut 
 
 1;

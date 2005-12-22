@@ -31,12 +31,12 @@ or download it from http://www.gnu.org/licenses/gpl.html
   my $dc = dcppp::clihub->new(
    'host'=>'dc.setun.net',
    'ip'=>'10.20.199.104',
-#   'host'=>'dcpp.migtel.ru',
+  'host'=>'dcpp.migtel.ru',
    'LocalPort' => '6778',
 
   );
 
-  $dc->{'debug'} = 1;
+#  $dc->{'debug'} = 1;
 
   $dc->{'handler'}{'MyINFO'} = sub {
     ($_) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
@@ -44,10 +44,19 @@ or download it from http://www.gnu.org/licenses/gpl.html
   }, 
  
   $dc->connect();
-  $dc->cmd('chatline','hello world');
+#  $dc->listen();
+  $dc->{'autorecv'} = 1;
+#  $dc->cmd('chatline','hello world');
   $dc->cmd('GetNickList');
-  $dc->listen();
   $dc->cmd('ConnectToMe', 'pro');
+  $dc->{'autorecv'} = 0;
+
+
+$dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',
+$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyInfo'),sleep 1
+for (1..1000);
+
+#  $dc->recv(),  print("! $_ !\n"),  $dc->cmd('ConnectToMe',$_),sleep 1 for grep $_ ne $dc->{'Nick'}, keys %{$dc->{'NickList'}};
 
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
@@ -55,7 +64,8 @@ or download it from http://www.gnu.org/licenses/gpl.html
 #print "DIS\n";
 #$dc->disconnect();
 #print "OK\n";
-  print"R\n",$dc->recv(), sleep 0.1 while 1;
+# print"R\n",
+$dc->recv(), sleep 0.1 while 1;
 #  sleep 1;
 #  $dc->recv();
 
