@@ -52,7 +52,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->cmd('GetNickList');
 #  $dc->cmd('ConnectToMe', 'pro');
 
-  $dc->{'autorecv'} = 0;
+#  $dc->{'autorecv'} = 0;
 
 #  $dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyINFO'),sleep 1for (1..1000);
   $dc->recv(),  print("! $_ !\n"), # $dc->cmd('ConnectToMe',$_)

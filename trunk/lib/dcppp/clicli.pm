@@ -29,9 +29,9 @@ our @ISA = ('dcppp');
 	  $self->cmd('Key');
         } else {
           $self->{'sendbuf'} = 1;
-          $self->{'cmd'}{'MyNick'}->();
+          $self->cmd('MyNick');
 	  $self->{'sendbuf'} = 0;
-	  $self->{'cmd'}{'Lock'}->();
+	  $self->cmd('Lock');
         }
       },
       'Supports' => sub { },
@@ -59,6 +59,7 @@ print "\nget:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n
       'MyNick' => sub { print 'peer is [', ($self->{'peernick'} = @_[0]), "]\n";},
 
       'FileLength' => sub { 
+        $self->{'filetotal'} = $_[0];
         open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
         binmode($self->{'filehandle'});
         $self->cmd('Send'); 
