@@ -39,7 +39,7 @@ our @ISA = ('dcppp');
         my ($nick, $info) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
         $self->{'NickList'}{$nick}{'info'} = $info;
         $self->{'NickList'}{$nick}{'online'} = 1;
-        print  "info:$nick [$info]\n";
+#        print  "info:$nick [$info]\n";
       }, 
       'HubName' => sub { print 'HubName is [', ($self->{'HubName'} = @_[0]), "]\n";},
       'HubTopic' => sub { print 'HubTopic is [', ($self->{'HubTopic'} = @_[0]), "]\n";},
@@ -55,6 +55,7 @@ our @ISA = ('dcppp');
 #print "ALREADY CONNECTED",         
          return if $self->{'clients'}{$host .':'. $port}->{'socket'};
          $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new( 'host'=>$host, 'port'=>$port, 
+'want' => \%{$self->{'want'}},
 'debug'=>1,
 );
          $self->{'clients'}{$host .':'. $port}->connect();
@@ -77,7 +78,7 @@ our @ISA = ('dcppp');
       'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'ip'}:$self->{'LocalPort'}"); },
     );
 
-    $self->{'clients'}{''} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'debug'=>1,);
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'want' => \%{$self->{'want'}}, 'debug'=>1,);
     $self->{'clients'}{''}->listen();
 
   }
