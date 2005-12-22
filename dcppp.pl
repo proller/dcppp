@@ -48,14 +48,11 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->{'autorecv'} = 1;
 #  $dc->cmd('chatline','hello world');
   $dc->cmd('GetNickList');
-  $dc->cmd('ConnectToMe', 'pro');
+#  $dc->cmd('ConnectToMe', 'pro');
+
   $dc->{'autorecv'} = 0;
 
-
-$dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',
-$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyINFO'),sleep 1
-for (1..1000);
-
+#  $dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyINFO'),sleep 1for (1..1000);
 #  $dc->recv(),  print("! $_ !\n"),  $dc->cmd('ConnectToMe',$_),sleep 1 for grep $_ ne $dc->{'Nick'}, keys %{$dc->{'NickList'}};
 
 #  $dc->recv();
