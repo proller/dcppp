@@ -13,6 +13,7 @@ our @ISA = ('dcppp');
 	'Lock'	=> 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
 	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
 	'Direction' => 'Upload 1',
+	'incomingclass' => 'dcppp::clicli',
       @_);
 
     %{$self->{'parse'}} = (
@@ -46,7 +47,7 @@ our @ISA = ('dcppp');
       'FileLength' =>  sub { $self->sendcmd('FileLength', $_[0]); },
     );
 
-   $self->cmd('MyNick');
+#   $self->cmd('MyNick');
 
   }
 

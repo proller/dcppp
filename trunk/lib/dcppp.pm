@@ -43,7 +43,7 @@ package dcppp;
     print "connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
 	 or return "socket: $@";
-    $self->{'select'} = IO::Select->new($self->{'socket'});
+#    $self->{'select'} = IO::Select->new($self->{'socket'});
 print "connect to $self->{'host'} ok"  if $self->{'debug'};
     $self->recv();
 print "rec fr $self->{'host'} ok"  if $self->{'debug'};
@@ -52,10 +52,11 @@ print "rec fr $self->{'host'} ok"  if $self->{'debug'};
   sub listen {
     my $self = shift;
     print "listening $self->{'LocalPort'}\n"  if $self->{'debug'};
-    $self->{'socketin'} = new IO::Socket::INET('LocalPort'=> $self->{'LocalPort'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Listen' => $self->{'Listen'})
+    $self->{'socket'} = new IO::Socket::INET('LocalPort'=> $self->{'LocalPort'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Listen' => $self->{'Listen'})
 	 or return "socket: $@";
-    $self->{'selectin'} = IO::Select->new($self->{'socketin'});
+#    $self->{'select'} = IO::Select->new($self->{'socket'});
     print "listening $self->{'LocalPort'} ok\n"  if $self->{'debug'};
+    $self->{'accept'} = 1;
     $self->recv();
   }
 
@@ -74,32 +75,38 @@ print "rec fr $self->{'host'} ok"  if $self->{'debug'};
 { my $buf;
   sub recv {
     my $self = shift;
+=z
     if ($self->{'selectin'}) {
       for my $client ($self->{'selectin'}->can_read(1)) {
 print "Lcanread\n";
-        if ($client == $self->{'socketin'}) {
-print "nconn\n";
-          if ($_ = $self->{'socketin'}->accept()) {
-print "creat\n";
-            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'debug'=>1,) unless $self->{'clients'}{$_};
-print "ok\n";
-          }
-print "1\n";
-        }
-print "2\n";
+#print "2\n";
       }
-print "3\n";
+#print "3\n";
     }
-print "4\n";
+#print "4\n";
+=cut
 
     return unless $self->{'socket'};
-print "TRYREAD $self->{'host'} [$self->{'select'}]" if $self->{'debug'};
+    $self->{'select'} = IO::Select->new($self->{'socket'}) unless $self->{'select'};
+
+#print "TRYREAD $self->{'host'} [$self->{'select'}]\n" if $self->{'debug'};
     my ($databuf, $readed);
     do {
       $readed = 0;
 
-      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
-      for my $client ($select->can_read(1)) {
+#      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
+      for my $client ($self->{'select'}->can_read(1)) {
+        if ($self->{'accept'} and $client == $self->{'socket'}) {
+print "nconn\n";
+          if ($_ = $self->{'socket'}->accept()) {
+print "creat\n";
+            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'debug'=>1,), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_};
+#print "ok\n";
+          }
+#print "1\n";
+          next;
+        }
+
         ++$readed;
         $databuf = '';
         my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
@@ -107,7 +114,7 @@ print "TRYREAD $self->{'host'} [$self->{'select'}]" if $self->{'debug'};
 print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
         unless (defined($rv) && length($databuf)) {
 print "CLOSEME" if $self->{'debug'};
-          $select->remove($client);
+          $self->{'select'}->remove($client);
           $self->disconnect();
         }
         if ($buf) {
@@ -115,8 +122,15 @@ print "CLOSEME" if $self->{'debug'};
           $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for (grep $_, split(/\|/, $1));
         }
       }
-      }
+#      }
     } while ($readed);
+    for (keys %{$self->{'clients'}}) {
+#print "\n!! $self->{'clients'}{$_}->{'socket'} !!\n" ;
+      delete $self->{'clients'}{$_}, last unless $self->{'clients'}{$_}->{'socket'};
+      $self->{'clients'}{$_}->recv();
+    }
+#    $self->SUPER::recv();
+
   }
 }
  
@@ -144,7 +158,7 @@ print "CLOSEME" if $self->{'debug'};
     } else {
       $self->{'socket'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
       @sendbuf = ();
-      print"we send [$_]\n" if $self->{'debug'};
+      print"we send [$_] to [$self->{'socket'}]\n" if $self->{'debug'};
     }
   }
 }
