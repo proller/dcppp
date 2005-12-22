@@ -121,9 +121,11 @@ print "CLOSEME" if $self->{'debug'};
         }
         if ($self->{'filehandle'}) {
           $self->{'filebytes'} += length $databuf;
-print "recv $self->{'filebytes'} of file\n";
+print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
+
+print("file complete\n"),
           close($self->{'filehandle'}), delete($self->{'filehandle'}) 
             if $self->{'filebytes'} == $self->{'filetotal'};
         } else {
