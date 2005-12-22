@@ -53,7 +53,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
 
 $dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',
-$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyInfo'),sleep 1
+$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyINFO'),sleep 1
 for (1..1000);
 
 #  $dc->recv(),  print("! $_ !\n"),  $dc->cmd('ConnectToMe',$_),sleep 1 for grep $_ ne $dc->{'Nick'}, keys %{$dc->{'NickList'}};
