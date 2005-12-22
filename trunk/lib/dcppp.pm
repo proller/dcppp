@@ -28,6 +28,9 @@ package dcppp;
   use POSIX;
   use strict;
 
+
+#  my %want;
+
   sub new {
     my $class = shift;
     my $self = { 
@@ -35,6 +38,7 @@ package dcppp;
     };
     bless($self, $class);
     $self->init(@_);
+    $self->{'want'} = {} unless $self->{'want'};
     return $self;
   }
  
@@ -100,7 +104,7 @@ print "Lcanread\n";
 print "nconn\n";
           if ($_ = $self->{'socket'}->accept()) {
 print "creat\n";
-            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'debug'=>1,), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_};
+            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'incoming'=>1, 'want' => \%{$self->{'want'}}, 'debug'=>1,), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_};
 #print "ok\n";
           }
 #print "1\n";
@@ -110,16 +114,25 @@ print "creat\n";
         ++$readed;
         $databuf = '';
         my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
-          $buf .= $databuf;
-print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
         unless (defined($rv) && length($databuf)) {
 print "CLOSEME" if $self->{'debug'};
           $self->{'select'}->remove($client);
           $self->disconnect();
         }
-        if ($buf) {
-          $buf =~ s/(.*\|)//;
-          $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for (grep $_, split(/\|/, $1));
+        if ($self->{'filehandle'}) {
+          $self->{'filebytes'} += length $databuf;
+print "recv $self->{'filebytes'} of file\n";
+          my $fh = $self->{'filehandle'};
+          print $fh $databuf;
+          close($self->{'filehandle'}), delete($self->{'filehandle'}) 
+            if $self->{'filebytes'} == $self->{'filetotal'};
+        } else {
+print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
+          $buf .= $databuf;
+          if (length $buf) {
+            $buf =~ s/(.*\|)//;
+            $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for (grep $_, split(/\|/, $1));
+          }
         }
       }
 #      }
@@ -173,6 +186,14 @@ print "CLOSEME" if $self->{'debug'};
       $self->{'cmd'}{$cmd} = sub { };
     }
     $self->recv() if $self->{'autorecv'};
+  }
+
+  sub get {
+    my ($self, $nick, $file, $as) = @_;
+#print "get from $nick $file\n";
+    $self->{'want'}->{$nick}{$file} = ($as or $file);
+#print "[nick:$_]" for keys %{$self->{'want'}};
+    $self->cmd('ConnectToMe',$nick);
   }
 
 1;
