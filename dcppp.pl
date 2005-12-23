@@ -36,7 +36,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   );
 
-#  $dc->{'debug'} = 1;
+  $dc->{'debug'} = 1;
 
 =example
   $dc->{'handler'}{'MyINFO'} = sub {

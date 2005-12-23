@@ -129,10 +129,11 @@ print("file complete\n"),
           close($self->{'filehandle'}), delete($self->{'filehandle'}) 
             if $self->{'filebytes'} == $self->{'filetotal'};
         } else {
-print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
+#print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
           $buf =~ s/(.*\|)//;
 #          if (length $1) {
+print("PP[$_]");
             $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for grep /\w/, split /\|+/, $1;
 #          }
         }

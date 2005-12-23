@@ -41,6 +41,9 @@ our @ISA = ('dcppp');
         $self->{'NickList'}{$nick}{'online'} = 1;
 #        print  "info:$nick [$info]\n";
       }, 
+      'UserIP' => sub { 
+        /(\S+)\s+(\S+)/, $self->{'NickList'}{$1}{'ip'} = $2 for grep $_, split /\$\$/, @_[0];
+      },
       'HubName' => sub { print 'HubName is [', ($self->{'HubName'} = @_[0]), "]\n";},
       'HubTopic' => sub { print 'HubTopic is [', ($self->{'HubTopic'} = @_[0]), "]\n";},
       'NickList' => sub { 
