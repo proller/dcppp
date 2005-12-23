@@ -92,7 +92,7 @@ print "Lcanread\n";
 
     return unless $self->{'socket'};
     $self->{'select'} = IO::Select->new($self->{'socket'}) unless $self->{'select'};
-
+print "R";
 #print "TRYREAD $self->{'host'} [$self->{'select'}]\n" if $self->{'debug'};
     my ($databuf, $readed);
     do {
@@ -121,7 +121,7 @@ print "CLOSEME" if $self->{'debug'};
         }
         if ($self->{'filehandle'}) {
           $self->{'filebytes'} += length $databuf;
-print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
+#print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
 
@@ -131,10 +131,10 @@ print("file complete\n"),
         } else {
 print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
-          if (length $buf) {
-            $buf =~ s/(.*\|)//;
-            $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for (grep $_, split(/\|/, $1));
-          }
+          $buf =~ s/(.*\|)//;
+#          if (length $1) {
+            $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for grep /\w/, split /\|+/, $1;
+#          }
         }
       }
 #      }
