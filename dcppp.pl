@@ -51,6 +51,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 #  $dc->cmd('chatline','hello world');
   $dc->cmd('GetNickList');
 #  $dc->cmd('ConnectToMe', 'pro');
+  $dc->recv();
 
 #  $dc->{'autorecv'} = 0;
 
