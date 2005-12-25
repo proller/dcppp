@@ -21,8 +21,8 @@ or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 
 package dcppp;
-#  use Socket;
-#  use Fcntl;
+  use Socket;
+#  use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
   use IO::Socket;
   use IO::Select;
   use POSIX;
@@ -40,7 +40,10 @@ package dcppp;
     bless($self, $class);
     $self->init(@_);
     $self->{'want'} = {} unless $self->{'want'};
+
     $self->{'number'} = ++$global{'total'};
+    ++$global{'count'};
+print "created [$self->{'number'}] now=$global{'count'}\n" if $self->{'debug'};
     return $self;
   }
  
@@ -49,13 +52,12 @@ package dcppp;
     print "connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
 	 or return "socket: $@";
+#    nonblock();
+    setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
-    ++$global{'count'};
-print "created [$self->{'number'}] now=$global{'count'}\n";
-
 print "connect to $self->{'host'} ok"  if $self->{'debug'};
     $self->recv();
-print "rec fr $self->{'host'} ok"  if $self->{'debug'};
+#print "rec fr $self->{'host'} ok"  if $self->{'debug'};
   }
 
   sub listen {
@@ -64,6 +66,8 @@ print "rec fr $self->{'host'} ok"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('LocalPort'=> $self->{'LocalPort'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Listen' => $self->{'Listen'})
 	 or return "socket: $@";
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
+    setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
+#    nonblock();
     print "listening $self->{'LocalPort'} ok\n"  if $self->{'debug'};
     $self->{'accept'} = 1;
     $self->recv();
@@ -72,15 +76,20 @@ print "rec fr $self->{'host'} ok"  if $self->{'debug'};
 
   sub disconnect {
     my $self = shift;
-    close($self->{'socket'});
-    undef $self->{'socket'};
-    --$global{'count'};
-print "deleted [$self->{'number'}] now=$global{'count'}\n";
+    if ($self->{'socket'}) {
+      close($self->{'socket'});
+      undef $self->{'socket'};
+      --$global{'count'};
+#    } else {
+#      print "already ";
+    }
+#print "deleted [$self->{'number'}] now=$global{'count'}\n";
   }
 
   sub DESTROY {
     my $self = shift;
     $self->disconnect();
+#print "DESTROY[$self->{'number'}]\n";
   }
 
 { my $buf;
@@ -103,14 +112,14 @@ print "Lcanread\n";
     my ($databuf, $readed);
     do {
       $readed = 0;
-print "R[$self->{'number'}]";
+#print "R[$self->{'number'}]";
 
 #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
       for my $client ($self->{'select'}->can_read(1)) {
         if ($self->{'accept'} and $client == $self->{'socket'}) {
-print "nconn\n";
+#print "nconn\n";
           if ($_ = $self->{'socket'}->accept()) {
-print "creat\n";
+print "Incoming \n";
             $self->{'clients'}{$_} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'incoming'=>1, 'want' => \%{$self->{'want'}}, 'debug'=>1,), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_};
 #print "ok\n";
           }
@@ -121,7 +130,7 @@ print "creat\n";
         $databuf = '';
         my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
         unless (defined($rv) && length($databuf)) {
-print "CLOSEME" if $self->{'debug'};
+#print "CLOSEME" if $self->{'debug'};
           $self->{'select'}->remove($client);
           $self->disconnect();
         } else {
@@ -134,11 +143,11 @@ print "CLOSEME" if $self->{'debug'};
           print $fh $databuf;
 
 print("file complete\n"),
-          close($self->{'filehandle'}), undef($self->{'filehandle'}) 
+          close($self->{'filehandle'}), undef($self->{'filehandle'}),
+            $self->disconnect()
             if $self->{'filebytes'} == $self->{'filetotal'};
-            $self->disconnect();
         } else {
-#print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
+print "($rv) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
           $buf =~ s/(.*\|)//;
 #          if (length $1) {
@@ -149,10 +158,10 @@ print("file complete\n"),
       }
 #      }
     } while ($readed);
-print "E[$self->{'number'}]";
+#print "E[$self->{'number'}]";
 
     for (keys %{$self->{'clients'}}) {
-print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
+#print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
       delete $self->{'clients'}{$_}, next unless $self->{'clients'}{$_}->{'socket'};
       $self->{'clients'}{$_}->recv();
     }
@@ -212,4 +221,14 @@ print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
     $self->cmd('ConnectToMe',$nick);
   }
 
+
+=c
+sub nonblock {
+    my $self = shift;
+    my $flags = fcntl($self->{'socket'}, F_GETFL, 0)
+            or die "Can't get flags for socket: $!\n";
+    fcntl($self->{'socket'}, F_SETFL, $flags | O_NONBLOCK)
+            or die "Can't make socket nonblocking: $!\n";
+}
+=cut
 1;
