@@ -21,18 +21,21 @@ our @ISA = ('dcppp');
 
 
     %{$self->{'parse'}} = (
-      'chatline' => sub { print "CHAT:", @_, "\n"; },
+      'chatline' => sub { #print "CHAT:", @_, "\n"; 
+      },
       'Lock' => sub { $self->{'sendbuf'} = 1;
 	$self->{'cmd'}{'Key'}->();
 	$self->{'sendbuf'} = 0;
 	$self->{'cmd'}{'ValidateNick'}->();
-	$self->recv();
+#	$self->recv();
       },
-      'Hello' => sub { $self->{'sendbuf'} = 1;
+      'Hello' => sub { 
+        return unless $_[0] eq $self->{'Nick'};
+        $self->{'sendbuf'} = 1;
 	$self->{'cmd'}{'Version'}->();
 	$self->{'sendbuf'} = 0;
 	$self->{'cmd'}{'MyINFO'}->();
-	$self->recv();
+#	$self->recv();
       },
       'To' => sub { print "Private message to", @_, "\n";  },
       'MyINFO' => sub { 
@@ -44,11 +47,11 @@ our @ISA = ('dcppp');
       'UserIP' => sub { 
         /(\S+)\s+(\S+)/, $self->{'NickList'}{$1}{'ip'} = $2 for grep $_, split /\$\$/, @_[0];
       },
-      'HubName' => sub { print 'HubName is [', ($self->{'HubName'} = @_[0]), "]\n";},
-      'HubTopic' => sub { print 'HubTopic is [', ($self->{'HubTopic'} = @_[0]), "]\n";},
+      'HubName' => sub { $self->{'HubName'} = @_[0];},
+      'HubTopic' => sub { $self->{'HubTopic'} = @_[0];},
       'NickList' => sub { 
         $self->{'NickList'}{$_}{'online'} = 1 for grep $_, split /\$\$/, @_[0];
-        print 'nicklist:', join(';', sort keys %{$self->{'NickList'}}), "\n"
+#        print 'nicklist:', join(';', sort keys %{$self->{'NickList'}}), "\n"
       },
       'OpList' => sub { $self->{'NickList'}{$_}{'oper'} = 1 for grep $_, split /\$\$/, @_[0]; },
       'ForceMove' => sub { print "ForceMove to $_[0]  \n"},
@@ -86,17 +89,5 @@ our @ISA = ('dcppp');
 
   }
 
-=x
-  sub recv {
-    my $self = shift;
-#print "CLIREAD";
-    for (keys %{$self->{'clients'}}) {
-print "\n!! $self->{'clients'}{$_}->{'socket'} !!\n" ;
-      delete $self->{'clients'}{$_}, last unless $self->{'clients'}{$_}->{'socket'};
-      $self->{'clients'}{$_}->recv();
-    }
-    $self->SUPER::recv();
-  }
-=cut 
 
 1;

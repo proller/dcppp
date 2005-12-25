@@ -30,7 +30,8 @@ package dcppp;
 
 
 #  my %want;
-
+  my %global;
+  
   sub new {
     my $class = shift;
     my $self = { 
@@ -39,6 +40,7 @@ package dcppp;
     bless($self, $class);
     $self->init(@_);
     $self->{'want'} = {} unless $self->{'want'};
+    $self->{'number'} = ++$global{'total'};
     return $self;
   }
  
@@ -48,6 +50,9 @@ package dcppp;
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
 	 or return "socket: $@";
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
+    ++$global{'count'};
+print "created [$self->{'number'}] now=$global{'count'}\n";
+
 print "connect to $self->{'host'} ok"  if $self->{'debug'};
     $self->recv();
 print "rec fr $self->{'host'} ok"  if $self->{'debug'};
@@ -68,7 +73,9 @@ print "rec fr $self->{'host'} ok"  if $self->{'debug'};
   sub disconnect {
     my $self = shift;
     close($self->{'socket'});
-    delete $self->{'socket'};
+    undef $self->{'socket'};
+    --$global{'count'};
+print "deleted [$self->{'number'}] now=$global{'count'}\n";
   }
 
   sub DESTROY {
@@ -92,11 +99,11 @@ print "Lcanread\n";
 
     return unless $self->{'socket'};
     $self->{'select'} = IO::Select->new($self->{'socket'}) unless $self->{'select'};
-print "R";
 #print "TRYREAD $self->{'host'} [$self->{'select'}]\n" if $self->{'debug'};
     my ($databuf, $readed);
     do {
       $readed = 0;
+print "R[$self->{'number'}]";
 
 #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
       for my $client ($self->{'select'}->can_read(1)) {
@@ -111,13 +118,14 @@ print "creat\n";
           next;
         }
 
-        ++$readed;
         $databuf = '';
         my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
         unless (defined($rv) && length($databuf)) {
 print "CLOSEME" if $self->{'debug'};
           $self->{'select'}->remove($client);
           $self->disconnect();
+        } else {
+          ++$readed;
         }
         if ($self->{'filehandle'}) {
           $self->{'filebytes'} += length $databuf;
@@ -126,23 +134,26 @@ print "CLOSEME" if $self->{'debug'};
           print $fh $databuf;
 
 print("file complete\n"),
-          close($self->{'filehandle'}), delete($self->{'filehandle'}) 
+          close($self->{'filehandle'}), undef($self->{'filehandle'}) 
             if $self->{'filebytes'} == $self->{'filetotal'};
+            $self->disconnect();
         } else {
 #print "($rv) ", POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
           $buf =~ s/(.*\|)//;
 #          if (length $1) {
-print("PP[$_]");
+##print("PP[$1]");
             $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for grep /\w/, split /\|+/, $1;
 #          }
         }
       }
 #      }
     } while ($readed);
+print "E[$self->{'number'}]";
+
     for (keys %{$self->{'clients'}}) {
-#print "\n!! $self->{'clients'}{$_}->{'socket'} !!\n" ;
-      delete $self->{'clients'}{$_}, last unless $self->{'clients'}{$_}->{'socket'};
+print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
+      delete $self->{'clients'}{$_}, next unless $self->{'clients'}{$_}->{'socket'};
       $self->{'clients'}{$_}->recv();
     }
 #    $self->SUPER::recv();
@@ -155,6 +166,8 @@ print("PP[$_]");
     for(@_) {
       s/^\$(\w+)\s*//;
       my $cmd = $1;
+#print "CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
+
       if($self->{'parse'}{$cmd}) {
         $self->{'parse'}{$cmd}->($_);
       } else {
@@ -174,7 +187,7 @@ print("PP[$_]");
     } else {
       $self->{'socket'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
       @sendbuf = ();
-      print"we send [$_] to [$self->{'socket'}]\n" if $self->{'debug'};
+      print"we send [$_] to [$self->{'number'}]\n" if $self->{'debug'};
     }
   }
 }
