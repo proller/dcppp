@@ -33,8 +33,7 @@ package dcppp;
   my %global;
 
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'');
-  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef
-, 'parse'=>{},  'cmd'=>{}, );
+  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
   
   sub new {
     my $class = shift;
@@ -151,10 +150,9 @@ print "Incoming \n";
         }
         if ($self->{'filehandle'}) {
           $self->{'filebytes'} += length $databuf;
-print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
+#print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
-
 print("file complete\n"),
           close($self->{'filehandle'}), undef($self->{'filehandle'}),
             $self->disconnect()

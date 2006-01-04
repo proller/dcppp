@@ -17,7 +17,7 @@ our @ISA = ('dcppp');
 	'Direction' => 'Upload 1', #rand here
 	'incomingclass' => 'dcppp::clicli',
     );
-print "1: $self->{'Nick'}\n";
+#print "1: $self->{'Nick'}\n";
 
     %{$self->{'parse'}} = (
       'Lock' => sub { 
@@ -41,7 +41,7 @@ print "1: $self->{'Nick'}\n";
       'Direction' => sub { },
       'Key' => sub { 
         if ($self->{'incoming'}) {
-print " CL $self->{'number'} [nick:$_] " for keys %{$self->{'want'}};
+#print " CL $self->{'number'} [nick:$_] " for keys %{$self->{'want'}};
           for(keys %{$self->{'want'}->{$self->{'peernick'}}}) {
              ($self->{'filename'}, $self->{'fileas'}) =  
              ($_, $self->{'want'}->{$self->{'peernick'}}{$_});
