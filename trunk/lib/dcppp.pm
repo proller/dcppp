@@ -33,7 +33,8 @@ package dcppp;
   my %global;
 
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'');
-  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'', 'parse'=>{},  'cmd'=>{}, );
+  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef
+, 'parse'=>{},  'cmd'=>{}, );
   
   sub new {
     my $class = shift;
