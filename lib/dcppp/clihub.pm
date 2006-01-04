@@ -7,8 +7,7 @@ package dcppp::clihub;
 
 our @ISA = ('dcppp');
 
-  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef
-, 'parse'=>{},  'cmd'=>{}, );
+  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
 
 
   sub init {
