@@ -51,13 +51,14 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->cmd('GetNickList');
 #  $dc->cmd('ConnectToMe', 'pro');
   $dc->recv();
-  $dc->cmd('chatline','hello world! i\'m perl bot. Freebsd rulez.');
+#  $dc->cmd('chatline','hello world! i\'m perl bot. Freebsd rulez.');
 
 #  $dc->{'autorecv'} = 0;
 
 #  $dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyINFO'),sleep 1for (1..1000);
-#  $dc->recv(),  print("! $_ !\n"), # $dc->cmd('ConnectToMe',$_)
-#  $dc->get($_, 'files.xml.bz2', $_ . '.xml.bz2'),sleep 1 for grep $_ ne $dc->{'Nick'}, keys %{$dc->{'NickList'}};
+  $dc->recv(),  
+#print("! $_ !\n"), # $dc->cmd('ConnectToMe',$_)
+  $dc->get($_, 'files.xml.bz2', $_ . '.xml.bz2'),sleep 1 for grep $_ ne $dc->{'Nick'}, keys %{$dc->{'NickList'}};
 
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
