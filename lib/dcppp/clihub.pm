@@ -3,22 +3,30 @@ package dcppp::clihub;
 
 #use dcppp;
 
+
+
 our @ISA = ('dcppp');
+
+  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'', 'parse'=>{},  'cmd'=>{}, );
+
 
   sub init {
     my $self = shift;
-    %$self = (%$self,
+    %$self = (
+	'Nick'	=> 'dcpppBot', 
+	'port'	=> 4111, 
 	'host'	=> 'localhost', 
         'LocalPort' => '6779',
-	'port'	=> 4111, 
-	'Nick'	=> 'dcpppBot', 
-	'pass'	=> '', 
 	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
-	'Key'	=> 'zzz', 
 	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$1$',
+	'pass'	=> '', 
+	'Key'	=> 'zzz', 
+#        %$self,
+        @_,
 	'incomingclass' => 'dcppp::clicli',
-      @_);
+);
 
+#print "2: $self->{'Nick'}\n";
 
     %{$self->{'parse'}} = (
       'chatline' => sub { #print "CHAT:", @_, "\n"; 
@@ -60,9 +68,14 @@ our @ISA = ('dcppp');
          my ($nick, $host, $port) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
 #print "ALREADY CONNECTED",         
          return if $self->{'clients'}{$host .':'. $port}->{'socket'};
-         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new( 'host'=>$host, 'port'=>$port, 
+         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new( 
+%$self,
+%clear,
+'host'=>$host, 
+'port'=>$port, 
 'want' => \%{$self->{'want'}},
-'debug'=>1,
+#'clients' => {},
+#'debug'=>1,
 );
          $self->{'clients'}{$host .':'. $port}->connect();
          $self->{'clients'}{$host .':'. $port}->cmd('MyNick');
@@ -84,8 +97,14 @@ our @ISA = ('dcppp');
       'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'ip'}:$self->{'LocalPort'}"); },
     );
 
-    $self->{'clients'}{''} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'want' => \%{$self->{'want'}}, 'debug'=>1,);
+#print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
+#print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
+
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'want' => \%{$self->{'want'}}, 
+#'debug'=>1,
+);
     $self->{'clients'}{''}->listen();
+#print "[$self->{'number'}]AFT";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 
   }
 
