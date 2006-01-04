@@ -31,6 +31,9 @@ package dcppp;
 
 #  my %want;
   my %global;
+
+#  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'');
+  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'', 'parse'=>{},  'cmd'=>{}, );
   
   sub new {
     my $class = shift;
@@ -38,11 +41,19 @@ package dcppp;
       'Listen' => 10,
     };
     bless($self, $class);
+
     $self->init(@_);
+#print "3: $self->{'Nick'}\n";
+
     $self->{'want'} = {} unless $self->{'want'};
 
     $self->{'number'} = ++$global{'total'};
     ++$global{'count'};
+
+#print "new obj: [$self->{'number'}]";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
+
+#print "[$self->{'number'}]clr";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
+
 print "created [$self->{'number'}] now=$global{'count'}\n" if $self->{'debug'};
     return $self;
   }
@@ -108,19 +119,20 @@ print "Lcanread\n";
 
     return unless $self->{'socket'};
     $self->{'select'} = IO::Select->new($self->{'socket'}) unless $self->{'select'};
-#print "TRYREAD $self->{'host'} [$self->{'select'}]\n" if $self->{'debug'};
+print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
     my ($databuf, $readed);
     do {
       $readed = 0;
-#print "R[$self->{'number'}]";
+#print "R[$self->{'number'}]\n";
 
 #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
       for my $client ($self->{'select'}->can_read(1)) {
+#print "can read : $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
         if ($self->{'accept'} and $client == $self->{'socket'}) {
 #print "nconn\n";
           if ($_ = $self->{'socket'}->accept()) {
 print "Incoming \n";
-            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'incoming'=>1, 'want' => \%{$self->{'want'}}, 'debug'=>1,), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_};
+            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  'debug'=>1,), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_};
 #print "ok\n";
           }
 #print "1\n";
@@ -130,7 +142,7 @@ print "Incoming \n";
         $databuf = '';
         my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
         unless (defined($rv) && length($databuf)) {
-#print "CLOSEME" if $self->{'debug'};
+#print "CLOSEME $self->{'number'}\n" if $self->{'debug'};
           $self->{'select'}->remove($client);
           $self->disconnect();
         } else {
@@ -138,7 +150,7 @@ print "Incoming \n";
         }
         if ($self->{'filehandle'}) {
           $self->{'filebytes'} += length $databuf;
-#print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
+print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
 
@@ -147,7 +159,7 @@ print("file complete\n"),
             $self->disconnect()
             if $self->{'filebytes'} == $self->{'filetotal'};
         } else {
-print "($rv) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
+print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
           $buf =~ s/(.*\|)//;
 #          if (length $1) {
@@ -158,9 +170,10 @@ print "($rv) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self
       }
 #      }
     } while ($readed);
-#print "E[$self->{'number'}]";
+#print "CLIents[$self->{'number'}:$self->{'clients'}]";
 
     for (keys %{$self->{'clients'}}) {
+#print("\n!!$self->{'clients'}{$_}->{'number'}!!\n"),
 #print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
       delete $self->{'clients'}{$_}, next unless $self->{'clients'}{$_}->{'socket'};
       $self->{'clients'}{$_}->recv();
@@ -190,6 +203,7 @@ print "($rv) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self
 { my @sendbuf;
   sub sendcmd {
     my $self = shift;
+#print caller, "snd [@_] to [$self->{'number'}]\n" if $self->{'debug'};
     return unless $self->{'socket'};
     if ($self->{'sendbuf'})  {
       push @sendbuf , '$' . join(' ', @_) . '|';

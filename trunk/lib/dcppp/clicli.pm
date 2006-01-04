@@ -7,14 +7,17 @@ our @ISA = ('dcppp');
 
   sub init {
     my $self = shift;
-    %$self = (%$self,
+#print "1.0: $self->{'Nick'} : ",@_,"\n";
+    %$self = (
 	'Nick'	=> 'dcpppBot', 
 	'Key'	=> 'zzz', 
 	'Lock'	=> 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
 	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
-	'Direction' => 'Upload 1',
+         @_,
+	'Direction' => 'Upload 1', #rand here
 	'incomingclass' => 'dcppp::clicli',
-      @_);
+    );
+print "1: $self->{'Nick'}\n";
 
     %{$self->{'parse'}} = (
       'Lock' => sub { 
@@ -38,7 +41,7 @@ our @ISA = ('dcppp');
       'Direction' => sub { },
       'Key' => sub { 
         if ($self->{'incoming'}) {
-#print " CL[nick:$_] " for keys %{$self->{'want'}};
+print " CL $self->{'number'} [nick:$_] " for keys %{$self->{'want'}};
           for(keys %{$self->{'want'}->{$self->{'peernick'}}}) {
              ($self->{'filename'}, $self->{'fileas'}) =  
              ($_, $self->{'want'}->{$self->{'peernick'}}{$_});
