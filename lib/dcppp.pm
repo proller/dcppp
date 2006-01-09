@@ -2,7 +2,7 @@
 my $Id = '$Id$';
 =copyright
 dcpp for perl 
-Copyright (C) 2005-2006 !!CONTACTS HERE!!
+Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proller AT mail DOT ru icq#89088275
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
