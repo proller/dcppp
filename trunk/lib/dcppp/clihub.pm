@@ -16,7 +16,7 @@ our @ISA = ('dcppp');
 	'Nick'	=> 'dcpppBot', 
 	'port'	=> 4111, 
 	'host'	=> 'localhost', 
-        'LocalPort' => '6779',
+        'myport' => '6779',
 	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
 	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$1$',
 	'pass'	=> '', 
@@ -48,13 +48,12 @@ our @ISA = ('dcppp');
       'To' => sub { print "Private message to", @_, "\n";  },
       'MyINFO' => sub { 
         my ($nick, $info) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
+#        print("Bad nick:[$_[0]]"), return unless length $nick;
         $self->{'NickList'}{$nick}{'info'} = $info;
         $self->{'NickList'}{$nick}{'online'} = 1;
 #        print  "info:$nick [$info]\n";
       }, 
-      'UserIP' => sub { 
-        /(\S+)\s+(\S+)/, $self->{'NickList'}{$1}{'ip'} = $2 for grep $_, split /\$\$/, @_[0];
-      },
+      'UserIP' => sub { /(\S+)\s+(\S+)/, $self->{'NickList'}{$1}{'ip'} = $2 for grep $_, split /\$\$/, @_[0]; },
       'HubName' => sub { $self->{'HubName'} = @_[0];},
       'HubTopic' => sub { $self->{'HubTopic'} = @_[0];},
       'NickList' => sub { 
@@ -94,13 +93,13 @@ our @ISA = ('dcppp');
       'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
       'GetNickList'	=> sub { $self->sendcmd('GetNickList'); },
       'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); },
-      'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'ip'}:$self->{'LocalPort'}"); },
+      'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}"); },
     );
 
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 
-    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'want' => \%{$self->{'want'}}, 
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
 #'debug'=>1,
 );
     $self->{'clients'}{''}->listen();
