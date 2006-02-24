@@ -30,9 +30,10 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   my $dc = dcppp::clihub->new(
    'host'=>'dc.setun.net',
-   'ip'=>'10.20.199.104',
-   'host'=>'dcpp.migtel.ru',
-   'LocalPort' => '6778',
+   'myip'=>'10.20.199.104',
+   'port'	=> 4111, 
+#   'host'=>'dcpp.migtel.ru',
+   'myport' => '6778',
   );
 
   $dc->{'debug'} = 1;
