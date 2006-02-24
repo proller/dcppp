@@ -87,6 +87,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 
   sub disconnect {
     my $self = shift;
+#print "disconnect($self->{'number'})\n";
     if ($self->{'socket'}) {
       close($self->{'socket'});
       undef $self->{'socket'};
@@ -94,6 +95,9 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 #    } else {
 #      print "already ";
     }
+
+    $self->{'clients'}{$_}->disconnect() for keys %{$self->{'clients'}};
+
 #print "deleted [$self->{'number'}] now=$global{'count'}\n";
   }
 
@@ -135,6 +139,8 @@ print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'s
 print "Incoming \n";
             $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
 #print "ok\n";
+          } else {
+             print "Accepting fail!\n";
           }
 #print "1\n";
           next;
