@@ -68,7 +68,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 #$dc->disconnect();
 #print "OK\n";
 # print"R\n",
-$dc->recv(), sleep 0.1 while 1;
+$dc->recv(), sleep 0.1 while 600;
 #  sleep 1;
 #  $dc->recv();
 
