@@ -47,7 +47,7 @@ our @ISA = ('dcppp');
              ($_, $self->{'want'}->{$self->{'peernick'}}{$_});
              last;
           }
-print "\nget:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
+print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
 	  $self->{'Get'} = $self->{'filename'} . '$' . ($self->{'filefrom'} or 1);
 	  $self->cmd('Get');
         } else {

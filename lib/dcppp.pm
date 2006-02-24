@@ -73,13 +73,13 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 
   sub listen {
     my $self = shift;
-    print "listening $self->{'LocalPort'}\n"  if $self->{'debug'};
-    $self->{'socket'} = new IO::Socket::INET('LocalPort'=> $self->{'LocalPort'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Listen' => $self->{'Listen'})
+    print "listening $self->{'myport'}\n"  if $self->{'debug'};
+    $self->{'socket'} = new IO::Socket::INET('LocalPort'=> $self->{'myport'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Listen' => $self->{'Listen'})
 	 or return "socket: $@";
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    nonblock();
-    print "listening $self->{'LocalPort'} ok\n"  if $self->{'debug'};
+    print "listening $self->{'myport'} ok\n"  if $self->{'debug'};
     $self->{'accept'} = 1;
     $self->recv();
   }
@@ -131,8 +131,9 @@ print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'s
         if ($self->{'accept'} and $client == $self->{'socket'}) {
 #print "nconn\n";
           if ($_ = $self->{'socket'}->accept()) {
+#MORE INFO HERE
 print "Incoming \n";
-            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'LocalPort'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  'debug'=>1,), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_};
+            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
 #print "ok\n";
           }
 #print "1\n";
