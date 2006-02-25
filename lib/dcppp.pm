@@ -160,7 +160,7 @@ print "Incoming \n";
 #print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
-print("file complete\n"),
+print("file complete ($self->{'filebytes'})\n"),
           close($self->{'filehandle'}), undef($self->{'filehandle'}),
             $self->disconnect()
             if $self->{'filebytes'} == $self->{'filetotal'};
