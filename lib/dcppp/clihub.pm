@@ -49,20 +49,20 @@ our @ISA = ('dcppp');
       'MyINFO' => sub { 
         my ($nick, $info) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
 #        print("Bad nick:[$_[0]]"), return unless length $nick;
-        $self->{'NickList'}{$nick}{'info'} = $info;
-        $self->{'NickList'}{$nick}{'online'} = 1;
+        $self->{'NickList'}->{$nick}{'info'} = $info;
+        $self->{'NickList'}->{$nick}{'online'} = 1;
 #        print  "info:$nick [$info]\n";
       }, 
-      'UserIP' => sub { /(\S+)\s+(\S+)/, $self->{'NickList'}{$1}{'ip'} = $2 for grep $_, split /\$\$/, @_[0]; },
+      'UserIP' => sub { /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2 for grep $_, split /\$\$/, @_[0]; },
       'HubName' => sub { $self->{'HubName'} = @_[0];},
       'HubTopic' => sub { $self->{'HubTopic'} = @_[0];},
       'NickList' => sub { 
-        $self->{'NickList'}{$_}{'online'} = 1 for grep $_, split /\$\$/, @_[0];
+        $self->{'NickList'}->{$_}{'online'} = 1 for grep $_, split /\$\$/, @_[0];
 #        print 'nicklist:', join(';', sort keys %{$self->{'NickList'}}), "\n"
       },
-      'OpList' => sub { $self->{'NickList'}{$_}{'oper'} = 1 for grep $_, split /\$\$/, @_[0]; },
+      'OpList' => sub { $self->{'NickList'}->{$_}{'oper'} = 1 for grep $_, split /\$\$/, @_[0]; },
       'ForceMove' => sub { print "ForceMove to $_[0]  \n"},
-      'Quit' => sub { $self->{'NickList'}{$_[0]}{'online'} = 0; },
+      'Quit' => sub { $self->{'NickList'}->{$_[0]}{'online'} = 0; },
       'ConnectToMe' => sub { 
          my ($nick, $host, $port) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
 #print "ALREADY CONNECTED",         
