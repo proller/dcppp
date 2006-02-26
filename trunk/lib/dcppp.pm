@@ -136,7 +136,6 @@ print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'s
 #print "nconn\n";
           if ($_ = $self->{'socket'}->accept()) {
 #MORE INFO HERE
-print "Incoming \n";
             $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
 #print "ok\n";
           } else {
@@ -241,6 +240,12 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
     $self->cmd('ConnectToMe',$nick);
   }
 
+
+  sub get_peer_addr {
+    my ($self) = @_;
+    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
+    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
+  }
 
 =c
 sub nonblock {
