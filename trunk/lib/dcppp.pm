@@ -90,7 +90,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 #print "disconnect($self->{'number'})\n";
     if ($self->{'socket'}) {
       close($self->{'socket'});
-      undef $self->{'socket'};
+      delete $self->{'socket'};
       --$global{'count'};
 #    } else {
 #      print "already ";
@@ -243,6 +243,7 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
 
   sub get_peer_addr {
     my ($self) = @_;
+print "SO[$self->{'socket'}]";
     ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
     $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
   }
