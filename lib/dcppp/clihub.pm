@@ -34,8 +34,10 @@ our @ISA = ('dcppp');
     %{$self->{'parse'}} = (
       'chatline' => sub { #print "CHAT:", @_, "\n"; 
       },
-      'Lock' => sub { $self->{'sendbuf'} = 1;
-	$self->{'cmd'}{'Key'}->();
+      'Lock' => sub { 
+        $self->{'sendbuf'} = 1;
+        $_[0] =~ /(\S+)/;
+	$self->{'cmd'}{'Key'}->(dcppp::lock2key($1));
 	$self->{'sendbuf'} = 0;
 	$self->{'cmd'}{'ValidateNick'}->();
 #	$self->recv();
