@@ -22,9 +22,12 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
   use strict;
 
-  require 'lib/dcppp.pm';
-  require 'lib/dcppp/clihub.pm';
-  require 'lib/dcppp/clicli.pm';
+  use lib './lib';
+  use dcppp::clihub;
+
+#  require 'lib/dcppp.pm';
+#  require 'lib/dcppp/clihub.pm';
+#  require 'lib/dcppp/clicli.pm';
 #  use dcppp; 
 #  use dcppp::client;
 
