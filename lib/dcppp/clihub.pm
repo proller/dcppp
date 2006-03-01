@@ -2,6 +2,9 @@
 package dcppp::clihub;
 
 #use dcppp;
+#use lib '../..';
+use dcppp;
+use dcppp::clicli;
 
 
 
