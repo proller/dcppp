@@ -2,12 +2,15 @@
 package dcppp::clicli;
 
 #eval { use dcppp; };
+#use lib '../..';
+use dcppp;
 
 our @ISA = ('dcppp');
 
   sub init {
     my $self = shift;
 #print "1.0: $self->{'Nick'} : ",@_,"\n";
+print "Sc0[$self->{'socket'}]\n";
     %$self = (
 	'Nick'	=> 'dcpppBot', 
 	'Key'	=> 'zzz', 
@@ -18,6 +21,7 @@ our @ISA = ('dcppp');
 	'incomingclass' => 'dcppp::clicli',
     );
 #print "1: $self->{'Nick'}\n";
+print "Sc1[$self->{'socket'}]\n";
 
 #    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
 #    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};

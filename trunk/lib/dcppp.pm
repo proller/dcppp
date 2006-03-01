@@ -88,6 +88,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
   sub disconnect {
     my $self = shift;
 #print "disconnect($self->{'number'})\n";
+print "SO0[$self->{'socket'}]";
     if ($self->{'socket'}) {
       close($self->{'socket'});
       delete $self->{'socket'};
@@ -97,6 +98,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
     }
 
     $self->{'clients'}{$_}->disconnect() for keys %{$self->{'clients'}};
+print "SO1[$self->{'socket'}]";
 
 #print "deleted [$self->{'number'}] now=$global{'count'}\n";
   }
@@ -243,10 +245,44 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
 
   sub get_peer_addr {
     my ($self) = @_;
-print "SO[$self->{'socket'}]";
+print "SO9[$self->{'socket'}]";
     ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
     $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
   }
+
+# http://www.dcpp.net/wiki/index.php/LockToKey :
+sub lock2key
+{
+   my @lock = split( // , shift );
+   my $i;
+   my @key = ();
+   # convert to ordinal
+   foreach( @lock ) {
+       $_ = ord;
+   }
+   # calc key[0] with some xor-ing magic
+   push( @key , $lock[0] ^ 5 );
+   # calc rest of key with some other xor-ing magic
+   for( $i = 1 ; $i < @lock ; $i++ ) {
+       push( @key , ( $lock[$i] ^ $lock[$i - 1] ) );
+   }
+   # nibble swapping
+   for( $i = 0 ; $i < @key ; $i++ ) {
+       $key[$i] = ( (($key[$i] << 4) & 240) | ( ($key[$i] >> 4) & 15 )) & 0xff;
+   }
+   #temp[0] = (u_int8_t)(temp[0] ^ temp[aLock.length()-1]);
+   $key[0] = $key[0] ^ $key[ @key - 1 ];
+   # escape some
+   foreach( @key ) {
+       if ( $_ == 0 || $_ == 5 || $_ == 36 || $_ == 96 || $_ == 124 || $_ == 126 ) {
+           $_ = sprintf( '/%%DCN%03i%%/' , $_ );
+       } else {
+           $_ = chr;
+       }
+   }
+   # done
+   return join( "" , @key );
+}
 
 =c
 sub nonblock {
