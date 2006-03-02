@@ -28,6 +28,8 @@ our @ISA = ('dcppp');
 #        %$self,
         @_,
 	'incomingclass' => 'dcppp::clicli',
+        $self->{'NickList'} => \{},
+        $self->{'IpList'} => \{},
 );
 
 #print "2: $self->{'Nick'}\n";
@@ -43,26 +45,30 @@ our @ISA = ('dcppp');
 	$self->cmd('Key', dcppp::lock2key($1));
 #!!!!!ALL $self->cmd
 	$self->{'sendbuf'} = 0;
-	$self->{'cmd'}{'ValidateNick'}->();
+	$self->cmd('ValidateNick');
 #	$self->recv();
       },
       'Hello' => sub { 
         return unless $_[0] eq $self->{'Nick'};
         $self->{'sendbuf'} = 1;
-	$self->{'cmd'}{'Version'}->();
+	$self->cmd('Version');
 	$self->{'sendbuf'} = 0;
-	$self->{'cmd'}{'MyINFO'}->();
+	$self->cmd('MyINFO');
 #	$self->recv();
       },
       'To' => sub { print "Private message to", @_, "\n";  },
       'MyINFO' => sub { 
         my ($nick, $info) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
 #        print("Bad nick:[$_[0]]"), return unless length $nick;
+        $self->{'NickList'}->{$nick}{'nick'} = $nick;
         $self->{'NickList'}->{$nick}{'info'} = $info;
         $self->{'NickList'}->{$nick}{'online'} = 1;
 #        print  "info:$nick [$info]\n";
       }, 
-      'UserIP' => sub { /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2 for grep $_, split /\$\$/, @_[0]; },
+      'UserIP' => sub { 
+         /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2,
+         $self->{'IpList'}->{$2} = \%{ $self->{'NickList'}->{$1} }
+          for grep $_, split /\$\$/, @_[0]; },
       'HubName' => sub { $self->{'HubName'} = @_[0];},
       'HubTopic' => sub { $self->{'HubTopic'} = @_[0];},
       'NickList' => sub { 
@@ -89,7 +95,9 @@ our @ISA = ('dcppp');
          $self->{'clients'}{$host .':'. $port}->cmd('MyNick');
       },
 
-#      'Search' => sub { }, #todo
+      'Search' => sub { }, #todo
+#         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+#
 #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
 #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
     );

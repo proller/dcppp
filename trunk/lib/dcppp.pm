@@ -134,7 +134,7 @@ print "Lcanread\n";
 
     return unless $self->{'socket'};
     $self->{'select'} = IO::Select->new($self->{'socket'}) unless $self->{'select'};
-print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
+#print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
     my ($databuf, $readed);
     do {
       $readed = 0;
@@ -143,7 +143,7 @@ print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'s
 
 #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
       for my $client ($self->{'select'}->can_read(1)) {
-print "can read : $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
+#print "can read : $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
         if ($self->{'accept'} and $client == $self->{'socket'}) {
 #print "nconn\n";
           if ($_ = $self->{'socket'}->accept()) {
