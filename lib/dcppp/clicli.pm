@@ -4,13 +4,14 @@ package dcppp::clicli;
 #eval { use dcppp; };
 #use lib '../..';
 use dcppp;
+use strict;
 
 our @ISA = ('dcppp');
 
   sub init {
     my $self = shift;
 #print "1.0: $self->{'Nick'} : ",@_,"\n";
-print "Sc0[$self->{'socket'}]\n";
+#print "Sc0[$self->{'socket'}]\n";
     %$self = (
 	'Nick'	=> 'dcpppBot', 
 	'Key'	=> 'zzz', 
@@ -18,10 +19,11 @@ print "Sc0[$self->{'socket'}]\n";
 	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
          @_,
 	'Direction' => 'Upload 1', #rand here
-	'incomingclass' => 'dcppp::clicli',
+#	'incomingclass' => 'dcppp::clicli',
     );
 #print "1: $self->{'Nick'}\n";
-print "Sc1[$self->{'socket'}]\n";
+#print "Sc1[$self->{'socket'}]\n";
+#print "CLICLI init [$self->{'number'}]\n";
 
 #    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
 #    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
@@ -31,9 +33,12 @@ print "Sc1[$self->{'socket'}]\n";
 #print("{{  $self->{'NickList'} }}");
 #print("[$_]")for sort keys %{$self->{'NickList'}};
 
+#print " clicli init clients:{", keys %{$self->{'clients'}}, "}\n";
+
 
     %{$self->{'parse'}} = (
       'Lock' => sub { 
+#print "CLICLI lock parse\n";
         if ($self->{'incoming'}) {
           $self->{'sendbuf'} = 1;
           $self->cmd('MyNick');
@@ -42,7 +47,8 @@ print "Sc1[$self->{'socket'}]\n";
           $self->{'Direction'} = 'Download 1';
   	  $self->cmd('Direction');
 	  $self->{'sendbuf'} = 0;
-	  $self->cmd('Key');
+          $_[0] =~ /(\S+)/;
+	  $self->cmd('Key', dcppp::lock2key($1));
         } else {
           $self->{'sendbuf'} = 1;
           $self->cmd('MyNick');
@@ -87,11 +93,13 @@ print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
       'Lock'	=> sub { $self->sendcmd('Lock', $self->{'Lock'}); },
       'Supports'	=> sub { $self->sendcmd('Supports', $self->{'Supports'}); },
       'Direction'	=> sub { $self->sendcmd('Direction', $self->{'Direction'}); },
-      'Key'	=> sub { $self->sendcmd('Key', $self->{'Key'}); },
+      'Key'	=> sub { $self->sendcmd('Key', ($_[0] or $self->{'Key'})); },
       'Get'	=> sub { $self->sendcmd('Get', $self->{'Get'}); },
       'Send'	=> sub { $self->sendcmd('Send'); },
       'FileLength' =>  sub { $self->sendcmd('FileLength', $_[0]); },
     );
+
+#print " clicli aftinit clients:{", keys %{$self->{'clients'}}, "}\n";
 
   }
 

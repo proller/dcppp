@@ -5,12 +5,13 @@ package dcppp::clihub;
 #use lib '../..';
 use dcppp;
 use dcppp::clicli;
-
+use strict;
 
 
 our @ISA = ('dcppp');
 
-  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
+#todo! move to main module
+#  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
 
 
   sub init {
@@ -35,9 +36,12 @@ our @ISA = ('dcppp');
       'chatline' => sub { #print "CHAT:", @_, "\n"; 
       },
       'Lock' => sub { 
+#print "lockparse[$_[0]]\n";
         $self->{'sendbuf'} = 1;
         $_[0] =~ /(\S+)/;
-	$self->{'cmd'}{'Key'}->(dcppp::lock2key($1));
+#print "lock[$1]\n";
+	$self->cmd('Key', dcppp::lock2key($1));
+#!!!!!ALL $self->cmd
 	$self->{'sendbuf'} = 0;
 	$self->{'cmd'}{'ValidateNick'}->();
 #	$self->recv();
@@ -74,7 +78,7 @@ our @ISA = ('dcppp');
          return if $self->{'clients'}{$host .':'. $port}->{'socket'};
          $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new( 
 %$self,
-%clear,
+%dcppp::clear,
 'host'=>$host, 
 'port'=>$port, 
 'want' => \%{$self->{'want'}},
@@ -92,7 +96,7 @@ our @ISA = ('dcppp');
   
     %{$self->{'cmd'}} = (
       'chatline'	=> sub { $self->{'socket'}->send("<$self->{'Nick'}> $_|") for(@_); },
-      'Key'	=> sub { $self->sendcmd('Key', $self->{'Key'}); },
+      'Key'	=> sub { $self->sendcmd('Key', ($_[0] or $self->{'Key'})); },
       'ValidateNick'	=> sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); },
       'Version'	=> sub { $self->sendcmd('Version', $self->{'Version'}); },
       'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
@@ -104,7 +108,8 @@ our @ISA = ('dcppp');
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 
-    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
+#    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %dcppp::clear, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
 #'debug'=>1,
 );
     $self->{'clients'}{''}->listen();

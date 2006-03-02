@@ -1,7 +1,8 @@
 
 package dcppp::hubcli;
 
-#use dcppp;
+use dcppp;
+use strict;
 
 our @ISA = ('dcppp');
 
