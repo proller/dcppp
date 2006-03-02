@@ -30,10 +30,10 @@ package dcppp;
 
 
 #  my %want;
-  my %global;
+  our %global;
 
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'');
-  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
+  our %clear = ('clients' => {},'socket' => undef, 'select' => undef,'accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
   
   sub new {
     my $class = shift;
@@ -41,8 +41,11 @@ package dcppp;
       'Listen' => 10,
     };
     bless($self, $class);
+#print "self: $self \n";
 
+#print "dcppp0[$self->{'socket'}]{",@_,"}\n";
     $self->init(@_);
+#print "dcppp1[$self->{'socket'}]\n";
 #print "3: $self->{'Nick'}\n";
 
     $self->{'want'} = {} unless $self->{'want'};
@@ -53,16 +56,18 @@ package dcppp;
 #print "new obj: [$self->{'number'}]";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 
 #print "[$self->{'number'}]clr";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
+#print "[$self->{'number'}] dcppp new clients:{", keys %{$self->{'clients'}}, "}\n";
 
-print "created [$self->{'number'}] now=$global{'count'}\n" if $self->{'debug'};
+print "created [$self->{'number'}] now=$global{'count'} ($self)\n" if $self->{'debug'};
+#print "dcppp2[$self->{'socket'}]\n";
     return $self;
   }
  
   sub connect {
     my $self = shift;
-    print "connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
+    print "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
-	 or return "socket: $@";
+	 or print("socket: $@"), return "socket: $@";
 #    nonblock();
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
@@ -87,8 +92,9 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 
   sub disconnect {
     my $self = shift;
+#print "[$self->{'number'}] dcppp disconnect clients:{", keys %{$self->{'clients'}}, "}\n";
 #print "disconnect($self->{'number'})\n";
-print "SO0[$self->{'socket'}]";
+#print "SO00[$self->{'socket'}]";
     if ($self->{'socket'}) {
       close($self->{'socket'});
       delete $self->{'socket'};
@@ -97,8 +103,11 @@ print "SO0[$self->{'socket'}]";
 #      print "already ";
     }
 
-    $self->{'clients'}{$_}->disconnect() for keys %{$self->{'clients'}};
-print "SO1[$self->{'socket'}]";
+#print " clidel {", keys %{$self->{'clients'}}, "}\n";
+
+#print "SO0[$_]",
+    $self->{'clients'}{$_}->disconnect() for grep $self->{'number'} != $self->{'clients'}{$_}->{'number'}, keys %{$self->{'clients'}};
+#print "SO1[$self->{'socket'}]";
 
 #print "deleted [$self->{'number'}] now=$global{'count'}\n";
   }
@@ -130,27 +139,29 @@ print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'s
     do {
       $readed = 0;
 #print "R[$self->{'number'}]\n";
+#print "[$self->{'number'}] dcppp read clients:{", keys %{$self->{'clients'}}, "} is $self->{'socket'}\n";
 
 #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
       for my $client ($self->{'select'}->can_read(1)) {
-#print "can read : $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
+print "can read : $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
         if ($self->{'accept'} and $client == $self->{'socket'}) {
 #print "nconn\n";
           if ($_ = $self->{'socket'}->accept()) {
 #MORE INFO HERE
+#print "[$self->{'number'}] newinc [$self->{'accept'}]\n";
             $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
-#print "ok\n";
+#p#rint "ok\n";
           } else {
              print "Accepting fail!\n";
           }
-#print "1\n";
+#print "next\n";
           next;
         }
 
         $databuf = '';
         my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
         unless (defined($rv) && length($databuf)) {
-#print "CLOSEME $self->{'number'}\n" if $self->{'debug'};
+print "CLOSEME $self->{'number'}\n" if $self->{'debug'};
           $self->{'select'}->remove($client);
           $self->disconnect();
         } else {
@@ -162,11 +173,14 @@ print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'s
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
 print("file complete ($self->{'filebytes'})\n"),
-          close($self->{'filehandle'}), undef($self->{'filehandle'}),
+          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
             $self->disconnect()
             if $self->{'filebytes'} == $self->{'filetotal'};
+
+#print("aft fc\n");
+
         } else {
-print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
+#print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
           $buf =~ s/(.*\|)//;
 #          if (length $1) {
@@ -179,10 +193,11 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
     } while ($readed);
 #print "CLIents[$self->{'number'}:$self->{'clients'}]";
 
+#print "[$self->{'number'}] dcppp readaft clients:{", keys %{$self->{'clients'}}, "}\n";
     for (keys %{$self->{'clients'}}) {
 #print("\n!!$self->{'clients'}{$_}->{'number'}!!\n"),
 #print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
-      delete $self->{'clients'}{$_}, next unless $self->{'clients'}{$_}->{'socket'};
+      delete $self->{'clients'}{$_}, next if !$self->{'clients'}{$_}->{'socket'} or $self->{'clients'}{$_}->{'socket'} eq $self->{'socket'};
       $self->{'clients'}{$_}->recv();
     }
 #    $self->SUPER::recv();
@@ -195,8 +210,7 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
     for(@_) {
       s/^\$(\w+)\s*//;
       my $cmd = $1;
-#print "CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
-
+#print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
       if($self->{'parse'}{$cmd}) {
         $self->{'parse'}{$cmd}->($_);
       } else {
@@ -212,10 +226,19 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
     my $self = shift;
 #print caller, "snd [@_] to [$self->{'number'}]\n" if $self->{'debug'};
     return unless $self->{'socket'};
+
+
     if ($self->{'sendbuf'})  {
       push @sendbuf , '$' . join(' ', @_) . '|';
     } else {
+#print "snd to [$self->{'socket'}] \n";
+#eval {
+#$self->{'socket'}->send('$|');
+#      print"sending [$_] to [$self->{'number'}]\n" ;
       $self->{'socket'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
+#      $_ = $self->{'socket'};
+#      print $_ join('', @sendbuf, '$' . join(' ', @_) . '|'); 
+#}      
       @sendbuf = ();
       print"we send [$_] to [$self->{'number'}]\n" if $self->{'debug'};
     }
@@ -225,6 +248,8 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
   sub cmd {
     my $self = shift;
     my $cmd = shift;
+#print "[$self->{'number'}] dcppp cmdbeg ($self->{'autorecv'})clients:{", keys %{$self->{'clients'}}, "}\n" if ;
+
     if($self->{'cmd'}{$cmd}) {
       $self->{'cmd'}{$cmd}->(@_);
     } else {
@@ -232,6 +257,7 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
       $self->{'cmd'}{$cmd} = sub { };
     }
     $self->recv() if $self->{'autorecv'};
+#print "[$self->{'number'}] dcppp cmdaft clients:{", keys %{$self->{'clients'}}, "}\n";
   }
 
   sub get {
@@ -245,7 +271,7 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
 
   sub get_peer_addr {
     my ($self) = @_;
-print "SO9[$self->{'socket'}]";
+#print "SO9[$self->{'socket'}]";
     ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
     $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
   }
