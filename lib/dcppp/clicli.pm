@@ -78,7 +78,11 @@ print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
         }
       },
       'Get' => sub { $self->cmd('FileLength',0); },
-      'MyNick' => sub { print 'peer is [', ($self->{'peernick'} = @_[0]), "]\n";},
+      'MyNick' => sub { 
+         print 'peer is [', ($self->{'peernick'} = @_[0]), "]\n";
+         $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
+         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+      },
 
       'FileLength' => sub { 
         $self->{'filetotal'} = $_[0];
