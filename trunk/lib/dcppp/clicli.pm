@@ -1,3 +1,4 @@
+my $Id = '$Id: dcppp.pm 110 2006-03-02 22:51:22Z pro $';
 
 package dcppp::clicli;
 
@@ -66,7 +67,7 @@ our @ISA = ('dcppp');
              ($_, $self->{'want'}->{$self->{'peernick'}}{$_});
              last;
           }
-print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
+#print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
 	  $self->{'Get'} = $self->{'filename'} . '$' . ($self->{'filefrom'} or 1);
 	  $self->cmd('Get');
         } else {
