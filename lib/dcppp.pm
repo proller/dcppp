@@ -235,12 +235,12 @@ print("file complete ($self->{'filebytes'})\n"),
 #eval {
 #$self->{'socket'}->send('$|');
 #      print"sending [$_] to [$self->{'number'}]\n" ;
-      $self->{'socket'}->send($_ = join('', @sendbuf, '$' . join(' ', @_) . '|')); 
+      $self->{'socket'}->send(join('', @sendbuf, '$' . join(' ', @_) . '|')); 
 #      $_ = $self->{'socket'};
 #      print $_ join('', @sendbuf, '$' . join(' ', @_) . '|'); 
 #}      
+print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'number'}]\n" if $self->{'debug'};
       @sendbuf = ();
-      print"we send [$_] to [$self->{'number'}]\n" if $self->{'debug'};
     }
   }
 }
