@@ -180,7 +180,7 @@ print("file complete ($self->{'filebytes'})\n"),
 #print("aft fc\n");
 
         } else {
-#print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
+print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
           $buf =~ s/(.*\|)//;
 #          if (length $1) {
