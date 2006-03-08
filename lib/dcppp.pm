@@ -182,9 +182,11 @@ print("file complete ($self->{'filebytes'})\n"),
         } else {
 print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
-          $buf =~ s/(.*\|)//;
+#print("PBUF:[$buf]\n");
+          $buf =~ s/(.*\|)//s;
+#          $buf =~ /^(.*)$/;
 #          if (length $1) {
-##print("PP[$1]");
+#print("PP[$1]\n");
             $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for grep /\w/, split /\|+/, $1;
 #          }
         }
@@ -208,6 +210,7 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
   sub parse {
     my $self = shift;
     for(@_) {
+#print "[$self->{'number'}] PRECMD:{$_}\n" ;
       s/^\$(\w+)\s*//;
       my $cmd = $1;
 #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';

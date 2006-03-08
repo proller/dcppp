@@ -41,9 +41,10 @@ our @ISA = ('dcppp');
       'Lock' => sub { 
 #print "lockparse[$_[0]]\n";
         $self->{'sendbuf'} = 1;
-        $_[0] =~ /(\S+)/;
+#        $_[0] =~ /EXTENDEDPROTOCOL::\S+::(CTRL\[[^\]]+)\]/ or $_[0] =~ /(\S+)/;
 #print "lock[$1]\n";
-	$self->cmd('Key', dcppp::lock2key($1));
+#	$self->cmd('Key', dcppp::lock2key($1));
+	$self->cmd('Key', dcppp::lock2key($_[0]));
 #!!!!!ALL $self->cmd
 	$self->{'sendbuf'} = 0;
 	$self->cmd('ValidateNick');
