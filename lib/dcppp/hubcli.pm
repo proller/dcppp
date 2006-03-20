@@ -9,8 +9,7 @@ our @ISA = ('dcppp');
 
   sub init {
     my $self = shift;
-    %$self = (%$self,
-      @_);
+    %$self = (%$self, @_);
 
     %{$self->{'parse'}} = (
     );

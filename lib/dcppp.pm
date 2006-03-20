@@ -33,18 +33,41 @@ package dcppp;
   our %global;
 
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'');
-  our %clear = ('clients' => {},'socket' => undef, 'select' => undef,'accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
+  our %clear = ('clients' => {}, 'socket' => undef, 'select' => undef, 
+                'accept' => 0, 'filehandle' => undef, 'parse' => {},  'cmd' => {}, );
   
   sub new {
     my $class = shift;
     my $self = { 
-      'Listen' => 10,
+	'Listen' => 10,
+	# http://www.dcpp.net/wiki/index.php/%24MyINFO
+	'description' => 'just dcppp bot',
+	'connection' => 'LAN(T3)',
+	#NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3) 
+	#NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3) 
+	'flag' => '1', # User status as ascii char (byte) 
+	# 1 normal 
+	# 2, 3 away 
+	# 4, 5 server               The server icon is used when the client has 
+	# 6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB. 
+	# 8, 9 fireball             The fireball icon is used when the client 
+	# 10, 11 fireball away      has had an upload > 100 kB/s. 
+	'email' => 'billgates@microsoft.com',
+	'sharesize' => 10 * 1024 * 1024 * 1024, #10GB 
+	'client'	=> 'dcp++',	#++: indicates the client 
+	'V'	=> (split(' ', '$Revision$'))[1],	#V: tells you the version number 
+	'M'	=> 'A',		#M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode 
+	'H'	=> '0/1/0',	#H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']). 
+	'S'	=> '2',		#S: tells the number of slots user has opened 
+	'O'	=> undef,	#O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero 
     };
+#print "self creat: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n\n";
     bless($self, $class);
 #print "self: $self \n";
 
 #print "dcppp0[$self->{'socket'}]{",@_,"}\n";
     $self->init(@_);
+#print "self init: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n\n";
 #print "dcppp1[$self->{'socket'}]\n";
 #print "3: $self->{'Nick'}\n";
 
@@ -52,8 +75,9 @@ package dcppp;
 
     $self->{'number'} = ++$global{'total'};
     ++$global{'count'};
+    $self->{'status'} = 'disconnected';
 
-#print "new obj: [$self->{'number'}]";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
+#print "new obj: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 
 #print "[$self->{'number'}]clr";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 #print "[$self->{'number'}] dcppp new clients:{", keys %{$self->{'clients'}}, "}\n";
@@ -72,6 +96,7 @@ print "created [$self->{'number'}] now=$global{'count'} ($self)\n" if $self->{'d
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
 print "connect to $self->{'host'} ok"  if $self->{'debug'};
+    $self->{'status'} = 'connecting';
     $self->recv();
 #print "rec fr $self->{'host'} ok"  if $self->{'debug'};
   }
@@ -95,6 +120,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 #print "[$self->{'number'}] dcppp disconnect clients:{", keys %{$self->{'clients'}}, "}\n";
 #print "disconnect($self->{'number'})\n";
 #print "SO00[$self->{'socket'}]";
+    $self->{'status'} = 'disconnected';
     if ($self->{'socket'}) {
       close($self->{'socket'});
       delete $self->{'socket'};
@@ -187,7 +213,7 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
 #          $buf =~ /^(.*)$/;
 #          if (length $1) {
 #print("PP[$1]\n");
-            $self->parse(/^\$/ ? $_ : ($_ = '$chatline ' . $_)) for grep /\w/, split /\|+/, $1;
+            $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_)) for grep /\w/, split /\|+/, $1;
 #          }
         }
       }
@@ -313,6 +339,16 @@ sub lock2key
    return join( "" , @key );
 }
 
+  sub tag { 
+    my $self = shift;
+    $self->{'client'} . ' ' . 
+    join(',', map $_ . ':' . $self->{$_}, grep defined($self->{$_}), qw(V M H S O) );
+  }
+
+  sub myinfo { 
+    my $self = shift;
+    return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'};
+  }
 =c
 sub nonblock {
     my $self = shift;
