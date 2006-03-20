@@ -37,8 +37,8 @@ our @ISA = ('dcppp');
 #print "2: $self->{'Nick'}\n";
 
     %{$self->{'parse'}} = (
-      'chatline' => sub { #print "CHAT:", @_, "\n"; 
-      },
+      'chatline' => sub { },#print("welcome:", @_) unless $self->{'no_print_welcome'}; },
+      'welcome' => sub { print("welcome:", @_)},
       'Lock' => sub { 
 #print "lockparse[$_[0]]\n";
         $self->{'sendbuf'} = 1;
@@ -58,6 +58,8 @@ our @ISA = ('dcppp');
 	$self->cmd('Version');
 	$self->{'sendbuf'} = 0;
 	$self->cmd('MyINFO');
+        $self->{'status'} = 'connected';
+#        $self->{'no_print_welcome'} = 1;
 #	$self->recv();
       },
       'To' => sub { print "Private message to", @_, "\n";  },
@@ -86,12 +88,7 @@ our @ISA = ('dcppp');
          my ($nick, $host, $port) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
 #print "ALREADY CONNECTED",         
          return if $self->{'clients'}{$host .':'. $port}->{'socket'};
-         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new( 
-%$self,
-%dcppp::clear,
-'host'=>$host, 
-'port'=>$port, 
-'want' => \%{$self->{'want'}},
+         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, %dcppp::clear, 'host' => $host,  'port' => $port, 'want' => \%{$self->{'want'}},
 #'clients' => {},
 #'debug'=>1,
 );
