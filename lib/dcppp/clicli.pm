@@ -13,9 +13,9 @@ our @ISA = ('dcppp');
     my $self = shift;
 #print "1.0: $self->{'Nick'} : ",@_,"\n";
 #print "Sc0[$self->{'socket'}]\n";
-    %$self = (
+    %$self = (%$self,
 	'Nick'	=> 'dcpppBot', 
-	'Key'	=> 'zzz', 
+#	'Key'	=> 'zzz', 
 	'Lock'	=> 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
 	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
          @_,
@@ -49,8 +49,9 @@ our @ISA = ('dcppp');
   	  $self->cmd('Direction');
 	  $self->{'sendbuf'} = 0;
 #          $_[0] =~ /(\S+)/;
-#	  $self->cmd('Key', dcppp::lock2key($1));
-	  $self->cmd('Key', dcppp::lock2key($_[0]));
+          $_[0] =~ /^(.+) Pk=/i;
+	  $self->cmd('Key', dcppp::lock2key($1));
+#	  $self->cmd('Key', dcppp::lock2key($_[0]));
         } else {
           $self->{'sendbuf'} = 1;
           $self->cmd('MyNick');
@@ -99,7 +100,7 @@ our @ISA = ('dcppp');
       'Lock'	=> sub { $self->sendcmd('Lock', $self->{'Lock'}); },
       'Supports'	=> sub { $self->sendcmd('Supports', $self->{'Supports'}); },
       'Direction'	=> sub { $self->sendcmd('Direction', $self->{'Direction'}); },
-      'Key'	=> sub { $self->sendcmd('Key', ($_[0] or $self->{'Key'})); },
+      'Key'	=> sub { $self->sendcmd('Key', $_[0]); },
       'Get'	=> sub { $self->sendcmd('Get', $self->{'Get'}); },
       'Send'	=> sub { $self->sendcmd('Send'); },
       'FileLength' =>  sub { $self->sendcmd('FileLength', $_[0]); },

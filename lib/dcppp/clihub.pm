@@ -2,8 +2,9 @@ my $Id = '$Id$';
 
 package dcppp::clihub;
 
-#use dcppp;
+#use lib '../../..';
 #use lib '../..';
+#use lib '..';
 use dcppp;
 use dcppp::clicli;
 use strict;
@@ -17,13 +18,13 @@ our @ISA = ('dcppp');
 
   sub init {
     my $self = shift;
-    %$self = (
+    %$self = (%$self,
 	'Nick'	=> 'dcpppBot', 
 	'port'	=> 411, 
 	'host'	=> 'localhost', 
         'myport' => '6779',
-	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
-	'MyINFO'	=> 'interest$ $LAN(T3)1$e-mail@mail.ru$1$',
+#	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
+
 	'pass'	=> '', 
 	'Key'	=> 'zzz', 
 #        %$self,
@@ -43,7 +44,7 @@ our @ISA = ('dcppp');
         $self->{'sendbuf'} = 1;
 #        $_[0] =~ /EXTENDEDPROTOCOL::\S+::(CTRL\[[^\]]+)\]/ or $_[0] =~ /(\S+)/;
         $_[0] =~ /^(.+) Pk=/i;
-print "lock[$1]\n";
+#print "lock[$1]\n";
 	$self->cmd('Key', dcppp::lock2key($1));
 #	$self->cmd('Key', dcppp::lock2key($_[0]));
 #!!!!!ALL $self->cmd
@@ -107,10 +108,13 @@ print "lock[$1]\n";
   
     %{$self->{'cmd'}} = (
       'chatline'	=> sub { $self->{'socket'}->send("<$self->{'Nick'}> $_|") for(@_); },
-      'Key'	=> sub { $self->sendcmd('Key', ($_[0] or $self->{'Key'})); },
+      'Key'	=> sub { $self->sendcmd('Key', $_[0]); },
       'ValidateNick'	=> sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); },
-      'Version'	=> sub { $self->sendcmd('Version', $self->{'Version'}); },
-      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
+#      'Version'	=> sub { $self->sendcmd('Version', $self->{'Version'}); },
+      'Version'	=> sub { $self->sendcmd('Version', $self->tag()); },
+      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->myinfo()); },
+#      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
+#      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'description'} . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$'); },
       'GetNickList'	=> sub { $self->sendcmd('GetNickList'); },
       'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); },
       'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}"); },
