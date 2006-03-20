@@ -48,8 +48,9 @@ our @ISA = ('dcppp');
           $self->{'Direction'} = 'Download 1';
   	  $self->cmd('Direction');
 	  $self->{'sendbuf'} = 0;
-          $_[0] =~ /(\S+)/;
-	  $self->cmd('Key', dcppp::lock2key($1));
+#          $_[0] =~ /(\S+)/;
+#	  $self->cmd('Key', dcppp::lock2key($1));
+	  $self->cmd('Key', dcppp::lock2key($_[0]));
         } else {
           $self->{'sendbuf'} = 1;
           $self->cmd('MyNick');
