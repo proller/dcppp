@@ -38,7 +38,7 @@ our @ISA = ('dcppp');
 
     %{$self->{'parse'}} = (
       'chatline' => sub { },#print("welcome:", @_) unless $self->{'no_print_welcome'}; },
-      'welcome' => sub { print("welcome:", @_)},
+      'welcome' => sub { }, #print("welcome:", @_)
       'Lock' => sub { 
 #print "lockparse[$_[0]]\n";
         $self->{'sendbuf'} = 1;
