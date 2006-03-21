@@ -49,7 +49,8 @@ our @ISA = ('dcppp');
   	  $self->cmd('Direction');
 	  $self->{'sendbuf'} = 0;
 #          $_[0] =~ /(\S+)/;
-          $_[0] =~ /^(.+) Pk=/i;
+#          $_[0] =~ /^(.+) Pk=/i;
+          $_[0] =~ /^(.+)( Pk=.+)?$/i;
 	  $self->cmd('Key', dcppp::lock2key($1));
 #	  $self->cmd('Key', dcppp::lock2key($_[0]));
         } else {
