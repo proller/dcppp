@@ -40,11 +40,11 @@ our @ISA = ('dcppp');
       'chatline' => sub { },#print("welcome:", @_) unless $self->{'no_print_welcome'}; },
       'welcome' => sub { }, #print("welcome:", @_)
       'Lock' => sub { 
-print "lockparse[$_[0]]\n";
+#print "lockparse[$_[0]]\n";
         $self->{'sendbuf'} = 1;
 #        $_[0] =~ /EXTENDEDPROTOCOL::\S+::(CTRL\[[^\]]+)\]/ or $_[0] =~ /(\S+)/;
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-print "lock[$1]\n";
+#print "lock[$1]\n";
 	$self->cmd('Key', dcppp::lock2key($1));
 #	$self->cmd('Key', dcppp::lock2key($_[0]));
 #!!!!!ALL $self->cmd

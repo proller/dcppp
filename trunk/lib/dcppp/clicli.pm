@@ -50,7 +50,8 @@ our @ISA = ('dcppp');
 	  $self->{'sendbuf'} = 0;
 #          $_[0] =~ /(\S+)/;
 #          $_[0] =~ /^(.+) Pk=/i;
-          $_[0] =~ /^(.+?)( Pk=.+)?$/i;
+#          $_[0] =~ /^(.+?)( Pk=.+)?$/i;
+          $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
 	  $self->cmd('Key', dcppp::lock2key($1));
 #	  $self->cmd('Key', dcppp::lock2key($_[0]));
         } else {
