@@ -82,7 +82,7 @@ package dcppp;
 #print "[$self->{'number'}]clr";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 #print "[$self->{'number'}] dcppp new clients:{", keys %{$self->{'clients'}}, "}\n";
 
-print "created [$self->{'number'}] now=$global{'count'} ($self)\n" if $self->{'debug'};
+print "created [$self->{'number'}] now=$global{'count'} ($self)\n" ; #if $self->{'debug'};
 #print "dcppp2[$self->{'socket'}]\n";
     return $self;
   }
@@ -135,7 +135,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
     $self->{'clients'}{$_}->disconnect() for grep $self->{'number'} != $self->{'clients'}{$_}->{'number'}, keys %{$self->{'clients'}};
 #print "SO1[$self->{'socket'}]";
 
-#print "deleted [$self->{'number'}] now=$global{'count'}\n";
+print "deleted [$self->{'number'}] now=$global{'count'}\n";
   }
 
   sub DESTROY {
@@ -175,7 +175,9 @@ print "Lcanread\n";
           if ($_ = $self->{'socket'}->accept()) {
 #MORE INFO HERE
 #print "[$self->{'number'}] newinc [$self->{'accept'}]\n";
+print "accpt total 0 ", scalar keys %{$self->{'clients'}}  ,"\n";
             $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
+print "accpt total 1 ", scalar keys %{$self->{'clients'}}  ,"\n";
 #p#rint "ok\n";
           } else {
              print "Accepting fail!\n";
