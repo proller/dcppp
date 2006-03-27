@@ -17,7 +17,8 @@ our @ISA = ('dcppp');
 	'Nick'	=> 'dcpppBot', 
 #	'Key'	=> 'zzz', 
 	'Lock'	=> 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
-	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
+#	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
+	'Supports' => 'XmlBZList ADCGet',
          @_,
 	'Direction' => 'Upload 1', #rand here
 #	'incomingclass' => 'dcppp::clicli',

@@ -82,7 +82,7 @@ package dcppp;
 #print "[$self->{'number'}]clr";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 #print "[$self->{'number'}] dcppp new clients:{", keys %{$self->{'clients'}}, "}\n";
 
-print "created [$self->{'number'}] now=$global{'count'} ($self)\n" ; #if $self->{'debug'};
+#print "created [$self->{'number'}] now=$global{'count'} ($self)\n" if $self->{'debug'};
 #print "dcppp2[$self->{'socket'}]\n";
     return $self;
   }
@@ -178,7 +178,7 @@ print "Lcanread\n";
 print "accpt total 0 ", scalar keys %{$self->{'clients'}}  ,"\n";
             $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
 print "accpt total 1 ", scalar keys %{$self->{'clients'}}  ,"\n";
-#p#rint "ok\n";
+#print "ok\n";
           } else {
              print "Accepting fail!\n";
           }
@@ -256,8 +256,8 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
   sub sendcmd {
     my $self = shift;
 #print caller, "snd [@_] to [$self->{'number'}]\n" if $self->{'debug'};
-    return unless $self->{'socket'};
-
+    print("ERROR! no socket to send\n"),
+     return unless $self->{'socket'};
 
     if ($self->{'sendbuf'})  {
       push @sendbuf , '$' . join(' ', @_) . '|';
@@ -266,22 +266,25 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
 #eval {
 #$self->{'socket'}->send('$|');
 #      print"sending [$_] to [$self->{'number'}]\n" ;
-      $self->{'socket'}->send(join('', @sendbuf, '$' . join(' ', @_) . '|')); 
+#print"we send [",join('', (@sendbuf, '$' . join(' ', @_) . '|')),"] to [$self->{'number'}]\n" if $self->{'debug'};
+      $self->{'socket'}->send( join('', @sendbuf, '$' . join(' ', @_) . '|') ); 
 #      $_ = $self->{'socket'};
 #      print $_ join('', @sendbuf, '$' . join(' ', @_) . '|'); 
 #}      
-print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'number'}]\n" if $self->{'debug'};
       @sendbuf = ();
     }
   }
 }
 
   sub cmd {
+#print "CMD PRE param[",@_,"]\n" ;
     my $self = shift;
     my $cmd = shift;
 #print "[$self->{'number'}] dcppp cmdbeg ($self->{'autorecv'})clients:{", keys %{$self->{'clients'}}, "}\n" if ;
 
     if($self->{'cmd'}{$cmd}) {
+
+#print "[$self->{'number'}] CMD:$cmd param[",@_,"]\n" ;
       $self->{'cmd'}{$cmd}->(@_);
     } else {
       print "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };\n";
@@ -293,10 +296,11 @@ print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'n
 
   sub get {
     my ($self, $nick, $file, $as) = @_;
-#print "get from $nick $file\n";
+#print "get from [$nick] [$file] as [$as]\n";
     $self->{'want'}->{$nick}{$file} = ($as or $file);
 #print "[nick:$_]" for keys %{$self->{'want'}};
-    $self->cmd('ConnectToMe',$nick);
+#print "go conn [$nick] \n";
+    $self->cmd('ConnectToMe', $nick);
   }
 
 
