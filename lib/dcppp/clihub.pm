@@ -123,6 +123,7 @@ our @ISA = ('dcppp');
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
+#print "Listen on port $self->{'myport'} \n";
     $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(), 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
 #'debug'=>1,
 );
