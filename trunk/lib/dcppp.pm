@@ -33,8 +33,12 @@ package dcppp;
   our %global;
 
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'');
-  our %clear = ('clients' => {}, 'socket' => undef, 'select' => undef, 
+#  our %clear = ('clients' => {}, 'socket' => undef, 'select' => undef, 
+#                'accept' => 0, 'filehandle' => undef, 'parse' => {},  'cmd' => {}, );
+  sub clear {
+    return ('clients' => {}, 'socket' => undef, 'select' => undef, 
                 'accept' => 0, 'filehandle' => undef, 'parse' => {},  'cmd' => {}, );
+  }
   
   sub new {
     my $class = shift;
@@ -70,7 +74,7 @@ package dcppp;
 #print "self init: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n\n";
 #print "dcppp1[$self->{'socket'}]\n";
 #print "3: $self->{'Nick'}\n";
-
+    $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
     $self->{'want'} = {} unless $self->{'want'};
 
     $self->{'number'} = ++$global{'total'};
@@ -116,6 +120,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 
 
   sub disconnect {
+#print( "disconnect from ", join(':', caller), "\n");
     my $self = shift;
 #print "[$self->{'number'}] dcppp disconnect clients:{", keys %{$self->{'clients'}}, "}\n";
 #print "disconnect($self->{'number'})\n";
@@ -123,7 +128,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
     $self->{'status'} = 'disconnected';
     if ($self->{'socket'}) {
       close($self->{'socket'});
-      delete $self->{'socket'};
+      $self->{'socket'} = undef;
       --$global{'count'};
 #    } else {
 #      print "already ";
@@ -131,15 +136,20 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 
 #print " clidel {", keys %{$self->{'clients'}}, "}\n";
 
-#print "SO0[$_]",
-    $self->{'clients'}{$_}->disconnect() for grep $self->{'number'} != $self->{'clients'}{$_}->{'number'}, keys %{$self->{'clients'}};
+#print ("SO0[$_]"),
+    $self->{'clients'}{$_}->disconnect(), 
+     delete($self->{'clients'}{$_}) for grep $_, keys %{$self->{'clients'}};
+#grep $self->{'number'} != $self->{'clients'}{$_}->{'number'},
 #print "SO1[$self->{'socket'}]";
+    close($self->{'filehandle'}),
+     $self->{'filehandle'} = undef if $self->{'filehandle'};
 
-print "deleted [$self->{'number'}] now=$global{'count'}\n";
+#print "deleted [$self->{'number'}] now=$global{'count'}\n";
   }
 
   sub DESTROY {
     my $self = shift;
+print( "[$self->{'number'}]DESTROY from ", join(':', caller), " [$@] ($self)\n");
     $self->disconnect();
 #print "DESTROY[$self->{'number'}]\n";
   }
@@ -147,6 +157,7 @@ print "deleted [$self->{'number'}] now=$global{'count'}\n";
 { my $buf;
   sub recv {
     my $self = shift;
+#print "[$self->{'number'}] dcppp readstart clients:{", keys %{$self->{'clients'}}, "}\n";
 =z
     if ($self->{'selectin'}) {
       for my $client ($self->{'selectin'}->can_read(1)) {
@@ -159,8 +170,10 @@ print "Lcanread\n";
 =cut
 
     return unless $self->{'socket'};
+
     $self->{'select'} = IO::Select->new($self->{'socket'}) unless $self->{'select'};
 #print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
+#print "R$self->{'number'} " if $self->{'debug'};
     my ($databuf, $readed);
     do {
       $readed = 0;
@@ -175,9 +188,9 @@ print "Lcanread\n";
           if ($_ = $self->{'socket'}->accept()) {
 #MORE INFO HERE
 #print "[$self->{'number'}] newinc [$self->{'accept'}]\n";
-print "accpt total 0 ", scalar keys %{$self->{'clients'}}  ,"\n";
-            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
-print "accpt total 1 ", scalar keys %{$self->{'clients'}}  ,"\n";
+#print "accpt total bef ", scalar keys %{$self->{'clients'}}  ,"\n";
+            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, clear(), 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
+#print "accpt total aft ", scalar keys %{$self->{'clients'}}  ,"\n";
 #print "ok\n";
           } else {
              print "Accepting fail!\n";
@@ -187,8 +200,9 @@ print "accpt total 1 ", scalar keys %{$self->{'clients'}}  ,"\n";
         }
 
         $databuf = '';
-        my $rv = $client->recv($databuf, POSIX::BUFSIZ, 0);
-        unless (defined($rv) && length($databuf)) {
+#        my $rv = ;
+        if (!defined($client->recv($databuf, POSIX::BUFSIZ, 0)) or !length($databuf)) {
+#        if (!defined($client->recv($databuf, POSIX::BUFSIZ, 0)) ) {
 print "CLOSEME $self->{'number'}\n" if $self->{'debug'};
           $self->{'select'}->remove($client);
           $self->disconnect();
@@ -201,14 +215,14 @@ print "CLOSEME $self->{'number'}\n" if $self->{'debug'};
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
 print("file complete ($self->{'filebytes'})\n"),
-          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
+#          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
             $self->disconnect()
             if $self->{'filebytes'} == $self->{'filetotal'};
 
 #print("aft fc\n");
 
         } else {
-print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
+#print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
 #print("PBUF:[$buf]\n");
           $buf =~ s/(.*\|)//s;
@@ -224,10 +238,16 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
 #print "CLIents[$self->{'number'}:$self->{'clients'}]";
 
 #print "[$self->{'number'}] dcppp readaft clients:{", keys %{$self->{'clients'}}, "}\n";
-    for (keys %{$self->{'clients'}}) {
+    for (keys %{$self->{'clients'}}) { #grep $self->{'number'} != $self->{'clients'}{$_}->{'number'}, 
 #print("\n!!$self->{'clients'}{$_}->{'number'}!!\n"),
 #print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
-      delete $self->{'clients'}{$_}, next if !$self->{'clients'}{$_}->{'socket'} or $self->{'clients'}{$_}->{'socket'} eq $self->{'socket'};
+
+#      print "child($self->{'clients'}{$_}->{'number'}) ";
+#    print ("readdel($self->{'clients'}{$_}->{'number'}) \n"),
+      delete($self->{'clients'}{$_}), next if !$self->{'clients'}{$_}->{'socket'};
+#or $self->{'clients'}{$_}->{'socket'} eq $self->{'socket'};
+#      print "child start recv ";
+
       $self->{'clients'}{$_}->recv();
     }
 #    $self->SUPER::recv();
@@ -243,6 +263,7 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
       my $cmd = $1;
 #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
       if($self->{'parse'}{$cmd}) {
+print "($self->{'number'}) $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
         $self->{'parse'}{$cmd}->($_);
       } else {
         print "UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
@@ -266,7 +287,7 @@ print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databu
 #eval {
 #$self->{'socket'}->send('$|');
 #      print"sending [$_] to [$self->{'number'}]\n" ;
-#print"we send [",join('', (@sendbuf, '$' . join(' ', @_) . '|')),"] to [$self->{'number'}]\n" if $self->{'debug'};
+print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'number'}]\n" if $self->{'debug'};
       $self->{'socket'}->send( join('', @sendbuf, '$' . join(' ', @_) . '|') ); 
 #      $_ = $self->{'socket'};
 #      print $_ join('', @sendbuf, '$' . join(' ', @_) . '|'); 
@@ -364,4 +385,13 @@ sub nonblock {
             or die "Can't make socket nonblocking: $!\n";
 }
 =cut
+
+ 
+  sub parseinfo {
+    my $self = shift;
+    my ($info, $save) = @_;
+#print "parsing info [$info] to $save\n";
+    $save->{'info'} = $info;
+    $save->{'sharesize'} = $1 if $info =~ s/\$(\d+)\$$//;
+  }
 1;
