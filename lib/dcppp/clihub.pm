@@ -22,7 +22,7 @@ our @ISA = ('dcppp');
 	'Nick'	=> 'dcpppBot', 
 	'port'	=> 411, 
 	'host'	=> 'localhost', 
-        'myport' => '6779',
+        'myport' => 6779 + int(rand(1000)),
 #	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
 
 	'pass'	=> '', 
