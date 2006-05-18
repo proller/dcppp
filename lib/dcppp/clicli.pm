@@ -11,6 +11,7 @@ our @ISA = ('dcppp');
 
   sub init {
     my $self = shift;
+#print( "$self::init from ", join(':', caller), "\n");
 #print "1.0: $self->{'Nick'} : ",@_,"\n";
 #print "Sc0[$self->{'socket'}]\n";
     %$self = (%$self,
@@ -38,7 +39,9 @@ our @ISA = ('dcppp');
 #print " clicli init clients:{", keys %{$self->{'clients'}}, "}\n";
 
 
-    %{$self->{'parse'}} = (
+#print "parse init\n";
+#    %{$self->{'parse'}} = (
+    $self->{'parse'} = {
       'Lock' => sub { 
 #print "CLICLI lock parse\n";
         if ($self->{'incoming'}) {
@@ -85,7 +88,7 @@ our @ISA = ('dcppp');
       },
       'Get' => sub { $self->cmd('FileLength',0); },
       'MyNick' => sub { 
-         print 'peer is [', ($self->{'peernick'} = @_[0]), "]\n";
+         print 'peer is [', ($self->{'peernick'} = $_[0]), "]\n";
          $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
          $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
       },
@@ -96,9 +99,11 @@ our @ISA = ('dcppp');
         binmode($self->{'filehandle'});
         $self->cmd('Send'); 
       },
-    );
+    };
   
-    %{$self->{'cmd'}} = (
+#print "cmd init ($self->{'cmd'})\n";
+#    %{$self->{'cmd'}} = {
+    $self->{'cmd'} = {
       'MyNick'	=> sub { $self->sendcmd('MyNick', $self->{'Nick'}); },
       'Lock'	=> sub { $self->sendcmd('Lock', $self->{'Lock'}); },
       'Supports'	=> sub { $self->sendcmd('Supports', $self->{'Supports'}); },
@@ -107,7 +112,7 @@ our @ISA = ('dcppp');
       'Get'	=> sub { $self->sendcmd('Get', $self->{'Get'}); },
       'Send'	=> sub { $self->sendcmd('Send'); },
       'FileLength' =>  sub { $self->sendcmd('FileLength', $_[0]); },
-    );
+    };
 
 #print " clicli aftinit clients:{", keys %{$self->{'clients'}}, "}\n";
 

@@ -67,7 +67,9 @@ our @ISA = ('dcppp');
         my ($nick, $info) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
 #        print("Bad nick:[$_[0]]"), return unless length $nick;
         $self->{'NickList'}->{$nick}{'nick'} = $nick;
-        $self->{'NickList'}->{$nick}{'info'} = $info;
+#        $self->{'NickList'}->{$nick}{'info'} = $info;
+#print "preinfo[$info] to $self->{'NickList'}->{$nick}";
+        $self->parseinfo($info, $self->{'NickList'}->{$nick});
         $self->{'NickList'}->{$nick}{'online'} = 1;
 #        print  "info:$nick [$info]\n";
       }, 
@@ -121,7 +123,7 @@ our @ISA = ('dcppp');
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
-    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %dcppp::clear, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(), 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
 #'debug'=>1,
 );
     $self->{'clients'}{''}->listen();
