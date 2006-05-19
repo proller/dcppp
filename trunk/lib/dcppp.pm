@@ -28,6 +28,8 @@ package dcppp;
   use POSIX;
   use strict;
 
+#dbg
+#use Time::HiRes qw(time);
 
 #  my %want;
   our %global;
@@ -109,7 +111,7 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
     my $self = shift;
     print "listening $self->{'myport'}\n"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('LocalPort'=> $self->{'myport'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Listen' => $self->{'Listen'})
-	 or return "socket: $@";
+	 or print("listen $self->{'myport'} socket error: $@\n"), return ;
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    nonblock();
@@ -127,7 +129,8 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 #print "SO00[$self->{'socket'}]";
     $self->{'status'} = 'disconnected';
     if ($self->{'socket'}) {
-      close($self->{'socket'});
+#print "[$self->{'number'}] Closing socket\n";
+      close($self->{'socket'}) or print "Error closing socket: $!\n";
       $self->{'socket'} = undef;
       --$global{'count'};
 #    } else {
@@ -136,8 +139,9 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 
 #print " clidel {", keys %{$self->{'clients'}}, "}\n";
 
-#print ("SO0[$_]"),
+print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"),
     $self->{'clients'}{$_}->disconnect(), 
+     $self->{'clients'}{$_} = undef,
      delete($self->{'clients'}{$_}) for grep $_, keys %{$self->{'clients'}};
 #grep $self->{'number'} != $self->{'clients'}{$_}->{'number'},
 #print "SO1[$self->{'socket'}]";
@@ -149,10 +153,11 @@ print "connect to $self->{'host'} ok"  if $self->{'debug'};
 
   sub DESTROY {
     my $self = shift;
-print( "[$self->{'number'}]DESTROY from ", join(':', caller), " [$@] ($self)\n");
+print( "[$self->{'number'}]($self)DESTROY from ", join(':', caller), " ($self)\n") if $self->{'debug'};
     $self->disconnect();
 #print "DESTROY[$self->{'number'}]\n";
   }
+
 
 { my $buf;
   sub recv {
@@ -181,7 +186,10 @@ print "Lcanread\n";
 #print "[$self->{'number'}] dcppp read clients:{", keys %{$self->{'clients'}}, "} is $self->{'socket'}\n";
 
 #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
+#my $tim = time();
       for my $client ($self->{'select'}->can_read(1)) {
+#print ("can_read per ", (time() - $tim), "\n");
+
 #print "can read : $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
         if ($self->{'accept'} and $client == $self->{'socket'}) {
 #print "nconn\n";
@@ -214,7 +222,7 @@ print "CLOSEME $self->{'number'}\n" if $self->{'debug'};
 #print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
-print("file complete ($self->{'filebytes'})\n"),
+print("[$self->{'number'}] file complete ($self->{'filebytes'})\n"),
 #          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
             $self->disconnect()
             if $self->{'filebytes'} == $self->{'filetotal'};
@@ -229,11 +237,14 @@ print("file complete ($self->{'filebytes'})\n"),
 #          $buf =~ /^(.*)$/;
 #          if (length $1) {
 #print("PP[$1]\n");
+#my $tim = time();
             $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_)) for grep /\w/, split /\|+/, $1;
+#print ("parse ", (time() - $tim), "\n");
 #          }
         }
       }
 #      }
+#print ("recv per ", (time() - $tim), "\n");
     } while ($readed);
 #print "CLIents[$self->{'number'}:$self->{'clients'}]";
 
@@ -244,6 +255,7 @@ print("file complete ($self->{'filebytes'})\n"),
 
 #      print "child($self->{'clients'}{$_}->{'number'}) ";
 #    print ("readdel($self->{'clients'}{$_}->{'number'}) \n"),
+      $self->{'clients'}{$_} = undef,
       delete($self->{'clients'}{$_}), next if !$self->{'clients'}{$_}->{'socket'};
 #or $self->{'clients'}{$_}->{'socket'} eq $self->{'socket'};
 #      print "child start recv ";
@@ -253,6 +265,7 @@ print("file complete ($self->{'filebytes'})\n"),
 #    $self->SUPER::recv();
 
   }
+
 }
  
   sub parse {
