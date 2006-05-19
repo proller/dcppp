@@ -90,7 +90,7 @@ our @ISA = ('dcppp');
          my ($nick, $host, $port) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
 #print "ALREADY CONNECTED",         
          return if $self->{'clients'}{$host .':'. $port}->{'socket'};
-         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, %dcppp::clear, 'host' => $host,  'port' => $port, 'want' => \%{$self->{'want'}},
+         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 'want' => \%{$self->{'want'}},
 #'clients' => {},
 #'debug'=>1,
 );

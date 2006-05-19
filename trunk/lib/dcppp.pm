@@ -387,7 +387,7 @@ sub lock2key
 
   sub myinfo { 
     my $self = shift;
-    return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'};
+    return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$ $' . $self->{'connection'} . (length($self->{'flag'}) ? chr($self->{'flag'}) : '') . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$';
   }
 =c
 sub nonblock {
