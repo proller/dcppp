@@ -211,7 +211,7 @@ print "Lcanread\n";
 #        my $rv = ;
         if (!defined($client->recv($databuf, POSIX::BUFSIZ, 0)) or !length($databuf)) {
 #        if (!defined($client->recv($databuf, POSIX::BUFSIZ, 0)) ) {
-print "CLOSEME $self->{'number'}\n" if $self->{'debug'};
+print "CLOSEME $self->{'number'} [$!][$@]\n" if $self->{'debug'};
           $self->{'select'}->remove($client);
           $self->disconnect();
         } else {
