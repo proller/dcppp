@@ -31,7 +31,7 @@ our @ISA = ('dcppp');
 #    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
 #    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
     $self->get_peer_addr();
-    print "Incoming client $self->{'peerip'}:$self->{'peerport'}\n" if $self->{'peerip'};
+    print "[$self->{'number'}] Incoming client $self->{'peerip'}\n" if $self->{'peerip'};
 
 #print("{{  $self->{'NickList'} }}");
 #print("[$_]")for sort keys %{$self->{'NickList'}};
@@ -88,7 +88,7 @@ our @ISA = ('dcppp');
       },
       'Get' => sub { $self->cmd('FileLength',0); },
       'MyNick' => sub { 
-         print 'peer is [', ($self->{'peernick'} = $_[0]), "]\n";
+         print "[$self->{'number'}] peer is [", ($self->{'peernick'} = $_[0]), "]\n";
          $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
          $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
       },
