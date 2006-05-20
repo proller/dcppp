@@ -1,5 +1,7 @@
 my $Id = '$Id$';
 
+# reserved for future 8)
+
 package dcppp::hubcli;
 
 use dcppp;
