@@ -141,7 +141,7 @@ print "connect to $self->{'host'} ok\n"  if $self->{'debug'};
 
 #print " clidel {", keys %{$self->{'clients'}}, "}\n";
 
-print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"),
+#print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"),
     $self->{'clients'}{$_}->disconnect(), 
      $self->{'clients'}{$_} = undef,
      delete($self->{'clients'}{$_}) for grep $_, keys %{$self->{'clients'}};
