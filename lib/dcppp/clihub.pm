@@ -67,7 +67,7 @@ our @ISA = ('dcppp');
 #        print("Bad nick:[$_[0]]"), return unless length $nick;
         $self->{'NickList'}->{$nick}{'nick'} = $nick;
 #        $self->{'NickList'}->{$nick}{'info'} = $info;
-#print "preinfo[$info] to $self->{'NickList'}->{$nick}";
+#print "preinfo[$info] to $self->{'NickList'}->{$nick}\n";
         $self->parseinfo($info, $self->{'NickList'}->{$nick});
         $self->{'NickList'}->{$nick}{'online'} = 1;
 #        print  "info:$nick [$info]\n";
@@ -95,6 +95,10 @@ our @ISA = ('dcppp');
 );
          $self->{'clients'}{$host .':'. $port}->cmd('connect');
       },
+      'RevConnectToMe' => sub { 
+        my ($to, $from) = split /\s+/, $_[0];
+        $self->cmd('ConnectToMe', $to) if $from eq $self->{'Nick'}; 
+      },
       'GetPass' => sub {  $self->cmd('MyPass'); },
       'BadPass' => sub { }, # print("BadPassword\n");
       'LogedIn' => sub { }, # print("$_[0] is LogedIn\n");
@@ -117,7 +121,11 @@ our @ISA = ('dcppp');
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'description'} . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$'); },
       'GetNickList'	=> sub { $self->sendcmd('GetNickList'); },
       'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); },
-      'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}"); },
+      'ConnectToMe' => sub { 
+#print "ctm [$self->{'M'}][$self->{'allow_passive_ConnectToMe'}]\n";
+         return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
+         $self->sendcmd('ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}"); 
+      },
       'RevConnectToMe' => sub { $self->sendcmd('RevConnectToMe', $self->{'Nick'}, $_[0]); },
       'MyPass'	=> sub { $self->sendcmd('MyPass', ($_[0] or $self->{'Pass'})); },
     );

@@ -405,8 +405,32 @@ sub nonblock {
   sub parseinfo {
     my $self = shift;
     my ($info, $save) = @_;
-#print "parsing info [$info] to $save\n";
+#print "parsing info [$info] to $save :";
     $save->{'info'} = $info;
-    $save->{'sharesize'} = $1 if $info =~ s/\$(\d+)\$$//;
+    $save->{'infofor'} = $2 if $info =~ s/^\s*(MyINFO)?\s*(\$ALL)?\s*// and $2;
+    $save->{'Nick'} = $1 if $info =~ s/^\s*([^\s\$]+)\s*//; 
+    ($save->{'tag'}, $save->{'M'}, $save->{'connection'}, $save->{'email'}, $save->{'sharesize'}) = split /\s*\$\s*/, $info;
+    $save->{'flag'} = ord($1) if $save->{'connection'} =~ s/([\x00-\x1F])$//e;
+    $self->parsetag($save->{'tag'}, $save);
+#    $save->{'sharesize'} = $1 if $info =~ s/\$(\d+)\$$//;
+    delete $save->{$_} for grep ! length $save->{$_}, keys %$save;
+#print " $_ = $save->{$_}; " for keys %$save; print "\n";
+    return wantarray ? %$save : $save;
   }
+
+#rcv: MyINFO $ALL WolF <++ V:0.668,M:A,H:10/0/0,S:40>$ $LAN(T3)$$15100817262$
+
+  sub parsetag {
+    my $self = shift;
+    my ($tag, $save) = @_;
+#print "parsing tag [$tag] to $save\n";
+    $save->{'tag'} = $tag;
+    $tag =~ s/(^\s*<\s*)|(\s*>\s*$)//g;
+    $save->{'client'} = $1 if $tag =~ s/^(\S+)\s*//;
+#print "\npars[$tag]\n";
+    /(.+):(.+)/, $save->{$1} = $2 for split /,/, $tag;
+#print " $_ = $save->{$_}; " for keys %$save;
+    return wantarray ? %$save : $save;
+  }
+
 1;
