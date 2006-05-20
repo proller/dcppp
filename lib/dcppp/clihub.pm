@@ -24,8 +24,7 @@ our @ISA = ('dcppp');
 	'host'	=> 'localhost', 
         'myport' => 6779 + int(rand(1000)),
 #	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
-
-	'pass'	=> '', 
+	'Pass'	=> '', 
 	'Key'	=> 'zzz', 
 #        %$self,
         @_,
@@ -97,6 +96,9 @@ our @ISA = ('dcppp');
          $self->{'clients'}{$host .':'. $port}->connect();
          $self->{'clients'}{$host .':'. $port}->cmd('MyNick');
       },
+      'GetPass' => sub {  $self->cmd('MyPass'); },
+      'BadPass' => sub { }, # print("BadPassword\n");
+      'LogedIn' => sub { }, # print("$_[0] is LogedIn\n");
 
       'Search' => sub { }, #todo
 #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
@@ -117,6 +119,7 @@ our @ISA = ('dcppp');
       'GetNickList'	=> sub { $self->sendcmd('GetNickList'); },
       'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); },
       'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}"); },
+      'MyPass'	=> sub { $self->sendcmd('MyPass', ($_[0] or $self->{'Pass'})); },
     );
 
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
