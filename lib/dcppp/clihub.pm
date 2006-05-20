@@ -93,8 +93,7 @@ our @ISA = ('dcppp');
 #'clients' => {},
 #'debug'=>1,
 );
-         $self->{'clients'}{$host .':'. $port}->connect();
-         $self->{'clients'}{$host .':'. $port}->cmd('MyNick');
+         $self->{'clients'}{$host .':'. $port}->cmd('connect');
       },
       'GetPass' => sub {  $self->cmd('MyPass'); },
       'BadPass' => sub { }, # print("BadPassword\n");
@@ -119,6 +118,7 @@ our @ISA = ('dcppp');
       'GetNickList'	=> sub { $self->sendcmd('GetNickList'); },
       'GetINFO'	=> sub { $self->sendcmd('GetINFO', $_[0], $self->{'Nick'}); },
       'ConnectToMe' => sub { $self->sendcmd('ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}"); },
+      'RevConnectToMe' => sub { $self->sendcmd('RevConnectToMe', $self->{'Nick'}, $_[0]); },
       'MyPass'	=> sub { $self->sendcmd('MyPass', ($_[0] or $self->{'Pass'})); },
     );
 

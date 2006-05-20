@@ -21,7 +21,7 @@ our @ISA = ('dcppp');
 #	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
 	'Supports' => 'XmlBZList ADCGet',
          @_,
-	'Direction' => 'Upload 1', #rand here
+#	'Direction' => 'Upload', #rand here
 #	'incomingclass' => 'dcppp::clicli',
     );
 #print "1: $self->{'Nick'}\n";
@@ -49,7 +49,7 @@ our @ISA = ('dcppp');
           $self->cmd('MyNick');
 	  $self->cmd('Lock');
   	  $self->cmd('Supports');
-          $self->{'Direction'} = 'Download 1';
+          $self->{'Direction'} = 'Download';
   	  $self->cmd('Direction');
 	  $self->{'sendbuf'} = 0;
 #          $_[0] =~ /(\S+)/;
@@ -59,38 +59,55 @@ our @ISA = ('dcppp');
 	  $self->cmd('Key', dcppp::lock2key($1));
 #	  $self->cmd('Key', dcppp::lock2key($_[0]));
         } else {
-          $self->{'sendbuf'} = 1;
-          $self->cmd('MyNick');
-	  $self->{'sendbuf'} = 0;
-	  $self->cmd('Lock');
+          $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+#	  $self->cmd('Key', dcppp::lock2key($1));
+          $self->{'Key'} = dcppp::lock2key($1);
+#         $self->{'sendbuf'} = 1;
+#         $self->cmd('MyNick');
+#	  $self->{'sendbuf'} = 0;
+#	  $self->cmd('Lock');
         }
       },
       'Supports' => sub { },
-      'Direction' => sub { },
+      'Direction' => sub { 
+      },
       'Key' => sub { 
         if ($self->{'incoming'}) {
 #print " CL $self->{'number'} [nick:$_] " for keys %{$self->{'want'}};
+=c
           for(keys %{$self->{'want'}->{$self->{'peernick'}}}) {
              ($self->{'filename'}, $self->{'fileas'}) =  
              ($_, $self->{'want'}->{$self->{'peernick'}}{$_});
              last;
           }
-#print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
-	  $self->{'Get'} = $self->{'filename'} . '$' . ($self->{'filefrom'} or 1);
-	  $self->cmd('Get');
+=cut
         } else {
-        $self->{'sendbuf'} = 1;
-	$self->cmd('Supports');
-	$self->cmd('Direction');
-        $self->{'sendbuf'} = 0;
-	$self->cmd('Key');
+          $self->{'sendbuf'} = 1;
+	  $self->cmd('Supports');
+	  $self->cmd('Direction');
+          $self->{'sendbuf'} = 0;
+  	  $self->cmd('Key', $self->{'Key'});
         }
+	$self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
+ #print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
+	$self->{'Get'} = $self->{'filename'} . '$' . ($self->{'filefrom'} or 1),
+  	 $self->cmd('Get')
+          if $self->{'filename'};
       },
       'Get' => sub { $self->cmd('FileLength',0); },
       'MyNick' => sub { 
          print "[$self->{'number'}] peer is [", ($self->{'peernick'} = $_[0]), "]\n";
          $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
          $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+        if (keys %{$self->{'want'}->{$self->{'peernick'}}}) {
+#print ("we want to download ",keys %{$self->{'want'}->{$self->{'peernick'}}}, " files\n");
+          $self->{'Direction'} = 'Download';
+        } else {
+          $self->{'Direction'} = 'Upload';
+#print ("we dont want to download \n");
+
+        }
+
       },
 
       'FileLength' => sub { 
@@ -104,10 +121,28 @@ our @ISA = ('dcppp');
 #print "cmd init ($self->{'cmd'})\n";
 #    %{$self->{'cmd'}} = {
     $self->{'cmd'} = {
+      'connect'	=> sub { 
+         $self->connect();
+         $self->{'sendbuf'} = 1;
+         $self->cmd('MyNick');
+         $self->{'sendbuf'} = 0;
+         $self->cmd('Lock');
+      },
+      'selectfile'	=> sub { 
+          for(keys %{$self->{'want'}->{$self->{'peernick'}}}) {
+             ($self->{'filename'}, $self->{'fileas'}) =  
+             ($_, $self->{'want'}->{$self->{'peernick'}}{$_});
+             last;
+          }
+      },
+
       'MyNick'	=> sub { $self->sendcmd('MyNick', $self->{'Nick'}); },
       'Lock'	=> sub { $self->sendcmd('Lock', $self->{'Lock'}); },
       'Supports'	=> sub { $self->sendcmd('Supports', $self->{'Supports'}); },
-      'Direction'	=> sub { $self->sendcmd('Direction', $self->{'Direction'}); },
+      'Direction'	=> sub { 
+        $self->sendcmd('Direction', $self->{'Direction'}, int(rand(0x7FFF))); 
+#$self->{'want'}->{$self->{'peernick'}}
+},
       'Key'	=> sub { $self->sendcmd('Key', $_[0]); },
       'Get'	=> sub { $self->sendcmd('Get', $self->{'Get'}); },
       'Send'	=> sub { $self->sendcmd('Send'); },
