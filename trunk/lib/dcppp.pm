@@ -102,8 +102,9 @@ package dcppp;
 #    nonblock();
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
-print "connect to $self->{'host'} ok"  if $self->{'debug'};
+print "connect to $self->{'host'} ok\n"  if $self->{'debug'};
     $self->{'status'} = 'connecting';
+    $self->{'outgoing'} = 1;
     $self->recv();
 #print "rec fr $self->{'host'} ok"  if $self->{'debug'};
   }
@@ -277,7 +278,7 @@ print("[$self->{'number'}] file complete ($self->{'filebytes'})\n"),
       my $cmd = $1;
 #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
       if($self->{'parse'}{$cmd}) {
-print "($self->{'number'}) $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
+print "($self->{'number'}) rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
         $self->{'parse'}{$cmd}->($_);
       } else {
         print "UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
@@ -319,7 +320,7 @@ print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'n
 
     if($self->{'cmd'}{$cmd}) {
 
-#print "[$self->{'number'}] CMD:$cmd param[",@_,"]\n" ;
+print "[$self->{'number'}] CMD:$cmd param[",@_,"]\n" ;
       $self->{'cmd'}{$cmd}->(@_);
     } else {
       print "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };\n";
@@ -330,12 +331,12 @@ print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'n
   }
 
   sub get {
-    my ($self, $nick, $file, $as) = @_;
+    my ($self, $nick, $file, $as, $passive) = @_;
 #print "get from [$nick] [$file] as [$as]\n";
     $self->{'want'}->{$nick}{$file} = ($as or $file);
 #print "[nick:$_]" for keys %{$self->{'want'}};
 #print "go conn [$nick] \n";
-    $self->cmd('ConnectToMe', $nick);
+    $self->cmd(($self->{'M'} eq 'A' ? '' : 'Rev') . 'ConnectToMe', $nick);
   }
 
 
