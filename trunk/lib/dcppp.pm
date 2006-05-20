@@ -77,7 +77,7 @@ package dcppp;
 #print "dcppp1[$self->{'socket'}]\n";
 #print "3: $self->{'Nick'}\n";
     $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
-    $self->{'myport'} = $self->{'port_base'} + int(rand($self->{'myport_random'})) if $self->{'myport_random'} and $self->{'myport_base'};
+    $self->{'myport'} = $self->{'myport_base'} + int(rand($self->{'myport_random'})) if $self->{'myport_random'} and $self->{'myport_base'};
     $self->{'want'} = {} unless $self->{'want'};
 
     $self->{'number'} = ++$global{'total'};
