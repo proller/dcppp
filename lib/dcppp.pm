@@ -320,7 +320,7 @@ print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'n
 
     if($self->{'cmd'}{$cmd}) {
 
-print "[$self->{'number'}] CMD:$cmd param[",@_,"]\n" ;
+print "[$self->{'number'}] CMD:$cmd param[",@_,"]\n" if $self->{'debug'};
       $self->{'cmd'}{$cmd}->(@_);
     } else {
       print "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };\n";
