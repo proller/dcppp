@@ -98,7 +98,7 @@ package dcppp;
     my $self = shift;
     print "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
-	 or print("socket: $@"), return "socket: $@";
+	 or print("connect socket  error: $@\n"), return;
 #    nonblock();
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
@@ -389,7 +389,7 @@ sub lock2key
 
   sub myinfo { 
     my $self = shift;
-    return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$ $' . $self->{'connection'} . (length($self->{'flag'}) ? chr($self->{'flag'}) : '') . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$';
+    return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$' . ($self->{'M'} or ' ') .'$' . $self->{'connection'} . (length($self->{'flag'}) ? chr($self->{'flag'}) : '') . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$';
   }
 =c
 sub nonblock {
