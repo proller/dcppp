@@ -22,7 +22,7 @@ our @ISA = ('dcppp');
 	'Nick'	=> 'dcpppBot', 
 	'port'	=> 411, 
 	'host'	=> 'localhost', 
-        'myport' => 6779 + int(rand(1000)),
+#        'myport' => 6779 + int(rand(1000)),
 #	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2', 
 	'Pass'	=> '', 
 	'Key'	=> 'zzz', 
@@ -135,7 +135,8 @@ our @ISA = ('dcppp');
 
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
 #print "Listen on port $self->{'myport'} \n";
-    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(), 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(), 'want' => \%{$self->{'want'}},  
+#'LocalPort'=>$self->{'myport'},
 #'debug'=>1,
 );
     $self->{'clients'}{''}->listen();
