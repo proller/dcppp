@@ -72,18 +72,10 @@ package dcppp;
 #print "self: $self \n";
 
 #print "dcppp0[$self->{'socket'}]{",@_,"}\n";
-    $self->{'number'} = ++$global{'total'};
-    $self->{'myport'} ||= $self->{'myport_base'} + int(rand($self->{'myport_random'})) if $self->{'myport_random'} and $self->{'myport_base'};
     $self->init(@_);
 #print "self init: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n\n";
 #print "dcppp1[$self->{'socket'}]\n";
 #print "3: $self->{'Nick'}\n";
-    $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
-
-    $self->{'want'} ||= {};
-
-    ++$global{'count'};
-    $self->{'status'} = 'disconnected';
 
 #print "[$self->{'number'}] myport pre: $self->{'myport'}\n";
 #print "[$self->{'number'}] myport aft: $self->{'myport'}\n";
@@ -97,6 +89,19 @@ package dcppp;
 #print "created [$self->{'number'}] now=$global{'count'} ($self)\n" if $self->{'debug'};
 #print "dcppp2[$self->{'socket'}]\n";
     return $self;
+  }
+
+  sub baseinit {
+    my $self = shift;
+    $self->{'number'} = ++$global{'total'};
+    $self->{'myport'} ||= $self->{'myport_base'} + int(rand($self->{'myport_random'})) if $self->{'myport_random'} and $self->{'myport_base'};
+    $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
+
+    $self->{'want'} ||= {};
+
+    ++$global{'count'};
+    $self->{'status'} = 'disconnected';
+
   }
  
   sub connect {

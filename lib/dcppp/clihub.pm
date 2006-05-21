@@ -34,6 +34,7 @@ our @ISA = ('dcppp');
 );
 
 #print "2: $self->{'Nick'}\n";
+    $self->baseinit();
 
     %{$self->{'parse'}} = (
       'chatline' => sub { },#print("welcome:", @_) unless $self->{'no_print_welcome'}; },
