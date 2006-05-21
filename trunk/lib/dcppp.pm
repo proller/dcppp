@@ -77,12 +77,17 @@ package dcppp;
 #print "dcppp1[$self->{'socket'}]\n";
 #print "3: $self->{'Nick'}\n";
     $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
-    $self->{'myport'} ||= $self->{'myport_base'} + int(rand($self->{'myport_random'})) if $self->{'myport_random'} and $self->{'myport_base'};
+
     $self->{'want'} = {} unless $self->{'want'};
 
     $self->{'number'} = ++$global{'total'};
     ++$global{'count'};
     $self->{'status'} = 'disconnected';
+
+print "[$self->{'number'}] myport pre: $self->{'myport'}\n";
+    $self->{'myport'} ||= $self->{'myport_base'} + int(rand($self->{'myport_random'})) if $self->{'myport_random'} and $self->{'myport_base'};
+print "[$self->{'number'}] myport aft: $self->{'myport'}\n";
+
 
 #print "new obj: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 
