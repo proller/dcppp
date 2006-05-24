@@ -6,6 +6,7 @@ package dcppp::hubcli;
 
 use dcppp;
 use strict;
+  no warnings qw(uninitialized);
 
 our @ISA = ('dcppp');
 
