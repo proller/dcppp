@@ -27,6 +27,7 @@ package dcppp;
   use IO::Select;
   use POSIX;
   use strict;
+  no warnings qw(uninitialized);
 
 #dbg
 #use Time::HiRes qw(time);
@@ -46,6 +47,8 @@ package dcppp;
     my $class = shift;
     my $self = { 
 	'Listen' => 10,
+	'myport_base' => 40000,
+	'myport_random' => 1000,
 	# http://www.dcpp.net/wiki/index.php/%24MyINFO
 	'description' => 'just dcppp bot',
 	'connection' => 'LAN(T3)',
@@ -78,7 +81,7 @@ package dcppp;
 #print "3: $self->{'Nick'}\n";
 
 #print "[$self->{'number'}] myport pre: $self->{'myport'}\n";
-#print "[$self->{'number'}] myport aft: $self->{'myport'}\n";
+print "[$self->{'number'}] myport aft: $self->{'myport'}\n";
 
 
 #print "new obj: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";

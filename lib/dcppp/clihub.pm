@@ -8,6 +8,7 @@ package dcppp::clihub;
 use dcppp;
 use dcppp::clicli;
 use strict;
+  no warnings qw(uninitialized);
 
 
 our @ISA = ('dcppp');
@@ -76,14 +77,14 @@ our @ISA = ('dcppp');
       'UserIP' => sub { 
          /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2,
          $self->{'IpList'}->{$2} = \%{ $self->{'NickList'}->{$1} }
-          for grep $_, split /\$\$/, @_[0]; },
-      'HubName' => sub { $self->{'HubName'} = @_[0];},
-      'HubTopic' => sub { $self->{'HubTopic'} = @_[0];},
+          for grep $_, split /\$\$/, $_[0]; },
+      'HubName' => sub { $self->{'HubName'} = $_[0];},
+      'HubTopic' => sub { $self->{'HubTopic'} = $_[0];},
       'NickList' => sub { 
-        $self->{'NickList'}->{$_}{'online'} = 1 for grep $_, split /\$\$/, @_[0];
+        $self->{'NickList'}->{$_}{'online'} = 1 for grep $_, split /\$\$/, $_[0];
 #        print 'nicklist:', join(';', sort keys %{$self->{'NickList'}}), "\n"
       },
-      'OpList' => sub { $self->{'NickList'}->{$_}{'oper'} = 1 for grep $_, split /\$\$/, @_[0]; },
+      'OpList' => sub { $self->{'NickList'}->{$_}{'oper'} = 1 for grep $_, split /\$\$/, $_[0]; },
       'ForceMove' => sub { print "ForceMove to $_[0]  \n"},
       'Quit' => sub { $self->{'NickList'}->{$_[0]}{'online'} = 0; },
       'ConnectToMe' => sub { 
@@ -128,7 +129,10 @@ our @ISA = ('dcppp');
          $self->sendcmd('ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}"); 
       },
       'RevConnectToMe' => sub { $self->sendcmd('RevConnectToMe', $self->{'Nick'}, $_[0]); },
-      'MyPass'	=> sub { $self->sendcmd('MyPass', ($_[0] or $self->{'Pass'})); },
+      'MyPass'	=> sub { 
+        my $pass = ($_[0] or $self->{'Pass'});
+        $self->sendcmd('MyPass', ) if $pass; 
+      },
     );
 
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";

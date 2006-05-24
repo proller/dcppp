@@ -6,6 +6,7 @@ package dcppp::clicli;
 #use lib '../..';
 use dcppp;
 use strict;
+  no warnings qw(uninitialized);
 
 our @ISA = ('dcppp');
 
@@ -24,6 +25,8 @@ our @ISA = ('dcppp');
 #	'Direction' => 'Upload', #rand here
 #	'incomingclass' => 'dcppp::clicli',
     );
+    $self->baseinit();
+
 #print "1: $self->{'Nick'}\n";
 #print "Sc1[$self->{'socket'}]\n";
 #print "CLICLI init [$self->{'number'}]\n";
