@@ -81,7 +81,7 @@ package dcppp;
 #print "3: $self->{'Nick'}\n";
 
 #print "[$self->{'number'}] myport pre: $self->{'myport'}\n";
-print "[$self->{'number'}] myport aft: $self->{'myport'}\n";
+#print "[$self->{'number'}] myport aft: $self->{'myport'}\n";
 
 
 #print "new obj: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
