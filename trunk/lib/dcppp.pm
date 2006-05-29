@@ -1,4 +1,3 @@
-#!/usr/bin/perl 	
 my $Id = '$Id$';
 =copyright
 dcpp for perl 
@@ -234,7 +233,7 @@ print "CLOSEME $self->{'number'} [$!][$@]\n" if $self->{'debug'};
         }
         if ($self->{'filehandle'}) {
           $self->{'filebytes'} += length $databuf;
-#print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n";
+print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
           my $fh = $self->{'filehandle'};
           print $fh $databuf;
 print("[$self->{'number'}] file complete ($self->{'filebytes'})\n"),
