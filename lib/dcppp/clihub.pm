@@ -28,6 +28,17 @@ our @ISA = ('dcppp');
 	'Pass'	=> '', 
 	'Key'	=> 'zzz', 
 #        %$self,
+        'supports_avail' => [qw(
+NoGetINFO 
+NoHello 
+UserIP2 
+UserCommand 
+TTHSearch 
+OpPlus 
+Feed 
+MCTo 
+HubTopic
+)],
         @_,
 	'incomingclass' => 'dcppp::clicli',
         $self->{'NickList'} => \{},
@@ -70,7 +81,7 @@ our @ISA = ('dcppp');
         $self->{'NickList'}->{$nick}{'nick'} = $nick;
 #        $self->{'NickList'}->{$nick}{'info'} = $info;
 #print "preinfo[$info] to $self->{'NickList'}->{$nick}\n";
-        $self->parseinfo($info, $self->{'NickList'}->{$nick});
+        $self->info_parse($info, $self->{'NickList'}->{$nick});
         $self->{'NickList'}->{$nick}{'online'} = 1;
 #        print  "info:$nick [$info]\n";
       }, 
@@ -133,6 +144,7 @@ our @ISA = ('dcppp');
         my $pass = ($_[0] or $self->{'Pass'});
         $self->sendcmd('MyPass', ) if $pass; 
       },
+      'Supports'	=> sub { $self->sendcmd('Supports', ($self->supports() or return)); },
     );
 
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";

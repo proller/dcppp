@@ -403,6 +403,21 @@ sub lock2key
     my $self = shift;
     return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$' . ($self->{'M'} or ' ') .'$' . $self->{'connection'} . (length($self->{'flag'}) ? chr($self->{'flag'}) : '') . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$';
   }
+
+  sub supports { 
+    my $self = shift;
+    return join ' ', grep $self->{$_}, @{$self->{'supports_avail'}};
+  }
+
+  sub supports_parse { 
+    my $self = shift;
+    my ($str, $save) = @_;
+    $save->{$_} = 1 for split /\s+/, $str;
+    delete $save->{$_} for grep ! length $save->{$_}, keys %$save;
+#print " $_ = $save->{$_}; " for keys %$save; print "\n";
+    return wantarray ? %$save : $save;
+  }
+
 =c
 sub nonblock {
     my $self = shift;
@@ -414,7 +429,7 @@ sub nonblock {
 =cut
 
  
-  sub parseinfo {
+  sub info_parse {
     my $self = shift;
     my ($info, $save) = @_;
 #print "parsing info [$info] to $save :";
@@ -423,7 +438,7 @@ sub nonblock {
     $save->{'Nick'} = $1 if $info =~ s/^\s*([^\s\$]+)\s*//; 
     ($save->{'tag'}, $save->{'M'}, $save->{'connection'}, $save->{'email'}, $save->{'sharesize'}) = split /\s*\$\s*/, $info;
     $save->{'flag'} = ord($1) if $save->{'connection'} =~ s/([\x00-\x1F])$//e;
-    $self->parsetag($save->{'tag'}, $save);
+    $self->tag_parse($save->{'tag'}, $save);
 #    $save->{'sharesize'} = $1 if $info =~ s/\$(\d+)\$$//;
     delete $save->{$_} for grep ! length $save->{$_}, keys %$save;
 #print " $_ = $save->{$_}; " for keys %$save; print "\n";
@@ -432,7 +447,7 @@ sub nonblock {
 
 #rcv: MyINFO $ALL WolF <++ V:0.668,M:A,H:10/0/0,S:40>$ $LAN(T3)$$15100817262$
 
-  sub parsetag {
+  sub tag_parse {
     my $self = shift;
     my ($tag, $save) = @_;
 #print "parsing tag [$tag] to $save\n";
