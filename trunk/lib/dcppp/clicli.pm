@@ -20,7 +20,26 @@ our @ISA = ('dcppp');
 #	'Key'	=> 'zzz', 
 	'Lock'	=> 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
 #	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
-	'Supports' => 'XmlBZList',
+#	'Supports' => 'XmlBZList',
+#http://www.dcpp.net/wiki/index.php/%24Supports
+        'supports_avail' => [qw(
+BZList 
+MiniSlots 
+GetZBlock 
+XmlBZList 
+ADCGet 
+TTHL 
+TTHF 
+ZLIG 
+ClientID 
+CHUNK 
+GetTestZBlock 
+GetCID
+)],
+         'XmlBZList' => 1,
+         'ADCGet' => 1,
+         'MiniSlots' => 1,
+
          @_,
 #	'Direction' => 'Upload', #rand here
 #	'incomingclass' => 'dcppp::clicli',
@@ -94,7 +113,8 @@ our @ISA = ('dcppp');
 	$self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
  #print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
 	$self->{'Get'} = $self->{'filename'} . '$' . ($self->{'filefrom'} or 1),
-  	 $self->cmd('Get')
+        $self->{'ADCGet'} = 'file ' . $self->{'filename'} . ' 0 -1',
+  	 $self->cmd(($self->{'NickList'}->{$self->{'peernick'}}{'ADCGet'} ? 'ADC' : '') . 'Get')
           if $self->{'filename'};
       },
       'Get' => sub { $self->cmd('FileLength',0); },
@@ -119,6 +139,15 @@ our @ISA = ('dcppp');
         binmode($self->{'filehandle'});
         $self->cmd('Send'); 
       },
+      'ADCSND' => sub {
+        $_[0] =~ /(\d+?)$/is;
+        $self->{'filetotal'} = $1;
+        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
+        binmode($self->{'filehandle'});
+      },
+      'Supports' => sub {
+        $self->supports_parse($_[0], $self->{'NickList'}->{$self->{'peernick'}});
+      },
     };
   
 #print "cmd init ($self->{'cmd'})\n";
@@ -141,7 +170,8 @@ our @ISA = ('dcppp');
 
       'MyNick'	=> sub { $self->sendcmd('MyNick', $self->{'Nick'}); },
       'Lock'	=> sub { $self->sendcmd('Lock', $self->{'Lock'}); },
-      'Supports'	=> sub { $self->sendcmd('Supports', $self->{'Supports'}); },
+#      'Supports'	=> sub { $self->sendcmd('Supports', $self->{'Supports'}); },
+      'Supports'	=> sub { $self->sendcmd('Supports', ($self->supports() or return)); },
       'Direction'	=> sub { 
         $self->sendcmd('Direction', $self->{'Direction'}, int(rand(0x7FFF))); 
 #$self->{'want'}->{$self->{'peernick'}}
@@ -150,6 +180,7 @@ our @ISA = ('dcppp');
       'Get'	=> sub { $self->sendcmd('Get', $self->{'Get'}); },
       'Send'	=> sub { $self->sendcmd('Send'); },
       'FileLength' =>  sub { $self->sendcmd('FileLength', $_[0]); },
+      'ADCGet'  => sub{ $self->sendcmd('ADCGET', $self->{'ADCGet'}); },
     };
 
 #print " clicli aftinit clients:{", keys %{$self->{'clients'}}, "}\n";
