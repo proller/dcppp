@@ -113,7 +113,7 @@ GetCID
 	$self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
  #print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
 	$self->{'Get'} = $self->{'filename'} . '$' . ($self->{'filefrom'} or 1),
-        $self->{'ADCGet'} = 'file ' . $self->{'filename'} . ' 0 -1',
+         $self->{'ADCGet'} = 'file ' . $self->{'filename'} . ' 0 -1',
   	 $self->cmd(($self->{'NickList'}->{$self->{'peernick'}}{'ADCGet'} ? 'ADC' : '') . 'Get')
           if $self->{'filename'};
       },
