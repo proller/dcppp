@@ -135,15 +135,17 @@ GetCID
 
       'FileLength' => sub { 
         $self->{'filetotal'} = $_[0];
-        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
-        binmode($self->{'filehandle'});
+        return if $self->openfile();
+#        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
+#        binmode($self->{'filehandle'});
         $self->cmd('Send'); 
       },
       'ADCSND' => sub {
         $_[0] =~ /(\d+?)$/is;
         $self->{'filetotal'} = $1;
-        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
-        binmode($self->{'filehandle'});
+        return if $self->openfile();
+#        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
+#        binmode($self->{'filehandle'});
       },
       'Supports' => sub {
         $self->supports_parse($_[0], $self->{'NickList'}->{$self->{'peernick'}});

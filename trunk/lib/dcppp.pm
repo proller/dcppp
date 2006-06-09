@@ -232,17 +232,7 @@ print "CLOSEME $self->{'number'} [$!][$@]\n" if $self->{'debug'};
           ++$readed;
         }
         if ($self->{'filehandle'}) {
-          $self->{'filebytes'} += length $databuf;
-print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
-          my $fh = $self->{'filehandle'};
-          print $fh $databuf;
-print("[$self->{'number'}] file complete ($self->{'filebytes'})\n"),
-#          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
-            $self->disconnect()
-            if $self->{'filebytes'} == $self->{'filetotal'};
-
-#print("aft fc\n");
-
+          writefile(\$databuf);
         } else {
 #print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
@@ -252,6 +242,8 @@ print("[$self->{'number'}] file complete ($self->{'filebytes'})\n"),
 #          if (length $1) {
 #print("PP[$1]\n");
 #my $tim = time();
+#!! while here..
+
             $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_)) for grep /\w/, split /\|+/, $1;
 #print ("parse ", (time() - $tim), "\n");
 #          }
@@ -293,7 +285,7 @@ print("[$self->{'number'}] file complete ($self->{'filebytes'})\n"),
 print "($self->{'number'}) rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
         $self->{'parse'}{$cmd}->($_);
       } else {
-        print "UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
+        print "($self->{'number'}) UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
         $self->{'parse'}{$cmd} = sub { };
       }                                                 
       $self->{'handler'}{$cmd}->($_) if $self->{'handler'}{$cmd};
@@ -349,6 +341,28 @@ print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'n
 #print "[nick:$_]" for keys %{$self->{'want'}};
 #print "go conn [$nick] \n";
     $self->cmd(($self->{'M'} eq 'A' ? '' : 'Rev') . 'ConnectToMe', $nick);
+  }
+
+  sub openfile {
+    my $self = shift;
+    open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return 1;
+    binmode($self->{'filehandle'});
+    return 0;
+  }
+
+  sub writefile {
+    my $self = shift;
+    my ($databuf) = @_;
+          $self->{'filebytes'} += length $$databuf;
+#print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
+          my $fh = $self->{'filehandle'};
+          print $fh $$databuf;
+print("[$self->{'number'}] file complete ($self->{'filebytes'})\n"),
+#          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
+            $self->disconnect()
+            if $self->{'filebytes'} == $self->{'filetotal'};
+
+#print("aft fc\n");
   }
 
 
