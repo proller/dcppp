@@ -4,11 +4,11 @@ my $Id = '$Id$';
 
 package dcppp::hubhub;
 
-use dcppp;
-use strict;
+  use dcppp;
+  use strict;
   no warnings qw(uninitialized);
-
-our @ISA = ('dcppp');
+  our $VERSION = (split(' ', '$Revision$'))[1];
+  our @ISA = ('dcppp');
 
   sub init {
     my $self = shift;
