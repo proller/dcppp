@@ -5,13 +5,12 @@ package dcppp::clihub;
 #use lib '../../..';
 #use lib '../..';
 #use lib '..';
-use dcppp;
-use dcppp::clicli;
-use strict;
+  use dcppp;
+  use dcppp::clicli;
+  use strict;
   no warnings qw(uninitialized);
-
-
-our @ISA = ('dcppp');
+  our $VERSION = (split(' ', '$Revision$'))[1];
+  our @ISA = ('dcppp');
 
 #todo! move to main module
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
