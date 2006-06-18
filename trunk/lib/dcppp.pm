@@ -233,7 +233,7 @@ print "CLOSEME $self->{'number'} [$!][$@]\n" if $self->{'debug'};
           ++$readed;
         }
         if ($self->{'filehandle'}) {
-          writefile(\$databuf);
+          $self->writefile(\$databuf);
         } else {
 #print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
           $buf .= $databuf;
@@ -245,7 +245,13 @@ print "CLOSEME $self->{'number'} [$!][$@]\n" if $self->{'debug'};
 #my $tim = time();
 #!! while here..
 
-            $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_)) for grep /\w/, split /\|+/, $1;
+#            $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_)) for grep /\w/, split /\|+/, $1;
+          my $numbuf;
+          for (split /\|/, $1) {
+            ($numbuf++ ? $_ .= '|' : 0), $self->writefile(\$_), next if ($self->{'filehandle'});
+            next unless /\w/;
+            $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_));
+          }
 #print ("parse ", (time() - $tim), "\n");
 #          }
         }
@@ -354,6 +360,7 @@ print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'n
   sub writefile {
     my $self = shift;
     my ($databuf) = @_;
+#print("self:$self;\n");
           $self->{'filebytes'} += length $$databuf;
 #print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
           my $fh = $self->{'filehandle'};

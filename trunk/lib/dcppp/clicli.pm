@@ -117,7 +117,9 @@ GetCID
   	 $self->cmd(($self->{'NickList'}->{$self->{'peernick'}}{'ADCGet'} ? 'ADC' : '') . 'Get')
           if $self->{'filename'};
       },
-      'Get' => sub { $self->cmd('FileLength',0); },
+      'Get' => sub { 
+#TODO      
+      $self->cmd('FileLength',0); },
       'MyNick' => sub { 
          print "[$self->{'number'}] peer is [", ($self->{'peernick'} = $_[0]), "]\n";
          $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
