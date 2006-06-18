@@ -47,6 +47,8 @@ HubTopic
 #print "2: $self->{'Nick'}\n";
     $self->baseinit();
 
+#print('dcdbg', "myip : $self->{'myip'}", "\n");
+
     %{$self->{'parse'}} = (
       'chatline' => sub { },#print("welcome:", @_) unless $self->{'no_print_welcome'}; },
       'welcome' => sub { }, #print("welcome:", @_)
