@@ -53,7 +53,7 @@ GetCID
 #    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
 #    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
     $self->get_peer_addr();
-    print "[$self->{'number'}] Incoming client $self->{'peerip'}\n" if $self->{'peerip'};
+     $self->{'log'}->('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
 
 #print("{{  $self->{'NickList'} }}");
 #print("[$_]")for sort keys %{$self->{'NickList'}};
@@ -121,7 +121,7 @@ GetCID
 #TODO      
       $self->cmd('FileLength',0); },
       'MyNick' => sub { 
-         print "[$self->{'number'}] peer is [", ($self->{'peernick'} = $_[0]), "]\n";
+         $self->{'log'}->('info', "[$self->{'number'}] peer is [", ($self->{'peernick'} = $_[0]), "]");
          $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
          $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
         if (keys %{$self->{'want'}->{$self->{'peernick'}}}) {

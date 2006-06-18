@@ -75,7 +75,7 @@ HubTopic
 #        $self->{'no_print_welcome'} = 1;
 #	$self->recv();
       },
-      'To' => sub { print "Private message to", @_, "\n";  },
+      'To' => sub { $self->{'log'}->('msg', "Private message to", @_);  },
       'MyINFO' => sub { 
         my ($nick, $info) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
 #        print("Bad nick:[$_[0]]"), return unless length $nick;
@@ -97,7 +97,7 @@ HubTopic
 #        print 'nicklist:', join(';', sort keys %{$self->{'NickList'}}), "\n"
       },
       'OpList' => sub { $self->{'NickList'}->{$_}{'oper'} = 1 for grep $_, split /\$\$/, $_[0]; },
-      'ForceMove' => sub { print "ForceMove to $_[0]  \n"},
+      'ForceMove' => sub { $self->{'log'}->('info',  "ForceMove to $_[0]")},
       'Quit' => sub { $self->{'NickList'}->{$_[0]}{'online'} = 0; },
       'ConnectToMe' => sub { 
          my ($nick, $host, $port) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
