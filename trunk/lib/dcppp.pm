@@ -113,7 +113,7 @@ package dcppp;
     $self->{'log'}->('dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}");
 #    print "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
-	 or $self->{'log'}->('err',"connect socket  error: $@\n"), return;
+	 or $self->{'log'}->('err',"connect socket  error: $@"), return;
     $self->nonblock();
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
@@ -175,7 +175,7 @@ $self->{'log'}->('dcdbg', "listening $self->{'myport'}"); #  if $self->{'debug'}
 
   sub DESTROY {
     my $self = shift;
-    $self->{'log'}->('dcdbg', "[$self->{'number'}]($self)DESTROY from ", join(':', caller), " ($self)\n");
+    $self->{'log'}->('dcdbg', "[$self->{'number'}]($self)DESTROY from ", join(':', caller), " ($self)");
     $self->disconnect();
 #print "DESTROY[$self->{'number'}]\n";
   }
@@ -239,7 +239,7 @@ $self->{'log'}->('dctim', "[$self->{'number'}] canread");
         if (!defined($client->recv($databuf, POSIX::BUFSIZ, 0)) or !length($databuf)) {
 #$self->{'log'}->('dctim', "[$self->{'number'}] pstrecv");
 #        if (!defined($client->recv($databuf, POSIX::BUFSIZ, 0)) ) {
-          $self->{'log'}->('dcdbg', "($self->{'number'}) CLOSEME [$!][$@]\n");
+          $self->{'log'}->('dcdbg', "($self->{'number'}) CLOSEME [$!][$@]");
           $self->{'select'}->remove($client);
           $self->disconnect();
         } else {
@@ -393,7 +393,7 @@ $self->{'log'}->('dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $sel
 #print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
           my $fh = $self->{'filehandle'};
           print $fh $$databuf;
-$self->{'log'}->('info',"($self->{'number'}) file complete ($self->{'filebytes'})\n"),
+$self->{'log'}->('info',"($self->{'number'}) file complete ($self->{'filebytes'})"),
 #          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
             $self->disconnect()
             if $self->{'filebytes'} == $self->{'filetotal'};

@@ -138,6 +138,7 @@ HubTopic
       'ConnectToMe' => sub { 
 #print "ctm [$self->{'M'}][$self->{'allow_passive_ConnectToMe'}]\n";
          return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
+         $self->{'log'}->('err', "please define myip"), return unless $self->{'myip'};
          $self->sendcmd('ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}"); 
       },
       'RevConnectToMe' => sub { $self->sendcmd('RevConnectToMe', $self->{'Nick'}, $_[0]); },
