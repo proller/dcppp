@@ -392,7 +392,7 @@ $self->{'log'}->('dctim', "[$self->{'number'}] readend");
 $self->{'log'}->('dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}");
 #print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
           my $fh = $self->{'filehandle'};
-          print $fh $$databuf;
+          print $fh $$databuf if $fh;
 $self->{'log'}->('info',"($self->{'number'}) file complete ($self->{'filebytes'})"),
 #          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
             $self->disconnect()
@@ -471,6 +471,7 @@ sub lock2key
 
 #=c
 sub nonblock {
+    return;
     my $self = shift;
     my $flags = fcntl($self->{'socket'}, F_GETFL, 0)
             or $self->{'log'}->('err', "Can't get flags for socket: $!"), return;
