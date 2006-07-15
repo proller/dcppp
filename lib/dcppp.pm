@@ -496,13 +496,15 @@ sub nonblock {
 #=cut
 
  
+#[Hub security$ $$$0$]
   sub info_parse {
     my $self = shift;
     my ($info, $save) = @_;
 #print "parsing info [$info] to $save :";
     $save->{'info'} = $info;
-    $save->{'infofor'} = $2 if $info =~ s/^\s*(MyINFO)?\s*(\$ALL)?\s*// and $2;
-    $save->{'Nick'} = $1 if $info =~ s/^\s*([^\s\$]+)\s*//; 
+#    $save->{'infofor'} = $1 if $info =~ s/^\s*(?:MyINFO)?\s*(\$ALL)?\s*// and $1;
+#    $save->{'Nick'} = $1 if $info =~ s/^\s*([^\s\$]+)\s*//; 
+    $save->{'description'} = $1 if $info =~ s/^([^<\$]+)(<|\$)/$2/; 
     ($save->{'tag'}, $save->{'M'}, $save->{'connection'}, $save->{'email'}, $save->{'sharesize'}) = split /\s*\$\s*/, $info;
     $save->{'flag'} = ord($1) if $save->{'connection'} =~ s/([\x00-\x1F])$//e;
     $self->tag_parse($save->{'tag'}, $save);
