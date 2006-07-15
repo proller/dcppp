@@ -25,9 +25,13 @@ package dcppp;
   use IO::Socket;
   use IO::Select;
   use POSIX;
+
+  eval { use Time::HiRes qw(time); };
+
   use strict;
   no warnings qw(uninitialized);
   our $VERSION = (split(' ', '$Revision$'))[1];
+
 
 #dbg
 #use Time::HiRes qw(time);
@@ -38,6 +42,13 @@ package dcppp;
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'');
 #  our %clear = ('clients' => {}, 'socket' => undef, 'select' => undef, 
 #                'accept' => 0, 'filehandle' => undef, 'parse' => {},  'cmd' => {}, );
+#from lib/misc
+  sub float { #v1
+    my $self = shift;
+    return ($_[0] < 8 and $_[0] - int($_[0])) ? sprintf('%.'.($_[0] < 1 ? 3 : ($_[0] < 3 ? 2 : 1)).'f', $_[0]) : int($_[0]);
+  };
+
+
   sub clear {
     return ('clients' => {}, 'socket' => undef, 'select' => undef, 
                 'accept' => 0, 'filehandle' => undef, 'parse' => {},  'cmd' => {}, );
@@ -386,6 +397,7 @@ $self->{'log'}->('dctim', "[$self->{'number'}] readend");
 
   sub writefile {
     my $self = shift;
+    $self->{'file_start_time'} ||= time;
     for my $databuf ( @_) {
 #print("self:$self;\n");
           $self->{'filebytes'} += length $$databuf;
@@ -393,9 +405,10 @@ $self->{'log'}->('dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $sel
 #print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
           my $fh = $self->{'filehandle'};
           print $fh $$databuf if $fh;
-$self->{'log'}->('info',"($self->{'number'}) file complete ($self->{'filebytes'})"),
+          $self->{'log'}->('info',"($self->{'number'}) file complete ($self->{'filebytes'}) per", $self->float(time - $self->{'file_start_time'}), 's at', $self->float($self->{'filebytes'} / ((time - $self->{'file_start_time'}) or 1)), 'b/s'),
 #          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
-            $self->disconnect()
+            $self->disconnect(),
+            $self->{'file_start_time'} = 0
             if $self->{'filebytes'} == $self->{'filetotal'};
 
 #print("aft fc\n");
