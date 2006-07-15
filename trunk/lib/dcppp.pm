@@ -113,6 +113,8 @@ package dcppp;
     $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
 
     $self->{'want'} ||= {};
+    $self->{'NickList'} ||= {},
+    $self->{'IpList'} ||= {},
 
     ++$global{'count'};
     $self->{'status'} = 'disconnected';
