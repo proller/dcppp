@@ -113,8 +113,8 @@ package dcppp;
     $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
 
     $self->{'want'} ||= {};
-    $self->{'NickList'} ||= {},
-    $self->{'IpList'} ||= {},
+    $self->{'NickList'} ||= {};
+    $self->{'IpList'} ||= {};
 
     ++$global{'count'};
     $self->{'status'} = 'disconnected';
@@ -236,7 +236,7 @@ $self->{'log'}->('dctim', "[$self->{'number'}] canread");
 #MORE INFO HERE
 #print "[$self->{'number'}] newinc [$self->{'accept'}]\n";
 #print "accpt total bef ", scalar keys %{$self->{'clients'}}  ,"\n";
-            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, clear(), 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  ), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
+            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, clear(), 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}},), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
 #print "accpt total aft ", scalar keys %{$self->{'clients'}}  ,"\n";
 #print "ok\n";
           } else {

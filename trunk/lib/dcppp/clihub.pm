@@ -101,7 +101,7 @@ HubTopic
          my ($nick, $host, $port) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
 #print "ALREADY CONNECTED",         
          return if $self->{'clients'}{$host .':'. $port}->{'socket'};
-         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 'want' => \%{$self->{'want'}},
+         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 'want' => \%{$self->{'want'}}, 'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}},
 #         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 
 #'clients' => {},
 #'debug'=>1,
@@ -153,7 +153,7 @@ HubTopic
 
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
 #print "Listen on port $self->{'myport'} \n";
-    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(), 'want' => \%{$self->{'want'}},  
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(), 'want' => \%{$self->{'want'}},  'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}},
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),   
 #'LocalPort'=>$self->{'myport'},
 #'debug'=>1,
