@@ -382,7 +382,7 @@ $self->{'log'}->('dctim', "[$self->{'number'}] readend");
   }
 
   sub get {
-    my ($self, $nick, $file, $as, $passive) = @_;
+    my ($self, $nick, $file, $as) = @_;
 #print "get from [$nick] [$file] as [$as]\n";
     $self->{'want'}->{$nick}{$file} = ($as or $file);
 #print "[nick:$_]" for keys %{$self->{'want'}};
