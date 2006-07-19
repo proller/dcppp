@@ -124,6 +124,7 @@ GetCID
          $self->{'log'}->('info', "[$self->{'number'}] peer is [", ($self->{'peernick'} = $_[0]), "]");
          $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
          $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+         $self->{'IpList'}->{$self->{'peerip'}}->{'port'} = $self->{'PortList'}->{$self->{'peerip'}};
         if (keys %{$self->{'want'}->{$self->{'peernick'}}}) {
 #print ("we want to download ",keys %{$self->{'want'}->{$self->{'peernick'}}}, " files\n");
           $self->{'Direction'} = 'Download';
