@@ -86,8 +86,8 @@ HubTopic
       }, 
       'UserIP' => sub { 
          /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2,
-         $self->{'IpList'}->{$2} = \%{ $self->{'NickList'}->{$1} }
-         $self->{'IpList'}->{$2}->{'port'} = $self->{'PortList'}->{$2},
+         $self->{'IpList'}->{$2} = \%{ $self->{'NickList'}->{$1} },
+         $self->{'IpList'}->{$2}->{'port'} = $self->{'PortList'}->{$2}
           for grep $_, split /\$\$/, $_[0]; },
       'HubName' => sub { $self->{'HubName'} = $_[0];},
       'HubTopic' => sub { $self->{'HubTopic'} = $_[0];},
@@ -106,7 +106,7 @@ HubTopic
 #         $self->{'IpList'}->{$hp} = \%{ $self->{'NickList'}->{$nick} };
          $self->{'PortList'}->{$host} = $port;
          return if $self->{'clients'}{$host .':'. $port}->{'socket'};
-         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 'want' => \%{$self->{'want'}}, 'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}, 'PortList' => \%{$self->{'PortList'}},
+         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 'want' => \%{$self->{'want'}}, 'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}}, 'PortList' => \%{$self->{'PortList'}},
 #         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 
 #'clients' => {},
 #'debug'=>1,
@@ -158,7 +158,7 @@ HubTopic
 
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}}, 
 #print "Listen on port $self->{'myport'} \n";
-    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(), 'want' => \%{$self->{'want'}},  'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}, 'PortList' => \%{$self->{'PortList'}},
+    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(), 'want' => \%{$self->{'want'}},  'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}}, 'PortList' => \%{$self->{'PortList'}},
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),   
 #'LocalPort'=>$self->{'myport'},
 #'debug'=>1,
