@@ -388,7 +388,7 @@ $self->{'log'}->('dctim', "[$self->{'number'}] readend");
     $self->{'want'}->{$nick}{$file} = ($as or $file);
 #print "[nick:$_]" for keys %{$self->{'want'}};
 #print "go conn [$nick] \n";
-    $self->cmd(($self->{'M'} eq 'A' ? '' : 'Rev') . 'ConnectToMe', $nick);
+    $self->cmd((($self->{'M'} eq 'A' and $self->{'myip'} ) ? '' : 'Rev') . 'ConnectToMe', $nick);
   }
 
   sub openfile {

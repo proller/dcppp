@@ -148,7 +148,7 @@ HubTopic
       'RevConnectToMe' => sub { $self->sendcmd('RevConnectToMe', $self->{'Nick'}, $_[0]); },
       'MyPass'	=> sub { 
         my $pass = ($_[0] or $self->{'Pass'});
-        $self->sendcmd('MyPass', ) if $pass; 
+        $self->sendcmd('MyPass', $pass) if $pass; 
       },
       'Supports'	=> sub { $self->sendcmd('Supports', ($self->supports() or return)); },
     );
