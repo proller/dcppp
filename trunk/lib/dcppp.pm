@@ -187,10 +187,22 @@ $self->{'log'}->('dcdbg', "listening $self->{'myport'}"); #  if $self->{'debug'}
 #print "deleted [$self->{'number'}] now=$global{'count'}\n";
   }
 
+  sub destroy {
+    my $self = shift;
+#print "\n[$self->{'number'}]DESTROY MANUAL TRY\n";
+#    return;
+    $self->disconnect();
+    $self->{'log'}->('dcdbg', "[$self->{'number'}]($self)TOTAL MANUAL DESTROY from ", join(':', caller), " ($self)") if $self->{'log'};
+    delete $self->{$_} for keys %$self;
+    $self = undef;
+  }
+
   sub DESTROY {
     my $self = shift;
-    $self->{'log'}->('dcdbg', "[$self->{'number'}]($self)DESTROY from ", join(':', caller), " ($self)");
-    $self->disconnect();
+#print "\n[$self->{'number'}]DESTROY AUTO TRY\n";
+    $self->{'log'}->('dcdbg', "[$self->{'number'}]($self)DESTROY from ", join(':', caller), " ($self)") if $self->{'log'};
+#    $self->disconnect();
+    $self->destroy();
 #print "DESTROY[$self->{'number'}]\n";
   }
 
@@ -256,6 +268,9 @@ $self->{'log'}->('dctim', "[$self->{'number'}] canread");
           $self->{'log'}->('dcdbg', "($self->{'number'}) CLOSEME [$!][$@]");
           $self->{'select'}->remove($client);
           $self->disconnect();
+          $self->{'status'} = 'todestroy';
+#          $self->destroy();
+#          return;
         } else {
           ++$readed;
         }
@@ -292,6 +307,9 @@ $self->{'log'}->('dctim', "[$self->{'number'}] canread");
 #      }
 #print ("recv per ", (time() - $tim), "\n");
 $self->{'log'}->('dctim', "[$self->{'number'}] readend");
+
+#  $self->destroy() , return if $self->{'status'} eq 'todestroy';
+
     } while ($readed);
 #print "CLIents[$self->{'number'}:$self->{'clients'}]";
 
@@ -311,6 +329,7 @@ $self->{'log'}->('dctim', "[$self->{'number'}] readend");
     }
 #    $self->SUPER::recv();
 
+  $self->destroy() if $self->{'status'} eq 'todestroy';
   }
 
 }
@@ -411,6 +430,8 @@ $self->{'log'}->('dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $sel
           $self->{'log'}->('info',"($self->{'number'}) file complete ($self->{'filebytes'}) per", $self->float(time - $self->{'file_start_time'}), 's at', $self->float($self->{'filebytes'} / ((time - $self->{'file_start_time'}) or 1)), 'b/s'),
 #          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
             $self->disconnect(),
+#            $self->destroy(),
+          $self->{'status'} = 'todestroy';
             $self->{'file_start_time'} = 0
             if $self->{'filebytes'} == $self->{'filetotal'};
 
