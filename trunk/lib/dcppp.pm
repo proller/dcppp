@@ -197,7 +197,7 @@ $self->log('dcdbg', "listening $self->{'myport'}"); #  if $self->{'debug'};
 #print "\n[$self->{'number'}]DESTROY MANUAL TRY\n";
 #    return;
     $self->disconnect();
-    $self->log('dcdbg', "[$self->{'number'}]($self)TOTAL MANUAL DESTROY from ", join(':', caller), " ($self)") if $self->{'log'};
+    $self->log('dcdbg', "[$self->{'number'}]($self)TOTAL MANUAL DESTROY from ", join(':', caller), " ($self)");
     delete $self->{$_} for keys %$self;
     $self = undef;
   }
@@ -205,10 +205,10 @@ $self->log('dcdbg', "listening $self->{'myport'}"); #  if $self->{'debug'};
   sub DESTROY {
     my $self = shift;
 #print "\n[$self->{'number'}]DESTROY AUTO TRY\n";
-    $self->log('dcdbg', "[$self->{'number'}]($self)DESTROY from ", join(':', caller), " ($self)") if $self->{'log'};
+    $self->log('dcdbg', "[$self->{'number'}]($self)AUTO DESTROY from ", join(':', caller), " ($self)");
 #    $self->disconnect();
     $self->destroy();
-#print "DESTROY[$self->{'number'}]\n";
+#print "NOLOG DESTROY[$self->{'number'}]\n";
   }
 
 
@@ -312,7 +312,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
       }
 #      }
 #print ("recv per ", (time() - $tim), "\n");
-$self->log('dctim', "[$self->{'number'}] readend") if $self->{'log'};
+   $self->log('dctim', "[$self->{'number'}] readend");
 
 #  $self->destroy() , return if $self->{'status'} eq 'todestroy';
 
@@ -437,7 +437,7 @@ $self->log('dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'f
 #          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
             $self->disconnect(),
 #            $self->destroy(),
-          $self->{'status'} = 'todestroy';
+            $self->{'status'} = 'todestroy',
             $self->{'file_start_time'} = 0
             if $self->{'filebytes'} == $self->{'filetotal'};
 
