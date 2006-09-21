@@ -23,7 +23,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
   use strict;
   use lib './lib';
   use dcppp::clihub;
-  print ("usage: countub.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
+  print ("usage: countub.pl [dchub://]host[:port] [bot_nick] [share_delim]\n"), exit if !$ARGV[0];
   $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
   my $dc = dcppp::clihub->new(
    'host'	=>	$1,
@@ -38,5 +38,6 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->cmd('GetINFO', $_) for grep !$dc->{'NickList'}->{$_}{'info'}, keys %{$dc->{'NickList'}};
   $dc->recv() for 1..3;
   $share += $dc->{'NickList'}{$_}{'sharesize'} for keys %{$dc->{'NickList'}};
+  $share /= $ARGV[2] if  $ARGV[2];
   print ((scalar keys %{$dc->{'NickList'}} or 0), "\n$share\n$ARGV[0]\nz\n");
 
