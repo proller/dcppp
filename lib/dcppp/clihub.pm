@@ -1,6 +1,7 @@
+#Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
+
 my $Id = '$Id$';
 
-#Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 
 package dcppp::clihub;
 
