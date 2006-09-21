@@ -2,7 +2,7 @@
 my $Id = '$Id: dcppp.pl 107 2006-03-01 21:45:44Z pro $';
 =copyright
 counting users-bytes from dchub for mrtg or cacti (snmpd)
-Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proller AT mail DOT ru icq#89088275
+Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
