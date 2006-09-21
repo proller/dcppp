@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 my $Id = '$Id$';
 =copyright
 dcpp for perl 
@@ -36,10 +36,13 @@ or download it from http://www.gnu.org/licenses/gpl.html
    'myip'=>'10.20.199.104',
    'port'	=> 4111, 
 #   'host'=>'dcpp.migtel.ru',
-   'myport' => '6778',
+#   'myport' => '6778',
+   'host'=>'hub.selfip.com',
+
+ #  'host'=>'freehub.ru',
+   'port'	=> 411, 
   );
 
-  $dc->{'debug'} = 1;
 
 =example
   $dc->{'handler'}{'MyINFO'} = sub {

@@ -16,5 +16,5 @@ http://en.wikipedia.org/wiki/Magnet:_URI_scheme
 dcppp \        
         clihub  client to hub
         clicli  client to client
-        hubcli
-        hubhub 
+        hubcli  future
+        hubhub  future
