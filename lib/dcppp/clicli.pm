@@ -70,7 +70,10 @@ GetCID
         if ($self->{'incoming'}) {
           $self->{'sendbuf'} = 1;
           $self->cmd('MyNick');
+#          $self->{'sendbuf'} = 0;
 	  $self->cmd('Lock');
+#	  $self->recv();
+#          $self->{'sendbuf'} = 1;
   	  $self->cmd('Supports');
           $self->{'Direction'} = 'Download';
   	  $self->cmd('Direction');
@@ -93,9 +96,15 @@ GetCID
       },
       'Supports' => sub { },
       'Direction' => sub { 
+#$self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
       },
       'Key' => sub { 
         if ($self->{'incoming'}) {
+
+#  	  $self->cmd('Supports');
+#          $self->{'Direction'} = 'Download';
+#  	  $self->cmd('Direction');
+
 #print " CL $self->{'number'} [nick:$_] " for keys %{$self->{'want'}};
 =c
           for(keys %{$self->{'want'}->{$self->{'peernick'}}}) {
@@ -120,7 +129,7 @@ GetCID
       },
       'Get' => sub { 
 #TODO      
-      $self->cmd('FileLength',0); },
+      $self->cmd('FileLength', 0); },
       'MyNick' => sub { 
          $self->{'log'}->('info', "[$self->{'number'}] peer is [", ($self->{'peernick'} = $_[0]), "]");
          $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};

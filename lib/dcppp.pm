@@ -243,6 +243,7 @@ print "Lcanread\n";
 #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
 #my $tim = time();
 $self->log('dctim', "[$self->{'number'}] readstart");
+      last unless $self->{'select'};
       for my $client ($self->{'select'}->can_read(1)) {
 $self->log('dctim', "[$self->{'number'}] canread");
 #print ("can_read per ", (time() - $tim), "\n");
@@ -254,7 +255,8 @@ $self->log('dctim', "[$self->{'number'}] canread");
 #MORE INFO HERE
 #print "[$self->{'number'}] newinc [$self->{'accept'}]\n";
 #print "accpt total bef ", scalar keys %{$self->{'clients'}}  ,"\n";
-            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, clear(), 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}}, 'PortList' => \%{$self->{'PortList'}}), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
+#            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, clear(), 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}}, 'PortList' => \%{$self->{'PortList'}}), $self->{'clients'}{$_}->cmd('MyNick') unless $self->{'clients'}{$_}; #'debug'=>1,
+            $self->{'clients'}{$_} = $self->{'incomingclass'}->new( %$self, clear(), 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'incoming'=>1, 'want' => \%{$self->{'want'}},  'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}}, 'PortList' => \%{$self->{'PortList'}}) unless $self->{'clients'}{$_}; #'debug'=>1,
 #print "accpt total aft ", scalar keys %{$self->{'clients'}}  ,"\n";
 #print "ok\n";
           } else {
