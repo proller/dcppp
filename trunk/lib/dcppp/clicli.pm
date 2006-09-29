@@ -94,10 +94,11 @@ GetCID
 #	  $self->cmd('Lock');
         }
       },
-      'Supports' => sub { },
+#      'Supports' => sub { },
       'Direction' => sub { 
 #$self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
       },
+
       'Key' => sub { 
         if ($self->{'incoming'}) {
 
@@ -180,6 +181,20 @@ GetCID
              ($self->{'filename'}, $self->{'fileas'}) =  
              ($_, $self->{'want'}->{$self->{'peernick'}}{$_});
              last;
+          }
+          unless($self->{'filename'}) {
+            if ($self->{'NickList'}->{$self->{'peernick'}}{'BZList'} or 
+                $self->{'NickList'}->{$self->{'peernick'}}{'XmlBZList'}
+            ) {
+              $self->{'fileext'} = '.xml.bz2' ;
+              $self->{'filename'} = 'files' . $self->{'fileext'};
+            } else {
+              $self->{'fileext'} = '.DcLst' ;
+              $self->{'filename'} = 'MyList' . $self->{'fileext'};
+            }
+$self->{'log'}->('dev', "fas was", $self->{'fileas'});
+            $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
+$self->{'log'}->('dev', "fas now", $self->{'fileas'});
           }
       },
 
