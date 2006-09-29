@@ -8,6 +8,8 @@ package dcppp::clihub;
 #use lib '../../..';
 #use lib '../..';
 #use lib '..';
+#  use Time::HiRes;
+  eval { use Time::HiRes qw(time sleep); };  
   use dcppp;
   use dcppp::clicli;
   use strict;
@@ -132,7 +134,26 @@ HubTopic
     );
   
     %{$self->{'cmd'}} = (
-      'chatline'	=> sub { $self->{'socket'}->send("<$self->{'Nick'}> $_|") for(@_); },
+      'chatline'	=> sub { 
+        for(@_) {
+#  	  sleep($self->{'min_chat_delay'}) if $self->{'min_chat_delay'};
+#          if ($self->{'min_chat_delay'}) {
+            if ($self->{'min_chat_delay'} and (time - $self->{'last_chat_time'} < $self->{'min_chat_delay'})) {
+              $self->{'log'}->('dbg', 'sleep', $self->{'min_chat_delay'} - time + $self->{'last_chat_time'}); 
+	      sleep($self->{'min_chat_delay'} - time + $self->{'last_chat_time'});
+	    }
+            $self->{'last_chat_time'} = time;
+#	  }
+          $self->{'socket'}->send("<$self->{'Nick'}> $_|");
+#$self->{'log'}->('dbg', 'sleep', $self->{'min_chat_delay'}), 
+
+	} 
+      },
+#$To: <othernick> From: <nick> $<<nick>> <message>|
+      'To'	=> sub { 
+        my $to = shift;
+	$self->sendcmd('To:', "$to From: $self->{'Nick'} \$<$self->{'Nick'}> $_|") for(@_);
+      },
       'Key'	=> sub { $self->sendcmd('Key', $_[0]); },
       'ValidateNick'	=> sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); },
 #      'Version'	=> sub { $self->sendcmd('Version', $self->{'Version'}); },

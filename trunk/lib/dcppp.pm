@@ -394,9 +394,12 @@ $self->log('dctim', "[$self->{'number'}] canread");
     my $self = shift;
     my $cmd = shift;
 #print "[$self->{'number'}] dcppp cmdbeg ($self->{'autorecv'})clients:{", keys %{$self->{'clients'}}, "}\n" if ;
-
+    if ($self->{'min_cmd_delay'} and (time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'})) {
+      $self->{'log'}->('dbg', 'sleepcmd', $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'});
+      sleep($self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'});
+    }
+    $self->{'last_cmd_time'} = time;
     if($self->{'cmd'}{$cmd}) {
-
 #print "[$self->{'number'}] CMD:$cmd param[",@_,"]\n" if $self->{'debug'};
       $self->{'cmd'}{$cmd}->(@_);
     } else {
