@@ -1,7 +1,6 @@
 
-lock2key
+min_chat_delay min_cmd_delay
 
 private messages: $dc->cmd('To', 'pro', 'zz');
 
-min_chat_delay min_cmd_delay
-
+lock2key
