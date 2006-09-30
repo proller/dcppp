@@ -4,14 +4,13 @@ http://sourceforge.net/projects/dcppp
 svn co svn://svn.setun.net/dcppp/trunk/ search
 
 
-
-
-used in 
- http://sourceforge.net/projects/pro-search
+usage example:
+ http://sourceforge.net/projects/pro-search  http://pro.setun.net/search/trac.cgi/browser/trunk/crawler.pl
 
 
 
 
+protocol info
 http://www.dcpp.net/wiki/index.php
 http://www.teamfair.info/DC-Protocol.htm
 http://magnet-uri.sourceforge.net/

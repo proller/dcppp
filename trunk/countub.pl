@@ -38,6 +38,6 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->cmd('GetINFO', $_) for grep !$dc->{'NickList'}->{$_}{'info'}, keys %{$dc->{'NickList'}};
   $dc->recv() for 1..3;
   $share += $dc->{'NickList'}{$_}{'sharesize'} for keys %{$dc->{'NickList'}};
-  $share /= $ARGV[2] if  $ARGV[2];
+  $share /= $ARGV[2] if $ARGV[2];
   print ((scalar keys %{$dc->{'NickList'}} or 0), "\n$share\n$ARGV[0]\nz\n");
 
