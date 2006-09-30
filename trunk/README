@@ -4,17 +4,16 @@ http://sourceforge.net/projects/dcppp
 svn co svn://svn.setun.net/dcppp/trunk/ search
 
 
+
+
+used in 
+ http://sourceforge.net/projects/pro-search
+
+
+
+
 http://www.dcpp.net/wiki/index.php
 http://www.teamfair.info/DC-Protocol.htm
-
-
 http://magnet-uri.sourceforge.net/
 http://en.wikipedia.org/wiki/Magnet:_URI_scheme
 
-
-        me peer
-dcppp \        
-        clihub  client to hub
-        clicli  client to client
-        hubcli  future
-        hubhub  future

@@ -1,14 +1,4 @@
 
-
-
-
-/base class
-/client-hub class
-/client-client class
-[hub-client class
-hub-hub class]
-
-
 DC++ replaces all occurrences of "|" in <message> with "&#124;" and all occurrences of "$" with "&#36;". When displaying <message> the inverse replacement should be done.
 
-check send ret
+check socket->send ret
