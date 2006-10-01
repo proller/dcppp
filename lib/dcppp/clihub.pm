@@ -110,6 +110,7 @@ HubTopic
 #         $self->{'NickList'}->{$nick}{'ip'} = $hp;
 #         $self->{'IpList'}->{$hp} = \%{ $self->{'NickList'}->{$nick} };
          $self->{'PortList'}->{$host} = $port;
+$self->{'log'}->('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
          return if $self->{'clients'}{$host .':'. $port}->{'socket'};
          $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 'want' => \%{$self->{'want'}}, 'NickList' => \%{$self->{'NickList'}}, 'IpList' => \%{$self->{'IpList'}}, 'PortList' => \%{$self->{'PortList'}},
 #         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port, 
@@ -188,6 +189,7 @@ HubTopic
 #'debug'=>1,
 );
     $self->{'clients'}{''}->listen();
+    $self->connect() if $self->{'auto_connect'};
 #print "[$self->{'number'}]AFT";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 
   }

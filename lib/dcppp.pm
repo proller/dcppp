@@ -81,6 +81,8 @@ package dcppp;
 	'S'	=> '2',		#S: tells the number of slots user has opened 
 	'O'	=> undef,	#O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero 
 	'log'   => sub { print(join(' ', @_), "\n")},
+        'auto_connect' => 1,
+	'auto_recv' => 1,
     };
 #print "self creat: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n\n";
     bless($self, $class);
@@ -299,14 +301,14 @@ $self->log('dctim', "[$self->{'number'}] canread");
 #            $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_)) for grep /\w/, split /\|+/, $1;
 #          my $numbuf;
           for (split /\|/, $1) {
-          $self->log('dcdev', "($self->{'number'}) preparse writefile [$_]"),
+#          $self->log('dcdev', "($self->{'number'}) preparse writefile [$_]"),
 #            ($numbuf++ ? $_ .= '|' : 0), $self->writefile(\$_), next if ($self->{'filehandle'});
             last if $self->{'status'} eq 'todestroy';
             $_ .= '|', $self->writefile(\$_), next if ($self->{'filehandle'});
             next unless /\w/;
             $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_));
           }
-          $self->log('dcdev', "($self->{'number'}) preparse writefile postbuf  [$buf]"),
+#          $self->log('dcdev', "($self->{'number'}) preparse writefile postbuf  [$buf]"),
           $self->writefile(\$buf), $buf = '' if length($buf) and $self->{'filehandle'};
 #print ("parse ", (time() - $tim), "\n");
 #          }
@@ -395,7 +397,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
 #print "CMD PRE param[",@_,"]\n" ;
     my $self = shift;
     my $cmd = shift;
-#print "[$self->{'number'}] dcppp cmdbeg ($self->{'autorecv'})clients:{", keys %{$self->{'clients'}}, "}\n" if ;
+#print "[$self->{'number'}] dcppp cmdbeg ($self->{'auto_recv'})clients:{", keys %{$self->{'clients'}}, "}\n" if ;
     if ($self->{'min_cmd_delay'} and (time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'})) {
       $self->{'log'}->('dbg', 'sleepcmd', $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'});
       sleep($self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'});
@@ -408,7 +410,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
       $self->log('info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };");
       $self->{'cmd'}{$cmd} = sub { };
     }
-    $self->recv() if $self->{'autorecv'};
+    $self->recv() if $self->{'auto_recv'};
 #print "[$self->{'number'}] dcppp cmdaft clients:{", keys %{$self->{'clients'}}, "}\n";
   }
 
@@ -418,7 +420,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
     $self->{'want'}->{$nick}{$file} = ($as or $file);
 #print "[nick:$_]" for keys %{$self->{'want'}};
 #print "go conn [$nick] \n";
-    $self->cmd((($self->{'M'} eq 'A' and $self->{'myip'} ) ? '' : 'Rev') . 'ConnectToMe', $nick);
+    $self->cmd((($self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) ? '' : 'Rev') . 'ConnectToMe', $nick);
   }
 
   sub openfile {
@@ -454,8 +456,18 @@ $self->log('dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'f
   sub get_peer_addr {
     my ($self) = @_;
 #print "SO9[$self->{'socket'}]";
-    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
-    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
+#$self->{'log'}->('dev', "[$self->{'number'}] 1peerport=$self->{'peerport'}  port=$self->{'port'}; peerip=$self->{'peerip'} host=$self->{'host'};") ;
+    if($self->{'socket'}) {
+      @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) );
+#    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
+      $_[1]  = inet_ntoa($_[1]) if $_[1];
+#    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
+#$self->{'log'}->('dev', "[$self->{'number'}] 2peerport=$self->{'peerport'}  port=$self->{'port'}; peerip=$self->{'peerip'} host=$self->{'host'};") ;
+#    $self->{'peerport'} ||= $self->{'port'};
+#    $self->{'peerip'} ||= $self->{'host'};
+      $self->{'port'} = $_[0] if $_[0] and !$self->{'incoming'};
+      $self->{'host'} = $_[1] if $_[1];
+    }
   }
 
 # http://www.dcpp.net/wiki/index.php/LockToKey :

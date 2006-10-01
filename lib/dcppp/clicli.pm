@@ -54,7 +54,8 @@ GetCID
 #    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
 #    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
     $self->get_peer_addr();
-     $self->{'log'}->('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
+#     $self->{'log'}->('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
+    $self->{'log'}->('info', "[$self->{'number'}] Incoming client $self->{'host'}:$self->{'port'}") if $self->{'incoming'};
 
 #print("{{  $self->{'NickList'} }}");
 #print("[$_]")for sort keys %{$self->{'NickList'}};
@@ -133,9 +134,19 @@ GetCID
       $self->cmd('FileLength', 0); },
       'MyNick' => sub { 
          $self->{'log'}->('info', "[$self->{'number'}] peer is [", ($self->{'peernick'} = $_[0]), "]");
-         $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
-         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
-         $self->{'IpList'}->{$self->{'peerip'}}->{'port'} = $self->{'PortList'}->{$self->{'peerip'}};
+#         $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
+         $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'host'};
+#         $self->{'NickList'}->{$self->{'peernick'}}{'port'} = ($self->{'peerport'} or $self->{'port'});
+         $self->{'NickList'}->{$self->{'peernick'}}{'port'} = $self->{'port'};
+#         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+#         $self->{'IpList'}->{$self->{'peerip'}}->{'port'} = $self->{'PortList'}->{$self->{'peerip'}};
+         $self->{'IpList'}->{$self->{'host'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+         $self->{'IpList'}->{$self->{'host'}}->{'port'} = $self->{'PortList'}->{$self->{'host'}};
+#$self->{'log'}->('dev', "[$self->{'number'}] peer port is [ip:$self->{'host'} pl", 
+# $self->{'PortList'}->{$self->{'host'}},
+# 'nl',$self->{'NickList'}->{$self->{'peernick'}}{'port'},
+# 'port',$self->{'port'},"]");
+
         if (keys %{$self->{'want'}->{$self->{'peernick'}}}) {
 #print ("we want to download ",keys %{$self->{'want'}->{$self->{'peernick'}}}, " files\n");
           $self->{'Direction'} = 'Download';
@@ -192,9 +203,9 @@ GetCID
               $self->{'fileext'} = '.DcLst' ;
               $self->{'filename'} = 'MyList' . $self->{'fileext'};
             }
-$self->{'log'}->('dev', "fas was", $self->{'fileas'});
+#$self->{'log'}->('dev', "fas was", $self->{'fileas'});
             $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
-$self->{'log'}->('dev', "fas now", $self->{'fileas'});
+#$self->{'log'}->('dev', "fas now", $self->{'fileas'});
           }
       },
 
