@@ -77,7 +77,7 @@ GetCID
 #	  $self->recv();
 #          $self->{'sendbuf'} = 1;
   	  $self->cmd('Supports');
-          $self->{'Direction'} = 'Download';
+#          $self->{'Direction'} = 'Download';
   	  $self->cmd('Direction');
 	  $self->{'sendbuf'} = 0;
 #          $_[0] =~ /(\S+)/;
