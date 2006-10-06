@@ -42,6 +42,7 @@ GetCID
          'MiniSlots' => 1,
 
          @_,
+        'Direction' => 'Download',
 #	'Direction' => 'Upload', #rand here
 #	'incomingclass' => 'dcppp::clicli',
     );
