@@ -194,11 +194,12 @@ GetCID
              last;
           }
           unless($self->{'filename'}) {
-            if ($self->{'NickList'}->{$self->{'peernick'}}{'BZList'} or 
-                $self->{'NickList'}->{$self->{'peernick'}}{'XmlBZList'}
-            ) {
+            if ($self->{'NickList'}->{$self->{'peernick'}}{'XmlBZList'}) {
               $self->{'fileext'} = '.xml.bz2' ;
               $self->{'filename'} = 'files' . $self->{'fileext'};
+            } elsif ($self->{'NickList'}->{$self->{'peernick'}}{'BZList'}) {
+              $self->{'fileext'} = '.bz2' ;
+              $self->{'filename'} = 'MyList' . $self->{'fileext'};
             } else {
               $self->{'fileext'} = '.DcLst' ;
               $self->{'filename'} = 'MyList' . $self->{'fileext'};
