@@ -148,6 +148,8 @@ GetCID
 #         $self->{'IpList'}->{$self->{'peerip'}}->{'port'} = $self->{'PortList'}->{$self->{'peerip'}};
          $self->{'IpList'}->{$self->{'host'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
          $self->{'IpList'}->{$self->{'host'}}->{'port'} = $self->{'PortList'}->{$self->{'host'}};
+         $self->handler('user_ip',$self->{'peernick'}, $self->{'host'}, $self->{'port'});
+
 #$self->{'log'}->('dev', "[$self->{'number'}] peer port is [ip:$self->{'host'} pl", 
 # $self->{'PortList'}->{$self->{'host'}},
 # 'nl',$self->{'NickList'}->{$self->{'peernick'}}{'port'},

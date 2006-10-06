@@ -365,8 +365,14 @@ $self->log('dctim', "[$self->{'number'}] canread");
 #        print "($self->{'number'}) UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
         $self->{'parse'}{$cmd} = sub { };
       }                                                 
-      $self->{'handler'}{$cmd}->($_) if $self->{'handler'}{$cmd};
+      $self->handler($cmd, $_);
     }
+  }
+
+  sub handler {
+    my ($self, $cmd) = (shift, shift);
+$self->log('dev', 'handler', $cmd, @_, $self->{'handler'}{$cmd});
+    $self->{'handler'}{$cmd}->(@_) if $self->{'handler'}{$cmd};
   }
 
 { my @sendbuf;
