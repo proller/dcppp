@@ -425,7 +425,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
 
   sub openfile {
     my $self = shift;
-    open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return 1;
+    open($self->{'filehandle'}, ($self->{'fileas'} eq '-' ? ('>-') : ('>', ($self->{'fileas'} or $self->{'filename'})))) or return 1;
     binmode($self->{'filehandle'});
     return 0;
   }
