@@ -28,7 +28,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
   my $dc = dcppp::clihub->new(
    'host'	=>	$1,
    ($2 ? ('port'=>	$2): () ),
-   'Nick'	=>	($ARGV[1] or 'dcppp_counter'),
+   'Nick'	=>	($ARGV[1] or 'dcpppCounter'),
    'log'	=>	sub {},	# no logging
   );
   $dc->connect();
