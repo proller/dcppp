@@ -371,7 +371,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
 
   sub handler {
     my ($self, $cmd) = (shift, shift);
-$self->log('dev', 'handler', $cmd, @_, $self->{'handler'}{$cmd});
+#$self->log('dev', 'handler', $cmd, @_, $self->{'handler'}{$cmd});
     $self->{'handler'}{$cmd}->(@_) if $self->{'handler'}{$cmd};
   }
 
@@ -431,8 +431,14 @@ $self->log('dev', 'handler', $cmd, @_, $self->{'handler'}{$cmd});
 
   sub openfile {
     my $self = shift;
-    open($self->{'filehandle'}, ($self->{'fileas'} eq '-' ? ('>-') : ('>', ($self->{'fileas'} or $self->{'filename'})))) or return 1;
+    $self->handler('openfile_before');
+    my @oparam = (($self->{'fileas'} eq '-') ? ('>-') : ('>', ($self->{'fileas'} or $self->{'filename'})));
+    open($self->{'filehandle'}, @oparam) or  
+     $self->log('dcerr', "($self->{'number'}) openfile error", @oparam),
+     $self->handler('openfile_error', @oparam), 
+     return 1;
     binmode($self->{'filehandle'});
+    $self->handler('openfile_after');
     return 0;
   }
 
