@@ -361,7 +361,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
 #print "($self->{'number'}) rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
         $self->{'parse'}{$cmd}->($_);
       } else {
-        $self->log('info',  "($self->{'number'}) UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };");
+        $self->log('dcinf',  "($self->{'number'}) UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };");
 #        print "($self->{'number'}) UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
         $self->{'parse'}{$cmd} = sub { };
       }                                                 
