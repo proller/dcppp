@@ -433,7 +433,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
     my $self = shift;
     my $oparam = (($self->{'fileas'} eq '-') ? '>-' : '>'. ($self->{'fileas'} or $self->{'filename'}));
     $self->handler('openfile_before', $oparam);
-$self->log('dcdbg', "($self->{'number'}) openfile pre", $oparam);
+$self->log('dbg', "($self->{'number'}) openfile pre", $oparam);
     open($self->{'filehandle'}, $oparam) or  
      $self->log('dcerr', "($self->{'number'}) openfile error", $!, $oparam),
      $self->handler('openfile_error', $!, $oparam), 
