@@ -431,9 +431,9 @@ $self->log('dctim', "[$self->{'number'}] canread");
 
   sub openfile {
     my $self = shift;
-    $self->handler('openfile_before');
     my $oparam = (($self->{'fileas'} eq '-') ? '>-' : '>'. ($self->{'fileas'} or $self->{'filename'}));
-$self->log('dcdbg', "($self->{'number'}) openfile pre", $oparam),
+    $self->handler('openfile_before', $oparam);
+$self->log('dcdbg', "($self->{'number'}) openfile pre", $oparam);
     open($self->{'filehandle'}, $oparam) or  
      $self->log('dcerr', "($self->{'number'}) openfile error", $!, $oparam),
      $self->handler('openfile_error', $!, $oparam), 
@@ -447,7 +447,8 @@ $self->log('dcdbg', "($self->{'number'}) openfile post", $self->{'filehandle'}),
   sub writefile {
     my $self = shift;
     $self->{'file_start_time'} ||= time;
-    for my $databuf ( @_) {
+    $self->handler('writefile_before');
+    for my $databuf (@_) {
 #print("self:$self;\n");
           $self->{'filebytes'} += length $$databuf;
 $self->log('dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}");
