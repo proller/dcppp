@@ -237,7 +237,7 @@ print "Lcanread\n";
 #print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
 #print "R$self->{'number'} " if $self->{'debug'};
     my ($databuf, $readed);
-    do {
+LOOP: {    do {
       $readed = 0;
 #print "R[$self->{'number'}]\n";
 #print "[$self->{'number'}] dcppp read clients:{", keys %{$self->{'clients'}}, "} is $self->{'socket'}\n";
@@ -321,6 +321,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
 #  $self->destroy() , return if $self->{'status'} eq 'todestroy';
 
     } while ($readed);
+}
 #print "CLIents[$self->{'number'}:$self->{'clients'}]";
 
 #print "[$self->{'number'}] dcppp readaft clients:{", keys %{$self->{'clients'}}, "}\n";
@@ -440,7 +441,7 @@ $self->log('dbg', "($self->{'number'}) openfile pre", $oparam);
      return 1;
     binmode($self->{'filehandle'});
     $self->handler('openfile_after');
-$self->log('dcdbg', "($self->{'number'}) openfile post", $self->{'filehandle'}),
+#$self->log('dcdbg', "($self->{'number'}) openfile post", $self->{'filehandle'}),
     return 0;
   }
 

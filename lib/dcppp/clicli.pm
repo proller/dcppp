@@ -201,6 +201,7 @@ GetCID
              ($_, $self->{'want'}->{$self->{'peernick'}}{$_});
              last;
           }
+          return unless defined $self->{'filename'};
           unless($self->{'filename'}) {
             if ($self->{'NickList'}->{$self->{'peernick'}}{'XmlBZList'}) {
               $self->{'fileext'} = '.xml.bz2' ;
