@@ -58,6 +58,7 @@ package dcppp;
     my $class = shift;
     my $self = { 
 	'Listen' => 10,
+        'Timeout' => 10,
 	'myport_base' => 40000,
 	'myport_random' => 1000,
 	# http://www.dcpp.net/wiki/index.php/%24MyINFO
@@ -133,7 +134,7 @@ package dcppp;
     my $self = shift;
     $self->log('dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}");
 #    print "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
-    $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, )
+    $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Timeout' => $self->{'Timeout'})
 	 or $self->log('err',"connect socket  error: $@"), return;
     $self->nonblock();
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
