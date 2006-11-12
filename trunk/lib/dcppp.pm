@@ -141,7 +141,8 @@ package dcppp;
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
 
 #print "connect to $self->{'host'} ok\n"  if $self->{'debug'};
-    $self->log('dcdbg', "connect to $self->{'host'} ok"); #  if $self->{'debug'};
+    $self->get_my_addr();
+    $self->log('dcdbg', "connect to $self->{'host'} [me=$self->{'myip'}] ok"); #  if $self->{'debug'};
 #exit;
 
     $self->{'status'} = 'connecting';
@@ -472,20 +473,25 @@ $self->log('dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'f
 
   sub get_peer_addr {
     my ($self) = @_;
-#print "SO9[$self->{'socket'}]";
 #$self->{'log'}->('dev', "[$self->{'number'}] 1peerport=$self->{'peerport'}  port=$self->{'port'}; peerip=$self->{'peerip'} host=$self->{'host'};") ;
-    if($self->{'socket'}) {
-      @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) );
-#    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
-      $_[1]  = inet_ntoa($_[1]) if $_[1];
-#    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
-#$self->{'log'}->('dev', "[$self->{'number'}] 2peerport=$self->{'peerport'}  port=$self->{'port'}; peerip=$self->{'peerip'} host=$self->{'host'};") ;
-#    $self->{'peerport'} ||= $self->{'port'};
-#    $self->{'peerip'} ||= $self->{'host'};
-      $self->{'port'} = $_[0] if $_[0] and !$self->{'incoming'};
-      $self->{'host'} = $_[1] if $_[1];
-    }
+    return unless $self->{'socket'};
+    @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) );
+    return unless $_[1];
+    return unless $_[1] = inet_ntoa($_[1]);
+    $self->{'port'} = $_[0] if $_[0] and !$self->{'incoming'};
+    return $self->{'host'} = $_[1] if $_[1];
   }
+
+  sub get_my_addr {
+    my ($self) = @_;
+    return unless $self->{'socket'};
+    @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) );
+    return unless $_[1];
+    return unless $_[1] = inet_ntoa($_[1]);
+#$self->{'log'}->('dev', "[$self->{'number'}] SOCKNAME $_[0],$_[1];");
+    return $self->{'myip'} ||= $_[1];
+  }
+
 
 # http://www.dcpp.net/wiki/index.php/LockToKey :
 sub lock2key
