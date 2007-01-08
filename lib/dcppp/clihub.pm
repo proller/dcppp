@@ -145,7 +145,9 @@ HubTopic
 	    }
             $self->{'last_chat_time'} = time;
 #	  }
-          $self->{'socket'}->send("<$self->{'Nick'}> $_|");
+          $self->log('dcdmp', "($self->{'number'}) we send [", "<$self->{'Nick'}> $_|", "]:", 
+           $self->{'socket'}->send("<$self->{'Nick'}> $_|"), $!
+          );
 #$self->{'log'}->('dbg', 'sleep', $self->{'min_chat_delay'}), 
 
 	} 
@@ -153,7 +155,10 @@ HubTopic
 #$To: <othernick> From: <nick> $<<nick>> <message>|
       'To'	=> sub { 
         my $to = shift;
-	$self->sendcmd('To:', "$to From: $self->{'Nick'} \$<$self->{'Nick'}> $_|") for(@_);
+#	$self->sendcmd('To:', "$to From: $self->{'Nick'} \$<$self->{'Nick'}> $_|") for(@_);
+	$self->sendcmd('To:', $to, "From: $self->{'Nick'} \$<$self->{'Nick'}> $_") for(@_);
+#	$self->sendcmd('To :', "$to From: $self->{'Nick'} \$<$self->{'Nick'}> $_") for(@_);
+#	$self->{'socket'}->send('To :', "$to From: $self->{'Nick'} \$<$self->{'Nick'}> $_|") for(@_);
       },
       'Key'	=> sub { $self->sendcmd('Key', $_[0]); },
       'ValidateNick'	=> sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); },
