@@ -58,6 +58,7 @@ HubTopic
       'Lock' => sub { 
 #print "lockparse[$_[0]]\n";
         $self->{'sendbuf'} = 1;
+$self->cmd('Supports');
 #        $_[0] =~ /EXTENDEDPROTOCOL::\S+::(CTRL\[[^\]]+)\]/ or $_[0] =~ /(\S+)/;
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
 #print "lock[$1]\n";
@@ -70,14 +71,22 @@ HubTopic
       },
       'Hello' => sub { 
         return unless $_[0] eq $self->{'Nick'};
+$self->{'log'}->('info', "HELLO recieved, connected."); 
         $self->{'sendbuf'} = 1;
 	$self->cmd('Version');
-	$self->{'sendbuf'} = 0;
+	$self->{'sendbuf'} = 0 unless $self->{'auto_GetNickList'};
 	$self->cmd('MyINFO');
+	$self->{'sendbuf'} = 0,
+        $self->cmd('GetNickList') if $self->{'auto_GetNickList'};
         $self->{'status'} = 'connected';
 #        $self->{'no_print_welcome'} = 1;
 #	$self->recv();
+$self->{'log'}->('info', "HELLO end rec st:[$self->{'status'}]"); 
       },
+      'Supports' => sub {
+        $self->supports_parse($_[0], $self);
+      },
+
       'To' => sub { $self->{'log'}->('msg', "Private message to", @_);  },
       'MyINFO' => sub { 
         my ($nick, $info) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
@@ -162,8 +171,8 @@ HubTopic
       },
       'Key'	=> sub { $self->sendcmd('Key', $_[0]); },
       'ValidateNick'	=> sub { $self->sendcmd('ValidateNick', $self->{'Nick'}); },
-#      'Version'	=> sub { $self->sendcmd('Version', $self->{'Version'}); },
-      'Version'	=> sub { $self->sendcmd('Version', $self->tag()); },
+      'Version'	=> sub { $self->sendcmd('Version', $self->{'Version'}); },
+#      'Version'	=> sub { $self->sendcmd('Version', $self->tag()); },
       'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->myinfo()); },
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'description'} . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$'); },

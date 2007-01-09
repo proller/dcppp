@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 my $Id = '$Id$';
 =copyright
-dcpp for perl 
+tests
 Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 
 This program is free software; you can redistribute it and/or
