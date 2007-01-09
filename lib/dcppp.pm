@@ -84,10 +84,16 @@ package dcppp;
 	'log'   => sub { print(join(' ', @_), "\n")},
         'auto_connect' => 1,
 	'auto_recv' => 1,
+	'auto_GetNickList' => 1,
+'NoGetINFO'	=> 1,
+'NoHello'	=> 1,
+'UserIP2'	=> 1,
+'Version'	=> '1,0091',
     };
 #print "self creat: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n\n";
     bless($self, $class);
 #print "self: $self \n";
+#$self->{'log'}= sub { print(join(' ', @_, "st:[$self->{'status'}]"), "\n")};
 
 #print "dcppp0[$self->{'socket'}]{",@_,"}\n";
     $self->init(@_);
@@ -132,12 +138,16 @@ package dcppp;
  
   sub connect {
     my $self = shift;
+    return if $self->{'status'} eq 'connected';
     $self->log('dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}");
+    $self->{'status'} = 'connecting';
+    $self->{'outgoing'} = 1;
+
 #    print "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('PeerAddr'=>$self->{'host'}, 'PeerPort' => $self->{'port'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Timeout' => $self->{'Timeout'})
 	 or $self->log('err',"connect socket  error: $@"), return;
     $self->nonblock();
-    setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
+    setsockopt($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
 
 #print "connect to $self->{'host'} ok\n"  if $self->{'debug'};
@@ -145,8 +155,6 @@ package dcppp;
     $self->log('dcdbg', "connect to $self->{'host'} [me=$self->{'myip'}] ok"); #  if $self->{'debug'};
 #exit;
 
-    $self->{'status'} = 'connecting';
-    $self->{'outgoing'} = 1;
     $self->recv();
 #print "rec fr $self->{'host'} ok"  if $self->{'debug'};
   }
@@ -154,13 +162,13 @@ package dcppp;
   sub listen {
     my $self = shift;
 
-$self->log('dcdbg', "listening $self->{'myport'}"); #  if $self->{'debug'};
+$self->log('dcdbg', "[$self->{'number'}]listening $self->{'myport'}"); #  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('LocalPort'=> $self->{'myport'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Listen' => $self->{'Listen'})
 	 or $self->log('err',"listen $self->{'myport'} socket error: $@"), return;
 #    $self->{'select'} = IO::Select->new($self->{'socket'});
     setsockopt ($self->{'socket'},  &Socket::IPPROTO_TCP,  &Socket::TCP_NODELAY, 1);
     $self->nonblock();
-    $self->log('dcdbg', "listening $self->{'myport'} ok");
+    $self->log('dcdbg', "[$self->{'number'}]listening $self->{'myport'} ok");
     $self->{'accept'} = 1;
     $self->recv();
   }
@@ -246,10 +254,10 @@ LOOP: {    do {
 
 #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
 #my $tim = time();
-$self->log('dctim', "[$self->{'number'}] readstart");
+#$self->log('dctim', "[$self->{'number'}] readstart");
       last unless $self->{'select'};
       for my $client ($self->{'select'}->can_read(1)) {
-$self->log('dctim', "[$self->{'number'}] canread");
+#$self->log('dctim', "[$self->{'number'}] canread");
 #print ("can_read per ", (time() - $tim), "\n");
 
 #print "can read : $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
@@ -284,6 +292,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
 #          return;
         } else {
           ++$readed;
+#$self->log('dcdev', "[$self->{'number'}] RAW READ:[",$databuf,']');
         }
         if ($self->{'filehandle'}) {
           $self->writefile(\$databuf);
@@ -308,6 +317,8 @@ $self->log('dctim', "[$self->{'number'}] canread");
             last if $self->{'status'} eq 'todestroy';
             $_ .= '|', $self->writefile(\$_), next if ($self->{'filehandle'});
             next unless /\w/;
+#$self->log('dcdev', "($self->{'number'}) st: [$self->{'status'}]");
+
             $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_));
           }
 #          $self->log('dcdev', "($self->{'number'}) preparse writefile postbuf  [$buf]"),
@@ -318,7 +329,7 @@ $self->log('dctim', "[$self->{'number'}] canread");
       }
 #      }
 #print ("recv per ", (time() - $tim), "\n");
-   $self->log('dctim', "[$self->{'number'}] readend");
+#   $self->log('dctim', "[$self->{'number'}] readend");
 
 #  $self->destroy() , return if $self->{'status'} eq 'todestroy';
 
@@ -391,9 +402,10 @@ $self->log('dctim', "[$self->{'number'}] canread");
 #eval {
 #$self->{'socket'}->send('$|');
 #      print"sending [$_] to [$self->{'number'}]\n" ;
-      $self->log('dcdmp', "($self->{'number'}) we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"]");
+      $self->log('dcdmp', "($self->{'number'}) we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"]:",
 #print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'number'}]\n" if $self->{'debug'};
-      $self->{'socket'}->send( join('', @sendbuf, '$' . join(' ', @_) . '|') ); 
+       $self->{'socket'}->send( join('', @sendbuf, '$' . join(' ', @_) . '|') ), $!
+      );
 #      $_ = $self->{'socket'};
 #      print $_ join('', @sendbuf, '$' . join(' ', @_) . '|'); 
 #}      
@@ -535,7 +547,8 @@ sub lock2key
 
   sub myinfo { 
     my $self = shift;
-    return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$' . ($self->{'M'} or ' ') .'$' . $self->{'connection'} . (length($self->{'flag'}) ? chr($self->{'flag'}) : '') . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$';
+#   return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$' . ($self->{'M'} or ' ') .'$' . $self->{'connection'} . (length($self->{'flag'}) ? chr($self->{'flag'}) : '') . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$';
+    return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$' . ' ' .'$' . $self->{'connection'} . (length($self->{'flag'}) ? chr($self->{'flag'}) : '') . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$';
   }
 
   sub supports { 
