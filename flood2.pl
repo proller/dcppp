@@ -36,10 +36,10 @@ or download it from http://www.gnu.org/licenses/gpl.html
 #   'log'		=>	sub {},	# no logging
 #   'min_chat_delay'	=> 0.401,
 #   'min_cmd_delay'	=> 0.401,
-'client' => '++',
-'V' => '0.698',
-	'description' => '',
-
+   'client'		=> '++',
+   'V'			=> '0.698',
+   'description'	=> '',
+   'M'			=> 'P',
   );
 print("BOT SEND all\n"),
   $dc->cmd('chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!');
