@@ -161,7 +161,7 @@ package dcppp;
 
   sub listen {
     my $self = shift;
-
+    return if !$self->{'Listen'} or ($self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'});
 $self->log('dcdbg', "[$self->{'number'}]listening $self->{'myport'}"); #  if $self->{'debug'};
     $self->{'socket'} = new IO::Socket::INET('LocalPort'=> $self->{'myport'}, 'Proto' => 'tcp', 'Type' => SOCK_STREAM, 'Listen' => $self->{'Listen'})
 	 or $self->log('err',"listen $self->{'myport'} socket error: $@"), return;
