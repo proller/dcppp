@@ -30,7 +30,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
    my $dc = dcppp::clihub->new(
    'host'		=>	$1,
    ($2 ? ('port'	=>	$2): () ),
-   'Nick'		=>	($ARGV[1] or int(rand(100)) x 4),
+   'Nick'		=>	($ARGV[1] or int(rand(100000000)) ),
 #   'Nick'		=>	'xxxx',
    'sharesize'		=>	int(rand 1000000000000) + int(rand 100000000000) * int(rand 100),
 #   'log'		=>	sub {},	# no logging
