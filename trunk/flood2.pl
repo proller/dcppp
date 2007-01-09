@@ -47,4 +47,5 @@ print("BOT SEND to $_\n"),
   $dc->cmd('To', $_, 'RAT HUB заражен вирусом срочно покиньте его!') for keys %{$dc->{'NickList'}};
   $dc->recv(); #sleep(5); $dc->recv();
   $dc->destroy();
+  sleep(2);
   }
