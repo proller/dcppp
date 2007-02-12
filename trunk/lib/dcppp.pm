@@ -193,7 +193,7 @@ $self->log('dcdbg', "[$self->{'number'}]listening $self->{'myport'}"); #  if $se
 #print " clidel {", keys %{$self->{'clients'}}, "}\n";
 
 #print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"),
-    $self->{'clients'}{$_}->disconnect(), 
+    $self->{'clients'}{$_}->destroy(), 
      $self->{'clients'}{$_} = undef,
      delete($self->{'clients'}{$_}) for grep $_, keys %{$self->{'clients'}};
 #grep $self->{'number'} != $self->{'clients'}{$_}->{'number'},
