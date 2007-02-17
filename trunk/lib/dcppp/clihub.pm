@@ -71,7 +71,7 @@ $self->cmd('Supports');
       },
       'Hello' => sub { 
         return unless $_[0] eq $self->{'Nick'};
-$self->{'log'}->('info', "HELLO recieved, connected."); 
+#$self->{'log'}->('info', "HELLO recieved, connected."); 
         $self->{'sendbuf'} = 1;
 	$self->cmd('Version');
 	$self->{'sendbuf'} = 0 unless $self->{'auto_GetNickList'};
@@ -81,7 +81,7 @@ $self->{'log'}->('info', "HELLO recieved, connected.");
         $self->{'status'} = 'connected';
 #        $self->{'no_print_welcome'} = 1;
 #	$self->recv();
-$self->{'log'}->('info', "HELLO end rec st:[$self->{'status'}]"); 
+#$self->{'log'}->('info', "HELLO end rec st:[$self->{'status'}]"); 
       },
       'Supports' => sub {
         $self->supports_parse($_[0], $self);
