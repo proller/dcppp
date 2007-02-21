@@ -32,8 +32,8 @@ or download it from http://www.gnu.org/licenses/gpl.html
    'log'	=>	sub {},	# no logging
   );
   $dc->connect();
-  $dc->cmd('GetNickList');
-  $dc->recv();
+#  $dc->cmd('GetNickList');
+#  $dc->recv();
   my ($share) = (0);
   $dc->cmd('GetINFO', $_) for grep !$dc->{'NickList'}->{$_}{'info'}, keys %{$dc->{'NickList'}};
   $dc->recv() for 1..3;
