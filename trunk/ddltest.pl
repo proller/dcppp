@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 my $Id = '$Id: dcppp.pl 107 2006-03-01 21:45:44Z pro $';
+
 =copyright
 test direct downloading (without hub)
 Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
@@ -20,11 +21,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 
-  use strict;
+use strict;
+
 #  use Time::HiRes;
-  eval { use Time::HiRes qw(time sleep); };
-  use lib './lib';
-  use dcppp::clihub;
+eval { use Time::HiRes qw(time sleep); };
+use lib './lib';
+use dcppp::clihub;
+
 =cu
   use dcppp::clicli;
   print ("usage: ddltest.pl nick:ip:port[/path]/file [bot_nick] [fileas]\n"), exit if !$ARGV[0];
@@ -50,18 +53,20 @@ or download it from http://www.gnu.org/licenses/gpl.html
   $dc->recv();
 =cut
 
-  print ("usage: ddltest.pl [dchub://]hub[:port]/nick[/path]/file [bot_nick] [fileas]\n"), exit if !$ARGV[0];
+print("usage: ddltest.pl [dchub://]hub[:port]/nick[/path]/file [bot_nick] [fileas]\n"), exit if !$ARGV[0];
+
 #  $ARGV[0] =~ m|^([^:]+):((?:\w+\.?)+)(?:\:(\d+))(/.+)$|;
-  $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?/(.+?)/(.+)$|;
+$ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?/(.+?)/(.+)$|;
+
 #print"[$ARGV[0]] 1=$1 2=$2 3=$3 4=$4 ; \n";
-  my ($user_nick, $file) = ($3, $4);
-  my $dc = dcppp::clihub->new(
-   'host'	=>	$1,
-   ($2 ? ('port'=>	$2): () ),
-   'Nick'	=>	($ARGV[1] or 'dcpppDl'. int(rand(100))),
-   'log'	=>	sub {},	# no logging
-  );
-  $dc->get($user_nick, $file, ($ARGV[2] or $file)); #.get
+my ( $user_nick, $file ) = ( $3, $4 );
+my $dc = dcppp::clihub->new(
+  'host' => $1,
+  ( $2 ? ( 'port' => $2 ) : () ),
+  'Nick' => ( $ARGV[1] or 'dcpppDl' . int( rand(100) ) ),
+  'log' => sub { },    # no logging
+);
+$dc->get( $user_nick, $file, ( $ARGV[2] or $file ) );    #.get
 
 #  $dc->recv(); sleep(5); $dc->recv();
 
