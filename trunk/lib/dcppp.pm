@@ -164,7 +164,8 @@ sub connect {
     'PeerPort' => $self->{'port'},
     'Proto'    => 'tcp',
     'Type'     => SOCK_STREAM,
-    'Timeout'  => $self->{'Timeout'}
+    'Timeout'  => $self->{'Timeout'},
+    %{$self->{'sockopts'} or {}},
   ) or $self->log( 'err', "connect socket  error: $@" ), return;
   $self->nonblock();
   setsockopt( $self->{'socket'}, &Socket::IPPROTO_TCP, &Socket::TCP_NODELAY, 1 );
@@ -190,7 +191,8 @@ sub listen {
     'LocalPort' => $self->{'myport'},
     'Proto'     => 'tcp',
     'Type'      => SOCK_STREAM,
-    'Listen'    => $self->{'Listen'}
+    'Listen'    => $self->{'Listen'},
+    %{$self->{'sockopts'} or {}},
   ) or $self->log( 'err', "listen $self->{'myport'} socket error: $@" ), return;
 
   #    $self->{'select'} = IO::Select->new($self->{'socket'});
