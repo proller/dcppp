@@ -131,6 +131,7 @@ sub init {
     },
     'ForceMove' => sub {
       $self->{'log'}->( 'info', "ForceMove to $_[0]" );
+      $self->disconnect();
     },
     'Quit' => sub {
       $self->{'NickList'}->{ $_[0] }{'online'} = 0;
