@@ -22,7 +22,6 @@ or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 
 use strict;
-
 #  use Time::HiRes;
 eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
@@ -33,23 +32,18 @@ my $dc = dcppp::clihub->new(
   'host' => $1,
   ( $2 ? ( 'port' => $2 ) : () ),
   'Nick' => ( $ARGV[1] or 'dcppp_flooder' . int( rand(100) ) ),
-
   #   'log'		=>	sub {},	# no logging
   #   'min_chat_delay'	=> 0.401,
   #   'min_cmd_delay'	=> 0.401,
 );
-
 #  $dc->connect();
 #  $dc->cmd('GetNickList');
 $dc->recv();
-
 #  $dc->cmd('chatline', 't');
 #  $dc->cmd('chatline', '?showstats xxx');
 #  $dc->cmd('chatline', 't2');
 my $i;
-
 $dc->cmd( 'To', '[skying]pro(+)', 'zz' . $i++ . 'z' . rand(1000) ),
-
   #  $dc->recv(),
   1 for 0 .. 100000;
 
@@ -64,4 +58,3 @@ $dc->cmd( 'To', '[skying]pro(+)', 'zz' . $i++ . 'z' . rand(1000) ),
 $dc->recv();
 sleep(5);
 $dc->recv();
-

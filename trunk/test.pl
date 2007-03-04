@@ -22,25 +22,20 @@ or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 
 use strict;
-
 use lib './lib';
 use dcppp::clihub;
-
 #  require 'lib/dcppp.pm';
 #  require 'lib/dcppp/clihub.pm';
 #  require 'lib/dcppp/clicli.pm';
 #  use dcppp;
 #  use dcppp::client;
-
 my $dc = dcppp::clihub->new(
   'host' => 'dc.setun.net',
   'myip' => '10.20.199.104',
   'port' => 4111,
-
   #   'host'=>'dcpp.migtel.ru',
   #   'myport' => '6778',
   'host' => 'hub.selfip.com',
-
   #  'host'=>'freehub.ru',
   'port' => 411,
 );
@@ -53,26 +48,18 @@ my $dc = dcppp::clihub->new(
 =cut
 
 $dc->connect();
-
 #  $dc->listen();
 $dc->{'autorecv'} = 1;
-
 #  $dc->cmd('chatline','hello world');
 $dc->cmd('GetNickList');
-
 #  $dc->cmd('ConnectToMe', 'pro');
 $dc->recv();
-
 #  $dc->cmd('chatline','hello world! i\'m perl bot. Freebsd rulez.');
-
 #  $dc->{'autorecv'} = 0;
-
 #  $dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyINFO'),sleep 1for (1..1000);
 $dc->recv(),
-
   #print("! $_ !\n"), # $dc->cmd('ConnectToMe',$_)
   $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), sleep 1 for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
-
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
 #  sleep 1;
@@ -81,8 +68,6 @@ $dc->recv(),
 #print "OK\n";
 # print"R\n",
 $dc->recv(), sleep 0.1 while 600;
-
 #  sleep 1;
 #  $dc->recv();
-
 #sleep 10;
