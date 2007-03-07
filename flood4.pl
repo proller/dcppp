@@ -90,6 +90,8 @@ TRY: for ( 0 .. 1000 ) {
     'description' => '',
     'M'           => 'P',
     'sockopts'    => { 'LocalAddr' => "10.131.$ipc.$ipd" },
+    'Version'          => rand_int(1,1000),
+
   );
   if_del(), next if !$dc->{'socket'};
   #      $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
