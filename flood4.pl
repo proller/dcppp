@@ -43,8 +43,9 @@ sub rand_int {
 
 sub rand_char {
   my ( $from, $to ) = @_;
-  $from ||= 32+16;
-  $to ||= 60;
+#perl -e "print chr($_) for (32+65..32+65+25)"  
+  $from ||= 32+65;
+  $to ||= 32+65+25;
   return chr(rand_int($from, $to));
 }
 
