@@ -102,8 +102,9 @@ TRY: for ( 0 .. 1000 ) {
   );
     $dc->{'handler'}{'To'} = sub {
      for (@_) {
+    print("ban test[$_]\n");
     print("BANNED! destroy.\n"),
-    $dc->destroy() if /навсегда лишен права говорить в чате и привате/i;
+    $dc->destroy(), last if /навсегда лишен права говорить в чате и привате/i;
      }
 #  
 };
