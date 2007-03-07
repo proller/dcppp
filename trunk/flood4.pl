@@ -57,6 +57,14 @@ sub rand_str{
   return $ret;
 }
 
+sub rand_str_ex {
+ my ($str, $chg) = @_;
+ $chg ||= int (length($str) / 10);
+ local @_ = split(//, $str);
+ for(0..$chg){
+ $_[rand scalar @_] = rand_char();
+ }
+}
 
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
@@ -77,10 +85,11 @@ TRY: for ( 0 .. 1000 ) {
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
 #    'Nick' => ( $ARGV[1] or 'z' . int( rand(100000000) ) ) . 'x',
-    'Nick' => ( $ARGV[1] or rand_str()),
+    'Nick' => ( $ARGV[1] or rand_str(rand_int(1,10))),
 
     #   'Nick'		=>	'xxxx',
-    'sharesize' => int( rand 100000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
+#    'sharesize' => int( rand 10000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
+    'sharesize' => rand_int(1,10000000000000),
     #   'log'		=>	sub {},	# no logging
     #    'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
     #   'min_chat_delay'	=> 0.401,
