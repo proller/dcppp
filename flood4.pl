@@ -35,10 +35,19 @@ sub fisher_yates_shuffle {
   }
   return $deck;
 }
+
+sub rand_int {
+ my ($from, $to) = @_;
+ return $from + int rand($to - $from);
+}
+
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
-for my $ipc ( map { @$_ } fisher_yates_shuffle( [ 230 .. 250 ] ) ) {
-  for my $ipd ( map { @$_ } fisher_yates_shuffle( [ 1 .. 254 ] ) ) {
+#for my $ipc ( map { @$_ } fisher_yates_shuffle( [ 230 .. 250 ] ) ) {
+#  for my $ipd ( map { @$_ } fisher_yates_shuffle( [ 1 .. 254 ] ) ) {
+for (0..1000) {
+my $ipc = rand_int(230,255);
+my $ipd = rand_int(1,254);
     print "if create 10.131.$ipc.$ipd\n";
     print `ifconfig lo1 alias 10.131.$ipc.$ipd/32`;
     print "ok\n";
@@ -79,7 +88,7 @@ last if !$dc->{'socket'} or $dc->{'status'} ne 'connected';
     $dc->destroy();
     sleep(2);
     print "if del 10.131.$ipc.$ipd\n";
-    print `ifconfig lo1  10.131.$ipc.$ipd/32 -alias`;
+    print `ifconfig lo1  10.131.$ipc.$ipd -alias`;
     print "ok\n";
-  }
+#  }
 }
