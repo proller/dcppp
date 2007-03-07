@@ -95,8 +95,8 @@ TRY: for ( 0 .. 1000 ) {
   );
   if_del(), next if !$dc->{'socket'};
   #      $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
-  for ( 1 .. 15 ) {    #sleep(5); $dc->recv();
-    if_del(), next TRY if !$dc->{'socket'} or $dc->{'status'} eq 'connected';
+  for ( 1 .. 30 ) {    #sleep(5); $dc->recv();
+    last if !$dc->{'socket'} or $dc->{'status'} eq 'connected';
     $dc->recv();
     sleep(1);
   }
