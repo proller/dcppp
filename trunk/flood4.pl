@@ -88,7 +88,7 @@ TRY: for ( 0 .. 1000 ) {
     'Nick' => ( $ARGV[1] or rand_str( rand_int( 1, 10 ) ) ),
     #   'Nick'		=>	'xxxx',
     #    'sharesize' => int( rand 10000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
-    'sharesize' => rand_int( 1, 10000000000000 ),
+    'sharesize' => rand_int( 1, 1000000000000 ),
     #   'log'		=>	sub {},	# no logging
     #    'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
     #   'min_chat_delay'	=> 0.401,
@@ -118,7 +118,7 @@ TRY: for ( 0 .. 1000 ) {
       rand_str_ex(
 'Доброго времени суток! Пользуясь случаем, хотим попросить Вас больше никогда не рекламировать свой хаб где попало. Спасибо. '
           . $_
-          . ':O:hmph::arrow::}:brow::no::(:\'(:idea:_\m/|-Om/_/:geek::geek::yes:O_O:):umm::?::sick::fear::ahoy::whistle::satan:'
+#          . ':O:hmph::arrow::}:brow::no::(:\'(:idea:_\m/|-Om/_/:geek::geek::yes:O_O:):umm::?::sick::fear::ahoy::whistle::satan:'
 #.':D:P:!::blush::w00t::errm::x;):omg:>_<:lol::roll::heart::S:sulk::naughty:(H):whatever::|:-p:crego::biggrin::sketchy::martini:'
       )
       );
