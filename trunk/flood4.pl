@@ -58,19 +58,24 @@ for my $ipc ( map { @$_ } fisher_yates_shuffle( [ 230 .. 250 ] ) ) {
       'M'           => 'P',
       'sockopts'    => { 'LocalAddr' => "10.131.$ipc.$ipd" },
     );
-    next if !$dc->{'socket'};
-    #      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим сказать вам: ¬џ Ё@3Ѕ@Ћ» —ѕјћ»“№!' );
-    $dc->recv(), sleep(1) for ( 1 .. 5 );    #sleep(5); $dc->recv();
-    for ( 1 .. 1000 ) {
-      last if !$dc->{'socket'};
-      print("BOT SEND all\n"),
+next if !$dc->{'socket'};
+#      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим сказать вам: ¬џ Ё@3Ѕ@Ћ» —ѕјћ»“№!' );
+     for (1..15) {    #sleep(5); $dc->recv();
+next if !$dc->{'socket'} or $dc->{'status'} eq 'connected';
+    $dc->recv();
+    sleep(1);
+}
+   for (1..1000) {
+last if !$dc->{'socket'} or $dc->{'status'} ne 'connected';
+    print("BOT SEND all\n"),
 #      $dc->cmd( 'chatline', 'Ќа–оƒ, ѕр»гЋаЎа≈м ¬а— Ќа ѕр»кќл№нџй хјб 10. 139. 24 .136  !!! ¬аћ ¬с≈гƒа –аƒ HUB -=NEW-CITY=-, Ќе «аЅуƒь“е ƒоЅа¬и“ь в »зЅрјннќе!!' );
-        $dc->cmd( 'chatline', $_ );
-      #    sleep(1);
-    }
-    #    print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, 'HUB за ражен виру сом сро чно поки ньте его!' )
-    #      for keys %{ $dc->{'NickList'} };
-    $dc->recv();                             #sleep(5); $dc->recv();
+#      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим сказать вам: ¬џ Ё@3Ѕ@Ћ» —ѕјћ»“№!'. $_);
+      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим попросить ¬ас больше никогда не рекламировать свой хаб где попало. —пасибо. '.$_ );
+#    sleep(1);
+}
+#    print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, 'HUB за ражен виру сом сро чно поки ньте его!' )
+#      for keys %{ $dc->{'NickList'} };
+    $dc->recv();    #sleep(5); $dc->recv();
     $dc->destroy();
     sleep(2);
     print "if del 10.131.$ipc.$ipd\n";
