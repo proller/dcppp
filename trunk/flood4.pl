@@ -108,7 +108,8 @@ TRY: for ( 0 .. 1000 ) {
       $dc->cmd( 'chatline',
 'Доброго времени суток! Пользуясь случаем, хотим попросить Вас больше никогда не рекламировать свой хаб где попало. Спасибо. '
         . $_ 
-. ':O:hmph::arrow::}:brow::no::(:\'(:idea:_\m/|-Om/_/:geek::geek::yes:O_O:):umm::?::sick::fear::ahoy::whistle::satan::D:P:!::blush::w00t::errm::x;):omg:>_<:lol::roll::heart::S:sulk::naughty:(H):whatever::|:-p:crego::biggrin::sketchy::martini:'
+. ':O:hmph::arrow::}:brow::no::(:\'(:idea:_\m/|-Om/_/:geek::geek::yes:O_O:):umm::?::sick::fear::ahoy::whistle::satan:'
+#.':D:P:!::blush::w00t::errm::x;):omg:>_<:lol::roll::heart::S:sulk::naughty:(H):whatever::|:-p:crego::biggrin::sketchy::martini:'
 	);
         sleep(2);
   }
