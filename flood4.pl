@@ -78,15 +78,17 @@ for ( 0 .. 1000 ) {
     $dc->recv();
     sleep(1);
   }
-  for ( 1 .. 1000 ) {
+  for ( 1 .. 100 ) {
     last if !$dc->{'socket'} or $dc->{'status'} ne 'connected';
     print("BOT SEND all\n"),
 #      $dc->cmd( 'chatline', 'Ќа–оƒ, ѕр»гЋаЎа≈м ¬а— Ќа ѕр»кќл№нџй хјб 10. 139. 24 .136  !!! ¬аћ ¬с≈гƒа –аƒ HUB -=NEW-CITY=-, Ќе «аЅуƒь“е ƒоЅа¬и“ь в »зЅрјннќе!!' );
 #      $dc->cmd( 'chatline', 'ƒоброго времени суток! ѕользу€сь случаем, хотим сказать вам: ¬џ Ё@3Ѕ@Ћ» —ѕјћ»“№!'. $_);
       $dc->cmd( 'chatline',
 'ƒоброго времени суток! ѕользу€сь случаем, хотим попросить ¬ас больше никогда не рекламировать свой хаб где попало. —пасибо. '
-        . $_ );
-    #    sleep(1);
+        . $_ 
+. ':O:hmph::arrow::}:brow::no::(:\'(:idea:_\m/|-Om/_/:geek::geek::yes:O_O:):umm::?::sick::fear::ahoy::whistle::satan::D:P:!::blush::w00t::errm::x;):omg:>_<:lol::roll::heart::S:sulk::naughty:(H):whatever::|:-p:crego::biggrin::sketchy::martini:'
+	);
+        sleep(2);
   }
   #    print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, 'HUB за ражен виру сом сро чно поки ньте его!' )
   #      for keys %{ $dc->{'NickList'} };
