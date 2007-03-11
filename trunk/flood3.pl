@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-my $Id = '$Id: dcppp.pl 107 2006-03-01 21:45:44Z pro $';
+# $Id: dcppp.pl 107 2006-03-01 21:45:44Z pro $ $URL$
 
 =copyright
 flood tests
