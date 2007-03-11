@@ -85,7 +85,7 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
     %{ $config{'dcbot_param'} or {} },
-    handler( 'param' ),
+    handler('param'),
   );
   handler( 'create_aft', $dc );
   #
@@ -99,14 +99,12 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   handler( 'send_bef', $dc );
   for ( 0 .. $config{'send_tries'} ) {
     last if !$dc->{'socket'} or $dc->{'status'} ne 'connected';
-    handler( 'send', $dc, $_), sleep( $config{'send_sleep'} );
+    handler( 'send', $dc, $_ ), sleep( $config{'send_sleep'} );
   }
   handler( 'send_aft', $dc );
-  #    print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, 'HUB за ражен виру сом сро чно поки ньте его!' )
-  #      for keys %{ $dc->{'NickList'} };
-  $dc->recv();                              #sleep(5); $dc->recv();
+  $dc->recv();
   handler( 'destroy_bef', $dc );
-  handler( 'destroy', $dc );
+  handler( 'destroy',     $dc );
   $dc->destroy() if !$config{'no_destroy'};
   sleep( $config{'after_sleep'} );
   print "ok\n";
