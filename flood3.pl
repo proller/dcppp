@@ -42,13 +42,12 @@ for ( 0 .. 100 ) {
     'V'           => '0.698',
     'description' => '',
     'M'           => 'P',
-#   'sockopts'    => { 'LocalAddr' => "10.131.120.1" },
-   
+    #   'sockopts'    => { 'LocalAddr' => "10.131.120.1" },
   );
   #print("BOT SEND all\n"),
-#  $dc->cmd( 'chatline', 'hi ' );
-#  $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' . $_ )
-#    for ( 1 .. 20 );
+  #  $dc->cmd( 'chatline', 'hi ' );
+  #  $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' . $_ )
+  #    for ( 1 .. 20 );
   #print("BOT SEND to $_\n"),
   #  $dc->cmd('To', $_, 'RAT HUB заражен вирусом срочно покиньте его!') for keys %{$dc->{'NickList'}};
   #  $dc->recv(); #sleep(5); $dc->recv();

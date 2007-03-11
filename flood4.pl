@@ -100,17 +100,13 @@ TRY: for ( 0 .. 1000 ) {
     'sockopts'    => { 'LocalAddr' => "10.131.$ipc.$ipd" },
     'Version'     => rand_int( 1, 1000 ),
   );
-    $dc->{'handler'}{'To'} = sub {
-     for (@_) {
-    print("ban test[$_]\n");
-    print("BANNED! destroy.\n"),
-    $dc->destroy(), last if /навсегда лишен права говорить в чате и привате/i;
-     }
-#  
-};
-
-
-  
+  $dc->{'handler'}{'To'} = sub {
+    for (@_) {
+      print("ban test[$_]\n");
+      print("BANNED! destroy.\n"), $dc->destroy(), last if /навсегда лишен права говорить в чате и привате/i;
+    }
+    #
+  };
   if_del(), next if !$dc->{'socket'};
   #      $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
   for ( 1 .. 30 ) {    #sleep(5); $dc->recv();
