@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-my $Id = '$Id$';
+# $Id$ $URL$
 
 =copyright
 tests
