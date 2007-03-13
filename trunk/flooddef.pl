@@ -1,4 +1,8 @@
+#!/usr/bin/perl
 # $Id$ $URL$
+# flood default config
+#
+
 $config{'flood_tries'}      = 100;
 $config{'connect_wait'}     = 30;
 $config{'connect_aft_wait'} = 5;

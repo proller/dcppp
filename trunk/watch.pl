@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-my $Id = '$Id$';
+# $Id$ $URL$
 
 =copyright
 flood tests
