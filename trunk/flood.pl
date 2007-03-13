@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: dcppp.pl 107 2006-03-01 21:45:44Z pro $ $URL$
+# $Id$ $URL$
 
 =copyright
 flood tests

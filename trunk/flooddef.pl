@@ -1,4 +1,4 @@
-# $Id: dcppp.pl 107 2006-03-01 21:45:44Z pro $ $URL$
+# $Id$ $URL$
 $config{'flood_tries'}      = 100;
 $config{'connect_wait'}     = 30;
 $config{'connect_aft_wait'} = 5;
