@@ -3,15 +3,21 @@
 # pro http://pro.setun.net/dcppp/ proler@gmail.com icq#89088275
       http://sourceforge.net/projects/dcppp
 
+svn co svn://svn.setun.net/dcppp/trunk/ dcppp
 
-svn co svn://svn.setun.net/dcppp/trunk/ search
+
+
+
+flood.pl config:
+copy flooddef.pl floodmy.pl
+edit floodmy.pl
+run flood.pl dchub://1.4.5.6:4111
+
+
 
 
 usage example:
  http://sourceforge.net/projects/pro-search  http://pro.setun.net/search/trac.cgi/browser/trunk/crawler.pl
-
-
-
 
 protocol info
 http://www.dcpp.net/wiki/index.php
