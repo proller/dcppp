@@ -14,7 +14,8 @@ use dcppp::clicli;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
-our @ISA = ('dcppp');
+#our @ISA = ('dcppp');
+use base 'dcppp';
 
 #todo! move to main module
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
