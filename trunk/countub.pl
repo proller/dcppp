@@ -29,7 +29,7 @@ $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 my $dc = dcppp::clihub->new(
   'host' => $1,
   ( $2 ? ( 'port' => $2 ) : () ),
-  'Nick' => ( $ARGV[1] or 'dcpppCounter' ),
+  'Nick' => ( $ARGV[1] or 'dcpppCnt' ),
   'log' => sub { },    # no logging
 );
 $dc->connect();
