@@ -22,7 +22,7 @@ $config{'dcbot_param'}      = {
                                                              #   'min_chat_delay'	=> 0.401,
                                                              #   'min_cmd_delay'	=> 0.401,
 };
-$config{'handler'}{'create_bef'} = sub {
+$config{'handler'}{'create_aft'} = sub {
   my ($dc) = @_;
   $dc->{'handler'}{'To'} = sub {
     for (@_) {

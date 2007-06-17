@@ -70,7 +70,7 @@ sub rand_str_ex {
 
 sub handler {
   my $name = shift;
-  print "handler($name)\n";
+  print "handler($name) = [$config{'handler'}{$name}]\n";
   return $config{'handler'}{$name}->(@_) if $config{'handler'}{$name};
   return ();
 }
@@ -81,6 +81,7 @@ handler( 'mail_loop_bef', @ARGV );
 TRY: for ( 0 .. $config{'flood_tries'} ) {
   handler( 'create_bef', $_ );
   $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|i;
+#print("host=$1; port=$2;\n");
   my $dc = dcppp::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),

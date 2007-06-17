@@ -154,7 +154,7 @@ sub baseinit {
 sub connect {
   my $self = shift;
   return if $self->{'status'} eq 'connected';
-  $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}" );
+  $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}",%{$self->{'sockopts'} or {}} );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
 
@@ -465,7 +465,7 @@ sub parse {
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
 
-  #$self->log('dev', 'handler', $cmd, @_, $self->{'handler'}{$cmd});
+#  $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
   $self->{'handler'}{$cmd}->(@_) if $self->{'handler'}{$cmd};
 }
 
