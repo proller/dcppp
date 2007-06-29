@@ -30,6 +30,8 @@ use POSIX;
 
 eval { use Time::HiRes qw(time); };
 
+our $AUTOLOAD;
+
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
