@@ -730,4 +730,26 @@ sub tag_parse {
   return wantarray ? %$save : $save;
 }
 
+sub AUTOLOAD {
+        my $self = shift;
+        my $type = ref($self) or return ;
+#                    or croak "$self is not an object";
+        my $name = $AUTOLOAD;
+        $name =~ s/.*://;   # strip fully-qualified portion
+#        $self->log('dev', 'autoload', $name, @_);
+        return $self->cmd($name, @_);
+=c
+        unless (exists $self->{$name} ) {
+            $self->log('dev',"Can't access `$name' field in class $type");
+        }
+$self->log('dev',"autoload: $name type=$type", @_	);
+        if (@_) {
+            return $self->{$name} = shift;
+        } else {
+            return $self->{$name};
+        }
+=cut
+}
+
+
 1;
