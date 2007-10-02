@@ -202,10 +202,11 @@ sub disconnect {
     #      print "already ";
   }
   #print " clidel {", keys %{$self->{'clients'}}, "}\n";
-  print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"), $self->{'clients'}{$_}->destroy(),
+  $self->log('dev',"delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n") for grep {$_} keys %{ $self->{'clients'} };
+  $self->{'clients'}{$_}->destroy(),
     #$self->{'clients'}{$_} = undef,
     #  undef $self->{'clients'}{$_},
-    delete( $self->{'clients'}{$_} ) for grep $_, keys %{ $self->{'clients'} };
+    delete( $self->{'clients'}{$_} ) for grep {$_} keys %{ $self->{'clients'} };
   #grep $self->{'number'} != $self->{'clients'}{$_}->{'number'},
   #print "SO1[$self->{'socket'}]";
   close( $self->{'filehandle'} ), $self->{'filehandle'} = undef if $self->{'filehandle'};
@@ -465,7 +466,7 @@ print "Lcanread\n";
     my $wait_one = shift || $self->{'wait_once'};
     local $_;
     my $ret;
-#      $self->log('dctim', "[$self->{'number'}] wait [$waits, $ret]"),
+      $self->log('dctim', "[$self->{'number'}] wait [$waits, $ret]"),
     $ret += $self->recv($wait_one) while --$waits > 0 and !$ret;
     return $ret;
 
@@ -589,7 +590,7 @@ sub writefile {
   for my $databuf (@_) {
     #print("self:$self;\n");
     $self->{'filebytes'} += length $$databuf;
-#    $self->log( 'dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}" );
+    $self->log( 'dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}" );
     #print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
     my $fh = $self->{'filehandle'};
     print $fh $$databuf if $fh;
