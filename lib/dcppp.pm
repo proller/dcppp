@@ -167,6 +167,7 @@ sub connect {
     'Proto'    => 'tcp',
     'Type'     => SOCK_STREAM,
     'Timeout'  => $self->{'Timeout'},
+    'Blocking'	=> 0,
     %{$self->{'sockopts'} or {}},
   ) or $self->log( 'err', "connect socket  error: $@" ), return;
   $self->nonblock();
@@ -194,6 +195,8 @@ sub listen {
     'Proto'     => 'tcp',
     'Type'      => SOCK_STREAM,
     'Listen'    => $self->{'Listen'},
+        'Blocking'	=> 0,
+
     %{$self->{'sockopts'} or {}},
   ) or $self->log( 'err', "listen $self->{'myport'} socket error: $@" ), return;
 
