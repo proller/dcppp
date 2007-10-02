@@ -227,9 +227,10 @@ sub DESTROY {
 {
   my $buf;
 
-  sub recv {
+  sub recv__ {
     my $self = shift;
     return unless $self->{'socket'};
+$self->log( 'dev', "($self->{'number'}) recv start sock=$self->{'socket'}" );
     my ( $databuf, $readed );
   LOOP: {
       do {
@@ -257,20 +258,24 @@ $self->log( 'dev', "($self->{'number'}) accpt incoming ($_)" );
               'PortList'  => \%{ $self->{'PortList'} }
             ) unless $self->{'clients'}{$_};    #'debug'=>1,
           } else {
-            $self->log( 'err', "($self->{'number'}) Accepting fail!" );
+#            $self->log( 'err', "($self->{'number'}) Accepting fail!" );
           }
           next;
         }
-        next unless $_ = $self->{'socket'}->atmark();
-        $self->log( 'dev', "($self->{'number'}) atmark=($_)" );
+#        next unless ($_ = $self->{'socket'}->atmark()) > 0;
+#        $self->log( 'dev', "($self->{'number'}) atmark=($_)" );
 
         $databuf = '';
-        if ( !defined( $self->{'socket'}->recv( $databuf, POSIX::BUFSIZ, 0 ) ) or !length($databuf) ) {
-          $self->log( 'dcdbg', "($self->{'number'}) CLOSEME [$!][$@]" );
+        if ( !defined( $_ = $self->{'socket'}->recv( $databuf, POSIX::BUFSIZ, MSG_DONTWAIT ) ) 
+	#or !length($databuf) 
+	) {
+          $self->log( 'dcdbg', "($self->{'number'}) CLOSEME [$_] [$!][$@]" );
 #          $self->{'select'}->remove($client);
-          $self->disconnect();
-          $self->{'status'} = 'todestroy';
+#          $self->disconnect();
+#          $self->{'status'} = 'todestroy';
         } else {
+          $self->log( 'dcdbg', "($self->{'number'}) readed [$_]" );
+
           ++$readed;
         }
         if ( $self->{'filehandle'} ) {
@@ -298,7 +303,7 @@ $self->log( 'dev', "($self->{'number'}) accpt incoming ($_)" );
     $self->destroy() if $self->{'status'} eq 'todestroy';
   }
 
-  sub recv_ {
+  sub recv {
     my $self = shift;
     #print "[$self->{'number'}] dcppp readstart clients:{", keys %{$self->{'clients'}}, "}\n";
 
@@ -325,8 +330,8 @@ print "Lcanread\n";
         #print "[$self->{'number'}] dcppp read clients:{", keys %{$self->{'clients'}}, "} is $self->{'socket'}\n";
         #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
         #my $tim = time();
-        #$self->log('dctim', "[$self->{'number'}] readstart");
         last unless $self->{'select'};
+        $self->log('dctim', "[$self->{'number'}] pre-can_read");
         for my $client ( $self->{'select'}->can_read(1) ) {
           #$self->log('dctim', "[$self->{'number'}] canread");
           #print ("can_read per ", (time() - $tim), "\n");
@@ -358,9 +363,9 @@ print "Lcanread\n";
           }
           $databuf = '';
           #        my $rv = ;
-          #$self->log('dctim', "[$self->{'number'}] prerecv");
-          if ( !defined( $client->recv( $databuf, POSIX::BUFSIZ, 0 ) ) or !length($databuf) ) {
-            #$self->log('dctim', "[$self->{'number'}] pstrecv");
+          $self->log('dctim', "[$self->{'number'}] prerecv");
+          if ( !defined( $client->recv( $databuf, POSIX::BUFSIZ, MSG_DONTWAIT  ) ) or !length($databuf) ) {
+            $self->log('dctim', "[$self->{'number'}] pstrecv");
             #        if (!defined($client->recv($databuf, POSIX::BUFSIZ, 0)) ) {
             $self->log( 'dcdbg', "($self->{'number'}) CLOSEME [$!][$@]" );
             $self->{'select'}->remove($client);
@@ -420,11 +425,15 @@ print "Lcanread\n";
       $self->{'clients'}{$_} = undef, delete( $self->{'clients'}{$_} ), next if !$self->{'clients'}{$_}->{'socket'};
       #or $self->{'clients'}{$_}->{'socket'} eq $self->{'socket'};
       #      print "child start recv ";
+      $self->log('dctim', "[$self->{'number'}] clients recv start");
+      
       $self->{'clients'}{$_}->recv();
     }
     #    $self->SUPER::recv();
     $self->destroy() if $self->{'status'} eq 'todestroy';
+      $self->log('dctim', "[$self->{'number'}]  recv end.");
   }
+
 }
 
 sub parse {
