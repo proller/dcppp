@@ -22,26 +22,19 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
 package dcppp;
 use Socket;
-
 #  use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
 use IO::Socket;
 use IO::Select;
 use POSIX;
-
 eval { use Time::HiRes qw(time); };
-
 our $AUTOLOAD;
-
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
-
 #dbg
 #use Time::HiRes qw(time);
-
 #  my %want;
 our %global;
-
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>'');
 #  our %clear = ('clients' => {}, 'socket' => undef, 'select' => undef,
 #                'accept' => 0, 'filehandle' => undef, 'parse' => {},  'cmd' => {}, );
@@ -72,11 +65,9 @@ sub new {
     'Timeout'       => 10,
     'myport_base'   => 40000,
     'myport_random' => 1000,
-
     # http://www.dcpp.net/wiki/index.php/%24MyINFO
     'description' => 'just dcppp bot',
     'connection'  => 'LAN(T3)',
-
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
     'flag'      => '1',                         # User status as ascii char (byte)
@@ -104,28 +95,20 @@ sub new {
     'UserIP2'          => 1,
     'Version'          => '1,0091',
   };
-
   #print "self creat: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n\n";
   bless( $self, $class );
-
   #print "self: $self \n";
   #$self->{'log'}= sub { print(join(' ', @_, "st:[$self->{'status'}]"), "\n")};
-
   #print "dcppp0[$self->{'socket'}]{",@_,"}\n";
   $self->init(@_);
-
   #print "self init: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n\n";
   #print "dcppp1[$self->{'socket'}]\n";
   #print "3: $self->{'Nick'}\n";
-
   #print "[$self->{'number'}] myport pre: $self->{'myport'}\n";
   #print "[$self->{'number'}] myport aft: $self->{'myport'}\n";
-
   #print "new obj: [$self->{'number'}]\n";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
-
   #print "[$self->{'number'}]clr";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
   #print "[$self->{'number'}] dcppp new clients:{", keys %{$self->{'clients'}}, "}\n";
-
   #print "created [$self->{'number'}] now=$global{'count'} ($self)\n" if $self->{'debug'};
   #print "dcppp2[$self->{'socket'}]\n";
   return $self;
@@ -142,24 +125,20 @@ sub baseinit {
   $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) )
     if $self->{'myport_random'} and $self->{'myport_base'};
   $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
-
   $self->{'want'}     ||= {};
   $self->{'NickList'} ||= {};
   $self->{'IpList'}   ||= {};
   $self->{'PortList'} ||= {};
-
   ++$global{'count'};
   $self->{'status'} = 'disconnected';
-
 }
 
 sub connect {
   my $self = shift;
   return if $self->{'status'} eq 'connected';
-  $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}",%{$self->{'sockopts'} or {}} );
+  $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} or {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
-
   #    print "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}\n"  if $self->{'debug'};
   $self->{'socket'} = new IO::Socket::INET(
     'PeerAddr' => $self->{'host'},
@@ -167,22 +146,17 @@ sub connect {
     'Proto'    => 'tcp',
     'Type'     => SOCK_STREAM,
     'Timeout'  => $self->{'Timeout'},
-    'Blocking'	=> 0,
-    %{$self->{'sockopts'} or {}},
+    'Blocking' => 0,
+    %{ $self->{'sockopts'} or {} },
   ) or $self->log( 'err', "connect socket  error: $@" ), return;
   $self->nonblock();
-  setsockopt( $self->{'socket'}, &Socket::IPPROTO_TCP, &Socket::TCP_NODELAY, 1 );
-
+  #  setsockopt( $self->{'socket'}, &Socket::IPPROTO_TCP, &Socket::TCP_NODELAY, 1 );
   #    $self->{'select'} = IO::Select->new($self->{'socket'});
-
   #print "connect to $self->{'host'} ok\n"  if $self->{'debug'};
   $self->get_my_addr();
   $self->log( 'dcdbg', "connect to $self->{'host'} [me=$self->{'myip'}] ok" );    #  if $self->{'debug'};
-
-  #exit;
-
+                                                                                  #exit;
   $self->recv();
-
   #print "rec fr $self->{'host'} ok"  if $self->{'debug'};
 }
 
@@ -195,59 +169,45 @@ sub listen {
     'Proto'     => 'tcp',
     'Type'      => SOCK_STREAM,
     'Listen'    => $self->{'Listen'},
-        'Blocking'	=> 0,
-
-    %{$self->{'sockopts'} or {}},
+    'Blocking'  => 0,
+    %{ $self->{'sockopts'} or {} },
   ) or $self->log( 'err', "listen $self->{'myport'} socket error: $@" ), return;
-
   #    $self->{'select'} = IO::Select->new($self->{'socket'});
-  setsockopt( $self->{'socket'}, &Socket::IPPROTO_TCP, &Socket::TCP_NODELAY, 1 );
-  $self->nonblock();
+  #  setsockopt( $self->{'socket'}, &Socket::IPPROTO_TCP, &Socket::TCP_NODELAY, 1 );
+  #  $self->nonblock();
   $self->log( 'dcdbg', "[$self->{'number'}]listening $self->{'myport'} ok" );
   $self->{'accept'} = 1;
   $self->recv();
 }
 
 sub disconnect {
-
   #print( "disconnect from ", join(':', caller), "\n");
   my $self = shift;
-
   #print "[$self->{'number'}] dcppp disconnect clients:{", keys %{$self->{'clients'}}, "}\n";
   #print "disconnect($self->{'number'})\n";
   #print "SO00[$self->{'socket'}]";
   $self->{'status'} = 'disconnected';
   if ( $self->{'socket'} ) {
-
-    $self->log('dev', "[$self->{'number'}] Closing socket\n",
-    $self->{'socket'}->shutdown());
-    close( $self->{'socket'} ) or $self->log( 'err', "Error closing socket: $!" );
+    $self->log( 'dev', "[$self->{'number'}] Closing socket\n", $self->{'socket'}->shutdown(2) );
+    #    close( $self->{'socket'} ) or $self->log( 'err', "Error closing socket: $!" );
     $self->{'socket'} = undef;
     --$global{'count'};
-
     #    } else {
     #      print "already ";
   }
-
   #print " clidel {", keys %{$self->{'clients'}}, "}\n";
-
-  print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"),
-  $self->{'clients'}{$_}->destroy(), 
-  #$self->{'clients'}{$_} = undef, 
-#  undef $self->{'clients'}{$_},
-  delete( $self->{'clients'}{$_} )
-    for grep $_, keys %{ $self->{'clients'} };
-
+  print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"), $self->{'clients'}{$_}->destroy(),
+    #$self->{'clients'}{$_} = undef,
+    #  undef $self->{'clients'}{$_},
+    delete( $self->{'clients'}{$_} ) for grep $_, keys %{ $self->{'clients'} };
   #grep $self->{'number'} != $self->{'clients'}{$_}->{'number'},
   #print "SO1[$self->{'socket'}]";
   close( $self->{'filehandle'} ), $self->{'filehandle'} = undef if $self->{'filehandle'};
-
   #print "deleted [$self->{'number'}] now=$global{'count'}\n";
 }
 
 sub destroy {
   my $self = shift;
-
   #print "\n[$self->{'number'}]DESTROY MANUAL TRY\n";
   #    return;
   $self->disconnect();
@@ -258,22 +218,88 @@ sub destroy {
 
 sub DESTROY {
   my $self = shift;
-
   #print "\n[$self->{'number'}]DESTROY AUTO TRY\n";
   $self->log( 'dcdbg', "[$self->{'number'}]($self)AUTO DESTROY from ", join( ':', caller ), " ($self)" );
-
   #    $self->disconnect();
   $self->destroy();
-
   #print "NOLOG DESTROY[$self->{'number'}]\n";
 }
-
 {
   my $buf;
 
   sub recv {
     my $self = shift;
+    return unless $self->{'socket'};
+    my ( $databuf, $readed );
+  LOOP: {
+      do {
+        $readed = 0;
+#$self->log( 'dev', "($self->{'number'}) atmark" );
+#        next unless $_ = $self->{'socket'}->atmark();
 
+        if ( $self->{'accept'} 
+        #and $client == $self->{'socket'} 
+        ) {
+
+$self->log( 'dev', "($self->{'number'}) accept" );
+          if ( 
+          $_ = $self->{'socket'}->accept() ) {
+$self->log( 'dev', "($self->{'number'}) accpt incoming ($_)" );
+
+            $self->{'clients'}{$_} = $self->{'incomingclass'}->new(
+              %$self, clear(),
+              'socket'    => $_,
+              'LocalPort' => $self->{'myport'},
+              'incoming'  => 1,
+              'want'      => \%{ $self->{'want'} },
+              'NickList'  => \%{ $self->{'NickList'} },
+              'IpList'    => \%{ $self->{'IpList'} },
+              'PortList'  => \%{ $self->{'PortList'} }
+            ) unless $self->{'clients'}{$_};    #'debug'=>1,
+          } else {
+            $self->log( 'err', "($self->{'number'}) Accepting fail!" );
+          }
+          next;
+        }
+        next unless $_ = $self->{'socket'}->atmark();
+        $self->log( 'dev', "($self->{'number'}) atmark=($_)" );
+
+        $databuf = '';
+        if ( !defined( $self->{'socket'}->recv( $databuf, POSIX::BUFSIZ, 0 ) ) or !length($databuf) ) {
+          $self->log( 'dcdbg', "($self->{'number'}) CLOSEME [$!][$@]" );
+#          $self->{'select'}->remove($client);
+          $self->disconnect();
+          $self->{'status'} = 'todestroy';
+        } else {
+          ++$readed;
+        }
+        if ( $self->{'filehandle'} ) {
+          $self->writefile( \$databuf );
+        } else {
+          $buf .= $databuf;
+          $buf =~ s/(.*\|)//s;
+          for ( split /\|/, $1 ) {
+            last if $self->{'status'} eq 'todestroy';
+            $_ .= '|', $self->writefile( \$_ ), next if ( $self->{'filehandle'} );
+            next unless /\w/;
+            $self->parse(
+              /^\$/ ? $_ : ( $_ = '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_ ) );
+          }
+          $self->writefile( \$buf ), $buf = '' if length($buf) and $self->{'filehandle'};
+        }
+        }
+        #}
+        while ($readed);
+    }
+    for ( keys %{ $self->{'clients'} } ) {    #grep $self->{'number'} != $self->{'clients'}{$_}->{'number'},
+      $self->{'clients'}{$_} = undef, delete( $self->{'clients'}{$_} ), next if !$self->{'clients'}{$_}->{'socket'};
+      $self->{'clients'}{$_}->recv();
+    }
+    $self->destroy() if $self->{'status'} eq 'todestroy';
+  }
+
+  sub recv_ {
+    my $self = shift;
     #print "[$self->{'number'}] dcppp readstart clients:{", keys %{$self->{'clients'}}, "}\n";
 
 =z
@@ -288,34 +314,26 @@ print "Lcanread\n";
 =cut
 
     return unless $self->{'socket'};
-
     $self->{'select'} = IO::Select->new( $self->{'socket'} ) unless $self->{'select'};
-
     #print "TRYREAD $self->{'host'} $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
     #print "R$self->{'number'} " if $self->{'debug'};
     my ( $databuf, $readed );
   LOOP: {
       do {
         $readed = 0;
-
         #print "R[$self->{'number'}]\n";
         #print "[$self->{'number'}] dcppp read clients:{", keys %{$self->{'clients'}}, "} is $self->{'socket'}\n";
-
         #      for my $select (grep $_, $self->{'select'}, $self->{'selectin'} ) {
         #my $tim = time();
         #$self->log('dctim', "[$self->{'number'}] readstart");
         last unless $self->{'select'};
         for my $client ( $self->{'select'}->can_read(1) ) {
-
           #$self->log('dctim', "[$self->{'number'}] canread");
           #print ("can_read per ", (time() - $tim), "\n");
-
           #print "can read : $self->{'number'} [$self->{'select'} : $self->{'socket'}]\n" if $self->{'debug'};
           if ( $self->{'accept'} and $client == $self->{'socket'} ) {
-
             #print "nconn\n";
             if ( $_ = $self->{'socket'}->accept() ) {
-
 #MORE INFO HERE
 #print "[$self->{'number'}] newinc [$self->{'accept'}]\n";
 #print "accpt total bef ", scalar keys %{$self->{'clients'}}  ,"\n";
@@ -330,121 +348,91 @@ print "Lcanread\n";
                 'IpList'    => \%{ $self->{'IpList'} },
                 'PortList'  => \%{ $self->{'PortList'} }
               ) unless $self->{'clients'}{$_};    #'debug'=>1,
-
-              #print "accpt total aft ", scalar keys %{$self->{'clients'}}  ,"\n";
-              #print "ok\n";
+                                                  #print "accpt total aft ", scalar keys %{$self->{'clients'}}  ,"\n";
+                                                  #print "ok\n";
             } else {
               $self->log( 'err', "($self->{'number'}) Accepting fail!" );
             }
-
             #print "next\n";
             next;
           }
-
           $databuf = '';
-
           #        my $rv = ;
           #$self->log('dctim', "[$self->{'number'}] prerecv");
           if ( !defined( $client->recv( $databuf, POSIX::BUFSIZ, 0 ) ) or !length($databuf) ) {
-
             #$self->log('dctim', "[$self->{'number'}] pstrecv");
             #        if (!defined($client->recv($databuf, POSIX::BUFSIZ, 0)) ) {
             $self->log( 'dcdbg', "($self->{'number'}) CLOSEME [$!][$@]" );
             $self->{'select'}->remove($client);
             $self->disconnect();
             $self->{'status'} = 'todestroy';
-
             #          $self->destroy();
             #          return;
           } else {
             ++$readed;
-
             #$self->log('dcdev', "[$self->{'number'}] RAW READ:[",$databuf,']');
           }
           if ( $self->{'filehandle'} ) {
             $self->writefile( \$databuf );
           } else {
-
             #print "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}\n" if $self->{'debug'};
             #$self->log('dcdmp',  "($self->{'number'}) ",length($databuf), ' of ', POSIX::BUFSIZ, " {$databuf}");
             $buf .= $databuf;
-
             #print("PBUF:[$buf]\n");
             $buf =~ s/(.*\|)//s;
-
-            #          my $forparse = $1;
-            #          $buf =~ /^(.*)$/;
-            #          if (length $1) {
-            #print("PP[$1]\n");
-            #my $tim = time();
-            #!! while here..
-
+#          my $forparse = $1;
+#          $buf =~ /^(.*)$/;
+#          if (length $1) {
+#print("PP[$1]\n");
+#my $tim = time();
+#!! while here..
 #            $self->parse(/^\$/ ? $_ : ($_ = '$'.($self->{'status'} eq 'connected' ? 'chatline' : 'welcome').' ' . $_)) for grep /\w/, split /\|+/, $1;
 #          my $numbuf;
             for ( split /\|/, $1 ) {
-
               #          $self->log('dcdev', "($self->{'number'}) preparse writefile [$_]"),
               #            ($numbuf++ ? $_ .= '|' : 0), $self->writefile(\$_), next if ($self->{'filehandle'});
               last if $self->{'status'} eq 'todestroy';
               $_ .= '|', $self->writefile( \$_ ), next if ( $self->{'filehandle'} );
               next unless /\w/;
-
               #$self->log('dcdev', "($self->{'number'}) st: [$self->{'status'}]");
-
               $self->parse(
                 /^\$/ ? $_ : ( $_ = '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_ ) );
             }
-
             #          $self->log('dcdev', "($self->{'number'}) preparse writefile postbuf  [$buf]"),
             $self->writefile( \$buf ), $buf = '' if length($buf) and $self->{'filehandle'};
-
             #print ("parse ", (time() - $tim), "\n");
             #          }
           }
         }
-
         #      }
         #print ("recv per ", (time() - $tim), "\n");
         #   $self->log('dctim', "[$self->{'number'}] readend");
-
         #  $self->destroy() , return if $self->{'status'} eq 'todestroy';
-
       } while ($readed);
     }
-
     #print "CLIents[$self->{'number'}:$self->{'clients'}]";
-
     #print "[$self->{'number'}] dcppp readaft clients:{", keys %{$self->{'clients'}}, "}\n";
     for ( keys %{ $self->{'clients'} } ) {    #grep $self->{'number'} != $self->{'clients'}{$_}->{'number'},
-
-      #print("\n!!$self->{'clients'}{$_}->{'number'}!!\n"),
-      #print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
-
-      #      print "child($self->{'clients'}{$_}->{'number'}) ";
-      #    print ("readdel($self->{'clients'}{$_}->{'number'}) \n"),
+                                              #print("\n!!$self->{'clients'}{$_}->{'number'}!!\n"),
+                                              #print("\nDEL!!$self->{'clients'}{$_}->{'number'}!!\n"),
+                                              #      print "child($self->{'clients'}{$_}->{'number'}) ";
+                                              #    print ("readdel($self->{'clients'}{$_}->{'number'}) \n"),
       $self->{'clients'}{$_} = undef, delete( $self->{'clients'}{$_} ), next if !$self->{'clients'}{$_}->{'socket'};
-
       #or $self->{'clients'}{$_}->{'socket'} eq $self->{'socket'};
       #      print "child start recv ";
-
       $self->{'clients'}{$_}->recv();
     }
-
     #    $self->SUPER::recv();
-
     $self->destroy() if $self->{'status'} eq 'todestroy';
   }
-
 }
 
 sub parse {
   my $self = shift;
   for (@_) {
-
     #print "[$self->{'number'}] PRECMD:{$_}\n" ;
     s/^\$(\w+)\s*//;
     my $cmd = $1;
-
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
     if ( $self->{'parse'}{$cmd} ) {
       if ( $cmd ne 'Search' ) {
@@ -457,13 +445,11 @@ sub parse {
       } else {
         ++$self->{'skip_print_search'};
       }
-
       #print "($self->{'number'}) rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
       $self->{'parse'}{$cmd}->($_);
     } else {
       $self->log( 'dcinf',
         "($self->{'number'}) UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" );
-
       #        print "($self->{'number'}) UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };\n";
       $self->{'parse'}{$cmd} = sub { };
     }
@@ -473,34 +459,28 @@ sub parse {
 
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
-
-#  $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
+  #  $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
   $self->{'handler'}{$cmd}->(@_) if $self->{'handler'}{$cmd};
 }
-
 {
   my @sendbuf;
 
   sub sendcmd {
     my $self = shift;
-
     #print caller, "snd [@_] to [$self->{'number'}]\n" if $self->{'debug'};
     $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
     if ( $self->{'sendbuf'} ) {
       push @sendbuf, '$' . join( ' ', @_ ) . '|';
     } else {
-
       #print "snd to [$self->{'socket'}] \n";
       #eval {
       #$self->{'socket'}->send('$|');
       #      print"sending [$_] to [$self->{'number'}]\n" ;
       $self->log(
         'dcdmp', "($self->{'number'}) we send [", join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ), "]:",
-
         #print"we send [",join('', @sendbuf, '$' . join(' ', @_) . '|'),"] to [$self->{'number'}]\n" if $self->{'debug'};
         $self->{'socket'}->send( join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ) ), $!
       );
-
       #      $_ = $self->{'socket'};
       #      print $_ join('', @sendbuf, '$' . join(' ', @_) . '|');
       #}
@@ -510,11 +490,9 @@ sub handler {
 }
 
 sub cmd {
-
   #print "CMD PRE param[",@_,"]\n" ;
   my $self = shift;
   my $cmd  = shift;
-
   #print "[$self->{'number'}] dcppp cmdbeg ($self->{'auto_recv'})clients:{", keys %{$self->{'clients'}}, "}\n" if ;
   if ( $self->{'min_cmd_delay'} and ( time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'} ) ) {
     $self->{'log'}->( 'dbg', 'sleepcmd', $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
@@ -522,7 +500,6 @@ sub cmd {
   }
   $self->{'last_cmd_time'} = time;
   if ( $self->{'cmd'}{$cmd} ) {
-
     #print "[$self->{'number'}] CMD:$cmd param[",@_,"]\n" if $self->{'debug'};
     $self->{'cmd'}{$cmd}->(@_);
   } else {
@@ -530,16 +507,13 @@ sub cmd {
     $self->{'cmd'}{$cmd} = sub { };
   }
   $self->recv() if $self->{'auto_recv'};
-
   #print "[$self->{'number'}] dcppp cmdaft clients:{", keys %{$self->{'clients'}}, "}\n";
 }
 
 sub get {
   my ( $self, $nick, $file, $as ) = @_;
-
   #print "get from [$nick] [$file] as [$as]\n";
   $self->{'want'}->{$nick}{$file} = ( $as or $file );
-
   #print "[nick:$_]" for keys %{$self->{'want'}};
   #print "go conn [$nick] \n";
   $self->cmd( ( ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) ? '' : 'Rev' ) . 'ConnectToMe', $nick );
@@ -555,7 +529,6 @@ sub openfile {
     $self->handler( 'openfile_error', $!, $oparam ), return 1;
   binmode( $self->{'filehandle'} );
   $self->handler('openfile_after');
-
   #$self->log('dcdbg', "($self->{'number'}) openfile post", $self->{'filehandle'}),
   return 0;
 }
@@ -565,11 +538,9 @@ sub writefile {
   $self->{'file_start_time'} ||= time;
   $self->handler('writefile_before');
   for my $databuf (@_) {
-
     #print("self:$self;\n");
     $self->{'filebytes'} += length $$databuf;
     $self->log( 'dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}" );
-
     #print "recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}\n" if $self->{'debug'};
     my $fh = $self->{'filehandle'};
     print $fh $$databuf if $fh;
@@ -579,21 +550,17 @@ sub writefile {
       $self->float( time - $self->{'file_start_time'} ),
       's at', $self->float( $self->{'filebytes'} / ( ( time - $self->{'file_start_time'} ) or 1 ) ), 'b/s'
       ),
-
       #          close($self->{'filehandle'}), $self->{'filehandle'} = undef,
       $self->disconnect(),
-
       #            $self->destroy(),
       $self->{'status'} = 'todestroy', $self->{'file_start_time'} = 0
       if $self->{'filebytes'} == $self->{'filetotal'};
-
     #print("aft fc\n");
   }
 }
 
 sub get_peer_addr {
   my ($self) = @_;
-
 #$self->{'log'}->('dev', "[$self->{'number'}] 1peerport=$self->{'peerport'}  port=$self->{'port'}; peerip=$self->{'peerip'} host=$self->{'host'};") ;
   return unless $self->{'socket'};
   @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) );
@@ -609,38 +576,30 @@ sub get_my_addr {
   @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) );
   return unless $_[1];
   return unless $_[1] = inet_ntoa( $_[1] );
-
   #$self->{'log'}->('dev', "[$self->{'number'}] SOCKNAME $_[0],$_[1];");
   return $self->{'myip'} ||= $_[1];
 }
-
 # http://www.dcpp.net/wiki/index.php/LockToKey :
 sub lock2key {
   my @lock = split( //, shift );
   my $i;
   my @key = ();
-
   # convert to ordinal
   foreach (@lock) {
     $_ = ord;
   }
-
   # calc key[0] with some xor-ing magic
   push( @key, $lock[0] ^ 5 );
-
   # calc rest of key with some other xor-ing magic
   for ( $i = 1 ; $i < @lock ; $i++ ) {
     push( @key, ( $lock[$i] ^ $lock[ $i - 1 ] ) );
   }
-
   # nibble swapping
   for ( $i = 0 ; $i < @key ; $i++ ) {
     $key[$i] = ( ( ( $key[$i] << 4 ) & 240 ) | ( ( $key[$i] >> 4 ) & 15 ) ) & 0xff;
   }
-
   #temp[0] = (u_int8_t)(temp[0] ^ temp[aLock.length()-1]);
   $key[0] = $key[0] ^ $key[ @key - 1 ];
-
   # escape some
   foreach (@key) {
     if ( $_ == 0 || $_ == 5 || $_ == 36 || $_ == 96 || $_ == 124 || $_ == 126 ) {
@@ -649,7 +608,6 @@ sub lock2key {
       $_ = chr;
     }
   }
-
   # done
   return join( "", @key );
 }
@@ -661,7 +619,6 @@ sub tag {
 
 sub myinfo {
   my $self = shift;
-
 #   return $self->{'Nick'} . ' ' . $self->{'description'} . '<' . $self->tag() . '>' . '$' . ($self->{'M'} or ' ') .'$' . $self->{'connection'} . (length($self->{'flag'}) ? chr($self->{'flag'}) : '') . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$';
   return $self->{'Nick'} . ' '
     . $self->{'description'} . '<'
@@ -682,71 +639,59 @@ sub supports_parse {
   my ( $str, $save ) = @_;
   $save->{$_} = 1 for split /\s+/, $str;
   delete $save->{$_} for grep !length $save->{$_}, keys %$save;
-
   #print " $_ = $save->{$_}; " for keys %$save; print "\n";
   return wantarray ? %$save : $save;
 }
-
 #=c
 sub nonblock {
-#  return;
+  return;
   my $self = shift;
   my $flags = fcntl( $self->{'socket'}, F_GETFL, 0 )
     or $self->log( 'err', "Can't get flags for socket: $!" ), return;
   fcntl( $self->{'socket'}, F_SETFL, $flags | O_NONBLOCK )
     or $self->log( 'err', "Can't make socket nonblocking: $!" ), return;
 }
-
 #=cut
-
 #[Hub security$ $$$0$]
 sub info_parse {
   my $self = shift;
   my ( $info, $save ) = @_;
-
   #print "parsing info [$info] to $save :";
   $save->{'info'} = $info;
-
   #    $save->{'infofor'} = $1 if $info =~ s/^\s*(?:MyINFO)?\s*(\$ALL)?\s*// and $1;
   #    $save->{'Nick'} = $1 if $info =~ s/^\s*([^\s\$]+)\s*//;
   $save->{'description'} = $1 if $info =~ s/^([^<\$]+)(<|\$)/$2/;
   ( $save->{'tag'}, $save->{'M'}, $save->{'connection'}, $save->{'email'}, $save->{'sharesize'} ) = split /\s*\$\s*/, $info;
   $save->{'flag'} = ord($1) if $save->{'connection'} =~ s/([\x00-\x1F])$//e;
   $self->tag_parse( $save->{'tag'}, $save );
-
   #    $save->{'sharesize'} = $1 if $info =~ s/\$(\d+)\$$//;
   delete $save->{$_} for grep !length $save->{$_}, keys %$save;
-
   #print " $_ = $save->{$_}; " for keys %$save; print "\n";
   return wantarray ? %$save : $save;
 }
-
 #rcv: MyINFO $ALL WolF <++ V:0.668,M:A,H:10/0/0,S:40>$ $LAN(T3)$$15100817262$
-
 sub tag_parse {
   my $self = shift;
   my ( $tag, $save ) = @_;
-
   #print "parsing tag [$tag] to $save\n";
   $save->{'tag'} = $tag;
   $tag =~ s/(^\s*<\s*)|(\s*>\s*$)//g;
   $save->{'client'} = $1 if $tag =~ s/^(\S+)\s*//;
-
   #print "\npars[$tag]\n";
   /(.+):(.+)/, $save->{$1} = $2 for split /,/, $tag;
-
   #print " $_ = $save->{$_}; " for keys %$save;
   return wantarray ? %$save : $save;
 }
 
 sub AUTOLOAD {
-        my $self = shift;
-        my $type = ref($self) or return ;
-#                    or croak "$self is not an object";
-        my $name = $AUTOLOAD;
-        $name =~ s/.*://;   # strip fully-qualified portion
-#        $self->log('dev', 'autoload', $name, @_);
-        return $self->cmd($name, @_);
+  my $self = shift;
+  my $type = ref($self) or return;
+  #                    or croak "$self is not an object";
+  my $name = $AUTOLOAD;
+  $name =~ s/.*://;    # strip fully-qualified portion
+                       #        $self->log('dev', 'autoload', $name, @_);
+  return $self->cmd( $name, @_ );
+
 =c
         unless (exists $self->{$name} ) {
             $self->log('dev',"Can't access `$name' field in class $type");
@@ -759,6 +704,4 @@ $self->log('dev',"autoload: $name type=$type", @_	);
         }
 =cut
 }
-
-
 1;
