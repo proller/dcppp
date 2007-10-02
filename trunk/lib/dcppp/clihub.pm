@@ -32,6 +32,7 @@ sub init {
     #	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2',
     'Pass' => '',
     'Key'  => 'zzz',
+#    'auto_wait'        => 1,
 
     #        %$self,
     'supports_avail' => [
@@ -90,7 +91,7 @@ sub init {
       $self->{'status'} = 'connected';
 
       #        $self->{'no_print_welcome'} = 1;
-      #	$self->recv();
+#      	$self->wait();
       #$self->{'log'}->('info', "HELLO end rec st:[$self->{'status'}]");
     },
     'Supports' => sub {
@@ -271,7 +272,8 @@ sub init {
     #'debug'=>1,
   );
   $self->{'clients'}{''}->listen();
-  $self->connect() if $self->{'auto_connect'};
+  $self->connect(),   $self->wait()
+ if $self->{'auto_connect'};
 
   #print "[$self->{'number'}]AFT";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 
