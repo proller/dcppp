@@ -219,7 +219,8 @@ sub disconnect {
   $self->{'status'} = 'disconnected';
   if ( $self->{'socket'} ) {
 
-    #print "[$self->{'number'}] Closing socket\n";
+    $self->log('dev', "[$self->{'number'}] Closing socket\n",
+    $self->{'socket'}->shutdown());
     close( $self->{'socket'} ) or $self->log( 'err', "Error closing socket: $!" );
     $self->{'socket'} = undef;
     --$global{'count'};
@@ -230,8 +231,11 @@ sub disconnect {
 
   #print " clidel {", keys %{$self->{'clients'}}, "}\n";
 
-  #print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"),
-  $self->{'clients'}{$_}->destroy(), $self->{'clients'}{$_} = undef, delete( $self->{'clients'}{$_} )
+  print("delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n"),
+  $self->{'clients'}{$_}->destroy(), 
+  #$self->{'clients'}{$_} = undef, 
+#  undef $self->{'clients'}{$_},
+  delete( $self->{'clients'}{$_} )
     for grep $_, keys %{ $self->{'clients'} };
 
   #grep $self->{'number'} != $self->{'clients'}{$_}->{'number'},
@@ -685,7 +689,7 @@ sub supports_parse {
 
 #=c
 sub nonblock {
-  return;
+#  return;
   my $self = shift;
   my $flags = fcntl( $self->{'socket'}, F_GETFL, 0 )
     or $self->log( 'err', "Can't get flags for socket: $!" ), return;
