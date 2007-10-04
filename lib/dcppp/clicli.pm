@@ -172,6 +172,10 @@ sub init {
     'Supports' => sub {
       $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
     },
+    'MaxedOut' => sub {
+        $self->disconnect();
+}
+  
   };
   #print "cmd init ($self->{'cmd'})\n";
   #    %{$self->{'cmd'}} = {
