@@ -86,6 +86,9 @@ sub new {
     'waits'            => 100,
     'wait_finish'      => 100,
     'wait_finish_by'   => 1,
+    'clients_max'      => 50,
+    'wait_clients'     => 200,
+    'wait_clients_by'  => 0.01,
     'auto_GetNickList' => 1,
     'NoGetINFO'        => 1,
     'NoHello'          => 1,
@@ -122,7 +125,7 @@ sub baseinit {
 
 sub connect {
   my $self = shift;
-  return if $self->{'status'} eq 'connected';
+  return 0 if $self->{'status'} eq 'connected';
   $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} or {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
@@ -134,10 +137,11 @@ sub connect {
     'Timeout'  => $self->{'Timeout'},
     'Blocking' => 0,
     %{ $self->{'sockopts'} or {} },
-  ) or $self->log( 'err', "connect socket  error: $@, $!" ), return;
+  ) or $self->log( 'err', "connect socket  error: $@, $!" ), return 1;
   $self->get_my_addr();
   $self->log( 'dcdbg', "connect to $self->{'host'} [me=$self->{'myip'}] ok" );
   $self->recv();
+  return 0;
 }
 
 sub listen {
@@ -199,10 +203,13 @@ sub recv {
   my ($readed);
   $self->{'databuf'} = '';
   my $reads = 5;
-LOOP: {
+#LOOP: 
+#{
     do {
       $readed = 0;
       last unless $self->{'select'};
+#      $self->info();
+#      $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep");
       for my $client ( $self->{'select'}->can_read($sleep) ) {
         if ( $self->{'accept'} and $client == $self->{'socket'} ) {
           if ( $_ = $self->{'socket'}->accept() ) {
@@ -248,8 +255,10 @@ LOOP: {
           $self->writefile( \$self->{'buf'} ), $self->{'buf'} = '' if length( $self->{'buf'} ) and $self->{'filehandle'};
         }
       }
-    } while ( $readed );
-  }
+ #     $self->log( 'dcdbg',"[$self->{'number'}] canread fin r=$readed");
+
+    } while ($readed);
+#  }
   for ( keys %{ $self->{'clients'} } ) {
     $self->{'clients'}{$_} = undef, delete( $self->{'clients'}{$_} ), next if !$self->{'clients'}{$_}->{'socket'};
     $ret += $self->{'clients'}{$_}->recv();
@@ -260,12 +269,16 @@ LOOP: {
 
 sub wait {
   my $self     = shift;
-  my $waits    = shift || $self->{'waits'};
-  my $wait_one = shift || $self->{'wait_once'};
+#        $self->log('waitR:', join(',',@_));
+  my ($waits   , $wait_once) = @_;
+#        $self->log('dctim', "[$self->{'number'}] waitR[$waits, , $wait_once]");
+  $waits ||= $self->{'waits'};
+  $wait_once ||= $self->{'wait_once'};
   local $_;
   my $ret;
-  #      $self->log('dctim', "[$self->{'number'}] wait [$waits, $ret]"),
-  $ret += $self->recv($wait_one) while --$waits > 0 and !$ret;
+#        $self->log('dctim', "[$self->{'number'}] wait [$waits, $ret, $wait_once]"),
+  $ret += $self->recv($wait_once) while --$waits > 0 and !$ret;
+#        $self->log('dctim', "[$self->{'number'}] waitret");
   return $ret;
 }
 
@@ -291,6 +304,16 @@ sub wait_finish {
     'finished, but clients still active:',
     map { "[$self->{'clients'}{$_}{'number'}]$_;st=$self->{'clients'}{$_}{'status'}" } @_
   ) if @_ = keys %{ $self->{'clients'} };
+}
+
+sub wait_clients {
+  my $self = shift;
+  for ( 0 .. $self->{'wait_clients'} ) {
+    last if $self->{'clients_max'} > scalar keys %{ $self->{'clients'} };
+    $self->log( 'info',      "wait clients " . scalar(keys %{ $self->{'clients'} }) . "/$self->{'clients_max'}  $_/$self->{'wait_clients'}" );
+#    $self->log( 'info',      "wait RUN", undef, $self->{'wait_clients_by'} );
+    $self->wait( undef, $self->{'wait_clients_by'} );
+  }
 }
 
 sub parse {
@@ -370,6 +393,7 @@ sub cmd {
 
 sub get {
   my ( $self, $nick, $file, $as ) = @_;
+  $self->wait_clients();
   $self->{'want'}->{$nick}{$file} = ( $as or $file );
   $self->cmd( ( ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) ? '' : 'Rev' ) . 'ConnectToMe', $nick );
 }
@@ -394,6 +418,7 @@ sub writefile {
   $self->handler('writefile_before');
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
+#    $self->log( 'dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}" );
     my $fh = $self->{'filehandle'};
     print $fh $$databuf if $fh;
     $self->log(
