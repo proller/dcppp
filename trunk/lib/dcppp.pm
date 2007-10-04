@@ -310,6 +310,7 @@ sub wait_clients {
   my $self = shift;
   for ( 0 .. $self->{'wait_clients'} ) {
     last if $self->{'clients_max'} > scalar keys %{ $self->{'clients'} };
+    $self->info() unless $_;
     $self->log( 'info',      "wait clients " . scalar(keys %{ $self->{'clients'} }) . "/$self->{'clients_max'}  $_/$self->{'wait_clients'}" );
 #    $self->log( 'info',      "wait RUN", undef, $self->{'wait_clients_by'} );
     $self->wait( undef, $self->{'wait_clients_by'} );
