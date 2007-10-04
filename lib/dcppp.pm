@@ -84,7 +84,7 @@ sub new {
     'auto_recv'        => 1,
     'wait_once'        => 0.1,
     'waits'            => 100,
-    'wait_finish'      => 100,
+    'wait_finish'      => 600,
     'wait_finish_by'   => 1,
     'clients_max'      => 50,
     'wait_clients'     => 200,
@@ -299,6 +299,7 @@ sub wait_finish {
     $self->wait( undef, $self->{'wait_finish_by'} );
   }
   local @_;
+  $self->info(),
   $self->log(
     'info',
     'finished, but clients still active:',
