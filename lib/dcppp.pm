@@ -173,7 +173,7 @@ sub disconnect {
     --$global{'count'};
   }
 #  $self->log('dev',"delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n") for grep {$_} keys %{ $self->{'clients'} };
-  $self->{'clients'}{$_}->destroy(), delete( $self->{'clients'}{$_} ) for grep { $_ } keys %{ $self->{'clients'} };
+  $self->{'clients'}{$_}->destroy(), delete( $self->{'clients'}{$_} ) for grep { $_ and $self->{'clients'}{$_}} keys %{ $self->{'clients'} };
   close( $self->{'filehandle'} ), $self->{'filehandle'} = undef if $self->{'filehandle'};
 }
 
