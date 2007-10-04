@@ -361,7 +361,7 @@ sub handler {
               local $_;
               eval {$_ = $self->{'socket'}->send( join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ) )};
       $self->log(
-        'err','send error', $@)
+        'err',"[$self->{'number'}]", 'send error', $@)
 if $@  ;
 
       $self->log(
