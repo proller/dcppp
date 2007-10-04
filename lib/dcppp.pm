@@ -361,11 +361,12 @@ sub handler {
               local $_;
               eval {$_ = $self->{'socket'}->send( join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ) )};
 
+
       $self->log(
         'dcdmp',
         "[$self->{'number'}] we send [",
         join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ),
-        "]:", $_        , $!
+        "]:", $_      , $@  , $!
       );
       @sendbuf = ();
     }
