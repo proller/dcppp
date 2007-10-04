@@ -2,7 +2,6 @@
 my $Id = '$Id$';
 
 package dcppp::clicli;
-
 #eval { use dcppp; };
 #use lib '../..';
 use dcppp;
@@ -14,22 +13,18 @@ use base 'dcppp';
 
 sub init {
   my $self = shift;
-
   #print( "$self::init from ", join(':', caller), "\n");
   #print "1.0: $self->{'Nick'} : ",@_,"\n";
   #print "Sc0[$self->{'socket'}]\n";
   %$self = (
     %$self,
     'Nick' => 'dcpppBot',
-
     #	'Key'	=> 'zzz',
     'Lock' => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
-
     #	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
     #	'Supports' => 'XmlBZList',
     #http://www.dcpp.net/wiki/index.php/%24Supports
-    'supports_avail' => [
-      qw(
+    'supports_avail' => [ qw(
         BZList
         MiniSlots
         GetZBlock
@@ -47,75 +42,57 @@ sub init {
     'XmlBZList' => 1,
     'ADCGet'    => 1,
     'MiniSlots' => 1,
-
     @_,
     'Direction' => 'Download',
-
     #	'Direction' => 'Upload', #rand here
     #	'incomingclass' => 'dcppp::clicli',
   );
   $self->baseinit();
-
   #print "1: $self->{'Nick'}\n";
   #print "Sc1[$self->{'socket'}]\n";
   #print "CLICLI init [$self->{'number'}]\n";
-
   #    ($self->{'peerport'}, $self->{'peerip'}) = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) if $self->{'socket'};
   #    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
   $self->get_peer_addr();
-
   #     $self->{'log'}->('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
   $self->{'log'}->( 'info', "[$self->{'number'}] Incoming client $self->{'host'}:$self->{'port'}" ) if $self->{'incoming'};
-
   #print("{{  $self->{'NickList'} }}");
   #print("[$_]")for sort keys %{$self->{'NickList'}};
-
   #print " clicli init clients:{", keys %{$self->{'clients'}}, "}\n";
-
   #print "parse init\n";
   #    %{$self->{'parse'}} = (
   $self->{'parse'} = {
     'Lock' => sub {
-
       #print "CLICLI lock parse\n";
       if ( $self->{'incoming'} ) {
         $self->{'sendbuf'} = 1;
         $self->cmd('MyNick');
-
         #          $self->{'sendbuf'} = 0;
         $self->cmd('Lock');
-
         #	  $self->recv();
         #          $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
-
         #          $self->{'Direction'} = 'Download';
         $self->cmd('Direction');
         $self->{'sendbuf'} = 0;
-
         #          $_[0] =~ /(\S+)/;
         #          $_[0] =~ /^(.+) Pk=/i;
         #          $_[0] =~ /^(.+?)( Pk=.+)?$/i;
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
         $self->cmd( 'Key', dcppp::lock2key($1) );
-
         #	  $self->cmd('Key', dcppp::lock2key($_[0]));
       } else {
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-
         #	  $self->cmd('Key', dcppp::lock2key($1));
         $self->{'Key'} = dcppp::lock2key($1);
-
         #         $self->{'sendbuf'} = 1;
         #         $self->cmd('MyNick');
         #	  $self->{'sendbuf'} = 0;
         #	  $self->cmd('Lock');
       }
     },
-
     #      'Supports' => sub { },
     'Direction' => sub {
-
       #$self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
       if ( $_[0] eq 'Download' ) {
         $self->{'Direction'} = 'Upload';
@@ -123,14 +100,11 @@ sub init {
         $self->{'Direction'} = 'Download';
       }
     },
-
     'Key' => sub {
       if ( $self->{'incoming'} ) {
-
         #  	  $self->cmd('Supports');
         #          $self->{'Direction'} = 'Download';
         #  	  $self->cmd('Direction');
-
         #print " CL $self->{'number'} [nick:$_] " for keys %{$self->{'want'}};
 
 =c
@@ -140,7 +114,6 @@ sub init {
              last;
           }
 =cut
-
       } else {
         $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
@@ -149,7 +122,6 @@ sub init {
         $self->cmd( 'Key', $self->{'Key'} );
       }
       $self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
-
       #print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
       $self->{'Get'} = $self->{'filename'} . '$' . ( $self->{'filefrom'} or 1 ),
         $self->{'ADCGet'} = 'file ' . $self->{'filename'} . ' 0 -1',
@@ -157,47 +129,35 @@ sub init {
         if $self->{'filename'};
     },
     'Get' => sub {
-
       #TODO
       $self->cmd( 'FileLength', 0 );
     },
     'MyNick' => sub {
       $self->{'log'}->( 'info', "[$self->{'number'}] peer is [", ( $self->{'peernick'} = $_[0] ), "]" );
-
       #         $self->{'NickList'}->{$self->{'peernick'}}{'ip'} = $self->{'peerip'};
       $self->{'NickList'}->{ $self->{'peernick'} }{'ip'} = $self->{'host'};
-
       #         $self->{'NickList'}->{$self->{'peernick'}}{'port'} = ($self->{'peerport'} or $self->{'port'});
       $self->{'NickList'}->{ $self->{'peernick'} }{'port'} = $self->{'port'};
-
       #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
       #         $self->{'IpList'}->{$self->{'peerip'}}->{'port'} = $self->{'PortList'}->{$self->{'peerip'}};
       $self->{'IpList'}->{ $self->{'host'} } = \%{ $self->{'NickList'}->{ $self->{'peernick'} } };
       $self->{'IpList'}->{ $self->{'host'} }->{'port'} = $self->{'PortList'}->{ $self->{'host'} };
       $self->handler( 'user_ip', $self->{'peernick'}, $self->{'host'}, $self->{'port'} );
-
       #$self->{'log'}->('dev', "[$self->{'number'}] peer port is [ip:$self->{'host'} pl",
       # $self->{'PortList'}->{$self->{'host'}},
       # 'nl',$self->{'NickList'}->{$self->{'peernick'}}{'port'},
       # 'port',$self->{'port'},"]");
-
       if ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) {
-
         #print ("we want to download ",keys %{$self->{'want'}->{$self->{'peernick'}}}, " files\n");
         $self->{'Direction'} = 'Download';
       } else {
         $self->{'Direction'} = 'Upload';
-
         #print ("we dont want to download \n");
-
       }
-
     },
-
     'FileLength' => sub {
       $self->{'filetotal'} = $_[0];
       return if $self->openfile();
-
       #        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
       #        binmode($self->{'filehandle'});
       $self->cmd('Send');
@@ -206,7 +166,6 @@ sub init {
       $_[0] =~ /(\d+?)$/is;
       $self->{'filetotal'} = $1;
       return if $self->openfile();
-
       #        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
       #        binmode($self->{'filehandle'});
     },
@@ -214,7 +173,6 @@ sub init {
       $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
     },
   };
-
   #print "cmd init ($self->{'cmd'})\n";
   #    %{$self->{'cmd'}} = {
   $self->{'cmd'} = {
@@ -242,22 +200,21 @@ sub init {
           $self->{'fileext'}  = '.DcLst';
           $self->{'filename'} = 'MyList' . $self->{'fileext'};
         }
-
         #$self->{'log'}->('dev', "fas was", $self->{'fileas'});
         $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
-
         #$self->{'log'}->('dev', "fas now", $self->{'fileas'});
       }
     },
-
-    'MyNick' => sub { $self->sendcmd( 'MyNick', $self->{'Nick'} ); },
-    'Lock'   => sub { $self->sendcmd( 'Lock',   $self->{'Lock'} ); },
-
+    'MyNick' => sub {
+      $self->sendcmd( 'MyNick', $self->{'Nick'} );
+    },
+    'Lock' => sub {
+      $self->sendcmd( 'Lock', $self->{'Lock'} );
+    },
     #      'Supports'	=> sub { $self->sendcmd('Supports', $self->{'Supports'}); },
     'Supports' => sub { $self->sendcmd( 'Supports', ( $self->supports() or return ) ); },
     'Direction' => sub {
       $self->sendcmd( 'Direction', $self->{'Direction'}, int( rand(0x7FFF) ) );
-
       #$self->{'want'}->{$self->{'peernick'}}
     },
     'Key' => sub {
@@ -276,9 +233,6 @@ sub init {
       $self->sendcmd( 'ADCGET', $self->{'ADCGet'} );
     },
   };
-
   #print " clicli aftinit clients:{", keys %{$self->{'clients'}}, "}\n";
-
 }
-
 1;
