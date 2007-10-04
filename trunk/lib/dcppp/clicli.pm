@@ -177,7 +177,7 @@ sub init {
   #    %{$self->{'cmd'}} = {
   $self->{'cmd'} = {
     'connect' => sub {
-      $self->connect();
+      $self->connect() && return;
       $self->{'sendbuf'} = 1;
       $self->cmd('MyNick');
       $self->{'sendbuf'} = 0;
