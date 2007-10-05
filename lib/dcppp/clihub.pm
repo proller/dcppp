@@ -150,12 +150,12 @@ sub init {
     },
     'BadPass' => sub {
     },    # print("BadPassword\n");
-    'LogedIn' => sub { },    # print("$_[0] is LogedIn\n");
-    'Search'  => sub { },    #todo
-    #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
-    #
-    #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
-    #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
+    'LogedIn' => sub { },  # print("$_[0] is LogedIn\n");
+    'Search'  => sub { },  #todo
+                           #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+                           #
+                           #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
+                           #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
   );
   %{ $self->{'cmd'} } = (
     'chatline' => sub {
@@ -221,7 +221,7 @@ sub init {
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}},
 #print "Listen on port $self->{'myport'} \n";
-  $self->{'clients'}{''} = $self->{'incomingclass'}->new(
+  $self->{'clients'}{'listener'} = $self->{'incomingclass'}->new(
     %$self, $self->clear(),
     'want'     => \%{ $self->{'want'} },
     'NickList' => \%{ $self->{'NickList'} },
@@ -231,10 +231,9 @@ sub init {
     #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
     #'LocalPort'=>$self->{'myport'},
     #'debug'=>1,
-  );
-  $self->{'clients'}{''}->listen();
-  $self->connect(), $self->wait()
-    if $self->{'auto_connect'};
+    'auto_listen' => 1,
+  ) if $self->{'M'} eq 'A';
+  #  $self->{'clients'}{'listener'}->listen();
   #print "[$self->{'number'}]AFT";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 }
 1;

@@ -20,7 +20,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
-
 use strict;
 use lib './lib';
 use dcppp::clihub;

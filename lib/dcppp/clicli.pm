@@ -114,6 +114,7 @@ sub init {
              last;
           }
 =cut
+
       } else {
         $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
@@ -173,9 +174,8 @@ sub init {
       $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
     },
     'MaxedOut' => sub {
-        $self->disconnect();
-}
-  
+      $self->disconnect();
+      }
   };
   #print "cmd init ($self->{'cmd'})\n";
   #    %{$self->{'cmd'}} = {
