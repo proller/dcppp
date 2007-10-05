@@ -20,7 +20,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
-
 use strict;
 #  use Time::HiRes;
 eval { use Time::HiRes qw(time sleep); };
@@ -54,7 +53,6 @@ $dc->cmd( 'To', '[skying]pro(+)', 'zz' . $i++ . 'z' . rand(1000) ),
 #  sleep(0.1)
    for 0..1000;
 =cut
-
 $dc->recv();
 sleep(5);
 $dc->recv();

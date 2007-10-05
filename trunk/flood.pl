@@ -20,14 +20,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
 use dcppp::clihub;
 our (%config);
 
-sub fisher_yates_shuffle {
+sub shuffle {
   my $deck = shift;    # $deck is a reference to an array
   my $i    = @$deck;
   while ( $i-- ) {
@@ -70,65 +69,69 @@ sub rand_str_ex {
 
 sub handler {
   my $name = shift;
-  print "handler($name) = [$config{'handler'}{$name}]\n";
-  return $config{'handler'}{$name}->(@_) if $config{'handler'}{$name};
-  return ();
+  #  print "handler($name) = [$config{'handler'}{$name}]\n";
+  return $config{'handler'}{$name}->(@_) if ref $config{'handler'}{$name} eq 'CODE';
+  return;
 }
-
-sub createbot {
-my ($host, $port) = @_;
-return  dcppp::clihub->new(
-    'host' => $host,
-    ( $port ? ( 'port' => $port ) : () ),
-    %{ $config{'dcbot_param'} or {} },
-    handler('param'),
-  );
-}
-
 require 'flooddef.pl';
 do 'floodmy.pl';
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 handler( 'mail_loop_bef', @ARGV );
-TRY: for ( 0 .. $config{'flood_tries'} ) {
-  handler( 'create_bef', $_ );
-  $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|i;
-#print("host=$1; port=$2;\n");
-  my @dc;
-  push @dc,  createbot($1, $2) for 0..$config{'bots'};
-  handler( 'create_aft', $_ ) for @dc;
-  #
-  for (@dc) {
-  handler( 'destroy', $_ ), next if !$_->{'socket'};
-  }
-  CW: for ( 1 .. $config{'connect_wait'} ) {    #sleep(5); $dc->recv();
-    for (@dc) {
-    last if !$_->{'socket'} or $_->{'status'} eq 'connected';
-#    $_->wait(10);
-    }
-    $_->wait(10) for @dc;
-    sleep(1);
-  }
-  for ( 0 .. $config{'connect_aft_wait'} ){
-  $_->wait(10) for @dc; 
-  sleep(1) 
-}
-  handler( 'send_bef', $_ ) for @dc;
-  for my $n( 0 .. $config{'send_tries'} ) {
-    for (@dc) {
 
-    last if !$_->{'socket'} or $_->{'status'} ne 'connected';
-    handler( 'send', $_, $n ), sleep( $config{'send_sleep'} );
+sub createbot {
+  my ( $host, $port ) = @_;
+  local $_ = dcppp::clihub->new(
+    'host' => $host,
+    ( $port ? ( 'port' => $port ) : () ),
+    'auto_connect' => 0,
+    #    'log'              => sub { local $_ = shift;    return if $_ eq 'dcdmp';    print( join( ' ', $_, @_ ), "\n" ) },
+    %{ ( ref $config{'dcbot_param'} eq 'CODE' ? $config{'dcbot_param'}->() : $config{'dcbot_param'} ) or {} },
+    handler('param'),
+  );
+  handler( 'create_aft', $_ );
+  $_->connect();
+  return $_;
 }
+TRY: for ( 0 .. $config{'flood_tries'} ) {
+  print("try $_\n"), handler( 'create_bef', $_ );
+  $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|i;
+  #print("host=$1; port=$2;\n");
+  my $dc = createbot( $1, $2 );
+  $dc->{'disconnect_recursive'} = 0;
+  $dc->{'clients'}{$_} = createbot( $1, $2 ), print("addbot[$_] = $dc->{'clients'}{$_}{'number'}\n"),
+    #  handler( 'create_aft', $dc->{'clients'}{$_} ),
+    #  $dc->wait(),
+    #  sleep(0.1),
+    #  $dc->wait(),
+    $dc->wait_sleep(),
+    #  $dc->info(),
+    for 2 .. $config{'bots'};
+  #
+  $dc->info();
+  handler( 'destroy', $dc ), next if !$dc->{'socket'};
+  for ( 1 .. $config{'connect_wait'} ) {    #sleep(5); $dc->recv();
+    last if !$dc->{'socket'} or $dc->{'status'} eq 'connected';
+    $dc->wait() for 0 .. 10;
+    #    sleep(1);
   }
-  handler( 'send_aft', $_ ),
-  $_->recv(),
-  handler( 'destroy_bef', $_ ),
-  handler( 'destroy',     $_ ) for @dc;
-for( @dc) {
-  $_->destroy() if !$config{'no_destroy'};
-}
+  handler( 'destroy', $dc ), next if !$dc->{'socket'};
+  $dc->wait(),
+    #    sleep(1)
+    for ( 0 .. $config{'connect_aft_wait'} );
+  handler( 'destroy', $dc ), next if !$dc->{'socket'};
+  handler( 'send_bef', $dc );
+  for ( 0 .. $config{'send_tries'} ) {
+    last if !$dc->{'socket'} or $dc->{'status'} ne 'connected';
+    handler( 'send', $dc, $_ ), sleep( $config{'send_sleep'} );
+    $dc->recv(),;
+  }
+  handler( 'send_aft', $dc );
+  $dc->recv();
+  handler( 'destroy_bef', $dc );
+  handler( 'destroy',     $dc );
+  $dc->destroy() if !$config{'no_destroy'};
   sleep( $config{'after_sleep'} );
   print "ok\n";
-  handler( 'aft', $_ ) for @dc;
+  handler( 'aft', $dc );
 }
 handler('end');
