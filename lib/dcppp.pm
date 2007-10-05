@@ -443,7 +443,7 @@ sub writefile {
 sub get_peer_addr {
   my ($self) = @_;
   return unless $self->{'socket'};
-  @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) );
+  eval {@_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) )};
   return unless $_[1];
   return unless $_[1] = inet_ntoa( $_[1] );
   $self->{'port'} = $_[0] if $_[0] and !$self->{'incoming'};
