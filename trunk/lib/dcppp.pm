@@ -223,7 +223,7 @@ sub recv {
     $readed = 0;
     last unless $self->{'select'} and $self->{'socket'};
     #      $self->info();
-          $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep $self->{'select'};$self->{'socket'}");
+#          $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep $self->{'select'};$self->{'socket'}");
     for my $client ( $self->{'select'}->can_read($sleep) ) {
       if ( $self->{'accept'} and $client == $self->{'socket'} ) {
         if ( $_ = $self->{'socket'}->accept() ) {
