@@ -20,6 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
@@ -60,9 +61,7 @@ sub rand_str_ex {
   my ( $str, $chg ) = @_;
   $chg ||= int( length($str) / 10 );
   local @_ = split( //, $str );
-  for ( 0 .. $chg ) {
-    $_[ rand scalar @_ ] = rand_char();
-  }
+  for ( 0 .. $chg ) { $_[ rand scalar @_ ] = rand_char(); }
   return join '', @_;
 }
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];

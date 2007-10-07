@@ -25,8 +25,7 @@ sub init {
     'host' => 'localhost',
     #        'myport' => 6779 + int(rand(1000)),
     #	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2',
-    'Pass' => '',
-    'Key'  => 'zzz',
+    'Pass' => '', 'Key' => 'zzz',
     #    'auto_wait'        => 1,
     #        %$self,
     'supports_avail' => [ qw(
@@ -150,12 +149,12 @@ sub init {
     },
     'BadPass' => sub {
     },    # print("BadPassword\n");
-    'LogedIn' => sub { },  # print("$_[0] is LogedIn\n");
-    'Search'  => sub { },  #todo
-                           #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
-                           #
-                           #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
-                           #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
+    'LogedIn' => sub { },    # print("$_[0] is LogedIn\n");
+    'Search'  => sub { },    #todo
+    #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+    #
+    #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
+    #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
   );
   %{ $self->{'cmd'} } = (
     'chatline' => sub {

@@ -38,7 +38,6 @@ sub float {    #v1
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
     : int( $_[0] );
 }
-
 sub clear {
   return (
     'clients'    => {},
@@ -59,44 +58,43 @@ sub new {
     'myport_base'   => 40000,
     'myport_random' => 1000,
     # http://www.dcpp.net/wiki/index.php/%24MyINFO
-    'description' => 'just dcppp bot',
-    'connection'  => 'LAN(T3)',
+    'description' => 'just dcppp bot', 'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
-    'flag'      => '1',                         # User status as ascii char (byte)
-                                                # 1 normal
-                                                # 2, 3 away
-                                                # 4, 5 server               The server icon is used when the client has
-                                                # 6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
-                                                # 8, 9 fireball             The fireball icon is used when the client
-                                                # 10, 11 fireball away      has had an upload > 100 kB/s.
-    'email'     => 'billgates@microsoft.com',
-    'sharesize' => 10 * 1024 * 1024 * 1024,     #10GB
-    'client'    => 'dcp++',                     #++: indicates the client
-    'V'         => $VERSION,                    #V: tells you the version number
-    'M'         => 'A',                         #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
-    'H'         => '0/1/0'
+    'flag' => '1',    # User status as ascii char (byte)
+    # 1 normal
+    # 2, 3 away
+    # 4, 5 server               The server icon is used when the client has
+    # 6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
+    # 8, 9 fireball             The fireball icon is used when the client
+    # 10, 11 fireball away      has had an upload > 100 kB/s.
+    'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
+    'client' => 'dcp++',     #++: indicates the client
+    'V'      => $VERSION,    #V: tells you the version number
+    'M'      => 'A',         #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    'H'      => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '2',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
-    'log'              => sub { print( join( ' ', @_ ), "\n" ) },
-    'auto_connect'     => 1,
-    'auto_recv'        => 1,
-    'wait_once'        => 0.1,
-    'waits'            => 100,
-    'wait_finish'      => 600,
-    'wait_finish_by'   => 1,
-    'clients_max'      => 50,
-    'wait_clients'     => 200,
-    'wait_clients_by'  => 0.01,
-    'auto_GetNickList' => 1,
-    'NoGetINFO'        => 1,
-    'NoHello'          => 1,
-    'UserIP2'          => 1,
+    'log'               => sub { print( join( ' ', @_ ), "\n" ) },
+    'auto_connect'      => 1,
+    'auto_recv'         => 1,
+    'wait_once'         => 0.1,
+    'waits'             => 100,
+    'wait_finish'       => 600,
+    'wait_finish_by'    => 1,
+    'clients_max'       => 50,
+    'wait_clients'      => 200,
+    'wait_clients_by'   => 0.01,
+    'cmd_recurse_sleep' => 1,
+    'auto_GetNickList'  => 1,
+    'NoGetINFO'         => 1,
+    'NoHello'           => 1,
+    'UserIP2'           => 1,
     ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'Version'              => '1,0091',
-    'informative'          => [qw(number status host port filebytes filetotal)],
-    'informative_hash'     => [qw(clients)],                                       #NickList IpList PortList
+    'informative'          => [qw(number status host port filebytes filetotal sharesize proxy)],
+    'informative_hash'     => [qw(clients)],                                             #NickList IpList PortList
     'disconnect_recursive' => 1,
   };
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
@@ -129,24 +127,21 @@ sub baseinit {
 
 sub connect {
   my $self = shift;
-  return 0 if $self->{'status'} eq 'connected';
+  return 0 if grep { $self->{'status'} eq $_ } qw(connected todestroy);
   $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} or {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
-  $self->{'socket'}   = (
-    new IO::Socket::INET(
-      'PeerAddr' => $self->{'host'},
-      'PeerPort' => $self->{'port'},
-      'Proto'    => 'tcp',
-      'Type'     => SOCK_STREAM,
-      'Timeout'  => $self->{'Timeout'},
-      ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
-      #    'Blocking' => 0,
-      %{ $self->{'sockopts'} or {} },
-      )
-      or $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $!" ),
-    return 1
+  $self->{'socket'} ||= new IO::Socket::INET(
+    'PeerAddr' => $self->{'host'},
+    'PeerPort' => $self->{'port'},
+    'Proto'    => 'tcp',
+    'Type'     => SOCK_STREAM,
+    'Timeout'  => $self->{'Timeout'},
+    ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
+    #    'Blocking' => 0,
+    %{ $self->{'sockopts'} or {} },
   );
+  $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $!" ), return 1 if !$self->{'socket'};
   $self->get_my_addr();
   $self->log( 'dcdbg', "[$self->{'number'}]",
     "connect to $self->{'host'} [me=$self->{'myip'}] ok, socket=[$self->{'socket'}]" );
@@ -263,9 +258,8 @@ sub recv {
         ++$readed;
         ++$ret;
       }
-      if ( $self->{'filehandle'} ) {
-        $self->writefile( \$self->{'databuf'} );
-      } else {
+      if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
+      else {
         $self->{'buf'} .= $self->{'databuf'};
         $self->{'buf'} =~ s/(.*\|)//s;
         for ( split /\|/, $1 ) {
@@ -283,7 +277,7 @@ sub recv {
   for ( keys %{ $self->{'clients'} } ) {
     #    $self->{'clients'}{$_} = undef,
     #    $self->log( 'dev', "del client[$_]", ),
-    delete( $self->{'clients'}{$_} ), next if !$self->{'clients'}{$_}->{'socket'};
+    delete( $self->{'clients'}{$_} ), next if !$self->{'clients'}{$_}->{'socket'} or $self->{'clients'}{$_}->{'status'} eq 'todestroy';
     $ret += $self->{'clients'}{$_}->recv();
   }
   #!  ++$ret, $self->destroy() if $self->{'status'} eq 'todestroy';
@@ -388,13 +382,11 @@ sub handler {
   sub sendcmd {
     my $self = shift;
     $self->log( 'err', "[$self->{'number'}] ERROR! no socket to send" ), return unless $self->{'socket'};
-    if ( $self->{'sendbuf'} ) {
-      push @sendbuf, '$' . join( ' ', @_ ) . '|';
-    } else {
+    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
+    else {
       local $_;
       eval { $_ = $self->{'socket'}->send( join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ) ) };
-      $self->log( 'err', "[$self->{'number'}]", 'send error', $@ )
-        if $@;
+      $self->log( 'err', "[$self->{'number'}]", 'send error', $@ ) if $@;
       $self->log( 'dcdmp', "[$self->{'number'}] we send [", join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ), "]:", $_,, $! );
       @sendbuf = ();
     }
@@ -410,17 +402,19 @@ sub cmd {
     sleep( $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
   }
   $self->{'last_cmd_time'} = time;
-  if ( $self->{'cmd'}{$cmd} ) {
-    $self->{'cmd'}{$cmd}->(@_);
-  } else {
-    $self->log( 'info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
+  if ( $self->{'cmd'}{$cmd} ) { $self->{'cmd'}{$cmd}->(@_); }
+  else {
+    $self->log( 'info', "[$self->{'number'}]", "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
     $self->{'cmd'}{$cmd} = sub { };
   }
-  if ( $self->{'auto_wait'} ) {
-    $self->wait();
-  } elsif ( $self->{'auto_recv'} ) {
-    $self->recv();
-  }
+  if    ( $self->{'auto_wait'} ) { $self->wait(); }
+  elsif ( $self->{'auto_recv'} ) { $self->recv(); }
+}
+
+sub rcmd {
+  my $self = shift;
+  $_->cmd(@_), $self->wait_sleep( $self->{'cmd_recurse_sleep'} ) for values( %{ $self->{'clients'} } ), $self;
+  #  $self->cmd(@_);
 }
 
 sub get {
@@ -477,7 +471,7 @@ sub get_peer_addr {
 sub get_my_addr {
   my ($self) = @_;
   return unless $self->{'socket'};
-  @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) );
+  eval { @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) ) };
   return unless $_[1];
   return unless $_[1] = inet_ntoa( $_[1] );
   #$self->{'log'}->('dev', "[$self->{'number'}] SOCKNAME $_[0],$_[1];");
@@ -489,28 +483,19 @@ sub lock2key {
   my $i;
   my @key = ();
   # convert to ordinal
-  foreach (@lock) {
-    $_ = ord;
-  }
+  foreach (@lock) { $_ = ord; }
   # calc key[0] with some xor-ing magic
   push( @key, $lock[0] ^ 5 );
   # calc rest of key with some other xor-ing magic
-  for ( $i = 1 ; $i < @lock ; $i++ ) {
-    push( @key, ( $lock[$i] ^ $lock[ $i - 1 ] ) );
-  }
+  for ( $i = 1 ; $i < @lock ; $i++ ) { push( @key, ( $lock[$i] ^ $lock[ $i - 1 ] ) ); }
   # nibble swapping
-  for ( $i = 0 ; $i < @key ; $i++ ) {
-    $key[$i] = ( ( ( $key[$i] << 4 ) & 240 ) | ( ( $key[$i] >> 4 ) & 15 ) ) & 0xff;
-  }
+  for ( $i = 0 ; $i < @key ; $i++ ) { $key[$i] = ( ( ( $key[$i] << 4 ) & 240 ) | ( ( $key[$i] >> 4 ) & 15 ) ) & 0xff; }
   #temp[0] = (u_int8_t)(temp[0] ^ temp[aLock.length()-1]);
   $key[0] = $key[0] ^ $key[ @key - 1 ];
   # escape some
   foreach (@key) {
-    if ( $_ == 0 || $_ == 5 || $_ == 36 || $_ == 96 || $_ == 124 || $_ == 126 ) {
-      $_ = sprintf( '/%%DCN%03i%%/', $_ );
-    } else {
-      $_ = chr;
-    }
+    if ( $_ == 0 || $_ == 5 || $_ == 36 || $_ == 96 || $_ == 124 || $_ == 126 ) { $_ = sprintf( '/%%DCN%03i%%/', $_ ); }
+    else                                                                        { $_ = chr; }
   }
   # done
   return join( "", @key );
@@ -569,6 +554,8 @@ sub tag_parse {
 
 sub info {
   my $self = shift;
+  #local @_ = $self->active();
+  #  $self->log('info', 'active', @_) if @_;
   $self->log(
     'info',
     map( {"$_=$self->{$_}"} grep { $self->{$_} } @{ $self->{'informative'} } ),
@@ -577,6 +564,11 @@ sub info {
         @{ $self->{'informative_hash'} } )
   );
   $self->{'clients'}{$_}->info() for keys %{ $self->{'clients'} };
+}
+
+sub active {
+  my $self = shift;
+  return map { $_->{'number'} } grep { $_->{'socket'} } $self, values %{ $self->{'clients'} };
 }
 
 sub AUTOLOAD {

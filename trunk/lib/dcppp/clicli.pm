@@ -94,11 +94,8 @@ sub init {
     #      'Supports' => sub { },
     'Direction' => sub {
       #$self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
-      if ( $_[0] eq 'Download' ) {
-        $self->{'Direction'} = 'Upload';
-      } else {
-        $self->{'Direction'} = 'Download';
-      }
+      if   ( $_[0] eq 'Download' ) { $self->{'Direction'} = 'Upload'; }
+      else                         { $self->{'Direction'} = 'Download'; }
     },
     'Key' => sub {
       if ( $self->{'incoming'} ) {
