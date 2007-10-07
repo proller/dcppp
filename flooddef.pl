@@ -84,19 +84,10 @@ $config{'handler'}{'destroy'} = sub {
 };
 =cut
 
-#=socks5 example
-$config{'proxy_first'} = 1; # use first working proxy- dont show all
-# 76.25.226.185:62059 
+=socks5 example
+$config{'proxy_first'} = 1; # use first working proxy - dont show all
 @{ $config{'proxy'} }{qw(
-
- 24.15.202.25:7566 211.239.150.148:3370 70.135.33.176:19650
-60.191.192.181:1080 198.4.175.38:1080 218.71.136.105:1080
-211.116.254.203:2753
-210.34.22.226:1080
-69.114.209.1:9225	
-218.234.21.33:9898	
-69.47.111.105:18345	
-59.77.21.250:1080	
+ 24.15.202.25:7566 211.239.150.148:3370 70.135.33.176:19650 76.25.226.185:62059 
 )} = ();
 use IO::Socket::Socks;
 $config{'handler'}{'create_aft0'} = sub {
@@ -125,7 +116,7 @@ $config{'handler'}{'create_aft0'} = sub {
   if ( !defined( $self->{'socket'} ) ) {
     $self->log( 'err', "[$self->{'number'}]", 'socks', $SOCKS_ERROR );
     $self->{'status'} = 'todestroy';
-    $self->log( 'warn', 'removing socks', $proxy ), delete $config{'proxy'}{$proxy} if ++$proxyerr{$proxy} > 3;
+    $self->log( 'warn', 'removing socks', $proxy ), delete $config{'proxy'}{$proxy} if ++$proxyerr{$proxy} > 2;
     delete $proxyok{$proxy} if --$proxyok{$proxy} < 0;
   } else {
     delete $proxyerr{$proxy};
@@ -134,4 +125,4 @@ $config{'handler'}{'create_aft0'} = sub {
   }
 };
 END { print "good proxies: ", join ' ', keys %proxyok if keys %proxyok }
-#=cut
+=cut
