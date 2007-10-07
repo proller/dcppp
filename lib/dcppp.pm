@@ -212,18 +212,18 @@ sub recv {
   my $self  = shift;
   my $sleep = shift || 0;
   my $ret   = 0;
-  return unless $self->{'socket'};
+#  return unless $self->{'socket'};
   $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
   my ($readed);
   $self->{'databuf'} = '';
   #  my $reads = 5;
   #LOOP:
-  #{
+  {
   do {
     $readed = 0;
     last unless $self->{'select'} and $self->{'socket'};
     #      $self->info();
-    #      $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep");
+          $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep $self->{'select'};$self->{'socket'}");
     for my $client ( $self->{'select'}->can_read($sleep) ) {
       if ( $self->{'accept'} and $client == $self->{'socket'} ) {
         if ( $_ = $self->{'socket'}->accept() ) {
@@ -273,10 +273,10 @@ sub recv {
     }
     #     $self->log( 'dcdbg',"[$self->{'number'}] canread fin r=$readed");
   } while ($readed);
-  #  }
+    }
   for ( keys %{ $self->{'clients'} } ) {
     #    $self->{'clients'}{$_} = undef,
-    #    $self->log( 'dev', "del client[$_]", ),
+   #     $self->log( 'dev', "del client[$_]", ),
     delete( $self->{'clients'}{$_} ), next if !$self->{'clients'}{$_}->{'socket'} or $self->{'clients'}{$_}->{'status'} eq 'todestroy';
     $ret += $self->{'clients'}{$_}->recv();
   }
@@ -293,7 +293,7 @@ sub wait {
   $wait_once ||= $self->{'wait_once'};
   local $_;
   my $ret;
-  #        $self->log('dctim', "[$self->{'number'}] wait [$waits, $ret, $wait_once]"),
+#          $self->log('dctim', "[$self->{'number'}] wait [$waits, $ret, $wait_once]"),
   $ret += $self->recv($wait_once) while --$waits > 0 and !$ret;
   #        $self->log('dctim', "[$self->{'number'}] waitret");
   return $ret;
