@@ -20,6 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
@@ -46,7 +47,7 @@ for ( 0 .. 1000 ) {
   #  print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, ' HUB заражен вирусом срочно покиньте его!' )
   #    for keys %{ $dc->{'NickList'} };
   while (1) {
-    $dc->recv();    #sleep(5); $dc->recv();
+    $dc->wait();    #sleep(5); $dc->recv();
   }
   $dc->destroy();
   sleep(2);

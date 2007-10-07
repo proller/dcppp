@@ -20,20 +20,33 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
+use Socket;
 use lib './lib';
 use dcppp::clihub;
 our (%config);
 
 sub shuffle {
-  my $deck = shift;    # $deck is a reference to an array
-  my $i    = @$deck;
+  my $deck = shift;
+  $deck = [ $deck, @_ ] unless ref $deck eq 'ARRAY';
+  my $i = @$deck;
   while ( $i-- ) {
     my $j = int rand( $i + 1 );
     @$deck[ $i, $j ] = @$deck[ $j, $i ];
   }
-  return $deck;
+  return wantarray ? @$deck : $deck;
+}
+
+sub name_to_ip {
+  my ($name) = @_;
+  unless ( $name =~ /^\d+\.\d+\.\d+\.\d+$/ ) {
+    local $_ = ( gethostbyname($name) )[4];
+    return ( $name, 1 ) unless length($_) == 4;
+    $name = inet_ntoa($_);
+  }
+  return $name;
 }
 
 sub rand_int {
@@ -61,15 +74,14 @@ sub rand_str_ex {
   my ( $str, $chg ) = @_;
   $chg ||= int( length($str) / 10 );
   local @_ = split( //, $str );
-  for ( 0 .. $chg ) {
-    $_[ rand scalar @_ ] = rand_char();
-  }
+  for ( 0 .. $chg ) { $_[ rand scalar @_ ] = rand_char(); }
   return join '', @_;
 }
 
 sub handler {
   my $name = shift;
   #  print "handler($name) = [$config{'handler'}{$name}]\n";
+  $config{'handler'}{ $name . $_ }->(@_) for grep { ref $config{'handler'}{ $name . $_ } eq 'CODE' } 0 .. 5;
   return $config{'handler'}{$name}->(@_) if ref $config{'handler'}{$name} eq 'CODE';
   return;
 }
@@ -83,8 +95,11 @@ sub createbot {
   local $_ = dcppp::clihub->new(
     'host' => $host,
     ( $port ? ( 'port' => $port ) : () ),
-    'auto_connect' => 0,
-    #    'log'              => sub { local $_ = shift;    return if $_ eq 'dcdmp';    print( join( ' ', $_, @_ ), "\n" ) },
+    'auto_connect' => 0, (
+      $config{'log_filter'}
+      ? ( 'log' => sub { local $_ = shift; return if $_ eq 'dcdmp'; print( join( ' ', $_, @_ ), "\n" ) } )
+      : ()
+    ),
     %{ ( ref $config{'dcbot_param'} eq 'CODE' ? $config{'dcbot_param'}->() : $config{'dcbot_param'} ) or {} },
     handler('param'),
   );
@@ -97,6 +112,13 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|i;
   #print("host=$1; port=$2;\n");
   my $dc = createbot( $1, $2 );
+  $SIG{'INFO'} = $SIG{'HUP'} = sub { $dc->info() };
+  $SIG{'INT'} = sub {
+    $dc->info();
+    $dc->{'disconnect_recursive'} = 1;
+    $dc->destroy();
+    exit();
+  };
   $dc->{'disconnect_recursive'} = 0;
   $dc->{'clients'}{$_} = createbot( $1, $2 ), print("addbot[$_] = $dc->{'clients'}{$_}{'number'}\n"),
     #  handler( 'create_aft', $dc->{'clients'}{$_} ),
@@ -121,12 +143,17 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   handler( 'destroy', $dc ), next if !$dc->{'socket'};
   handler( 'send_bef', $dc );
   for ( 0 .. $config{'send_tries'} ) {
-    last if !$dc->{'socket'} or $dc->{'status'} ne 'connected';
-    handler( 'send', $dc, $_ ), sleep( $config{'send_sleep'} );
-    $dc->recv(),;
+    last if !$dc->{'disconnect_recursive'} and ( !$dc->{'socket'} or $dc->{'status'} ne 'connected' );
+    print( "send try $_ to", join( ',', sort $dc->active() ), "\n" );
+    last if !$dc->active();
+    handler( 'send', $dc, $_ );
+    $dc->wait_sleep( $config{'send_sleep'} );
+    #    $dc->recv(),;
   }
   handler( 'send_aft', $dc );
   $dc->recv();
+  $dc->info();
+  $dc->{'disconnect_recursive'} = 1;
   handler( 'destroy_bef', $dc );
   handler( 'destroy',     $dc );
   $dc->destroy() if !$config{'no_destroy'};
