@@ -1,5 +1,9 @@
 # $Id$ $URL$
 
+flood bot improved
+
+new wait functions
+
 perltidy -b -i=2 -ce -l=128 *.pm *.pl *.cgi
 
 min_chat_delay min_cmd_delay

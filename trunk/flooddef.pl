@@ -85,8 +85,19 @@ $config{'handler'}{'destroy'} = sub {
 =cut
 
 #=socks5 example
-#$config{'proxy_first'} = 1; # use first working proxy- dont show all
-@{ $config{'proxy'} }{qw(76.25.226.185:62059 24.15.202.25:7566 211.239.150.148:3370 70.135.33.176:19650)} = ();
+$config{'proxy_first'} = 1; # use first working proxy- dont show all
+# 76.25.226.185:62059 
+@{ $config{'proxy'} }{qw(
+
+ 24.15.202.25:7566 211.239.150.148:3370 70.135.33.176:19650
+60.191.192.181:1080 198.4.175.38:1080 218.71.136.105:1080
+211.116.254.203:2753
+210.34.22.226:1080
+69.114.209.1:9225	
+218.234.21.33:9898	
+69.47.111.105:18345	
+59.77.21.250:1080	
+)} = ();
 use IO::Socket::Socks;
 $config{'handler'}{'create_aft0'} = sub {
   my ($self) = @_;
@@ -108,7 +119,8 @@ $config{'handler'}{'create_aft0'} = sub {
     ProxyAddr   => $host,
     ProxyPort   => $port,
     ConnectAddr => name_to_ip( $self->{'host'} ),
-    ConnectPort => $self->{'port'}
+    ConnectPort => $self->{'port'},
+    'Timeout'  => $self->{'Timeout'},
   );
   if ( !defined( $self->{'socket'} ) ) {
     $self->log( 'err', "[$self->{'number'}]", 'socks', $SOCKS_ERROR );

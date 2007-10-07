@@ -112,6 +112,7 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|i;
   #print("host=$1; port=$2;\n");
   my $dc = createbot( $1, $2 );
+#=c
   $SIG{'INFO'} = $SIG{'HUP'} = sub { $dc->info() };
   $SIG{'INT'} = sub {
     $dc->info();
@@ -119,31 +120,44 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
     $dc->destroy();
     exit();
   };
+#=cut
+
   $dc->{'disconnect_recursive'} = 0;
-  $dc->{'clients'}{$_} = createbot( $1, $2 ), print("addbot[$_] = $dc->{'clients'}{$_}{'number'}\n"),
+#  print("prebot[$bn/$config{'bots'}]\n");
+
+  $dc->{'clients'}{$_} = createbot( $1, $2 ),
+  print("addbot[$_/$config{'bots'}] = $dc->{'clients'}{$_}{'number'}\n"),
     #  handler( 'create_aft', $dc->{'clients'}{$_} ),
     #  $dc->wait(),
     #  sleep(0.1),
-    #  $dc->wait(),
-    $dc->wait_sleep(),
+      $dc->recv(),
+#    $dc->wait_sleep(),
     #  $dc->info(),
-    for 2 .. $config{'bots'};
+      for (2 .. $config{'bots'});
   #
+  
+#  print "added..\n";
+  $dc->wait();
   $dc->info();
-  handler( 'destroy', $dc ), next if !$dc->{'socket'};
+
+#  print("destroy1.\n"),
+  handler( 'destroy', $dc ), next if !$dc->active(); #!$dc->{'socket'} and $dc->{'disconnect_recursive'};
   for ( 1 .. $config{'connect_wait'} ) {    #sleep(5); $dc->recv();
-    last if !$dc->{'socket'} or $dc->{'status'} eq 'connected';
+#    last if (!$dc->{'socket'} and $dc->{'disconnect_recursive'}) or $dc->{'status'} eq 'connected';
+    last if (!$dc->active()) or $dc->{'status'} eq 'connected';
     $dc->wait() for 0 .. 10;
     #    sleep(1);
   }
-  handler( 'destroy', $dc ), next if !$dc->{'socket'};
+#  print("destroy2.\n"),
+  handler( 'destroy', $dc ), next if !$dc->active(); #!$dc->{'socket'} and $dc->{'disconnect_recursive'};
   $dc->wait(),
     #    sleep(1)
     for ( 0 .. $config{'connect_aft_wait'} );
-  handler( 'destroy', $dc ), next if !$dc->{'socket'};
+#  print("destroy3.\n"),
+  handler( 'destroy', $dc ), next if !$dc->active(); #$dc->{'socket'} and $dc->{'disconnect_recursive'};
   handler( 'send_bef', $dc );
   for ( 0 .. $config{'send_tries'} ) {
-    last if !$dc->{'disconnect_recursive'} and ( !$dc->{'socket'} or $dc->{'status'} ne 'connected' );
+    last if !$dc->active(); #!$dc->{'disconnect_recursive'} and ( !$dc->{'socket'} or $dc->{'status'} ne 'connected' );
     print( "send try $_ to", join( ',', sort $dc->active() ), "\n" );
     last if !$dc->active();
     handler( 'send', $dc, $_ );
