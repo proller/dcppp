@@ -137,6 +137,7 @@ sub init {
  #         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port,
  #'clients' => {},
  #'debug'=>1,
+#    'auto_listen' => 0,
       );
       $self->{'clients'}{ $host . ':' . $port }->cmd('connect');
     },

@@ -163,7 +163,7 @@ sub listen {
       #    ($^O eq 'MSWin32' ? () : ('Blocking'  => 0)),
       %{ $self->{'sockopts'} or {} },
       )
-      or $self->log( 'err', "listen $self->{'myport'} socket error: $@" ),
+      or $self->log( 'err', "[$self->{'number'}]", "listen $self->{'myport'} socket error: $@" ),
     return
   );
   #  $self->log( 'dcdbg', "[$self->{'number'}] listening $self->{'myport'} ok" );
@@ -227,7 +227,7 @@ sub recv {
     for my $client ( $self->{'select'}->can_read($sleep) ) {
       if ( $self->{'accept'} and $client == $self->{'socket'} ) {
         if ( $_ = $self->{'socket'}->accept() ) {
-          $self->{'clients'}{$_} = $self->{'incomingclass'}->new(
+          $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
             %$self, clear(),
             'socket'    => $_,
             'LocalPort' => $self->{'myport'},
@@ -235,8 +235,10 @@ sub recv {
             'want'      => \%{ $self->{'want'} },
             'NickList'  => \%{ $self->{'NickList'} },
             'IpList'    => \%{ $self->{'IpList'} },
-            'PortList'  => \%{ $self->{'PortList'} }
-          ) unless $self->{'clients'}{$_};
+            'PortList'  => \%{ $self->{'PortList'} },
+             'auto_listen' => 0,
+ 
+          ) ; #unless $self->{'clients'}{$_};
           ++$ret;
         } else {
           $self->log( 'err', "[$self->{'number'}] Accepting fail!" );
