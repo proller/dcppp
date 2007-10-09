@@ -162,9 +162,10 @@ sub init {
       for (@_) {
         #  	  sleep($self->{'min_chat_delay'}) if $self->{'min_chat_delay'};
         #          if ($self->{'min_chat_delay'}) {
+	return unless $self->{'socket'};
         if ( $self->{'min_chat_delay'} and ( time - $self->{'last_chat_time'} < $self->{'min_chat_delay'} ) ) {
           $self->{'log'}->( 'dbg', 'sleep', $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
-          sleep( $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
+          $self->wait_sleep( $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
         }
         $self->{'last_chat_time'} = time;
         #	  }

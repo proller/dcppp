@@ -74,7 +74,7 @@ sub new {
     'M'      => 'A',         #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H'      => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
-    'S' => '2',      #S: tells the number of slots user has opened
+    'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
     'log'               => sub { print( join( ' ', @_ ), "\n" ) },
     'auto_connect'      => 1,
@@ -128,7 +128,7 @@ sub baseinit {
 sub connect {
   my $self = shift;
   return 0 if grep { $self->{'status'} eq $_ } qw(connected todestroy);
-  $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} or {} } );
+  $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
   $self->{'socket'} ||= new IO::Socket::INET(
@@ -139,7 +139,7 @@ sub connect {
     'Timeout'  => $self->{'Timeout'},
     ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
     #    'Blocking' => 0,
-    %{ $self->{'sockopts'} or {} },
+    %{ $self->{'sockopts'} || {} },
   );
   $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $!" ), return 1 if !$self->{'socket'};
   $self->get_my_addr();
@@ -415,7 +415,7 @@ sub cmd {
 
 sub rcmd {
   my $self = shift;
-  $_->cmd(@_), $self->wait_sleep( $self->{'cmd_recurse_sleep'} ) for values( %{ $self->{'clients'} } ), $self;
+  eval {eval {$_->cmd(@_)}, $self->wait_sleep( $self->{'cmd_recurse_sleep'} ) for grep {$_} values( %{ $self->{'clients'} } ), $self;};
   #  $self->cmd(@_);
 }
 
