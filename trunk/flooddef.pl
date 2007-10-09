@@ -37,7 +37,7 @@ $config{'handler'}{'create_aft'} = sub {
       #            print("ban test[$_]\n");
       print("[$dc->{'number'}]BANNED! disconnect.[$_]\n"), $dc->disconnect(), delete $config{'proxy'}{ $dc->{'proxy'} },
         delete $proxyok{ $dc->{'proxy'} }, ++$proxyerr{ $dc->{'proxy'} }, last
-        if /лишен права говорить в чате|Sorry you are permanently banned|Вы были забанены|временно забанены/i;
+        if /лишен права говорить в чате|Sorry you are permanently banned|Вы были забанены|временно забанены|У вас открыто недостаточно слотов/i;
     }
   };
   $dc->{'handler'}{'Hello'} = sub { print("[$dc->{'number'}] logged in.\n"); };
@@ -47,13 +47,13 @@ $config{'handler'}{'send'} = sub {
   my ( $dc, $n ) = @_;
 #
 # simple chat line
-# $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
+# $dc->rcmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
 #
 # randomized line
-# $dc->cmd('chatline',rand_str_ex( 'Доброго времени суток! Пользуясь случаем, хотим попросить Вас больше никогда не рекламировать свой хаб где попало. Спасибо. '. $n ) );
+# $dc->rcmd('chatline',rand_str_ex( 'Доброго времени суток! Пользуясь случаем, хотим попросить Вас больше никогда не рекламировать свой хаб где попало. Спасибо. '. $n ) );
 #
 # to every private
-#  $dc->cmd('To', $_, 'HUB заражен вирусом срочно покиньте его!') for keys %{$dc->{'NickList'}};
+#  $dc->rcmd('To', $_, 'HUB заражен вирусом срочно покиньте его!') for keys %{$dc->{'NickList'}};
 #
 };
 

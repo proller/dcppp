@@ -47,8 +47,8 @@ for ( 0 .. 1000 ) {
   #  print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, ' HUB заражен вирусом срочно покиньте его!' )
   #    for keys %{ $dc->{'NickList'} };
   while (1) {
-    $dc->wait();    #sleep(5); $dc->recv();
+    $dc->wait_sleep();    #sleep(5); $dc->recv();
   }
   $dc->destroy();
-  sleep(2);
+#  sleep(2);
 }
