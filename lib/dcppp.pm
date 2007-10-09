@@ -250,7 +250,7 @@ sub recv {
       if ( !defined( $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
         or !length( $self->{'databuf'} ) )
       {
-        $self->log( 'dcdbg', "[$self->{'number'}]", "recv err, disconnect," );
+#        $self->log( 'dcdbg', "[$self->{'number'}]", "recv err, disconnect," );
         $self->{'select'}->remove($client);
         $self->disconnect();
         $self->{'status'} = 'todestroy';
