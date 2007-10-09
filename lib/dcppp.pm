@@ -93,7 +93,7 @@ sub new {
     'UserIP2'           => 1,
     ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'Version'              => '1,0091',
-    'informative'          => [qw(number status host port filebytes filetotal sharesize proxy)],
+    'informative'          => [qw(number peernick status host port filebytes filetotal sharesize proxy)],
     'informative_hash'     => [qw(clients)],                                             #NickList IpList PortList
     'disconnect_recursive' => 1,
   };
@@ -303,7 +303,7 @@ sub wait {
 
 sub finished {
   my $self = shift;
-  $self->log( 'dcdev', "[$self->{'number'}]", 'not finished file:', "$self->{'filebytes'} / $self->{'filetotal'}" ), return 0
+  $self->log( 'dcdev', "[$self->{'number'}]", 'not finished file:', "$self->{'filebytes'} / $self->{'filetotal'}", $self->{'peernick'} ), return 0
     if ( $self->{'filebytes'} and $self->{'filetotal'} and $self->{'filebytes'} < $self->{'filetotal'} - 1 );
   local @_;
   $self->log( 'dcdev', "[$self->{'number'}]", 'not finished clients:', @_ ), return 0
