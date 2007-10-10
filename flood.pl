@@ -158,7 +158,7 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   handler( 'send_bef', $dc );
   for ( 0 .. $config{'send_tries'} ) {
     last if !$dc->active(); #!$dc->{'disconnect_recursive'} and ( !$dc->{'socket'} or $dc->{'status'} ne 'connected' );
-    print( "send try $_ to", join( ',', sort $dc->active() ), "\n" );
+    print( "send try $_ to ", join( ',', sort $dc->active() ), "\n" );
     last if !$dc->active();
     handler( 'send', $dc, $_ );
     $dc->wait_sleep( $config{'send_sleep'} );
