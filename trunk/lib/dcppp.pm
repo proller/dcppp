@@ -101,8 +101,8 @@ sub new {
   $self->{'recv_flags'} ||= 0;
   bless( $self, $class );
   $self->init(@_);
-  $self->connect(), $self->wait() if $self->{'auto_connect'};
   $self->listen(),  $self->wait() if $self->{'auto_listen'};
+  $self->connect(), $self->wait() if $self->{'auto_connect'};
   return $self;
 }
 
