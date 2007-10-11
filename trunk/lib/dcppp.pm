@@ -93,7 +93,7 @@ sub new {
     'UserIP2'           => 1,
     ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'Version'              => '1,0091',
-    'informative'          => [qw(number peernick status host port filebytes filetotal sharesize proxy)],
+    'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],# sharesize
     'informative_hash'     => [qw(clients)],                                             #NickList IpList PortList
     'disconnect_recursive' => 1,
   };
