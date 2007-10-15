@@ -351,6 +351,7 @@ sub parse {
     s/^\$(\w+)\s*//;
     my $cmd = $1;
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
+    $self->handler( $cmd.'_parse_bef_bef', $_ );
     if ( $self->{'parse'}{$cmd} ) {
       if ( $cmd ne 'Search' ) {
         $self->log(
@@ -363,20 +364,23 @@ sub parse {
         ++$self->{'skip_print_search'};
       }
       #print "[$self->{'number'}] rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
+    $self->handler( $cmd.'_parse_bef', $_ );
       $self->{'parse'}{$cmd}->($_);
+    $self->handler( $cmd.'_parse_aft', $_ );
     } else {
       $self->log( 'dcinf',
         "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" );
       $self->{'parse'}{$cmd} = sub { };
     }
     $self->handler( $cmd, $_ );
+    $self->handler( $cmd.'_parse_aft_aft', $_ );
   }
 }
 
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
   #  $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
-  $self->{'handler'}{$cmd}->(@_) if $self->{'handler'}{$cmd};
+  $self->{'handler'}{$cmd}->($self, @_) if ref $self->{'handler'}{$cmd} eq 'CODE';
 }
 {
   my @sendbuf;
@@ -399,18 +403,27 @@ sub cmd {
   #print "CMD PRE param[",@_,"]\n" ;
   my $self = shift;
   my $cmd  = shift;
+      $self->handler( $cmd.'_cmd_bef_bef', @_ );
   if ( $self->{'min_cmd_delay'} and ( time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'} ) ) {
     $self->{'log'}->( 'dbg', 'sleepcmd', $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
     sleep( $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
   }
   $self->{'last_cmd_time'} = time;
-  if ( $self->{'cmd'}{$cmd} ) { $self->{'cmd'}{$cmd}->(@_); }
+  if ( $self->{'cmd'}{$cmd} ) { 
+      $self->handler( $cmd.'_cmd_bef', @_ );
+
+  $self->{'cmd'}{$cmd}->(@_); 
+      $self->handler( $cmd.'_cmd_aft', @_ );
+
+  }
   else {
     $self->log( 'info', "[$self->{'number'}]", "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
     $self->{'cmd'}{$cmd} = sub { };
   }
   if    ( $self->{'auto_wait'} ) { $self->wait(); }
   elsif ( $self->{'auto_recv'} ) { $self->recv(); }
+        $self->handler( $cmd.'_cmd_aft_aft', @_ );
+
 }
 
 sub rcmd {
