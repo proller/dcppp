@@ -259,16 +259,44 @@ sub recv {
       } else {
         ++$readed;
         ++$ret;
+#        $self->log( 'dcdbg', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ) );
+
       }
       if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
       else {
+#        $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}]" );
         $self->{'buf'} .= $self->{'databuf'};
-        $self->{'buf'} =~ s/(.*\|)//s;
-        for ( split /\|/, $1 ) {
+#        $self->{'buf'} =~ s/(.*\|)//s;
+#        for ( split /\|/, $1 ) {
+        while ($self->{'buf'} =~ s/([^|]+)\|//) {
+#        while ($self->{'buf'} =~ s/(.+?)\|//) {
+local $_ = $1;
           last if $self->{'status'} eq 'todestroy';
-          $_ .= '|', $self->writefile( \$_ ), next if ( $self->{'filehandle'} );
+#     $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
+ 
+#     $self->log( 'dcdbg',"[$self->{'number'}] bin write ",length $_," [$_]", ),
+          #$_ .= '|', 
+#(          $_ ? 
+=z
+$self->writefile( 
+          \$_, \'|'
+#          \($_. '|')
+          #, \$` 
+          ) 
+          #: ()), 
+          ,
+          #next 
+          last
+          if ( $self->{'filehandle'} );
+=cut
           next unless /\w/;
-          $self->parse( /^\$/ ? $_ : ( $_ = '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_ ) );
+          $self->parse( (/^\$/ ? '' :  #$_ = 
+                    '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' ). $_ );
+#          $self->parse( /^\$/ ? $_ : ( #$_ = 
+#                    '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_) );
+          last if ( $self->{'filehandle'} );
+
+        
         }
         $self->writefile( \$self->{'buf'} ), $self->{'buf'} = '' if length( $self->{'buf'} ) and $self->{'filehandle'};
       }
@@ -347,7 +375,7 @@ sub wait_sleep {
 
 sub parse {
   my $self = shift;
-  for (@_) {
+  for (local @_ = @_) {
     s/^\$(\w+)\s*//;
     my $cmd = $1;
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
@@ -459,7 +487,7 @@ sub writefile {
   $self->handler('writefile_before');
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
-   #    $self->log( 'dcdbg', "($self->{'number'}) recv $self->{'filebytes'} of $self->{'filetotal'} file $self->{'filename'}" );
+#       $self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );
     my $fh = $self->{'filehandle'};
     print $fh $$databuf if $fh;
     $self->log(
