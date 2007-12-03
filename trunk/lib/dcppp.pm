@@ -264,12 +264,12 @@ sub recv {
       }
       if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
       else {
-#        $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}]" );
         $self->{'buf'} .= $self->{'databuf'};
+#        $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}]" ) unless $self->{'filehandle'};
 #        $self->{'buf'} =~ s/(.*\|)//s;
 #        for ( split /\|/, $1 ) {
-        while ($self->{'buf'} =~ s/([^|]+)\|//) {
-#        while ($self->{'buf'} =~ s/(.+?)\|//) {
+#        while ($self->{'buf'} =~ s/^([^|]+)\|//) {
+        while ($self->{'buf'} =~ s/^(.*?)\|//s) {
 local $_ = $1;
           last if $self->{'status'} eq 'todestroy';
 #     $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
@@ -294,6 +294,8 @@ $self->writefile(
                     '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' ). $_ );
 #          $self->parse( /^\$/ ? $_ : ( #$_ = 
 #                    '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_) );
+#     $self->log( 'dcdbg',"[$self->{'number'}] dev lastexit ",length($self->{'buf'} )," [$self->{'buf'} ]", );
+
           last if ( $self->{'filehandle'} );
 
         
@@ -485,11 +487,21 @@ sub writefile {
   my $self = shift;
   $self->{'file_start_time'} ||= time;
   $self->handler('writefile_before');
+  my $fh = $self->{'filehandle'} || return;
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
 #       $self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );
-    my $fh = $self->{'filehandle'};
-    print $fh $$databuf if $fh;
+       $self->log( 'dcdbg', "[$self->{'number'}] recv ".length($$databuf)." [$$databuf]" ) if length $$databuf < 10;
+    print $fh $$databuf;
+    $self->log(
+      'err',                         
+      "[$self->{'number'}] file download error! extra bytes ($self->{'filebytes'}/$self->{'filetotal'}) "
+      )
+
+          if $self->{'filebytes'} > $self->{'filetotal'};
+
+#    close($fh),
+
     $self->log(
       'info',
       "[$self->{'number'}] file complete ($self->{'filebytes'}) per",
@@ -497,7 +509,7 @@ sub writefile {
       's at', $self->float( $self->{'filebytes'} / ( ( time - $self->{'file_start_time'} ) or 1 ) ), 'b/s'
       ),
       $self->disconnect(), $self->{'status'} = 'todestroy', $self->{'file_start_time'} = 0
-      if $self->{'filebytes'} == $self->{'filetotal'};
+      if $self->{'filebytes'} >= $self->{'filetotal'};
   }
 }
 
