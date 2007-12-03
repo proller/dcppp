@@ -38,6 +38,7 @@ sub float {    #v1
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
     : int( $_[0] );
 }
+
 sub clear {
   return (
     'clients'    => {},
@@ -62,17 +63,17 @@ sub new {
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
     'flag' => '1',    # User status as ascii char (byte)
-    # 1 normal
-    # 2, 3 away
-    # 4, 5 server               The server icon is used when the client has
-    # 6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
-    # 8, 9 fireball             The fireball icon is used when the client
-    # 10, 11 fireball away      has had an upload > 100 kB/s.
-    'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
-    'client' => 'dcp++',     #++: indicates the client
-    'V'      => $VERSION,    #V: tells you the version number
-    'M'      => 'A',         #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
-    'H'      => '0/1/0'
+                      # 1 normal
+                      # 2, 3 away
+                      # 4, 5 server               The server icon is used when the client has
+                      # 6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
+                      # 8, 9 fireball             The fireball icon is used when the client
+                      # 10, 11 fireball away      has had an upload > 100 kB/s.
+    'email'  => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
+    'client' => 'dcp++',                                                              #++: indicates the client
+    'V'      => $VERSION,                                                             #V: tells you the version number
+    'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
@@ -93,8 +94,8 @@ sub new {
     'UserIP2'           => 1,
     ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'Version'              => '1,0091',
-    'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],# sharesize
-    'informative_hash'     => [qw(clients)],                                             #NickList IpList PortList
+    'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
+    'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
   };
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
@@ -212,71 +213,69 @@ sub recv {
   my $self  = shift;
   my $sleep = shift || 0;
   my $ret   = 0;
-#  return unless $self->{'socket'};
+  #  return unless $self->{'socket'};
   $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
   my ($readed);
   $self->{'databuf'} = '';
   #  my $reads = 5;
   #LOOP:
   {
-  do {
-    $readed = 0;
-    last unless $self->{'select'} and $self->{'socket'};
-    #      $self->info();
-#          $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep $self->{'select'};$self->{'socket'}");
-    for my $client ( $self->{'select'}->can_read($sleep) ) {
-      if ( $self->{'accept'} and $client == $self->{'socket'} ) {
-        if ( $_ = $self->{'socket'}->accept() ) {
-          $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
-            %$self, clear(),
-            'socket'    => $_,
-            'LocalPort' => $self->{'myport'},
-            'incoming'  => 1,
-            'want'      => \%{ $self->{'want'} },
-            'NickList'  => \%{ $self->{'NickList'} },
-            'IpList'    => \%{ $self->{'IpList'} },
-            'PortList'  => \%{ $self->{'PortList'} },
-             'auto_listen' => 0,
- 
-          ) ; #unless $self->{'clients'}{$_};
-          ++$ret;
-        } else {
-          $self->log( 'err', "[$self->{'number'}] Accepting fail!" );
+    do {
+      $readed = 0;
+      last unless $self->{'select'} and $self->{'socket'};
+      #      $self->info();
+      #          $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep $self->{'select'};$self->{'socket'}");
+      for my $client ( $self->{'select'}->can_read($sleep) ) {
+        if ( $self->{'accept'} and $client == $self->{'socket'} ) {
+          if ( $_ = $self->{'socket'}->accept() ) {
+            $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
+              %$self, clear(),
+              'socket'      => $_,
+              'LocalPort'   => $self->{'myport'},
+              'incoming'    => 1,
+              'want'        => \%{ $self->{'want'} },
+              'NickList'    => \%{ $self->{'NickList'} },
+              'IpList'      => \%{ $self->{'IpList'} },
+              'PortList'    => \%{ $self->{'PortList'} },
+              'auto_listen' => 0,
+            );    #unless $self->{'clients'}{$_};
+            ++$ret;
+          } else {
+            $self->log( 'err', "[$self->{'number'}] Accepting fail!" );
+          }
+          next;
         }
-        next;
-      }
-      $self->{'databuf'} = '';
-      #       local $_;
-      if ( !defined( $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
-        or !length( $self->{'databuf'} ) )
-      {
-#        $self->log( 'dcdbg', "[$self->{'number'}]", "recv err, disconnect," );
-        $self->{'select'}->remove($client);
-        $self->disconnect();
-        $self->{'status'} = 'todestroy';
-        #}        elsif (!length( $self->{'databuf'} ) ) {
-        #    $self->log( 'dcdbg', "[$self->{'number'}]","recv warn, len=", length( $self->{'databuf'} )  );
-      } else {
-        ++$readed;
-        ++$ret;
-#        $self->log( 'dcdbg', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ) );
+        $self->{'databuf'} = '';
+        #       local $_;
+        if ( !defined( $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
+          or !length( $self->{'databuf'} ) )
+        {
+          #        $self->log( 'dcdbg', "[$self->{'number'}]", "recv err, disconnect," );
+          $self->{'select'}->remove($client);
+          $self->disconnect();
+          $self->{'status'} = 'todestroy';
+          #}        elsif (!length( $self->{'databuf'} ) ) {
+          #    $self->log( 'dcdbg', "[$self->{'number'}]","recv warn, len=", length( $self->{'databuf'} )  );
+        } else {
+          ++$readed;
+          ++$ret;
+          #        $self->log( 'dcdbg', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ) );
+        }
+        if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
+        else {
+          $self->{'buf'} .= $self->{'databuf'};
+          #        $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}]" ) unless $self->{'filehandle'};
+          #        $self->{'buf'} =~ s/(.*\|)//s;
+          #        for ( split /\|/, $1 ) {
+          #        while ($self->{'buf'} =~ s/^([^|]+)\|//) {
+          while ( $self->{'buf'} =~ s/^(.*?)\|//s ) {
+            local $_ = $1;
+            last if $self->{'status'} eq 'todestroy';
+            #     $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
+            #     $self->log( 'dcdbg',"[$self->{'number'}] bin write ",length $_," [$_]", ),
+            #$_ .= '|',
+            #(          $_ ?
 
-      }
-      if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
-      else {
-        $self->{'buf'} .= $self->{'databuf'};
-#        $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}]" ) unless $self->{'filehandle'};
-#        $self->{'buf'} =~ s/(.*\|)//s;
-#        for ( split /\|/, $1 ) {
-#        while ($self->{'buf'} =~ s/^([^|]+)\|//) {
-        while ($self->{'buf'} =~ s/^(.*?)\|//s) {
-local $_ = $1;
-          last if $self->{'status'} eq 'todestroy';
-#     $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
- 
-#     $self->log( 'dcdbg',"[$self->{'number'}] bin write ",length $_," [$_]", ),
-          #$_ .= '|', 
-#(          $_ ? 
 =z
 $self->writefile( 
           \$_, \'|'
@@ -289,27 +288,31 @@ $self->writefile(
           last
           if ( $self->{'filehandle'} );
 =cut
-          next unless /\w/;
-          $self->parse( (/^\$/ ? '' :  #$_ = 
-                    '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' ). $_ );
-#          $self->parse( /^\$/ ? $_ : ( #$_ = 
-#                    '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_) );
-#     $self->log( 'dcdbg',"[$self->{'number'}] dev lastexit ",length($self->{'buf'} )," [$self->{'buf'} ]", );
 
-          last if ( $self->{'filehandle'} );
-
-        
+            next unless /\w/;
+            $self->parse( (
+                /^\$/ ? '' :    #$_ =
+                  '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
+              )
+              . $_
+            );
+            #          $self->parse( /^\$/ ? $_ : ( #$_ =
+            #                    '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_) );
+            #     $self->log( 'dcdbg',"[$self->{'number'}] dev lastexit ",length($self->{'buf'} )," [$self->{'buf'} ]", );
+            last if ( $self->{'filehandle'} );
+          }
+          $self->writefile( \$self->{'buf'} ), $self->{'buf'} = '' if length( $self->{'buf'} ) and $self->{'filehandle'};
         }
-        $self->writefile( \$self->{'buf'} ), $self->{'buf'} = '' if length( $self->{'buf'} ) and $self->{'filehandle'};
       }
-    }
-    #     $self->log( 'dcdbg',"[$self->{'number'}] canread fin r=$readed");
-  } while ($readed);
-    }
+      #     $self->log( 'dcdbg',"[$self->{'number'}] canread fin r=$readed");
+    } while ($readed);
+  }
   for ( keys %{ $self->{'clients'} } ) {
     #    $self->{'clients'}{$_} = undef,
-   #     $self->log( 'dev', "del client[$_]", ),
-    delete( $self->{'clients'}{$_} ), next if !$self->{'clients'}{$_}->{'socket'} or $self->{'clients'}{$_}->{'status'} eq 'todestroy';
+    #     $self->log( 'dev', "del client[$_]", ),
+    delete( $self->{'clients'}{$_} ), next
+      if !$self->{'clients'}{$_}->{'socket'}
+        or $self->{'clients'}{$_}->{'status'} eq 'todestroy';
     $ret += $self->{'clients'}{$_}->recv();
   }
   #!  ++$ret, $self->destroy() if $self->{'status'} eq 'todestroy';
@@ -325,7 +328,7 @@ sub wait {
   $wait_once ||= $self->{'wait_once'};
   local $_;
   my $ret;
-#          $self->log('dctim', "[$self->{'number'}] wait [$waits, $ret, $wait_once]"),
+  #          $self->log('dctim', "[$self->{'number'}] wait [$waits, $ret, $wait_once]"),
   $ret += $self->recv($wait_once) while --$waits > 0 and !$ret;
   #        $self->log('dctim', "[$self->{'number'}] waitret");
   return $ret;
@@ -333,7 +336,13 @@ sub wait {
 
 sub finished {
   my $self = shift;
-  $self->log( 'dcdev', "[$self->{'number'}]", 'not finished file:', "$self->{'filebytes'} / $self->{'filetotal'}", $self->{'peernick'} ), return 0
+  $self->log(
+    'dcdev', "[$self->{'number'}]",
+    'not finished file:',
+    "$self->{'filebytes'} / $self->{'filetotal'}",
+    $self->{'peernick'}
+    ),
+    return 0
     if ( $self->{'filebytes'} and $self->{'filetotal'} and $self->{'filebytes'} < $self->{'filetotal'} - 1 );
   local @_;
   $self->log( 'dcdev', "[$self->{'number'}]", 'not finished clients:', @_ ), return 0
@@ -377,11 +386,11 @@ sub wait_sleep {
 
 sub parse {
   my $self = shift;
-  for (local @_ = @_) {
+  for ( local @_ = @_ ) {
     s/^\$(\w+)\s*//;
     my $cmd = $1;
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
-    $self->handler( $cmd.'_parse_bef_bef', $_ );
+    $self->handler( $cmd . '_parse_bef_bef', $_ );
     if ( $self->{'parse'}{$cmd} ) {
       if ( $cmd ne 'Search' ) {
         $self->log(
@@ -394,23 +403,23 @@ sub parse {
         ++$self->{'skip_print_search'};
       }
       #print "[$self->{'number'}] rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
-    $self->handler( $cmd.'_parse_bef', $_ );
+      $self->handler( $cmd . '_parse_bef', $_ );
       $self->{'parse'}{$cmd}->($_);
-    $self->handler( $cmd.'_parse_aft', $_ );
+      $self->handler( $cmd . '_parse_aft', $_ );
     } else {
       $self->log( 'dcinf',
         "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" );
       $self->{'parse'}{$cmd} = sub { };
     }
     $self->handler( $cmd, $_ );
-    $self->handler( $cmd.'_parse_aft_aft', $_ );
+    $self->handler( $cmd . '_parse_aft_aft', $_ );
   }
 }
 
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
   #  $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
-  $self->{'handler'}{$cmd}->($self, @_) if ref $self->{'handler'}{$cmd} eq 'CODE';
+  $self->{'handler'}{$cmd}->( $self, @_ ) if ref $self->{'handler'}{$cmd} eq 'CODE';
 }
 {
   my @sendbuf;
@@ -433,32 +442,31 @@ sub cmd {
   #print "CMD PRE param[",@_,"]\n" ;
   my $self = shift;
   my $cmd  = shift;
-      $self->handler( $cmd.'_cmd_bef_bef', @_ );
+  $self->handler( $cmd . '_cmd_bef_bef', @_ );
   if ( $self->{'min_cmd_delay'} and ( time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'} ) ) {
     $self->{'log'}->( 'dbg', 'sleepcmd', $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
     sleep( $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
   }
   $self->{'last_cmd_time'} = time;
-  if ( $self->{'cmd'}{$cmd} ) { 
-      $self->handler( $cmd.'_cmd_bef', @_ );
-
-  $self->{'cmd'}{$cmd}->(@_); 
-      $self->handler( $cmd.'_cmd_aft', @_ );
-
-  }
-  else {
+  if ( $self->{'cmd'}{$cmd} ) {
+    $self->handler( $cmd . '_cmd_bef', @_ );
+    $self->{'cmd'}{$cmd}->(@_);
+    $self->handler( $cmd . '_cmd_aft', @_ );
+  } else {
     $self->log( 'info', "[$self->{'number'}]", "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
     $self->{'cmd'}{$cmd} = sub { };
   }
   if    ( $self->{'auto_wait'} ) { $self->wait(); }
   elsif ( $self->{'auto_recv'} ) { $self->recv(); }
-        $self->handler( $cmd.'_cmd_aft_aft', @_ );
-
+  $self->handler( $cmd . '_cmd_aft_aft', @_ );
 }
 
 sub rcmd {
   my $self = shift;
-  eval {eval {$_->cmd(@_)}, $self->wait_sleep( $self->{'cmd_recurse_sleep'} ) for grep {$_} values( %{ $self->{'clients'} } ), $self;};
+  eval {
+    eval { $_->cmd(@_) }, $self->wait_sleep( $self->{'cmd_recurse_sleep'} )
+      for grep { $_ } values( %{ $self->{'clients'} } ), $self;
+  };
   #  $self->cmd(@_);
 }
 
@@ -491,17 +499,11 @@ sub writefile {
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
 #       $self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );
-       $self->log( 'dcdbg', "[$self->{'number'}] recv ".length($$databuf)." [$$databuf]" ) if length $$databuf < 10;
+    $self->log( 'dcdbg', "[$self->{'number'}] recv " . length($$databuf) . " [$$databuf]" ) if length $$databuf < 10;
     print $fh $$databuf;
-    $self->log(
-      'err',                         
-      "[$self->{'number'}] file download error! extra bytes ($self->{'filebytes'}/$self->{'filetotal'}) "
-      )
-
-          if $self->{'filebytes'} > $self->{'filetotal'};
-
-#    close($fh),
-
+    $self->log( 'err', "[$self->{'number'}] file download error! extra bytes ($self->{'filebytes'}/$self->{'filetotal'}) " )
+      if $self->{'filebytes'} > $self->{'filetotal'};
+    #    close($fh),
     $self->log(
       'info',
       "[$self->{'number'}] file complete ($self->{'filebytes'}) per",

@@ -24,10 +24,10 @@ $config{'dcbot_param'} = sub {
     'Version' => rand_int( 1,           1000 ),
     'V'       => rand_int( 1,           1000 ),
     'M'       => 'P',                   #mode - passive
-    #   'log'		=>	sub {},	# no logging
-    #   'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
-    #   'min_chat_delay'	=> 0.401,
-    #   'min_cmd_delay'	=> 0.401,
+                                                                                              #   'log'		=>	sub {},	# no logging
+           #   'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
+           #   'min_chat_delay'	=> 0.401,
+           #   'min_cmd_delay'	=> 0.401,
   };
 };
 $config{'handler'}{'create_aft'} = sub {
@@ -37,15 +37,13 @@ $config{'handler'}{'create_aft'} = sub {
       #            print("ban test[$_]\n");
       print("[$dc->{'number'}]BANNED! disconnect.[$_]\n"), $dc->disconnect(), delete $config{'proxy'}{ $dc->{'proxy'} },
         delete $proxyok{ $dc->{'proxy'} }, ++$proxyerr{ $dc->{'proxy'} }, last
-        if /лишен права говорить в чате|Sorry you are permanently banned|¬ы были забанены|временно забанены|” вас открыто недостаточно слотов|You are being kicked/i;
+        if
+/лишен права говорить в чате|Sorry you are permanently banned|¬ы были забанены|временно забанены|” вас открыто недостаточно слотов|You are being kicked/i;
     }
   };
-
-    $dc->{'handler'}{'ForceMove'} = $dc->{'handler'}{'welcome'} = sub {
-      print("[$dc->{'number'}]BANNED! disconnect. forcemove\n"), $dc->disconnect(), delete $config{'proxy'}{ $dc->{'proxy'} };
-      };
-
-  
+  $dc->{'handler'}{'ForceMove'} = $dc->{'handler'}{'welcome'} = sub {
+    print("[$dc->{'number'}]BANNED! disconnect. forcemove\n"), $dc->disconnect(), delete $config{'proxy'}{ $dc->{'proxy'} };
+  };
   $dc->{'handler'}{'Hello'} = sub { print("[$dc->{'number'}] logged in.\n"); };
   $dc->{'handler'}{'chatline'} = sub { my $dc = shift; print( "[$dc->{'number'}] chatline ", @_, ".\n" ); };
 };

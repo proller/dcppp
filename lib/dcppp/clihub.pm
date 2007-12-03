@@ -137,7 +137,7 @@ sub init {
  #         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port,
  #'clients' => {},
  #'debug'=>1,
-#    'auto_listen' => 0,
+ #    'auto_listen' => 0,
       );
       $self->{'clients'}{ $host . ':' . $port }->cmd('connect');
     },
@@ -150,19 +150,19 @@ sub init {
     },
     'BadPass' => sub {
     },    # print("BadPassword\n");
-    'LogedIn' => sub { },    # print("$_[0] is LogedIn\n");
-    'Search'  => sub { },    #todo
-    #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
-    #
-    #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
-    #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
+    'LogedIn' => sub { },  # print("$_[0] is LogedIn\n");
+    'Search'  => sub { },  #todo
+                           #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+                           #
+                           #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
+                           #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
   );
   %{ $self->{'cmd'} } = (
     'chatline' => sub {
       for (@_) {
         #  	  sleep($self->{'min_chat_delay'}) if $self->{'min_chat_delay'};
         #          if ($self->{'min_chat_delay'}) {
-	return unless $self->{'socket'};
+        return unless $self->{'socket'};
         if ( $self->{'min_chat_delay'} and ( time - $self->{'last_chat_time'} < $self->{'min_chat_delay'} ) ) {
           $self->{'log'}->( 'dbg', 'sleep', $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
           $self->wait_sleep( $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
