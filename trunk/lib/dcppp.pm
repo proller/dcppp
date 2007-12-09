@@ -268,7 +268,9 @@ sub recv {
           #        $self->{'buf'} =~ s/(.*\|)//s;
           #        for ( split /\|/, $1 ) {
           #        while ($self->{'buf'} =~ s/^([^|]+)\|//) {
-          while ( $self->{'buf'} =~ s/^(.*?)\|//s ) {
+#TODO HERE !!!
+          my $endmsg = '['.($self->{'buf'} =~ /^CSND\s/ ? "\n" : '') . '|]';
+          while ( $self->{'buf'} =~ s/^(.*?)$endmsg//s ) {
             local $_ = $1;
             last if $self->{'status'} eq 'todestroy';
             #     $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
@@ -290,9 +292,11 @@ $self->writefile(
 =cut
 
             next unless /\w/;
+
             $self->parse( (
                 /^\$/ ? '' :    #$_ =
-                  '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
+              '$'.
+              (defined($self->{'parse'}{(/^(\S+)/)[0]}) ? '' :  ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ')
               )
               . $_
             );
