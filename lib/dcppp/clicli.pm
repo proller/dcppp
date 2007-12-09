@@ -166,6 +166,13 @@ sub init {
       #        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
       #        binmode($self->{'filehandle'});
     },
+    'CSND' => sub {
+      $_[0] =~ /^file\s+\S+\s+(\d+)\s(\d+)$/is;
+      $self->{'filetotal'} = $2;
+      return if $self->openfile();
+      #        open($self->{'filehandle'}, '>', ($self->{'fileas'} or $self->{'filename'})) or return;
+      #        binmode($self->{'filehandle'});
+    },
     'Supports' => sub {
       $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
     },
