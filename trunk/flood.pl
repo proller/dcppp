@@ -139,7 +139,7 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   for ( 1 .. $config{'connect_wait'} ) {                #sleep(5); $dc->recv();
     #    last if (!$dc->{'socket'} and $dc->{'disconnect_recursive'}) or $dc->{'status'} eq 'connected';
     last if ( !$dc->active() ) or $dc->{'status'} eq 'connected';
-    $dc->wait() for 0 .. 10;
+    $dc->wait_sleep(10); #for 0 .. 10;
     #    sleep(1);
   }
   #  print("destroy2.\n"),
@@ -165,6 +165,7 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   handler( 'destroy_bef', $dc );
   handler( 'destroy',     $dc );
   $dc->destroy() if !$config{'no_destroy'};
+#  $dc->wait_finish();
   sleep( $config{'after_sleep'} );
   print "ok\n";
   handler( 'aft', $dc );

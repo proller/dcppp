@@ -57,7 +57,7 @@ $dc->recv();
 #  $dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyINFO'),sleep 1for (1..1000);
 $dc->recv(),
   #print("! $_ !\n"), # $dc->cmd('ConnectToMe',$_)
-  $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), sleep 1 for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
+  $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->wait_sleep() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
 #  sleep 1;
@@ -65,7 +65,9 @@ $dc->recv(),
 #$dc->disconnect();
 #print "OK\n";
 # print"R\n",
-$dc->recv(), sleep 0.1 while 600;
+$dc->wait_sleep(10); #wait for download starting
+$dc->wait_finish();
+#$dc->recv(),  while 600;
 #  sleep 1;
 #  $dc->recv();
 #sleep 10;
