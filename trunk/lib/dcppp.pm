@@ -154,7 +154,7 @@ sub connect {
 sub listen {
   my $self = shift;
   return if !$self->{'Listen'} or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );
-  #  $self->log( 'dcdbg', "[$self->{'number'}]listening $self->{'myport'}" );
+    $self->log( 'dcdbg', "[$self->{'number'}]","listening $self->{'myport'}"); # , Dumper($self->{'sockopts'}));
   $self->{'socket'} = (
     new IO::Socket::INET(
       'LocalPort' => $self->{'myport'},
