@@ -25,6 +25,8 @@ use Socket;
 use IO::Socket;
 use IO::Select;
 use POSIX;
+use Data::Dumper;    #dev only
+$Data::Dumper::Sortkeys = 1;
 eval { use Time::HiRes qw(time); };
 our $AUTOLOAD;
 use strict;
@@ -144,8 +146,7 @@ sub connect {
   );
   $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $!" ), return 1 if !$self->{'socket'};
   $self->get_my_addr();
-  $self->log( 'dcdbg', "[$self->{'number'}]",
-    "connect to $self->{'host'} [me=$self->{'myip'}] ok, socket=[$self->{'socket'}]" );
+  $self->log( 'dcdbg', "[$self->{'number'}]",    "connect to $self->{'host'} [me=$self->{'myip'}] ok, socket=[$self->{'socket'}]",  ); # Dumper($self->{'sockopts'})
   $self->recv();
   return 0;
 }
