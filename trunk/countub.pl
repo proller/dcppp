@@ -29,12 +29,13 @@ my $dc = dcppp::clihub->new(
   'host' => $1,
   ( $2 ? ( 'port' => $2 ) : () ),
   'Nick' => ( $ARGV[1] or 'dcpppCnt' ),
-#  'log' => sub { },    # no logging
+  'log' => sub { },    # no logging
 );
 $dc->connect();
 #  $dc->cmd('GetNickList');
 #  $dc->recv();
 my ($share) = (0);
+$dc->wait_sleep(3); #for 1 .. 3;
 $dc->cmd( 'GetINFO', $_ ) for grep !$dc->{'NickList'}->{$_}{'info'}, keys %{ $dc->{'NickList'} };
 $dc->wait_sleep(3); #for 1 .. 3;
 $share += $dc->{'NickList'}{$_}{'sharesize'} for keys %{ $dc->{'NickList'} };
