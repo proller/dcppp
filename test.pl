@@ -30,7 +30,7 @@ use dcppp::clihub;
 #  use dcppp::client;
 my $dc = dcppp::clihub->new(
   'host' => 'dc.setun.net',
-  'myip' => '10.20.199.104',
+#  'myip' => '10.20.199.104',
   'port' => 4111,
   #   'host'=>'dcpp.migtel.ru',
   #   'myport' => '6778',
@@ -51,11 +51,11 @@ $dc->{'autorecv'} = 1;
 #  $dc->cmd('chatline','hello world');
 $dc->cmd('GetNickList');
 #  $dc->cmd('ConnectToMe', 'pro');
-$dc->recv();
+$dc->wait();
 #  $dc->cmd('chatline','hello world! i\'m perl bot. Freebsd rulez.');
 #  $dc->{'autorecv'} = 0;
 #  $dc->{'MyINFO'}	= $_.'$ $LAN(T3)1$e-mail@mail.ru$1$',$dc->recv(),  print("! $_ !\n"),  $dc->cmd('MyINFO'),sleep 1for (1..1000);
-$dc->recv(),
+$dc->wait(),
   #print("! $_ !\n"), # $dc->cmd('ConnectToMe',$_)
   $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->wait_sleep() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
 #  $dc->recv();
