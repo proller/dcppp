@@ -423,7 +423,7 @@ sub parse {
 
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
-    $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
+#    $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
   $self->{'handler'}{$cmd}->( $self, @_ ) if ref $self->{'handler'}{$cmd} eq 'CODE';
 }
 {

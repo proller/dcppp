@@ -25,8 +25,11 @@ eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
 use dcppp::clihub;
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
+#print "Arg=",$ARGV[0],"\n";
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
+#print "to=$1";
 for ( 0 .. 1000 ) {
+#  print "i=$_";
   my $dc = dcppp::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
