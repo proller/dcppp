@@ -228,6 +228,7 @@ sub recv {
       #          $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep $self->{'select'};$self->{'socket'}");
 
 $self->log( 'err',"[$self->{'number'}]", "SOCKET UNEXISTS must delete select") unless $self->{'select'}->exists($self->{'socket'});
+$self->log( 'err',"[$self->{'number'}]", "SOCKET IS NOT CONNECTED must delete select") unless $self->{'socket'}->connected();
 
       for my $client ( $self->{'select'}->can_read($sleep) ) {
         if ( $self->{'accept'} and $client == $self->{'socket'} ) {
