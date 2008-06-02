@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id$ $URL$
+# $Id: watch.pl 280 2008-02-28 11:16:37Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/watch.pl $
 
 =copyright
 flood tests
@@ -25,10 +25,13 @@ use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
 use dcppp::clihub;
+use Data::Dumper;    #dev only
+$Data::Dumper::Sortkeys = 1;
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 #print "Arg=",$ARGV[0],"\n";
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 #print "to=[$1]";
+our %stat;
 for ( 0 .. 1000 ) {
   #  print "i=$_ $1";
   my $dc = dcppp::clihub->new(
@@ -44,6 +47,36 @@ for ( 0 .. 1000 ) {
     'V'           => '0.698',
     'description' => '',
     'M'           => 'P',
+    'handler'     => {
+      'Search_parse_bef_bef' => sub {
+        my $dc     = shift;
+        my $search = shift;
+        #print "Sh=", Dumper(\@_)
+        my %s;
+        print "s:[$search]\n";
+        #my ($who, $cmd)
+        ( $s{'who'}, $s{'cmds'} ) = split /\s+/, $search;
+        #my @cmd =
+        $s{'cmd'} = [ split /\?/, $s{'cmds'} ];
+        #my ($nick, $ip, $port);
+        if ( $s{'who'} =~ /^Hub:(.+)$/i ) {
+          $s{'nick'} = $1;
+        } else {
+          ( $s{'ip'}, $s{'port'} ) = split /:/, $s{'who'};
+        }
+        #my ($tth, string);
+        if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/i ) {
+          $s{'tth'} = $1;
+        } else {
+          $s{'string'} = $s{'cmd'}[4];
+        }
+        #print "search[$nick, $ip, $port, ",join('|', @cmd),"]\n";
+        for (qw(tth nick string ip)) {
+          ++$stat{$_}{ $s{$_} } if $s{$_};
+        }
+        print Dumper( \%stat );
+        }
+    },
   );
   #  print("BOT SEND all\n"),
   #    $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
@@ -55,4 +88,13 @@ for ( 0 .. 1000 ) {
   }
   $dc->destroy();
   sleep(1);
+}
+
+sub finish_report {
+  print Dumper( \%stat );
+}
+$SIG{INT} = $SIG{HUP} = $SIG{__DIE__} = \&finish_report;
+
+END {
+  finish_report();
 }
