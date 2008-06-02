@@ -20,6 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
+
 use strict;
 #  use Time::HiRes;
 eval { use Time::HiRes qw(time sleep); };
@@ -50,6 +51,7 @@ use dcppp::clihub;
   $dc->cmd('connect');
   $dc->recv();
 =cut
+
 print("usage: ddltest.pl [dchub://]hub[:port]/nick[/path]/file [bot_nick] [fileas]\n"), exit if !$ARGV[0];
 #  $ARGV[0] =~ m|^([^:]+):((?:\w+\.?)+)(?:\:(\d+))(/.+)$|;
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?/(.+?)/(.+)$|;

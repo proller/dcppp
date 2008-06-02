@@ -55,6 +55,9 @@ sub clear {
 
 sub new {
   my $class = shift;
+  my @param = @_;
+#print "init1:", Dumper(\@_);
+
   my $self  = {
     'Listen'        => 10,
     'Timeout'       => 5,
@@ -100,10 +103,17 @@ sub new {
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
   };
+#print "init2:", Dumper(\@_);
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
+#print "init3:", Dumper(\@_);
   $self->{'recv_flags'} ||= 0;
   bless( $self, $class );
-  $self->init(@_);
+#print "init4:", Dumper(\@_);
+  $self->init(@param);
+#  $self->init(@_);
+
+#print "init6:", Dumper(\@_);
+
   $self->listen(),  $self->wait() if $self->{'auto_listen'};
   $self->connect(), $self->wait() if $self->{'auto_connect'};
   return $self;
@@ -144,7 +154,7 @@ sub connect {
     #    'Blocking' => 0,
     %{ $self->{'sockopts'} || {} },
   );
-  $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $!" ), return 1 if !$self->{'socket'};
+  $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
   $self->get_my_addr();
   $self->log( 'dcdbg', "[$self->{'number'}]",    "connect to $self->{'host'} [me=$self->{'myip'}] ok, socket=[$self->{'socket'}]",  ); # Dumper($self->{'sockopts'})
   $self->recv();

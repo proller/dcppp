@@ -20,6 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use Socket;
@@ -137,10 +138,10 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   #  print("destroy1.\n"),
   handler( 'destroy', $dc ), next if !$dc->active();    #!$dc->{'socket'} and $dc->{'disconnect_recursive'};
   for ( 1 .. $config{'connect_wait'} ) {                #sleep(5); $dc->recv();
-    #    last if (!$dc->{'socket'} and $dc->{'disconnect_recursive'}) or $dc->{'status'} eq 'connected';
+        #    last if (!$dc->{'socket'} and $dc->{'disconnect_recursive'}) or $dc->{'status'} eq 'connected';
     last if ( !$dc->active() ) or $dc->{'status'} eq 'connected';
-    $dc->wait_sleep(10); #for 0 .. 10;
-    #    sleep(1);
+    $dc->wait_sleep(10);    #for 0 .. 10;
+                            #    sleep(1);
   }
   #  print("destroy2.\n"),
   handler( 'destroy', $dc ), next if !$dc->active();    #!$dc->{'socket'} and $dc->{'disconnect_recursive'};
@@ -165,7 +166,7 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   handler( 'destroy_bef', $dc );
   handler( 'destroy',     $dc );
   $dc->destroy() if !$config{'no_destroy'};
-#  $dc->wait_finish();
+  #  $dc->wait_finish();
   sleep( $config{'after_sleep'} );
   print "ok\n";
   handler( 'aft', $dc );

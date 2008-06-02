@@ -20,6 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
+
 use strict;
 use lib './lib';
 use dcppp::clihub;
@@ -30,7 +31,7 @@ use dcppp::clihub;
 #  use dcppp::client;
 my $dc = dcppp::clihub->new(
   'host' => 'dc.setun.net',
-#  'myip' => '10.20.199.104',
+  #  'myip' => '10.20.199.104',
   'port' => 4111,
   #   'host'=>'dcpp.migtel.ru',
   #   'myport' => '6778',
@@ -45,6 +46,7 @@ my $dc = dcppp::clihub->new(
     print "my cool info parser gets info about $1\n";
   }, 
 =cut
+
 $dc->connect();
 #  $dc->listen();
 $dc->{'autorecv'} = 1;
@@ -65,7 +67,7 @@ $dc->wait(),
 #$dc->disconnect();
 #print "OK\n";
 # print"R\n",
-$dc->wait_sleep(10); #wait for download starting
+$dc->wait_sleep(10);    #wait for download starting
 $dc->wait_finish();
 #$dc->recv(),  while 600;
 #  sleep 1;
