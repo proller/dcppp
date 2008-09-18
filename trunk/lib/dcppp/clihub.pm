@@ -156,6 +156,7 @@ sub init {
                            #
                            #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
                            #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
+'UserCommand' => sub { }, # useless
   );
   %{ $self->{'cmd'} } = (
     'chatline' => sub {
