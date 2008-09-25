@@ -133,7 +133,9 @@ sub init {
         'want'     => \%{ $self->{'want'} },
         'NickList' => \%{ $self->{'NickList'} },
         'IpList'   => \%{ $self->{'IpList'} },
-        'PortList' => \%{ $self->{'PortList'}, 'handler' => \%{ $self->{'handler'} }, },
+        'PortList' => \%{ $self->{'PortList'} }, 
+         'handler' => \%{ $self->{'handler'} }, 
+
  #         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port,
  #'clients' => {},
  #'debug'=>1,
