@@ -408,6 +408,7 @@ sub parse {
   for ( local @_ = @_ ) {
     s/^\$(\w+)\s*//;
     my $cmd = $1;
+my (@ret, $ret);
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
     $self->handler( $cmd . '_parse_bef_bef', $_ );
     if ( $self->{'parse'}{$cmd} ) {
@@ -423,15 +424,16 @@ sub parse {
       }
       #print "[$self->{'number'}] rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
       $self->handler( $cmd . '_parse_bef', $_ );
-      $self->{'parse'}{$cmd}->($_);
-      $self->handler( $cmd . '_parse_aft', $_ );
+      @ret = $self->{'parse'}{$cmd}->($_);
+$ret= scalar @ret > 1 ? \@ret : $ret[0];
+      $self->handler( $cmd . '_parse_aft', $_, $ret );
     } else {
       $self->log( 'dcinf',
         "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" );
       $self->{'parse'}{$cmd} = sub { };
     }
-    $self->handler( $cmd, $_ );
-    $self->handler( $cmd . '_parse_aft_aft', $_ );
+    $self->handler( $cmd, $_ , $ret);
+    $self->handler( $cmd . '_parse_aft_aft', $_, $ret );
   }
 }
 
@@ -461,6 +463,7 @@ sub cmd {
   #print "CMD PRE param[",@_,"]\n" ;
   my $self = shift;
   my $cmd  = shift;
+  my (@ret, $ret);
   $self->handler( $cmd . '_cmd_bef_bef', @_ );
   if ( $self->{'min_cmd_delay'} and ( time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'} ) ) {
     $self->{'log'}->( 'dbg', 'sleepcmd', $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
@@ -469,15 +472,17 @@ sub cmd {
   $self->{'last_cmd_time'} = time;
   if ( $self->{'cmd'}{$cmd} ) {
     $self->handler( $cmd . '_cmd_bef', @_ );
-    $self->{'cmd'}{$cmd}->(@_);
-    $self->handler( $cmd . '_cmd_aft', @_ );
+    @ret = $self->{'cmd'}{$cmd}->(@_);
+$ret= scalar @ret > 1 ? \@ret : $ret[0];
+
+    $self->handler( $cmd . '_cmd_aft', \@_ , $ret);
   } else {
     $self->log( 'info', "[$self->{'number'}]", "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
     $self->{'cmd'}{$cmd} = sub { };
   }
   if    ( $self->{'auto_wait'} ) { $self->wait(); }
   elsif ( $self->{'auto_recv'} ) { $self->recv(); }
-  $self->handler( $cmd . '_cmd_aft_aft', @_ );
+  $self->handler( $cmd . '_cmd_aft_aft' ,@_ ,$ret);
 }
 
 sub rcmd {
@@ -648,10 +653,11 @@ sub active {
 }
 
 sub AUTOLOAD {
-  my $self = shift;
-  my $type = ref($self) or return;
+  my $self = shift || return;
+  my $type = ref($self) || return;
   my $name = $AUTOLOAD;
   $name =~ s/.*://;
+#print "CMD[", Dumper ($self), " : $type];\n";
   return $self->cmd( $name, @_ );
 }
 1;
