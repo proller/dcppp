@@ -93,7 +93,11 @@ sub init {
       #        print  "info:$nick [$info]\n";
     },
     'UserIP' => sub {
-      /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2, $self->{'IpList'}->{$2} = \%{ $self->{'NickList'}->{$1} },
+      /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2, $self->{'IpList'}->{$2} = 
+#\%{ 
+$self->{'NickList'}->{$1} 
+#}
+,
         $self->{'IpList'}->{$2}->{'port'} = $self->{'PortList'}->{$2}
         for grep $_, split /\$\$/, $_[0];
     },
@@ -153,7 +157,60 @@ sub init {
     'BadPass' => sub {
     },    # print("BadPassword\n");
     'LogedIn' => sub { },  # print("$_[0] is LogedIn\n");
-    'Search'  => sub { },  #todo
+    'Search'  => sub { 
+my $search = $_[0];
+        my %s = (
+'time' => int(time()),
+);
+
+        ( $s{'who'}, $s{'cmds'} ) = split /\s+/, $search;
+        #my @cmd =
+        $s{'cmd'} = [ split /\?/, $s{'cmds'} ];
+        #my ($nick, $ip, $port);
+        if ( $s{'who'} =~ /^Hub:(.+)$/i ) {
+          $s{'nick'} = $1;
+        } else {
+          ( $s{'ip'}, $s{'port'} ) = split /:/, $s{'who'};
+        }
+        #my ($tth, string);
+        if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/i ) {
+          $s{'tth'} = $1;
+        } else {
+          $s{'string'} = $s{'cmd'}[4];
+          $s{'string'} =~ tr/$/ /;
+        }
+return \%s;
+
+},  #todo
+
+'SR' => sub {
+#=z
+my %s;
+#$self->log($self,'dcdv','SR===',$_[0]);
+($s{'nick'},$s{'str'}) = split / /, $_[0], 2;
+$s{'str'} = [split /\x05/, $s{'str'}];
+$s{'file'} = shift @{$s{'str'}};
+($s{'filename'})  = $s{'file'} =~ m{([^\\]+)$};
+($s{'size'}, $s{'slots'}) = split / /, shift @{$s{'str'}};
+($s{'tth'}, $s{'ipport'}) = split / /, shift @{$s{'str'}};
+$s{'tth'} =~ s/^TTH://;
+#print "ipport[$s{'ipport'}]\n";
+($s{'ipport'}, $s{'ip'}, $s{'port'}) = $s{'ipport'} =~ /\(((\S+):(\d+))\)/;
+delete $s{'str'};
+($s{'slotsopen'}, $s{'S'}) = split /\//, $s{'slots'};
+$s{'slotsfree'} = $s{'S'} -$s{'slotsopen'};
+
+$self->{'NickList'}{$s{'nick'}}{$_} = $s{$_} for qw(S ip port);
+
+      $self->{'PortList'}->{$s{'ip'}} = $s{'port'};
+$self->{'IpList'}->{$s{'ip'}} = $self->{'NickList'}{$s{'nick'}};
+
+# 'TTH:SA3IRQKXK52A6QC4MCGNLC4HYIICFR2F5ARYEOY (80.240.208.42:4111)'
+#$self->log($self, 'dcdv', Dumper(\%s));
+#=cut
+return \%s;
+},
+
                            #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
                            #
                            #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
@@ -218,7 +275,20 @@ sub init {
       $self->sendcmd( 'MyPass', $pass ) if $pass;
     },
     'Supports' => sub {
-      $self->sendcmd( 'Supports', ( $self->supports() or return ) );
+      $self->sendcmd( 'Supports',  $self->supports() || return  );
+    },
+    'Search' => sub {
+      $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:'.$self->{'Nick'} : "$self->{'myip'}:$self->{'myport'}" ,join '?', @_);
+    },
+    'search_tth' => sub {
+#      $self->Search(  'F', 'T', '0', '9', 'TTH:'.$_[0]);
+      $self->cmd('Search',  'F', 'T', '0', '9', 'TTH:'.$_[0]);
+    },
+    'search_string' => sub {
+my $string = $_[0];
+$_[0] =~ tr/ /$/;
+#      $self->Search(  'F', 'T', '0', '1', @_);
+      $self->cmd('Search',  'F', 'T', '0', '1', @_);
     },
   );
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
