@@ -153,7 +153,9 @@ for ( 0 .. 1000 ) {
 
 $db->insert_hash('queries', \%s);
 
-if ($s{'tth'} and !$work{'asktth'}{$s{'tth'}}++ ) { #and !$work{'askstth'}++
+if ($s{'tth'} and !$work{'asktth'}{$s{'tth'}}++ 
+and !$work{'askstth'}++
+) { 
 printlog("try ask [$s{'tth'}]");
 $dc->search_tth($s{'tth'});
 
