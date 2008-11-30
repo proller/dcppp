@@ -40,26 +40,17 @@ sub init {
         HubTopic
         )
     ],
-
     'search_every' => 1,
-
     @_,
     'incomingclass' => 'dcppp::clicli',
-
-'periodic' => sub {
+    'periodic'      => sub {
       $self->cmd('search_buffer');
-},
+    },
   );
   #print "2: $self->{'Nick'}\n";
   $self->baseinit();
   #print('dcdbg', "myip : $self->{'myip'}", "\n");
-
-
-$self->{'hub'} =   $self->{'host'} . (
-  $self->{'port'} and $self->{'port'} != 411 ? $self->{'port'} : '');
-
-
-
+  $self->{'hub'} = $self->{'host'} . ( $self->{'port'} and $self->{'port'} != 411 ? $self->{'port'} : '' );
   %{ $self->{'parse'} } = (
     'chatline' => sub { },    #print("welcome:", @_) unless $self->{'no_print_welcome'}; },
     'welcome'  => sub { },    #print("welcome:", @_)
@@ -107,13 +98,11 @@ $self->{'hub'} =   $self->{'host'} . (
       #        print  "info:$nick [$info]\n";
     },
     'UserIP' => sub {
-      /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2, $self->{'IpList'}->{$2} = 
-#\%{ 
-$self->{'NickList'}->{$1} 
-#}
-,
-        $self->{'IpList'}->{$2}->{'port'} = $self->{'PortList'}->{$2}
-        for grep $_, split /\$\$/, $_[0];
+      /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2, $self->{'IpList'}->{$2} =
+        #\%{
+        $self->{'NickList'}->{$1}
+        #}
+        , $self->{'IpList'}->{$2}->{'port'} = $self->{'PortList'}->{$2} for grep $_, split /\$\$/, $_[0];
     },
     'HubName' => sub {
       $self->{'HubName'} = $_[0];
@@ -151,9 +140,8 @@ $self->{'NickList'}->{$1}
         'want'     => \%{ $self->{'want'} },
         'NickList' => \%{ $self->{'NickList'} },
         'IpList'   => \%{ $self->{'IpList'} },
-        'PortList' => \%{ $self->{'PortList'} }, 
-         'handler' => \%{ $self->{'handler'} }, 
-
+        'PortList' => \%{ $self->{'PortList'} },
+        'handler'  => \%{ $self->{'handler'} },
  #         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port,
  #'clients' => {},
  #'debug'=>1,
@@ -170,74 +158,65 @@ $self->{'NickList'}->{$1}
     },
     'BadPass' => sub {
     },    # print("BadPassword\n");
-    'LogedIn' => sub { },  # print("$_[0] is LogedIn\n");
-    'Search'  => sub { 
-my $search = $_[0];
-        my %s = (
-'time' => int(time()),
-'hub' => $self->{'hub'},
-);
-
-        ( $s{'who'}, $s{'cmds'} ) = split /\s+/, $search;
-        #my @cmd =
-        $s{'cmd'} = [ split /\?/, $s{'cmds'} ];
-        #my ($nick, $ip, $port);
-        if ( $s{'who'} =~ /^Hub:(.+)$/ ) {
-          $s{'nick'} = $1;
-        } else {
-          ( $s{'ip'}, $s{'port'} ) = split /:/, $s{'who'};
-        }
-        #my ($tth, string);
-        if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/ ) {
-          $s{'tth'} = $1;
-        } else {
-          $s{'string'} = $s{'cmd'}[4];
-          $s{'string'} =~ tr/$/ /;
-        }
-return \%s;
-
-},  #todo
-
-'SR' => sub {
-#=z
-my %s = (
-'time' => int(time()),
-
-'hub' => $self->{'hub'},);
-#$self->log($self,'dcdv','SR===',$_[0]);
-($s{'nick'},$s{'str'}) = split / /, $_[0], 2;
-$s{'str'} = [split /\x05/, $s{'str'}];
-$s{'file'} = shift @{$s{'str'}};
-($s{'filename'})  = $s{'file'} =~ m{([^\\]+)$};
-($s{'ext'})  = $s{'filename'} =~ m{[^.]+\.([^.]+)$};
-
-($s{'size'}, $s{'slots'}) = split / /, shift @{$s{'str'}};
-($s{'tth'}, $s{'ipport'}) = split / /, shift @{$s{'str'}};
-$s{'tth'} =~ s/^TTH://;
-#print "ipport[$s{'ipport'}]\n";
-($s{'ipport'}, $s{'ip'}, $s{'port'}) = $s{'ipport'} =~ /\(((\S+):(\d+))\)/;
-delete $s{'str'};
-($s{'slotsopen'}, $s{'S'}) = split /\//, $s{'slots'};
-$s{'slotsfree'} = $s{'S'} -$s{'slotsopen'};
-$s{'string'} = $self->{'search_last_string'}                             ;
-
-
-$self->{'NickList'}{$s{'nick'}}{$_} = $s{$_} for qw(S ip port);
-
-      $self->{'PortList'}->{$s{'ip'}} = $s{'port'};
-$self->{'IpList'}->{$s{'ip'}} = $self->{'NickList'}{$s{'nick'}};
-
-# 'TTH:SA3IRQKXK52A6QC4MCGNLC4HYIICFR2F5ARYEOY (80.240.208.42:4111)'
-#$self->log($self, 'dcdv', Dumper(\%s));
-#=cut
-return \%s;
-},
-
-                           #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
-                           #
-                           #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
-                           #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
-'UserCommand' => sub { }, # useless
+    'LogedIn' => sub { },    # print("$_[0] is LogedIn\n");
+    'Search' => sub {
+      my $search = $_[0];
+      my %s      = (
+        'time' => int( time() ),
+        'hub'  => $self->{'hub'},
+      );
+      ( $s{'who'}, $s{'cmds'} ) = split /\s+/, $search;
+      #my @cmd =
+      $s{'cmd'} = [ split /\?/, $s{'cmds'} ];
+      #my ($nick, $ip, $port);
+      if ( $s{'who'} =~ /^Hub:(.+)$/ ) {
+        $s{'nick'} = $1;
+      } else {
+        ( $s{'ip'}, $s{'port'} ) = split /:/, $s{'who'};
+      }
+      #my ($tth, string);
+      if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/ ) {
+        $s{'tth'} = $1;
+      } else {
+        $s{'string'} = $s{'cmd'}[4];
+        $s{'string'} =~ tr/$/ /;
+      }
+      return \%s;
+    },    #todo
+    'SR' => sub {
+      #=z
+      my %s = (
+        'time' => int( time() ),
+        'hub'  => $self->{'hub'},
+      );
+      #$self->log($self,'dcdv','SR===',$_[0]);
+      ( $s{'nick'}, $s{'str'} ) = split / /, $_[0], 2;
+      $s{'str'} = [ split /\x05/, $s{'str'} ];
+      $s{'file'} = shift @{ $s{'str'} };
+      ( $s{'filename'} ) = $s{'file'}     =~ m{([^\\]+)$};
+      ( $s{'ext'} )      = $s{'filename'} =~ m{[^.]+\.([^.]+)$};
+      ( $s{'size'}, $s{'slots'} )  = split / /, shift @{ $s{'str'} };
+      ( $s{'tth'},  $s{'ipport'} ) = split / /, shift @{ $s{'str'} };
+      $s{'tth'} =~ s/^TTH://;
+      #print "ipport[$s{'ipport'}]\n";
+      ( $s{'ipport'}, $s{'ip'}, $s{'port'} ) = $s{'ipport'} =~ /\(((\S+):(\d+))\)/;
+      delete $s{'str'};
+      ( $s{'slotsopen'}, $s{'S'} ) = split /\//, $s{'slots'};
+      $s{'slotsfree'} = $s{'S'} - $s{'slotsopen'};
+      $s{'string'}    = $self->{'search_last_string'};
+      $self->{'NickList'}{ $s{'nick'} }{$_} = $s{$_} for qw(S ip port);
+      $self->{'PortList'}->{ $s{'ip'} } = $s{'port'};
+      $self->{'IpList'}->{ $s{'ip'} }   = $self->{'NickList'}{ $s{'nick'} };
+      # 'TTH:SA3IRQKXK52A6QC4MCGNLC4HYIICFR2F5ARYEOY (80.240.208.42:4111)'
+      #$self->log($self, 'dcdv', Dumper(\%s));
+      #=cut
+      return \%s;
+    },
+    #         $self->{'IpList'}->{$self->{'peerip'}} = \%{ $self->{'NickList'}->{$self->{'peernick'} } };
+    #
+    #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
+    #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
+    'UserCommand' => sub { },    # useless
   );
   %{ $self->{'cmd'} } = (
     'chatline' => sub {
@@ -297,44 +276,38 @@ return \%s;
       $self->sendcmd( 'MyPass', $pass ) if $pass;
     },
     'Supports' => sub {
-      $self->sendcmd( 'Supports',  $self->supports() || return  );
+      $self->sendcmd( 'Supports', $self->supports() || return );
     },
-
     'Search' => sub {
-#$self->log('dcdev', 'Search', @_);
-
-      $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:'.$self->{'Nick'} : "$self->{'myip'}:$self->{'myport'}" ,join '?', @_);
+      #$self->log('dcdev', 'Search', @_);
+      $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport'}",
+        join '?', @_ );
     },
-
     'search_buffer' => sub {
-
-#$self->log('dcdev', 'Search_buffer', @_);
-#return;
-
-push(@{$self->{'search_todo'}}, \@_) if @_;
-return unless @{$self->{'search_todo'}||return};
-
-$self->log('dcdev', "search too fast [$self->{'search_every'}], len=", scalar @{$self->{'search_todo'}}) if @_ and scalar @{$self->{'search_todo'}} > 1;
-return if time() - $self->{'search_last_time'} < $self->{'search_every'}+1;
-my $s = shift(@{$self->{'search_todo'}});
-$self->{'search_todo'} = undef unless @{$self->{'search_todo'}};
-
-
-
-      $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:'.$self->{'Nick'} : "$self->{'myip'}:$self->{'myport'}" ,join '?', @$s);
-$self->{'search_last_time'} = time();
+      #$self->log('dcdev', 'Search_buffer', @_);
+      #return;
+      push( @{ $self->{'search_todo'} }, \@_ ) if @_;
+      return unless @{ $self->{'search_todo'} || return };
+      $self->log( 'dcdev', "search too fast [$self->{'search_every'}], len=", scalar @{ $self->{'search_todo'} } )
+        if @_ and scalar @{ $self->{'search_todo'} } > 1;
+      return if time() - $self->{'search_last_time'} < $self->{'search_every'} + 1;
+      my $s = shift( @{ $self->{'search_todo'} } );
+      $self->{'search_todo'} = undef unless @{ $self->{'search_todo'} };
+      $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport'}",
+        join '?', @$s );
+      $self->{'search_last_time'} = time();
     },
     'search_tth' => sub {
-#      $self->Search(  'F', 'T', '0', '9', 'TTH:'.$_[0]);
-$self->{'search_last_string'} = undef;
-      $self->cmd('search_buffer',  'F', 'T', '0', '9', 'TTH:'.$_[0]);
+      #      $self->Search(  'F', 'T', '0', '9', 'TTH:'.$_[0]);
+      $self->{'search_last_string'} = undef;
+      $self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] );
     },
     'search_string' => sub {
-my $string = $_[0];
-$self->{'search_last_string'} = $string;
-$_[0] =~ tr/ /$/;
-#      $self->Search(  'F', 'T', '0', '1', @_);
-      $self->cmd('search_buffer',  'F', 'T', '0', '1', @_);
+      my $string = $_[0];
+      $self->{'search_last_string'} = $string;
+      $_[0] =~ tr/ /$/;
+      #      $self->Search(  'F', 'T', '0', '1', @_);
+      $self->cmd( 'search_buffer', 'F', 'T', '0', '1', @_ );
     },
   );
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
