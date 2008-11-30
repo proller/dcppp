@@ -222,6 +222,9 @@ sub DESTROY {
 
 sub recv {
   my $self  = shift;
+  return if $self->{'recv_runned'};
+  $self->{'recv_runned'} = 1;
+
   my $sleep = shift || 0;
   my $ret   = 0;
   #  return unless $self->{'socket'};
@@ -335,6 +338,12 @@ $self->writefile(
     $ret += $self->{'clients'}{$_}->recv();
   }
   #!  ++$ret, $self->destroy() if $self->{'status'} eq 'todestroy';
+
+
+$self->{'periodic'}->() if ref $self->{'periodic'} eq 'CODE';
+
+  $self->{'recv_runned'} = undef;
+
   return $ret;
 }
 
@@ -412,15 +421,21 @@ my (@ret, $ret);
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
     $self->handler( $cmd . '_parse_bef_bef', $_ );
     if ( $self->{'parse'}{$cmd} ) {
-      if ( $cmd ne 'Search' ) {
+      if ( ($self->{'print_search'} or $cmd ne 'Search' ) and (
+$self->{'print_myinfo'} or $cmd ne 'MyINFO' 
+)
+
+) {
         $self->log(
           'dcdmp',
           "[$self->{'number'}] rcv: $cmd $_",
-          ( $self->{'skip_print_search'} ? ", skipped searches: $self->{'skip_print_search'}" : () )
+          (   $self->{'skip_print_search'} ? ", skipped searches: $self->{'skip_print_search'}" : () ),
+          (   $self->{'skip_print_myinfo'} ? ", skipped myinfos: $self->{'skip_print_myinfo'}" : () ),
         );
         $self->{'skip_print_search'} = 0;
       } else {
-        ++$self->{'skip_print_search'};
+        ++$self->{'skip_print_search'} if !$self->{'print_search'} and $cmd eq 'Search';
+        ++$self->{'skip_print_myinfo'} if !$self->{'print_myinfo'} and $cmd eq 'MyINFO';
       }
       #print "[$self->{'number'}] rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
       $self->handler( $cmd . '_parse_bef', $_ );
