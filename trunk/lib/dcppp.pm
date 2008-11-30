@@ -34,7 +34,7 @@ no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 our %global;
 
-sub float {    #v1
+sub float {          #v1
   my $self = shift;
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
@@ -56,9 +56,8 @@ sub clear {
 sub new {
   my $class = shift;
   my @param = @_;
-#print "init1:", Dumper(\@_);
-
-  my $self  = {
+  #print "init1:", Dumper(\@_);
+  my $self = {
     'Listen'        => 10,
     'Timeout'       => 5,
     'myport_base'   => 40000,
@@ -103,17 +102,15 @@ sub new {
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
   };
-#print "init2:", Dumper(\@_);
+  #print "init2:", Dumper(\@_);
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
-#print "init3:", Dumper(\@_);
+  #print "init3:", Dumper(\@_);
   $self->{'recv_flags'} ||= 0;
   bless( $self, $class );
-#print "init4:", Dumper(\@_);
+  #print "init4:", Dumper(\@_);
   $self->init(@param);
-#  $self->init(@_);
-
-#print "init6:", Dumper(\@_);
-
+  #  $self->init(@_);
+  #print "init6:", Dumper(\@_);
   $self->listen(),  $self->wait() if $self->{'auto_listen'};
   $self->connect(), $self->wait() if $self->{'auto_connect'};
   return $self;
@@ -154,9 +151,11 @@ sub connect {
     #    'Blocking' => 0,
     %{ $self->{'sockopts'} || {} },
   );
-  $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
+  $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1
+    if !$self->{'socket'};
   $self->get_my_addr();
-  $self->log( 'dcdbg', "[$self->{'number'}]",    "connect to $self->{'host'} [me=$self->{'myip'}] ok, socket=[$self->{'socket'}]",  ); # Dumper($self->{'sockopts'})
+  $self->log( 'dcdbg', "[$self->{'number'}]", "connect to $self->{'host'} [me=$self->{'myip'}] ok, socket=[$self->{'socket'}]",
+  );    # Dumper($self->{'sockopts'})
   $self->recv();
   return 0;
 }
@@ -164,7 +163,7 @@ sub connect {
 sub listen {
   my $self = shift;
   return if !$self->{'Listen'} or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );
-    $self->log( 'dcdbg', "[$self->{'number'}]","listening $self->{'myport'}"); # , Dumper($self->{'sockopts'}));
+  $self->log( 'dcdbg', "[$self->{'number'}]", "listening $self->{'myport'}" );    # , Dumper($self->{'sockopts'}));
   $self->{'socket'} = (
     new IO::Socket::INET(
       'LocalPort' => $self->{'myport'},
@@ -221,12 +220,11 @@ sub DESTROY {
 }
 
 sub recv {
-  my $self  = shift;
+  my $self = shift;
   return if $self->{'recv_runned'};
   $self->{'recv_runned'} = 1;
-
   my $sleep = shift || 0;
-  my $ret   = 0;
+  my $ret = 0;
   #  return unless $self->{'socket'};
   $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
   my ($readed);
@@ -239,10 +237,10 @@ sub recv {
       last unless $self->{'select'} and $self->{'socket'};
       #      $self->info();
       #          $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep $self->{'select'};$self->{'socket'}");
-
-$self->log( 'err',"[$self->{'number'}]", "SOCKET UNEXISTS must delete select") unless $self->{'select'}->exists($self->{'socket'});
-$self->log( 'err',"[$self->{'number'}]", "SOCKET IS NOT CONNECTED must delete select") if !$self->{'accept'} and  !$self->{'socket'}->connected();
-
+      $self->log( 'err', "[$self->{'number'}]", "SOCKET UNEXISTS must delete select" )
+        unless $self->{'select'}->exists( $self->{'socket'} );
+      $self->log( 'err', "[$self->{'number'}]", "SOCKET IS NOT CONNECTED must delete select" )
+        if !$self->{'accept'} and !$self->{'socket'}->connected();
       for my $client ( $self->{'select'}->can_read($sleep) ) {
         if ( $self->{'accept'} and $client == $self->{'socket'} ) {
           if ( $_ = $self->{'socket'}->accept() ) {
@@ -286,8 +284,8 @@ $self->log( 'err',"[$self->{'number'}]", "SOCKET IS NOT CONNECTED must delete se
           #        $self->{'buf'} =~ s/(.*\|)//s;
           #        for ( split /\|/, $1 ) {
           #        while ($self->{'buf'} =~ s/^([^|]+)\|//) {
-#TODO HERE !!!
-          my $endmsg = '['.($self->{'buf'} =~ /^CSND\s/ ? "\n" : '') . '|]';
+          #TODO HERE !!!
+          my $endmsg = '[' . ( $self->{'buf'} =~ /^CSND\s/ ? "\n" : '' ) . '|]';
           while ( $self->{'buf'} =~ s/^(.*?)$endmsg//s ) {
             local $_ = $1;
             last if $self->{'status'} eq 'todestroy';
@@ -308,13 +306,15 @@ $self->writefile(
           last
           if ( $self->{'filehandle'} );
 =cut
-
             next unless /\w/;
-
             $self->parse( (
                 /^\$/ ? '' :    #$_ =
-              '$'.
-              (defined($self->{'parse'}{(/^(\S+)/)[0]}) ? '' :  ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ')
+                  '$'
+                  . (
+                  defined( $self->{'parse'}{ (/^(\S+)/)[0] } )
+                  ? ''
+                  : ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
+                  )
               )
               . $_
             );
@@ -338,12 +338,8 @@ $self->writefile(
     $ret += $self->{'clients'}{$_}->recv();
   }
   #!  ++$ret, $self->destroy() if $self->{'status'} eq 'todestroy';
-
-
-$self->{'periodic'}->() if ref $self->{'periodic'} eq 'CODE';
-
+  $self->{'periodic'}->() if ref $self->{'periodic'} eq 'CODE';
   $self->{'recv_runned'} = undef;
-
   return $ret;
 }
 
@@ -417,20 +413,16 @@ sub parse {
   for ( local @_ = @_ ) {
     s/^\$(\w+)\s*//;
     my $cmd = $1;
-my (@ret, $ret);
+    my ( @ret, $ret );
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
     $self->handler( $cmd . '_parse_bef_bef', $_ );
     if ( $self->{'parse'}{$cmd} ) {
-      if ( ($self->{'print_search'} or $cmd ne 'Search' ) and (
-$self->{'print_myinfo'} or $cmd ne 'MyINFO' 
-)
-
-) {
+      if ( ( $self->{'print_search'} or $cmd ne 'Search' ) and ( $self->{'print_myinfo'} or $cmd ne 'MyINFO' ) ) {
         $self->log(
           'dcdmp',
           "[$self->{'number'}] rcv: $cmd $_",
-          (   $self->{'skip_print_search'} ? ", skipped searches: $self->{'skip_print_search'}" : () ),
-          (   $self->{'skip_print_myinfo'} ? ", skipped myinfos: $self->{'skip_print_myinfo'}" : () ),
+          ( $self->{'skip_print_search'} ? ", skipped searches: $self->{'skip_print_search'}" : () ),
+          ( $self->{'skip_print_myinfo'} ? ", skipped myinfos: $self->{'skip_print_myinfo'}"  : () ),
         );
         $self->{'skip_print_search'} = 0;
       } else {
@@ -440,21 +432,21 @@ $self->{'print_myinfo'} or $cmd ne 'MyINFO'
       #print "[$self->{'number'}] rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
       $self->handler( $cmd . '_parse_bef', $_ );
       @ret = $self->{'parse'}{$cmd}->($_);
-$ret= scalar @ret > 1 ? \@ret : $ret[0];
+      $ret = scalar @ret > 1 ? \@ret : $ret[0];
       $self->handler( $cmd . '_parse_aft', $_, $ret );
     } else {
       $self->log( 'dcinf',
         "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" );
       $self->{'parse'}{$cmd} = sub { };
     }
-    $self->handler( $cmd, $_ , $ret);
+    $self->handler( $cmd, $_, $ret );
     $self->handler( $cmd . '_parse_aft_aft', $_, $ret );
   }
 }
 
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
-#    $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
+  #    $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
   $self->{'handler'}{$cmd}->( $self, @_ ) if ref $self->{'handler'}{$cmd} eq 'CODE';
 }
 {
@@ -478,7 +470,7 @@ sub cmd {
   #print "CMD PRE param[",@_,"]\n" ;
   my $self = shift;
   my $cmd  = shift;
-  my (@ret, $ret);
+  my ( @ret, $ret );
   $self->handler( $cmd . '_cmd_bef_bef', @_ );
   if ( $self->{'min_cmd_delay'} and ( time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'} ) ) {
     $self->{'log'}->( 'dbg', 'sleepcmd', $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
@@ -488,16 +480,15 @@ sub cmd {
   if ( $self->{'cmd'}{$cmd} ) {
     $self->handler( $cmd . '_cmd_bef', @_ );
     @ret = $self->{'cmd'}{$cmd}->(@_);
-$ret= scalar @ret > 1 ? \@ret : $ret[0];
-
-    $self->handler( $cmd . '_cmd_aft', \@_ , $ret);
+    $ret = scalar @ret > 1 ? \@ret : $ret[0];
+    $self->handler( $cmd . '_cmd_aft', \@_, $ret );
   } else {
     $self->log( 'info', "[$self->{'number'}]", "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
     $self->{'cmd'}{$cmd} = sub { };
   }
   if    ( $self->{'auto_wait'} ) { $self->wait(); }
   elsif ( $self->{'auto_recv'} ) { $self->recv(); }
-  $self->handler( $cmd . '_cmd_aft_aft' ,@_ ,$ret);
+  $self->handler( $cmd . '_cmd_aft_aft', @_, $ret );
 }
 
 sub rcmd {
@@ -668,11 +659,11 @@ sub active {
 }
 
 sub AUTOLOAD {
-  my $self = shift || return;
+  my $self = shift      || return;
   my $type = ref($self) || return;
   my $name = $AUTOLOAD;
   $name =~ s/.*://;
-#print "CMD[", Dumper ($self), " : $type];\n";
+  #print "CMD[", Dumper ($self), " : $type];\n";
   return $self->cmd( $name, @_ );
 }
 1;

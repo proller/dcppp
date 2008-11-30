@@ -111,6 +111,7 @@ sub init {
              last;
           }
 =cut
+
       } else {
         $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
