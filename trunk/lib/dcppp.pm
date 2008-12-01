@@ -101,6 +101,8 @@ sub new {
     'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
+'no_print' => {map {$_=>1} qw(Search Quit MyINFO Hello)},
+
   };
   #print "init2:", Dumper(\@_);
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
@@ -417,17 +419,32 @@ sub parse {
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
     $self->handler( $cmd . '_parse_bef_bef', $_ );
     if ( $self->{'parse'}{$cmd} ) {
-      if ( ( $self->{'print_search'} or $cmd ne 'Search' ) and ( $self->{'print_myinfo'} or $cmd ne 'MyINFO' ) ) {
+      if ( !exists $self->{'no_print'}{$cmd}
+#( $self->{'print_search'} or $cmd ne 'Search' ) and ( $self->{'print_myinfo'} or $cmd ne 'MyINFO' ) 
+
+) {
+local $_;
+
         $self->log(
           'dcdmp',
           "[$self->{'number'}] rcv: $cmd $_",
-          ( $self->{'skip_print_search'} ? ", skipped searches: $self->{'skip_print_search'}" : () ),
-          ( $self->{'skip_print_myinfo'} ? ", skipped myinfos: $self->{'skip_print_myinfo'}"  : () ),
+#          ( $self->{'skip_print_search'} ? ", skipped searches: $self->{'skip_print_search'}" : () ),
+#          ( $self->{'skip_print_myinfo'} ? ", skipped myinfos: $self->{'skip_print_myinfo'}"  : () ),
+map {$self->{'skip_print_'.$_} ? $_ = "$_:$self->{'skip_print_'.$_}" : ''; } keys %{$self->{'no_print'} || {}}
+
         );
-        $self->{'skip_print_search'} = 0;
+$self->{'skip_print_'.$_} = 0 for keys %{$self->{'no_print'} || {}};
+#        $self->{'skip_print_search'} = $self->{'skip_print_myinfo'} = 0;
+
       } else {
-        ++$self->{'skip_print_search'} if !$self->{'print_search'} and $cmd eq 'Search';
-        ++$self->{'skip_print_myinfo'} if !$self->{'print_myinfo'} and $cmd eq 'MyINFO';
+#        ++$self->{'skip_print_search'} if !$self->{'print_search'} and $cmd eq 'Search';
+ #       ++$self->{'skip_print_myinfo'} if !$self->{'print_myinfo'} and $cmd eq 'MyINFO';
+
+++$self->{'skip_print_'.$cmd} ,
+printlog('dcdev', 'savenoprint', $cmd,  $self->{'skip_print_'.$cmd}),
+
+
+if exists $self->{'no_print'}{$cmd};
       }
       #print "[$self->{'number'}] rcv: $cmd $_\n" if $cmd ne 'Search' and $self->{'debug'};
       $self->handler( $cmd . '_parse_bef', $_ );

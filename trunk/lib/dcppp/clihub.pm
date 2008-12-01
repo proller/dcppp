@@ -7,6 +7,9 @@ package dcppp::clihub;
 #use lib '..';
 #  use Time::HiRes;
 eval { use Time::HiRes qw(time sleep); };
+use Data::Dumper;    #dev only
+$Data::Dumper::Sortkeys = 1;
+
 use dcppp;
 use dcppp::clicli;
 use strict;
@@ -40,11 +43,11 @@ sub init {
         HubTopic
         )
     ],
-    'search_every' => 1,
+    'search_every' => 10,
     @_,
     'incomingclass' => 'dcppp::clicli',
     'periodic'      => sub {
-      $self->cmd('search_buffer');
+      $self->cmd('search_buffer',);
     },
   );
   #print "2: $self->{'Nick'}\n";
@@ -52,7 +55,21 @@ sub init {
   #print('dcdbg', "myip : $self->{'myip'}", "\n");
   $self->{'hub'} = $self->{'host'} . ( $self->{'port'} and $self->{'port'} != 411 ? $self->{'port'} : '' );
   %{ $self->{'parse'} } = (
-    'chatline' => sub { },    #print("welcome:", @_) unless $self->{'no_print_welcome'}; },
+    'chatline' => sub { 
+
+#$self->log('dcdev', 'chatline parse', Dumper(@_));
+
+        my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/;
+
+
+        $self->log( 'warn', "[$nick] oper, set interval = $1" ), $self->{'search_every'} = $1,
+          if ( $self->{'NickList'}->{$nick}{'oper'} and $text =~ /^Minimum search interval is:(\d+)s/ )
+          or $nick eq 'Hub-Security'
+          and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
+          $self->search_retry(  );
+
+
+},    #print("welcome:", @_) unless $self->{'no_print_welcome'}; },
     'welcome'  => sub { },    #print("welcome:", @_)
     'Lock' => sub {
       #print "lockparse[$_[0]]\n";
@@ -93,16 +110,16 @@ sub init {
       $self->{'NickList'}->{$nick}{'Nick'} = $nick;
       #        $self->{'NickList'}->{$nick}{'info'} = $info;
       #print "preinfo[$info] to $self->{'NickList'}->{$nick}\n";
-      $self->info_parse( $info, $self->{'NickList'}->{$nick} );
+      $self->info_parse( $info, $self->{'NickList'}{$nick} );
       $self->{'NickList'}->{$nick}{'online'} = 1;
       #        print  "info:$nick [$info]\n";
     },
     'UserIP' => sub {
-      /(\S+)\s+(\S+)/, $self->{'NickList'}->{$1}{'ip'} = $2, $self->{'IpList'}->{$2} =
+      /(\S+)\s+(\S+)/, $self->{'NickList'}{$1}{'ip'} = $2, $self->{'IpList'}{$2} =
         #\%{
-        $self->{'NickList'}->{$1}
+        $self->{'NickList'}{$1}
         #}
-        , $self->{'IpList'}->{$2}->{'port'} = $self->{'PortList'}->{$2} for grep $_, split /\$\$/, $_[0];
+        , $self->{'IpList'}{$2}{'port'} = $self->{'PortList'}{$2} for grep $_, split /\$\$/, $_[0];
     },
     'HubName' => sub {
       $self->{'HubName'} = $_[0];
@@ -284,17 +301,24 @@ sub init {
         join '?', @_ );
     },
     'search_buffer' => sub {
-      #$self->log('dcdev', 'Search_buffer', @_);
+#      $self->log('dcdev', 'Search_buffer', @_);
       #return;
-      push( @{ $self->{'search_todo'} }, \@_ ) if @_;
+      push( @{ $self->{'search_todo'} }, [@_] ) if @_;
       return unless @{ $self->{'search_todo'} || return };
-      $self->log( 'dcdev', "search too fast [$self->{'search_every'}], len=", scalar @{ $self->{'search_todo'} } )
-        if @_ and scalar @{ $self->{'search_todo'} } > 1;
+#      $self->log( 'dcdev', "search too fast [$self->{'search_every'}], len=", scalar @{ $self->{'search_todo'} } )        if @_ and scalar @{ $self->{'search_todo'} } > 1;
       return if time() - $self->{'search_last_time'} < $self->{'search_every'} + 1;
-      my $s = shift( @{ $self->{'search_todo'} } );
+#      my $s = shift( @{ $self->{'search_todo'} } );
+$self->{'search_last'} = shift( @{ $self->{'search_todo'} } );
       $self->{'search_todo'} = undef unless @{ $self->{'search_todo'} };
+
+#      $self->{'search_last'} = [@$s];
+#      $self->{'search_last'} = $s;
+
       $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport'}",
-        join '?', @$s );
+        join '?', 
+#@$s 
+@{$self->{'search_last'}}
+);
       $self->{'search_last_time'} = time();
     },
     'search_tth' => sub {
@@ -307,8 +331,24 @@ sub init {
       $self->{'search_last_string'} = $string;
       $_[0] =~ tr/ /$/;
       #      $self->Search(  'F', 'T', '0', '1', @_);
-      $self->cmd( 'search_buffer', 'F', 'T', '0', '1', @_ );
+      $self->cmd( 'search_buffer', 'F', 'T', '0', '1', $_[0] );
     },
+
+    'search' => sub {
+       return $self->cmd( 'search_tth', @_) if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
+       return $self->cmd( 'search_string', @_) if length $_[0];
+  },
+
+    'search_retry' => sub {
+#      $self->cmd( 'search_buffer', @{$self->{'search_last'}}) 
+#unshift( @{ $self->{'search_todo'} }, [@{$self->{'search_last'}}] )
+unshift( @{ $self->{'search_todo'} }, $self->{'search_last'} )
+if ref $self->{'search_last'} eq 'ARRAY';
+$self->{'search_last'} = undef;
+
+},
+
+
   );
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
