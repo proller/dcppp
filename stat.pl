@@ -155,7 +155,7 @@ for ( 0 .. 1000 ) {
     'client'      => '++',
     'V'           => '0.698',
     'description' => '',
-    'M'           => 'P',
+#    'M'           => 'P',
     #    'print_search' => 1,
     'handler' => {
       #      'Search_parse_bef_bef' => sub {
