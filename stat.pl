@@ -20,7 +20,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
@@ -41,7 +40,7 @@ $config{'log_dmp'} = 0;
 #$config{'log_obj'}='-obj.log';
 $config{'hit_to_ask'}         ||= 2;
 $config{'queue_recalc_every'} ||= 30;
-$config{'ask_retry'}         ||= 3600;
+$config{'ask_retry'}          ||= 3600;
 #print "Arg=",$ARGV[0],"\n";
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 #print "to=[$1]";
@@ -87,7 +86,6 @@ $config{'sql'} = {
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
-
 our $db = pssql->new(
   # 'driver' => 'pgpp',
   #  'dbname' => 'markers',
@@ -108,7 +106,7 @@ $db->install();
 if ( $ARGV[0] eq 'show' ) {
   #print Dumper
   my $limit = 'LIMIT 10';
-  my $where = ''; #'WHERE time >' . ( int( time - 3600 ) );
+  my $where = '';           #'WHERE time >' . ( int( time - 3600 ) );
   $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
   $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
   $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
@@ -139,7 +137,7 @@ for ( 0 .. 1000 ) {
     ( $2 ? ( 'port' => $2 ) : () ),
     'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
     #   'Nick'		=>	'xxxx',
-#    'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
+    #    'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
     'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
     #   'log'		=>	sub {},	# no logging
     'log' => sub { shift; psmisc::printlog(@_) },
@@ -185,6 +183,7 @@ for ( 0 .. 1000 ) {
           $s{'string'} =~ tr/$/ /;
         }
 =cut
+
         #print "search[$nick, $ip, $port, ",join('|', @cmd),"]\n";
         #        for (qw(tth nick string ip)) {          ++$stat{$_}{ $s{$_} } if $s{$_};        }
         $db->insert_hash( 'queries', \%s );
@@ -195,19 +194,19 @@ for ( 0 .. 1000 ) {
         every(
           $config{'queue_recalc_every'},
           our $queuerecalc ||= sub {
-my $time = int time;
-            $work{'toask'} =
-              [ (sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
-                grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} })
-
-
-,(sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
-                grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and $work{'asked'}{$_} and $work{'asked'}{$_} + $config{'ask_retry'} < $time } keys %{ $work{'ask'} })
-
-
-
-
- ];
+            my $time = int time;
+            $work{'toask'} = [ (
+                sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
+                  grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
+              ), (
+                sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
+                  grep {
+                  $work{'ask'}{$_} >= $config{'hit_to_ask'}
+                    and $work{'asked'}{$_}
+                    and $work{'asked'}{$_} + $config{'ask_retry'} < $time
+                  } keys %{ $work{'ask'} }
+              )
+            ];
             printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
           }
         );
@@ -248,6 +247,7 @@ and !$stat{'string_asked'}{ $s{'string'} }++
           $dc->search_string( $s{'string'} );
         }
 =cut
+
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
 #$dc
@@ -274,7 +274,6 @@ and !$stat{'string_asked'}{ $s{'string'} }++
           and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
           $dc->search_retry(  );
 =cut
-
         #dcdmp [1] rcv: chatline <Hub-Security> Search ignored.  Please leave at least 5 seconds between search attempts.
         # printlog( "[$dc->{'number'}] chatline ", join '|',@_,  );
       },

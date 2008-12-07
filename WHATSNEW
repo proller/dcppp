@@ -1,5 +1,11 @@
 # $Id$ $URL$
 
+search
+
+listen port auto select
+
+nickname rand if denide
+
 flood bot improved
 
 new wait functions
