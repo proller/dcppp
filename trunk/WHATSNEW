@@ -1,5 +1,7 @@
 # $Id$ $URL$
 
+auto reconnects
+
 search
 
 listen port auto select

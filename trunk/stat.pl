@@ -2,7 +2,7 @@
 # $Id: watch.pl 280 2008-02-28 11:16:37Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/watch.pl $
 
 =copyright
-flood tests
+stat bot
 Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 
 This program is free software; you can redistribute it and/or
@@ -140,7 +140,7 @@ print("usage: stat.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 our %work;
 #our %stat;
 for ( 0 .. 1000 ) {
-  #  print "i=$_ $1";
+    print "i=$_\n";
   my $dc = dcppp::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),

@@ -59,7 +59,7 @@ sub init {
     @_,
     'incomingclass' => 'dcppp::clicli',
     'periodic'      => sub {
-      $self->cmd( 'search_buffer', );
+      $self->cmd( 'search_buffer', )if $self->{'socket'};
     },
   );
   #print "2: $self->{'Nick'}\n";
@@ -372,7 +372,7 @@ sub init {
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}},
 #print "Listen on port $self->{'myport'} \n";
-#$self->log('dev', "making listeners: tcp"),
+$self->log('dev', "making listeners: tcp");
   if ( $self->{'M'} eq 'A' ) {
     $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
       %$self, $self->clear(),
@@ -389,7 +389,7 @@ sub init {
     $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
     $self->log( 'err', "cant listen tcp (file transfers)" )
       unless $self->{'myport_tcp'};
-    #$self->log('dev', "making listeners: udp"),
+    $self->log('dev', "making listeners: udp");
     $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
       %$self, $self->clear(),
       'prot' => 'udp',

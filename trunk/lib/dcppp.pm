@@ -102,6 +102,11 @@ sub new {
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
     'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello) },
+
+#todo
+'reconnects' => 5,
+'reconnect_sleep' => 5,
+
   };
   #print "init2:", Dumper(\@_);
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
@@ -111,10 +116,10 @@ sub new {
   #print "init4:", Dumper(\@_);
   $self->init(@param);
   #  $self->init(@_);
-  #print "init6:", Dumper(\@_);
+#  print "init6:", Dumper(\@_);
   if ( $self->{'auto_listen'} ) {
     $self->listen();
-    #$self->log('dev', 'listen work');
+#    $self->log('dev', 'listen work');
     #$self->work() ;
     #$self->log('dev', 'listen work ok ');
   } elsif ( $self->{'auto_connect'} ) {
@@ -156,9 +161,11 @@ sub baseinit {
 
 sub connect {
   my $self = shift;
+#psmisc::caller_trace(10);
+
 $self->{'host'} = $_[0] if $_[0];
 $self->{'port'} = $_[1] if $_[1];
-  return 0 if ($self->{'socket'} and $self->{'socket'}->connected()) or grep { $self->{'status'} eq $_ } qw(connected todestroy);
+  return 0 if ($self->{'socket'} and $self->{'socket'}->connected()) or grep { $self->{'status'} eq $_ } qw(todestroy); #connected
   $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
@@ -181,6 +188,26 @@ $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
   $self->recv();
   return 0;
 }
+
+sub connect_check {
+  my $self = shift;
+
+return 0 if $self->{'prot'} eq 'udp' or $self->{'status'} eq 'listening' or ($self->{'socket'} and $self->{'socket'}->connected());
+#$self->{'reconnects'}
+#$self->{'reconnect_sleep'},
+
+while ($self->{'reconnect_tries'}++ <  $self->{'reconnects'}) {
+  $self->log( 'warn', "[$self->{'number'}]", "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}]",);
+
+$self->connect();
+return if $self->{'socket'};
+
+
+sleep $self->{'reconnect_sleep'};
+}
+
+}
+
 
 sub listen {
   my $self = shift;
@@ -261,6 +288,7 @@ sub recv {
   $self->{'recv_runned'}{$self->{'number'}} = 1;
   my $sleep = shift || 0;
   my $ret = 0;
+   $self->connect_check();
   #  return unless $self->{'socket'};
 #                $self->log( 'dcdbg',"[$self->{'number'}] recv $self->{'select'};$self->{'socket'}") if $self->{'number'} > 3;
   $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
@@ -518,6 +546,8 @@ sub handler {
 
   sub sendcmd {
     my $self = shift;
+   $self->connect_check();
+
     $self->log( 'err', "[$self->{'number'}] ERROR! no socket to send" ), return unless $self->{'socket'};
     if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
     else {
@@ -650,7 +680,7 @@ sub lock2key {
     else                                                                        { $_ = chr; }
   }
   # done
-  return join( "", @key );
+  return join( '', @key );
 }
 
 sub tag {
