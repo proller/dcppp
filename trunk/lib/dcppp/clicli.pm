@@ -18,7 +18,7 @@ sub init {
   #print "Sc0[$self->{'socket'}]\n";
   %$self = (
     %$self,
-    'Nick' => 'dcpppBot',
+#    'Nick' => 'dcpppBot',
     #	'Key'	=> 'zzz',
     'Lock' => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
     #	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
@@ -47,6 +47,10 @@ sub init {
     #	'Direction' => 'Upload', #rand here
     #	'incomingclass' => 'dcppp::clicli',
   );
+
+    $self->{'auto_connect'}      =  1 if  !$self->{'incoming'} and !defined $self->{'auto_connect'};
+
+
   $self->baseinit();
   #print "1: $self->{'Nick'}\n";
   #print "Sc1[$self->{'socket'}]\n";
@@ -61,7 +65,7 @@ sub init {
   #print " clicli init clients:{", keys %{$self->{'clients'}}, "}\n";
   #print "parse init\n";
   #    %{$self->{'parse'}} = (
-  $self->{'parse'} = {
+  $self->{'parse'} ||= {
     'Lock' => sub {
       #print "CLICLI lock parse\n";
       if ( $self->{'incoming'} ) {
@@ -111,7 +115,6 @@ sub init {
              last;
           }
 =cut
-
       } else {
         $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
@@ -183,7 +186,7 @@ sub init {
   };
   #print "cmd init ($self->{'cmd'})\n";
   #    %{$self->{'cmd'}} = {
-  $self->{'cmd'} = {
+  $self->{'cmd'} ||= {
     'connect' => sub {
       $self->connect() && return;
       $self->{'sendbuf'} = 1;
