@@ -83,6 +83,9 @@ sub new {
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
+    'Lock' => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
+
+
     'log'               => sub { print( join( ' ', @_ ), "\n" ) },
     'auto_recv'         => 1,
     'wait_once'         => 0.1,
@@ -153,10 +156,13 @@ sub baseinit {
 
 sub connect {
   my $self = shift;
+$self->{'host'} = $_[0] if $_[0];
+$self->{'port'} = $_[1] if $_[1];
   return 0 if ($self->{'socket'} and $self->{'socket'}->connected()) or grep { $self->{'status'} eq $_ } qw(connected todestroy);
   $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
+$self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
   $self->{'socket'} ||= new IO::Socket::INET(
     'PeerAddr' => $self->{'host'},
     'PeerPort' => $self->{'port'},
@@ -221,6 +227,10 @@ sub disconnect {
     } keys %{ $self->{'clients'} };
   }
   close( $self->{'filehandle'} ), delete $self->{'filehandle'} if $self->{'filehandle'};
+
+ delete          $self->{$_} for 'NickList', 'IpList', 'PortList';
+
+
   #        $self->log( 'dev', "[$self->{'number'}] disconnected sock=", $self->{'socket'});
 }
 
@@ -284,6 +294,7 @@ sub recv {
               'PortList'    => \%{ $self->{'PortList'} },
               'auto_listen' => 0,
     'auto_connect'      => 0,
+'parent' => $self,
 
             );    #unless $self->{'clients'}{$_};
             ++$ret;
