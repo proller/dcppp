@@ -31,17 +31,17 @@ use dcppp::clihub;
 #  use dcppp;
 #  use dcppp::client;
 #for my $host (qw(dc.setun.net  dc.setun.net dc.setun.net dc.crossnet.ru dc.lanport.ru )) {
-for my $host (qw(dc.setun.net  )) {
+#for my $host (qw(dc.setun.net  )) {
   #for my $host (qw(dc.lanport.ru )) {
-  #for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
-  #for my $host (qw(fili.no-ip.org dc-files.info)) {
+  for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
+#  for my $host (qw(fili.no-ip.org dc-files.info)) {
   my $dc = dcppp::clihub->new(
     #  'host' => 'dc.setun.net',
     #  'myip' => '10.20.199.104',
     #  'port' => 4111,
     #   'host'=>'dcpp.migtel.ru',
     #'myip'=> '88.210.52.26',
-         'myport' => '412',
+#         'myport' => '412',
 #         'myport' => '80',
     #     'myport' => '53333',
     #  'host' => 'hub.selfip.com',
@@ -49,6 +49,8 @@ for my $host (qw(dc.setun.net  )) {
     'host' => $host,
     #  'host'=>'freehub.ru',
     #  'port' => 411,
+'M'=> 'P',
+'sharesize' => 0,
   );
 
 =example
@@ -76,8 +78,8 @@ for my $host (qw(dc.setun.net  )) {
 #UMBUUX4MUG4SQDVOAC6JWZVMXAI2HVLS4NG52QA
 
 #print("! $_ !\n"), # $dc->cmd('ConnectToMe',$_)
-  $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' )for qw(pro prrrrroo);
-  $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
+#  $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' )for qw(pro prrrrroo);
+#  $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
 #  $dc->recv();
 #  $dc->{'cmd'}{'GetINFO'}->('pro');
 #  sleep 1;
@@ -85,7 +87,7 @@ for my $host (qw(dc.setun.net  )) {
 #$dc->disconnect();
 #print "OK\n";
 # print"R\n",
-  $dc->work(100);    #wait for download starting
+#  $dc->work(100);    #wait for download starting
   $dc->wait_finish();
   #$dc->recv(),  while 600;
   #  sleep 1;

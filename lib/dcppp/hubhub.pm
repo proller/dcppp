@@ -12,7 +12,7 @@ use base 'dcppp';
 sub init {
   my $self = shift;
   %$self = ( %$self, @_ );
-  %{ $self->{'parse'} } = ();
-  %{ $self->{'cmd'} }   = ();
+   $self->{'parse'}  = {};
+   $self->{'cmd'}    = {};
 }
 1;

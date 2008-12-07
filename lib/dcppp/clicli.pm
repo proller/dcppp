@@ -20,7 +20,6 @@ sub init {
     %$self,
 #    'Nick' => 'dcpppBot',
     #	'Key'	=> 'zzz',
-    'Lock' => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
     #	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
     #	'Supports' => 'XmlBZList',
     #http://www.dcpp.net/wiki/index.php/%24Supports

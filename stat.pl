@@ -45,26 +45,26 @@ $config{'ask_retry'}          ||= 3600;
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 #print "to=[$1]";
 $config{'sql'} = {
-  'driver'       => 'sqlite',
-  'dbname'       => 'stat2',
+  'driver'       => 'mysql',#'sqlite',
+  'dbname'       => 'dcstat',
   'auto_connect' => 1,
   'table'        => {
     'queries' => {
       #111.111.111.111
       'time' => pssql::row( 'time', 'index' => 1 ),
       #      'added' => pssql::row('added'),
-      'hub'    => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
+      'hub'    => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1 ),
       'nick'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
       'ip'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15,  'Zindex' => 1 ),
       'port'   => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1 ),
-      'tth'    => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 40,  'index'  => 1 ),
-      'string' => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'index'  => 1 ),
+      'tth'    => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 40,  'default'=> '','index'  => 1 ),
+      'string' => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'default'=> '', 'index'  => 1 ),
     },
     'results' => {
       'time' => pssql::row( 'time', 'index' => 1 ),
       #      'added'  => pssql::row('added'),
       'string'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'index'  => 1 ),
-      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
+      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1 ),
       'nick'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
       'ip'       => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15,  'Zindex' => 1 ),
       'port'     => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1 ),
@@ -74,6 +74,13 @@ $config{'sql'} = {
       'ext'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
       'size'     => pssql::row( undef, 'type' => 'BIGINT',   'Zindex' => 1 ),
     },
+    'chat' => {
+      'time' => pssql::row( 'time', 'index' => 1 ),
+      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1 ),
+      #      'added'  => pssql::row('added'),
+      'nick'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
+      'string'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 3090, 'Zindex'  => 1 ),
+},
   }
 };
 
@@ -96,6 +103,8 @@ our $db = pssql->new(
   #'log' => sub{},
   #   'log' => \psmisc::printlog ,
   #sub {     &psmisc::printlog   },
+'cp_in' => 'cp1251',
+#'insert_by' => 1,
   %{ $config{'sql'} or {} },
 );
 $db->install();
@@ -261,8 +270,11 @@ and !$stat{'string_asked'}{ $s{'string'} }++
       },
       'chatline' => sub {
         my $dc = shift;
-        printlog( 'chatline', @_ );
-        #        my ( $nick, $text ) = /^<([^>]+)> (.+)$/;
+#        printlog( 'chatline', join '!',@_ );
+     my %s;
+                 ( $s{nick}, $s{string} ) = $_[0] =~  /^<([^>]+)> (.+)$/;
+        $db->insert_hash( 'chat', {%s, 'time'=>int(time), 'hub'=>$dc->{'hub'},} );
+
         #
         # todo: move  to lib
         #

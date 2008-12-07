@@ -52,7 +52,7 @@ sub init {
     'Version'              => '1,0091',
 
     'auto_GetNickList'  => 1,
-
+    'follow_forcemove' => 1,
 
 
 
@@ -151,6 +151,7 @@ sub init {
     'ForceMove' => sub {
       $self->{'log'}->( 'info', "ForceMove to $_[0]" );
       $self->disconnect();
+      $self->connect(@_) if $self->{'follow_forcemove'};
     },
     'Quit' => sub {
       $self->{'NickList'}->{ $_[0] }{'online'} = 0;
