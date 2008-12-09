@@ -92,6 +92,7 @@ sub new {
     'waits'             => 100,
     'wait_finish'       => 600,
     'wait_finish_by'    => 1,
+    'wait_connect'       => 600,
     'clients_max'       => 50,
     'wait_clients'      => 200,
     'wait_clients_by'   => 0.01,
@@ -454,6 +455,17 @@ sub finished {
     if @_ = grep { !$self->{'clients'}{$_}->finished() } keys %{ $self->{'clients'} };
   return 1;
 }
+
+
+sub wait_connect {
+  my $self = shift;
+  for ( 0 .. ($_[0] || $self->{'wait_connect'}) ) {
+    last if $self->{'status'} eq 'connected';
+    $self->wait();
+  }
+}
+
+
 
 sub wait_finish {
   my $self = shift;
