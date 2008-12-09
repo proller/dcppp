@@ -392,7 +392,7 @@ $self->log('dev', "making listeners: tcp");
     $self->log('dev', "making listeners: udp");
     $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
       %$self, $self->clear(),
-      'prot' => 'udp',
+      'Proto' => 'udp',
       #?    'want'     => \%{ $self->{'want'} },
       #?    'NickList' => \%{ $self->{'NickList'} },
       #?    'IpList'   => \%{ $self->{'IpList'} },
