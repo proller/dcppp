@@ -173,7 +173,7 @@ $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
   $self->{'socket'} ||= new IO::Socket::INET(
     'PeerAddr' => $self->{'host'},
     'PeerPort' => $self->{'port'},
-    'Proto'    => $self->{'prot'} || 'tcp',
+    'Proto'    => $self->{'Proto'} || 'tcp',
     #    'Type'     => SOCK_STREAM,
     'Timeout' => $self->{'Timeout'},
     ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
@@ -192,7 +192,7 @@ $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
 sub connect_check {
   my $self = shift;
 
-return 0 if $self->{'prot'} eq 'udp' or $self->{'status'} eq 'listening' or ($self->{'socket'} and $self->{'socket'}->connected());
+return 0 if $self->{'Proto'} eq 'udp' or $self->{'status'} eq 'listening' or ($self->{'socket'} and $self->{'socket'}->connected());
 #$self->{'reconnects'}
 #$self->{'reconnect_sleep'},
 
@@ -215,9 +215,9 @@ sub listen {
   for ( 1 .. $self->{'myport_tries'} ) {
     $self->{'socket'} ||= new IO::Socket::INET(
       'LocalPort' => $self->{'myport'},
-      'Proto'     => $self->{'prot'} || 'tcp',
+      'Proto'     => $self->{'Proto'} || 'tcp',
       #      'Type'      => SOCK_STREAM,
-      ( $self->{'prot'} ne 'udp' ? ( 'Listen' => $self->{'Listen'} ) : () ),
+      ( $self->{'Proto'} ne 'udp' ? ( 'Listen' => $self->{'Listen'} ) : () ),
       ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
       #    ($^O eq 'MSWin32' ? () : ('Blocking'  => 0)),
       %{ $self->{'sockopts'} or {} },
@@ -227,9 +227,9 @@ sub listen {
       unless $self->{'socket'};
   }
   return unless $self->{'socket'};
-  $self->log( 'dcdbg', "[$self->{'number'}]", "listening $self->{'myport'} $self->{'prot'}" ); # , Dumper($self->{'sockopts'}));
+  $self->log( 'dcdbg', "[$self->{'number'}]", "listening $self->{'myport'} $self->{'Proto'}" ); # , Dumper($self->{'sockopts'}));
   #    $self->log( 'dcdbg', "[$self->{'number'}] listening $self->{'myport'} ok" );
-  $self->{'accept'} = 1 if $self->{'prot'} ne 'udp';
+  $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
   $self->{'status'} = 'listening';
   $self->recv();
   #    $self->log( 'dcdbg', "[$self->{'number'}] listen exit" );
@@ -307,7 +307,7 @@ sub recv {
       $self->log( 'err', "[$self->{'number'}]", "SOCKET IS NOT CONNECTED must delete select" )
         if !$self->{'accept'}
           and !$self->{'socket'}->connected()
-          and $self->{'prot'} ne 'udp';
+          and $self->{'Proto'} ne 'udp';
       for my $client ( $self->{'select'}->can_read($sleep) ) {
         if ( $self->{'accept'} and $client == $self->{'socket'} ) {
           if ( $_ = $self->{'socket'}->accept() ) {
@@ -326,13 +326,13 @@ sub recv {
 
             );    #unless $self->{'clients'}{$_};
             ++$ret;
-            #          } elsif ($self->{'prot'} eq 'udp') {
+            #          } elsif ($self->{'Proto'} eq 'udp') {
             #        if ( !defined(
             #$client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} );
             #) )
             #$self->log( 'dev', "rcv udp [$self->{'databuf'}]");
           } else {
-            $self->log( 'err', "[$self->{'number'}] Accepting fail! [$self->{'prot'}]" );
+            $self->log( 'err', "[$self->{'number'}] Accepting fail! [$self->{'Proto'}]" );
           }
           next;
         }
