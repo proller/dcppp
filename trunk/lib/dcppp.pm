@@ -163,7 +163,12 @@ sub connect {
   my $self = shift;
 #psmisc::caller_trace(10);
 
-$self->{'host'} = $_[0] if $_[0];
+if ($_[0]) {
+$self->{'host'} = $_[0] ;
+$self->{'host'} =~ s{^.*?://}{};
+$self->{'host'} =~ s{/.*}{}g;
+$self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
+}
 $self->{'port'} = $_[1] if $_[1];
   return 0 if ($self->{'socket'} and $self->{'socket'}->connected()) or grep { $self->{'status'} eq $_ } qw(todestroy); #connected
   $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
