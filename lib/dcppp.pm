@@ -60,7 +60,7 @@ sub new {
   my $self = {
     'Listen'        => 10,
     'Timeout'       => 5,
-    'myport'   => 411, #first try
+    'myport'   => 4111, #first try
     'myport_base'   => 40000,
     'myport_random' => 1000,
     'myport_tries'  => 5,
