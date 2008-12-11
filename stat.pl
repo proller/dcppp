@@ -112,6 +112,17 @@ $db->install();
 #print 'zz:',
 #$db->do('CREATE TABLE IF NOT EXIST queries (varchar ())');
 #$db->do
+my %every;
+
+sub every {
+  my ( $sec, $func ) = ( shift, shift );
+  #printlog('dev','every', $sec, $every{$func}, time, $func ),
+  $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
+}
+unless (caller) {
+
+print("usage: stat.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
+
 if ( $ARGV[0] eq 'show' ) {
   #print Dumper
   my $limit = 'LIMIT 10';
@@ -128,14 +139,7 @@ if ( $ARGV[0] eq 'show' ) {
   #
   exit;
 }
-my %every;
 
-sub every {
-  my ( $sec, $func ) = ( shift, shift );
-  #printlog('dev','every', $sec, $every{$func}, time, $func ),
-  $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
-}
-print("usage: stat.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 #my $hubname=$1 . ($2 ? ':'.$2:'' );
 our %work;
 #our %stat;
@@ -152,11 +156,15 @@ for ( 0 .. 1000 ) {
     'log' => sub { shift; psmisc::printlog(@_) },
     #   'min_chat_delay'	=> 0.401,
     #   'min_cmd_delay'	=> 0.401,
-    'client'      => '++',
-    'V'           => '0.698',
-    'description' => '',
+#    'client'      => '++',
+#    'V'           => '0.698',
+    'description' => 'dev stat bot',
 #    'M'           => 'P',
     #    'print_search' => 1,
+
+'reconnects' => 500,
+
+
     'handler' => {
       #      'Search_parse_bef_bef' => sub {
       'Search_parse_aft' => sub {
@@ -310,7 +318,8 @@ and !$stat{'string_asked'}{ $s{'string'} }++
   $dc->destroy();
   sleep(1);
 }
-
+}
+=z
 sub finish_report {
   #print Dumper( \%stat );
 }
@@ -319,3 +328,4 @@ $SIG{INT} = $SIG{HUP} = $SIG{__DIE__} = \&finish_report;
 END {
   finish_report();
 }
+=cut
