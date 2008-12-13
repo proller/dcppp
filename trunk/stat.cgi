@@ -39,7 +39,7 @@ $queries{'queries top tth'} = {
     #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
     'SELECT'   => '*, COUNT(*) as cnt',
     'FROM'     => 'queries',
-    'WHERE'    => ['tth IS NOT NULL'],
+    'WHERE'    => ['tth != ""'],
     'GROUP BY' => 'tth',
     'HAVING'   => 'cnt > 1',
     'ORDER BY'    => 'cnt DESC',
@@ -49,7 +49,7 @@ $queries{'queries top string'} = {
  %{$queries{'queries top tth'}},
     'show' => [qw(cnt string time)],
     'GROUP BY' => 'string',
-    'WHERE'    => ['string IS NOT NULL'],
+    'WHERE'    => ['string != ""'],
 
 };
 
@@ -93,6 +93,7 @@ print '<tr>';
 
 
 $row->{'time'} = psmisc::human('time_period', time-$row->{'time'}) if int $row->{'time'};
+$row->{'size'} = psmisc::human('size', $row->{'size'}) if int $row->{'size'};
 print '<td>', $row->{$_}, '</td>' for @{$q->{'show'}};
 
 print '</tr>';
