@@ -65,11 +65,14 @@ sub init {
   #print "2: $self->{'Nick'}\n";
   $self->baseinit();
   #print('dcdbg', "myip : $self->{'myip'}", "\n");
-  $self->{'hub'} = $self->{'host'} . ( $self->{'port'} and $self->{'port'} != 411 ? $self->{'port'} : '' );
   #  %{
+$self->{'make_hub'} ||= sub {
+    $self->{'hub'} ||= $self->{'host'} . ( $self->{'port'} and $self->{'port'} != 411 ? $self->{'port'} : '' );
+};
+
   $self->{'parse'}
     #}
-    = {
+    ||= {
     'chatline' => sub {
       #$self->log('dcdev', 'chatline parse', Dumper(@_));
       my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/;
@@ -194,6 +197,9 @@ sub init {
     'LogedIn' => sub { },    # print("$_[0] is LogedIn\n");
     'Search' => sub {
       my $search = $_[0];
+
+$self->{'make_hub'}->();
+
       my %s      = (
         'time' => int( time() ),
         'hub'  => $self->{'hub'},
@@ -218,6 +224,8 @@ sub init {
     },    #todo
     'SR' => sub {
       #=z
+$self->{'make_hub'}->();
+
       my %s = (
         'time' => int( time() ),
         'hub'  => $self->{'hub'},
