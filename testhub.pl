@@ -25,9 +25,8 @@ use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use lib './lib';
 use dcppp::hub;
-  my $dc = dcppp::hub->new(  );
-
-  $dc->work(100);
-  $dc->wait_finish();
-  $dc->disconnect();
+my $dc = dcppp::hub->new();
+$dc->work(100);
+$dc->wait_finish();
+$dc->disconnect();
 #  $dc = undef;

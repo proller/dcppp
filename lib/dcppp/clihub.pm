@@ -321,7 +321,7 @@ sub init {
     },
     'Search' => sub {
       #$self->log('dcdev', 'Search', @_);
-      $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport_udp'}",
+      $self->sendcmd( 'Search', ($self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}"),
         join '?', @_ );
     },
     'search_buffer' => sub {

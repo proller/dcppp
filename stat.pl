@@ -31,7 +31,7 @@ our %config;
 use lib qw(./pslib ./../pslib ./../../pslib);
 use pssql;
 use psmisc;
-psmisc::config();
+psmisc::config( 0, 0, 0, 1 );
 #$config{'log_all'}=1;
 $config{'log_trace'} = $config{'log_dmpbef'} = 0;
 $config{'log_dmp'} = 0;
@@ -42,10 +42,9 @@ $config{'hit_to_ask'}         ||= 2;
 $config{'queue_recalc_every'} ||= 30;
 $config{'ask_retry'}          ||= 3600;
 #print "Arg=",$ARGV[0],"\n";
-$ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 #print "to=[$1]";
 $config{'sql'} = {
-  'driver'       => 'mysql',#'sqlite',
+  'driver'       => 'mysql',    #'sqlite',
   'dbname'       => 'dcstat',
   'auto_connect' => 1,
   'table'        => {
@@ -53,12 +52,12 @@ $config{'sql'} = {
       #111.111.111.111
       'time' => pssql::row( 'time', 'index' => 1 ),
       #      'added' => pssql::row('added'),
-      'hub'    => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1 ),
-      'nick'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
-      'ip'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15,  'Zindex' => 1 ),
-      'port'   => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1 ),
-      'tth'    => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 40,  'default'=> '','index'  => 1 ),
-      'string' => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'default'=> '', 'index'  => 1 ),
+      'hub'  => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64, 'index'  => 1 ),
+      'nick' => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32, 'index'  => 1 ),
+      'ip'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15, 'Zindex' => 1 ),
+      'port' => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1 ),
+      'tth'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
+      'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', 'index' => 1 ),
     },
     'results' => {
       'time' => pssql::row( 'time', 'index' => 1 ),
@@ -76,11 +75,11 @@ $config{'sql'} = {
     },
     'chat' => {
       'time' => pssql::row( 'time', 'index' => 1 ),
-      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1 ),
+      'hub' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 64, 'index' => 1 ),
       #      'added'  => pssql::row('added'),
-      'nick'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
-      'string'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 3090, 'Zindex'  => 1 ),
-},
+      'nick'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 32,   'index'  => 1 ),
+      'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 3090, 'Zindex' => 1 ),
+    },
   }
 };
 
@@ -103,11 +102,11 @@ our $db = pssql->new(
   #'log' => sub{},
   #   'log' => \psmisc::printlog ,
   #sub {     &psmisc::printlog   },
-'cp_in' => 'cp1251',
-#'insert_by' => 1,
+  'cp_in' => 'cp1251',
+  #'insert_by' => 1,
   %{ $config{'sql'} or {} },
 );
-$db->install();
+$db->install() unless $ENV{'SERVER_PORT'};
 #my $dbh = DBI->connect("dbi:SQLite:dbname=stat.sqlite","","");
 #print 'zz:',
 #$db->do('CREATE TABLE IF NOT EXIST queries (varchar ())');
@@ -120,124 +119,108 @@ sub every {
   $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
 }
 unless (caller) {
-
-print("usage: stat.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
-
-if ( $ARGV[0] eq 'show' ) {
-  #print Dumper
-  my $limit = 'LIMIT 10';
-  my $where = '';           #'WHERE time >' . ( int( time - 3600 ) );
-  $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-  $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-  $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-  $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-  $db->query_log(qq{SELECT COUNT(*) FROM $_}) for keys %{ $config{'sql'}{'table'} };
-  #WHERE cnt >= '1'
-  # periods: 1h 24h 7d 30d 1y
-  # stats: top file, top query,
-  #
-  #
-  exit;
-}
-
-#my $hubname=$1 . ($2 ? ':'.$2:'' );
-our %work;
-#our %stat;
-for ( 0 .. 1000 ) {
-    print "i=$_\n";
-  my $dc = dcppp::clihub->new(
-    'host' => $1,
-    ( $2 ? ( 'port' => $2 ) : () ),
-    'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
-    #   'Nick'		=>	'xxxx',
-    #    'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
-    'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
-    #   'log'		=>	sub {},	# no logging
-    'log' => sub { shift; psmisc::printlog(@_) },
-    #   'min_chat_delay'	=> 0.401,
-    #   'min_cmd_delay'	=> 0.401,
-'myport'=>41111,
-    'description' => 'dev stat bot',
-#    'M'           => 'P',
-    #    'print_search' => 1,
-
-'reconnects' => 500,
-
-
-    'handler' => {
-      #      'Search_parse_bef_bef' => sub {
-      'Search_parse_aft' => sub {
-        my $dc     = shift;
-        my $search = shift;
-        #        print "Sh=", Dumper(\@_);
-        my %s = (
-          #          'time' => int( time() ),
-          #          'hub'  => $dc->{'hub'},
-          %{ $_[0] },
-        );
-        #        print "s:[$search]\n";
-        #my ($who, $cmd)
-        #        printlog('dcdev', "search", $search);
-        #printlog('dcdev', "ignoring self search"),
-        return if $s{'nick'} eq $dc->{'Nick'};
-
-=z
-        ( $s{'who'}, $s{'cmds'} ) = split /\s+/, $search;
-        #my @cmd =
-        $s{'cmd'} = [ split /\?/, $s{'cmds'} ];
-        #my ($nick, $ip, $port);
-        if ( $s{'who'} =~ /^Hub:(.+)$/i ) {
-          $s{'nick'} = $1;
-        } else {
-          ( $s{'ip'}, $s{'port'} ) = split /:/, $s{'who'};
-        }
-        #my ($tth, string);
-        if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/i ) {
-          $s{'tth'} = $1;
-        } else {
-          $s{'string'} = $s{'cmd'}[4];
-          $s{'string'} =~ tr/$/ /;
-        }
-=cut
-
-        #print "search[$nick, $ip, $port, ",join('|', @cmd),"]\n";
-        #        for (qw(tth nick string ip)) {          ++$stat{$_}{ $s{$_} } if $s{$_};        }
-        $db->insert_hash( 'queries', \%s );
-        #and !$work{'askstth'}++
-        my $q = $s{'tth'} || $s{'string'} || return;
-        ++$work{'ask'}{$q};
-        #        printlog('dcdev', "q1", $q, $work{'ask'}{ $q });
-        every(
-          $config{'queue_recalc_every'},
-          our $queuerecalc ||= sub {
-            my $time = int time;
-            $work{'toask'} = [ (
-                sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
-                  grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
-              ), (
-                sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
-                  grep {
-                  $work{'ask'}{$_} >= $config{'hit_to_ask'}
-                    and $work{'asked'}{$_}
-                    and $work{'asked'}{$_} + $config{'ask_retry'} < $time
-                  } keys %{ $work{'ask'} }
+  print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
+  if ( $ARGV[0] eq 'show' ) {
+    #print Dumper
+    my $limit = 'LIMIT 10';
+    my $where = '';           #'WHERE time >' . ( int( time - 3600 ) );
+    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
+    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
+    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
+    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
+    $db->query_log(qq{SELECT COUNT(*) FROM $_}) for keys %{ $config{'sql'}{'table'} };
+    #WHERE cnt >= '1'
+    # periods: 1h 24h 7d 30d 1y
+    # stats: top file, top query,
+    #
+    #
+    exit;
+  }
+  #my $hubname=$1 . ($2 ? ':'.$2:'' );
+  our %work;
+  #our %stat;
+  #for ( 0 .. 1000 ) {
+  # $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
+  our @dc;
+  for (@ARGV) {
+    local @_;
+    if ( /^-/ and @_ = split '=', $_ ) {
+      $config{config_file} = $_[1], psmisc::config() if $_[0] eq '--config';
+      psmisc::program_one( 'params_pre_config', @_[ 1, 0 ] );
+    } else {
+      my $hub = $_;
+      #    print "i=$_\n";
+      my $dc = dcppp::clihub->new(
+        #    'host' => $1,
+        #    ( $2 ? ( 'port' => $2 ) : () ),
+        #      'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
+        #   'Nick'		=>	'xxxx',
+        #    'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
+        'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
+        #   'log'		=>	sub {},	# no logging
+        'log' => sub { shift; psmisc::printlog(@_) },
+        #   'min_chat_delay'	=> 0.401,
+        #   'min_cmd_delay'	=> 0.401,
+        'myport'       => 41111,
+        'description'  => 'dev stat bot',
+        'auto_connect' => 0,
+        #          'M'           => 'P',
+        #    'print_search' => 1,
+        'reconnects' => 500,
+        'handler'    => {
+          #      'Search_parse_bef_bef' => sub {
+          'Search_parse_aft' => sub {
+            my $dc     = shift;
+            my $search = shift;
+            #        print "Sh=", Dumper(\@_);
+            my %s = (
+              #          'time' => int( time() ),
+              #          'hub'  => $dc->{'hub'},
+              %{ $_[0] },
+            );
+            #        print "s:[$search]\n";
+            #my ($who, $cmd)
+            #        printlog('dcdev', "search", $search);
+            #printlog('dcdev', "ignoring self search"),
+            return if $s{'nick'} eq $dc->{'Nick'};
+            #print "search[$nick, $ip, $port, ",join('|', @cmd),"]\n";
+            #        for (qw(tth nick string ip)) {          ++$stat{$_}{ $s{$_} } if $s{$_};        }
+            $db->insert_hash( 'queries', \%s );
+            #and !$work{'askstth'}++
+            my $q = $s{'tth'} || $s{'string'} || return;
+            ++$work{'ask'}{$q};
+            #        printlog('dcdev', "q1", $q, $work{'ask'}{ $q });
+            every(
+              $config{'queue_recalc_every'},
+              our $queuerecalc ||= sub {
+                my $time = int time;
+                $work{'toask'} = [ (
+                    sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
+                      grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
+                  ), (
+                    sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
+                      grep {
+                            $work{'ask'}{$_} >= $config{'hit_to_ask'}
+                        and $work{'asked'}{$_}
+                        and $work{'asked'}{$_} + $config{'ask_retry'} < $time
+                      } keys %{ $work{'ask'} }
+                  )
+                ];
+                printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+              }
+            );
+            $q = shift @{ $work{'toask'} } or return;
+            #        printlog('dcdev', "q2", $q, $work{'ask'}{ $q }, Dumper $dc->{'search_todo'} );
+            #if ($q and ++$work{'ask'}{ $q }  >= $config{'hit_to_ask'}  and !exists $work{'asked'}{ $q }) {
+            if (
+              !$dc->{'search_todo'}
+              #and !@{$work{'toask'}||[]}
               )
-            ];
-            printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
-          }
-        );
-        $q = shift @{ $work{'toask'} } or return;
-        #        printlog('dcdev', "q2", $q, $work{'ask'}{ $q }, Dumper $dc->{'search_todo'} );
-        #if ($q and ++$work{'ask'}{ $q }  >= $config{'hit_to_ask'}  and !exists $work{'asked'}{ $q }) {
-        if (
-          !$dc->{'search_todo'}
-          #and !@{$work{'toask'}||[]}
-          )
-        {
-          $work{'asked'}{$q} = int time;
-          $dc->search($q);
-        }
-        #}
+            {
+              $work{'asked'}{$q} = int time;
+              $dc->search($q);
+            }
+            #}
 
 =z
        if ( $s{'tth'} and 
@@ -267,24 +250,23 @@ and !$stat{'string_asked'}{ $s{'string'} }++
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
 #$dc
-      },
-      'SR_parse_aft' => sub {
-        my $dc = shift;
-        #        my $search = shift;
-        my %s = %{ $_[1] || return };
-        #        printlog( 'SR=', Dumper( \@_ ) );
-        $db->insert_hash( 'results', \%s );
-      },
-      'chatline' => sub {
-        my $dc = shift;
-#        printlog( 'chatline', join '!',@_ );
-     my %s;
-                 ( $s{nick}, $s{string} ) = $_[0] =~  /^<([^>]+)> (.+)$/;
-        $db->insert_hash( 'chat', {%s, 'time'=>int(time), 'hub'=>$dc->{'hub'},} );
-
-        #
-        # todo: move  to lib
-        #
+          },
+          'SR_parse_aft' => sub {
+            my $dc = shift;
+            #        my $search = shift;
+            my %s = %{ $_[1] || return };
+            #        printlog( 'SR=', Dumper( \@_ ) );
+            $db->insert_hash( 'results', \%s );
+          },
+          'chatline' => sub {
+            my $dc = shift;
+            #        printlog( 'chatline', join '!',@_ );
+            my %s;
+            ( $s{nick}, $s{string} ) = $_[0] =~ /^<([^>]+)> (.+)$/;
+            $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } );
+            #
+            # todo: move  to lib
+            #
 
 =z
         printlog( 'dev', "[$nick] oper, set interval = $1" ), $dc->{'search_every'} = $1,
@@ -293,38 +275,24 @@ and !$stat{'string_asked'}{ $s{'string'} }++
           and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
           $dc->search_retry(  );
 =cut
-        #dcdmp [1] rcv: chatline <Hub-Security> Search ignored.  Please leave at least 5 seconds between search attempts.
-        # printlog( "[$dc->{'number'}] chatline ", join '|',@_,  );
-      },
-      'welcome' => sub {
-        my $dc = shift;
-        printlog( 'welcome', @_ );
-      },
-      #      'To' => sub {        my $dc = shift;printlog('to', @_);},
-    },
-  );
-  #
-  #dcdmp [1] rcv: chatline <[++T]инок> Minimum search interval is:90s
-  #printlog('dc=', Dumper($dc));
-  #  print("BOT SEND all\n"),
-  #    $dc->cmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
-  #  print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, ' HUB заражен вирусом срочно покиньте его!' )
-  #    for keys %{ $dc->{'NickList'} };
-  while ( $dc->{'socket'} ) {
-    #print "w1ds\n";
-    $dc->wait_sleep();    #sleep(5); $dc->recv();
+            #dcdmp [1] rcv: chatline <Hub-Security> Search ignored.  Please leave at least 5 seconds between search attempts.
+            # printlog( "[$dc->{'number'}] chatline ", join '|',@_,  );
+          },
+          'welcome' => sub {
+            my $dc = shift;
+            printlog( 'welcome', @_ );
+          },
+          #      'To' => sub {        my $dc = shift;printlog('to', @_);},
+        },
+        %config,
+      );
+      $dc->connect($hub);
+      push @dc, $dc;
+      $_->work() for @dc;
+    }
   }
-  $dc->destroy();
-  sleep(1);
+  while ( grep { $_->active() } @dc ) {
+    $_->work() for @dc;
+  }
+  $_->destroy() for @dc;
 }
-}
-=z
-sub finish_report {
-  #print Dumper( \%stat );
-}
-$SIG{INT} = $SIG{HUP} = $SIG{__DIE__} = \&finish_report;
-
-END {
-  finish_report();
-}
-=cut
