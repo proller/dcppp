@@ -32,25 +32,25 @@ use dcppp::clihub;
 #  use dcppp::client;
 #for my $host (qw(dc.setun.net  dc.setun.net dc.setun.net dc.crossnet.ru dc.lanport.ru )) {
 #for my $host (qw(dc.setun.net  )) {
-  #for my $host (qw(dc.lanport.ru )) {
-  for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
-#  for my $host (qw(fili.no-ip.org dc-files.info)) {
+#for my $host (qw(dc.lanport.ru )) {
+for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
+  #  for my $host (qw(fili.no-ip.org dc-files.info)) {
   my $dc = dcppp::clihub->new(
     #  'host' => 'dc.setun.net',
     #  'myip' => '10.20.199.104',
     #  'port' => 4111,
     #   'host'=>'dcpp.migtel.ru',
     #'myip'=> '88.210.52.26',
-#         'myport' => '412',
-#         'myport' => '80',
+    #         'myport' => '412',
+    #         'myport' => '80',
     #     'myport' => '53333',
     #  'host' => 'hub.selfip.com',
     #  'host' => 'dc.crossnet.ru',
     'host' => $host,
     #  'host'=>'freehub.ru',
     #  'port' => 411,
-'M'=> 'P',
-'sharesize' => 0,
+    'M'         => 'P',
+    'sharesize' => 0,
   );
 
 =example
@@ -74,9 +74,7 @@ use dcppp::clihub;
 #$dc->cmd('search', 'xxx');
 #$dc->cmd('search', 'house');
 #$dc->work(),
-
 #UMBUUX4MUG4SQDVOAC6JWZVMXAI2HVLS4NG52QA
-
 #print("! $_ !\n"), # $dc->cmd('ConnectToMe',$_)
 #  $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' )for qw(pro prrrrroo);
 #  $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
