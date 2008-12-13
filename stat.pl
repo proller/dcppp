@@ -22,13 +22,14 @@ or download it from http://www.gnu.org/licenses/gpl.html
 =cut
 use strict;
 eval { use Time::HiRes qw(time sleep); };
-use lib './lib';
+our $root_path;
+use lib $root_path.'./lib';
 use dcppp::clihub;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 #use DBI;
 our %config;
-use lib qw(./pslib ./../pslib ./../../pslib);
+use lib $root_path.'./pslib'; #, $root_path.'./../pslib', $root_path. './../../pslib';
 use pssql;
 use psmisc;
 psmisc::config( 0, 0, 0, 1 );

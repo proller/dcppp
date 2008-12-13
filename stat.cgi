@@ -23,6 +23,7 @@ BEGIN {
 #use psmisc;
 #use psweb;
 print "Content-type: text/html\n\n";
+print "[$root_path]";
 #psmisc::config();
 #$config{'log_all'} = 0;
 do $root_path . 'stat.pl';
