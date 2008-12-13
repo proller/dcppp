@@ -45,6 +45,8 @@ $config{'queue_recalc_every'} ||= 30;
 $config{'ask_retry'}          ||= 3600;
 #print "Arg=",$ARGV[0],"\n";
 #print "to=[$1]";
+$config{'row_all'} = {      'not null'   => 1,
+};
 $config{'sql'} = {
   'driver'       => 'mysql',    #'sqlite',
   'dbname'       => 'dcstat',
