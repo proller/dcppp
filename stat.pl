@@ -20,16 +20,17 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
-use lib $root_path.'./lib';
+use lib $root_path. './lib';
 use dcppp::clihub;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 #use DBI;
 our %config;
-use lib $root_path.'./pslib'; #, $root_path.'./../pslib', $root_path. './../../pslib';
+use lib $root_path. './pslib';    #, $root_path.'./../pslib', $root_path. './../../pslib';
 use pssql;
 use psmisc;
 psmisc::config( 0, 0, 0, 1 );
@@ -93,6 +94,7 @@ $config{'sql'} = {
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
+
 our $db = pssql->new(
   # 'driver' => 'pgpp',
   #  'dbname' => 'markers',
@@ -247,7 +249,6 @@ and !$stat{'string_asked'}{ $s{'string'} }++
           $dc->search_string( $s{'string'} );
         }
 =cut
-
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
 #$dc
@@ -276,6 +277,7 @@ and !$stat{'string_asked'}{ $s{'string'} }++
           and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
           $dc->search_retry(  );
 =cut
+
             #dcdmp [1] rcv: chatline <Hub-Security> Search ignored.  Please leave at least 5 seconds between search attempts.
             # printlog( "[$dc->{'number'}] chatline ", join '|',@_,  );
           },
