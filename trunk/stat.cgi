@@ -41,7 +41,7 @@ $queries{'queries top tth'} = {
     'WHERE'    => ['tth IS NOT NULL'],
     'GROUP BY' => 'tth',
     'HAVING'   => 'cnt > 1',
-    'ORDER BY'    => 'cnt',
+    'ORDER BY'    => 'cnt DESC',
   };
 
 $queries{'queries top string'} = {
