@@ -29,6 +29,7 @@ print "Content-type: text/html\n\n";
 do $root_path . 'stat.pl';
 #print 'hi';
 
+$db->set_names();
 
 $config{'query_default'} = {'LIMIT' => 10,};
 
