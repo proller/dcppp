@@ -23,7 +23,7 @@ BEGIN {
 #use psmisc;
 #use psweb;
 print "Content-type: text/html\n\n";
-print "[$root_path]";
+#print "[$root_path]";
 #psmisc::config();
 #$config{'log_all'} = 0;
 do $root_path . 'stat.pl';
@@ -32,26 +32,51 @@ do $root_path . 'stat.pl';
 
 $config{'query_default'} = {'LIMIT' => 10,};
 
-my %queries = (
-  'top searches' => {
-    'show' => [qw(cnt string tth time)],
+my %queries;
+$queries{'queries top tth'} = {
+    'show' => [qw(cnt tth time)],
     #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
     'SELECT'   => '*, COUNT(*) as cnt',
     'FROM'     => 'queries',
-#    'WHERE'    => '',
+    'WHERE'    => ['tth IS NOT NULL'],
     'GROUP BY' => 'tth',
     'HAVING'   => 'cnt > 1',
     'ORDER BY'    => 'cnt',
-  },
-);
+  };
+
+$queries{'queries top string'} = {
+ %{$queries{'queries top tth'}},
+    'show' => [qw(cnt string time)],
+    'GROUP BY' => 'string',
+    'WHERE'    => ['string IS NOT NULL'],
+
+};
+
+
+$queries{'results top tth'} = {
+%{$queries{'queries top tth'}},
+    'show' => [qw(cnt tth filename size time)],
+
+    'FROM'     => 'results',
+};
+
+
+$queries{'results top string'} = {
+%{$queries{'queries top string'}},
+    'show' => [qw(cnt string filename size time)],
+    'FROM'     => 'results',
+};
+
+
+#);
 #print "<pre>";
 #for my $days (  qw(1 7 30 365) ) {
 for my $days (  qw(1 ) ) {
 my $period =  $days * 86400 ;
-  for ( keys %queries ) {
+  for ( sort keys %queries ) {
     my $q   = {%{$queries{$_}}};
 push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
-$q->{'WHERE'}=join 'AND', @{$q->{'WHERE'}} if ref $q->{'WHERE'} eq 'ARRAY';
+$q->{'WHERE'}=join ' AND ', @{$q->{'WHERE'}} if ref $q->{'WHERE'} eq 'ARRAY';
     my $sql = join ' ',
       map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' }
       qw(SELECT FROM WHERE ), 'GROUP BY', qw(HAVING) , 'ORDER BY', qw(LIMIT);
