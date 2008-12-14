@@ -37,8 +37,8 @@ BEGIN {
 #use psmisc;
 #use psweb;
 my $param = get_params();
-print "Content-type: text/html\n\n";
-print '<script type="text/javascript" src="pslib/lib.js"></script>';
+print "Content-type: text/html; charset=utf-8\n\n";
+print '<html><head><title>RU DC stat</title></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 
 #print "[$root_path]";
 #psmisc::config();
@@ -241,6 +241,7 @@ $row->{'tth'} .= $row->{'tth_magnet'} if $row->{'tth'};
   #      print Dumper $res;
   psmisc::flush();
 }
+print '</body>';
 #}
 
 =z
