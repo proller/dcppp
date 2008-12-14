@@ -60,17 +60,18 @@ $queries{'queries top tth'} = {
   'desc'     => 'Most downloaded',
   'show'     => [qw(cnt tth)],          #time
                                         #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
-  'SELECT'   => '*, COUNT(*) as cnt',
+  'SELECT'   => 'tth, COUNT(*) as cnt',
   'FROM'     => 'queries',
   'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'tth',
-  'HAVING'   => 'cnt > 1',
+#!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
 };
 $queries{'queries top string'} = {
   %{ $queries{'queries top tth'} },
   'show'     => [qw(cnt string)],       #time
   'desc'     => 'Most searched',
+  'SELECT'   => 'string, COUNT(*) as cnt',
   'GROUP BY' => 'string',
   'WHERE'    => ['string != ""'],
 };
@@ -78,6 +79,7 @@ $queries{'results top'} = {
   %{ $queries{'queries top tth'} },
   'show'  => [qw(cnt string tth filename size )],    #time
   'desc'  => 'Most stored',
+  'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'  => 'results',
   'WHERE' => ['tth != ""'],
 };
@@ -135,7 +137,7 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
   print "$_ ($q->{'desc'}):<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
-  $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'}, ( $param->{'time'} ? "time >= " . int (time - $param->{'time'}) : '' ),
+  $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'}, ( $param->{'time'} ? "time >= " . int( (time - $param->{'time'})/1000)*1000 : '' ),
     map { "$_=" . $db->quote( $param->{$_} ) } grep { length $param->{$_} } qw(string tth);
   my $sql = join ' ',
     map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } qw(SELECT FROM WHERE),
