@@ -75,7 +75,7 @@ $config{'sql'} = {
       'file'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'Zindex' => 1 ),
       'filename' => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'index'  => 1 ),
       'ext'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
-      'size'     => pssql::row( undef, 'type' => 'BIGINT',   'Zindex' => 1 ),
+      'size'     => pssql::row( undef, 'type' => 'BIGINT',   'index' => 1 ),
     },
     'chat' => {
       'time' => pssql::row( 'time', 'index' => 1 ),
@@ -135,10 +135,6 @@ unless (caller) {
     $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
     $db->query_log(qq{SELECT COUNT(*) FROM $_}) for keys %{ $config{'sql'}{'table'} };
     #WHERE cnt >= '1'
-    # periods: 1h 24h 7d 30d 1y
-    # stats: top file, top query,
-    #
-    #
     exit;
   }
   #my $hubname=$1 . ($2 ? ':'.$2:'' );
@@ -147,6 +143,23 @@ unless (caller) {
   #for ( 0 .. 1000 ) {
   # $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
   our @dc;
+
+
+sub close_all {
+flush_all();
+$db->disconnect();
+$_->destroy() for @dc;
+exit;
+}
+sub flush_all {
+$db->flush_insert();
+}
+
+$SIG{INT} = $SIG{__DIE__} = \&close_all;
+$SIG{HUP} =  $^O =~ /win/i ? \&close_all : \&flush_all;
+
+
+
   for (@ARGV) {
     local @_;
     if ( /^-/ and @_ = split '=', $_ ) {
@@ -173,14 +186,11 @@ unless (caller) {
         #    'print_search' => 1,
         'reconnects' => 500,
         'handler'    => {
-          #      'Search_parse_bef_bef' => sub {
           'Search_parse_aft' => sub {
             my $dc     = shift;
             my $search = shift;
             #        print "Sh=", Dumper(\@_);
             my %s = (
-              #          'time' => int( time() ),
-              #          'hub'  => $dc->{'hub'},
               %{ $_[0] },
             );
             #        print "s:[$search]\n";
@@ -226,31 +236,6 @@ unless (caller) {
               $dc->search($q);
             }
             #}
-
-=z
-       if ( $s{'tth'} and 
-#++$work{'ask_tth'}{ $s{'tth'} }
-$stat{'tth'}{ $s{'tth'} }
- >= $config{'hit_to_ask'} 
-and !$stat{'tth_asked'}{ $s{'tth'} }++
-
-) {
-          printlog("try ask tth[$s{'tth'}]");
-          $dc->search_tth( $s{'tth'} );
-        } elsif ( $s{'string'} and 
-#++$work{'ask_string'}{ $s{'string'} }
-$stat{'string'}{ $s{'string'} }
-
-
- >= $config{'hit_to_ask'} 
-and !$stat{'string_asked'}{ $s{'string'} }++
-
-
-) {
-          printlog("try ask string [$s{'string'}]");
-          $dc->search_string( $s{'string'} );
-        }
-=cut
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
 #$dc
@@ -301,3 +286,6 @@ and !$stat{'string_asked'}{ $s{'string'} }++
   }
   $_->destroy() for @dc;
 }
+
+
+

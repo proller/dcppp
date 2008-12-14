@@ -102,6 +102,7 @@ sub new {
     'clients_max'       => 50,
     'wait_clients'      => 200,
     'wait_clients_by'   => 0.01,
+     'work_sleep' => 0.01,
     'cmd_recurse_sleep' => 1,
 
     ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
@@ -204,7 +205,7 @@ $self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
 sub connect_check {
   my $self = shift;
 
-return 0 if $self->{'Proto'} eq 'udp' or $self->{'status'} eq 'listening' or ($self->{'socket'} and $self->{'socket'}->connected());
+return 0 if $self->{'Proto'} eq 'udp' or $self->{'status'} eq 'listening' or ($self->{'socket'} and $self->{'socket'}->connected()) or !$self->active();
   $self->{'status'} = 'reconnecting';
 
 #$self->{'reconnects'}
@@ -223,6 +224,13 @@ $self->connect();
 
 }
 
+sub reconnect {
+
+  my $self = shift;
+$self->disconnect();
+$self->connect();
+
+}
 
 sub listen {
   my $self = shift;
@@ -516,7 +524,7 @@ sub work {
   $self->{'periodic'}->() if ref $self->{'periodic'} eq 'CODE';
 
   return $self->wait_sleep(@params) if @params;
-  return $self->recv();
+  return $self->recv($self->{'work_sleep'});
 }
 
 sub parse {
@@ -534,7 +542,7 @@ sub parse {
         )
       {
         local $_ = $_;
-local @_ = map { $self->{ 'skip_print_' . $_ } ? $_ = "$_:$self->{'skip_print_'.$_}" : ''; } keys %{ $self->{'no_print'} || {} };
+local @_ = map {   "$_:$self->{'skip_print_'.$_}" } grep { $self->{ 'skip_print_' . $_ }} keys %{ $self->{'no_print'} || {} };
         $self->log(
           'dcdmp',
           "[$self->{'number'}] rcv: $cmd $_",
