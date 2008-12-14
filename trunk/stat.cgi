@@ -79,22 +79,28 @@ $queries{'queries top string raw'} = {
 $queries{'queries top tth'} = {
   'main'     => 1,
   'desc'     => 'Most downloaded',
-  'show'     => [qw(cnt tth)],          #time
+  'show'     => [qw(cnt filename size tth )],          #time
                                         #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
-  'SELECT'   => 'tth, cnt',
+  'SELECT'   => '*, cnt',
   'FROM'     => 'queries'.($config{'periods'}{$param->{'time'}} ? $param->{'time'} : 'd'),
+'LEFT JOIN'=>'results',
+'USING' => '(tth)',
   'WHERE'    => ['tth != ""'],
 #  'GROUP BY' => 'tth',
 #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
 };
 $queries{'queries top string'} = {
-  %{ $queries{'queries top tth'} },
+#  %{ $queries{'queries top tth'} },
+  'main'     => 1,
   'show'     => [qw(cnt string)],       #time
   'desc'     => 'Most searched',
   'SELECT'   => 'string, cnt',
+  'FROM'     => 'queries'.($config{'periods'}{$param->{'time'}} ? $param->{'time'} : 'd'),
+
 #  'GROUP BY' => 'string',
   'WHERE'    => ['string != ""'],
+  'ORDER BY' => 'cnt DESC',
 };
 
 
@@ -104,7 +110,7 @@ $queries{'queries top string'} = {
 $queries{'results top'} = {
 #  %{ $queries{'queries top tth raw'} },
   'main'     => 1,
-  'show'  => [qw(cnt string tth filename size )],    #time
+  'show'  => [qw(cnt string filename size tth)],    #time
   'desc'  => 'Most stored',
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'  => 'results',
@@ -191,7 +197,7 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
 #( $param->{'time'} ? "time >= " . int( (time - $param->{'time'})/1000)*1000 : '' ),
     map { "$_=" . $db->quote( $param->{$_} ) } grep { length $param->{$_} } qw(string tth);
   my $sql = join ' ',
-    map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } qw(SELECT FROM WHERE),
+    map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } 'SELECT', 'FROM' ,'LEFT JOIN','USING','WHERE',
     'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT';
   #  print "[$sql]<br/>\n";
   my $res = $db->query($sql);
