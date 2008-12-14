@@ -72,7 +72,10 @@ sub init {
         if ( ( !keys %{ $self->{'NickList'} } or $self->{'NickList'}->{$nick}{'oper'} )
         and $text eq 'You are already in the hub.' );
       $self->log( 'warn', "[$nick] oper: set interval = $1" ), $self->{'search_every'} = $1,
-        if ( $self->{'NickList'}->{$nick}{'oper'} and $text =~ /^Minimum search interval is:(\d+)s/ )
+        if ( $self->{'NickList'}->{$nick}{'oper'} and ($text =~ /^Minimum search interval is:(\d+)s/ or 
+$text =~  /Пожалуйста подождите (\d+) секунд перед следующим поиском\./
+)
+)
         or $nick eq 'Hub-Security'
         and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
       $self->search_retry();
