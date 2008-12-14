@@ -109,6 +109,10 @@ $queries{'results top'} = {
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'  => 'results',
   'WHERE' => ['tth != ""'],
+  'GROUP BY' => 'tth',
+#!  'HAVING'   => 'cnt > 1',
+  'ORDER BY' => 'cnt DESC',
+
 };
 #$queries{'results top string'} = {
 #  %{ $queries{'queries top string'} },
