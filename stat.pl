@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: watch.pl 280 2008-02-28 11:16:37Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/watch.pl $
+# $Id$ $URL$
 
 =copyright
 stat bot

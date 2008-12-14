@@ -45,7 +45,7 @@ sub init {
     'Direction' => 'Download',
     #	'Direction' => 'Upload', #rand here
     #	'incomingclass' => 'dcppp::clicli',
-    'reconnects' => 1,
+    'reconnects' => 0,
   );
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
   $self->baseinit();

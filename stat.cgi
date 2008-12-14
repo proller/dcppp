@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: flood.pl 292 2008-12-07 03:09:42Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/flood.pl $
+# $Id$ $URL$
 
 =todo
 
