@@ -1,7 +1,7 @@
 #Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 my $Id = '$Id$';
 
-package dcppp::clihub;
+package Net::DC::clihub;
 #use lib '../../..';
 #use lib '../..';
 #use lib '..';
@@ -9,20 +9,20 @@ package dcppp::clihub;
 eval { use Time::HiRes qw(time sleep); };
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
-use dcppp;
-use dcppp::clicli;
+use Net::DC;
+use Net::DC::clicli;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
-#our @ISA = ('dcppp');
-use base 'dcppp';
+#our @ISA = ('Net::DC');
+use base 'Net::DC';
 #todo! move to main module
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
 sub init {
   my $self = shift;
   %$self = (
     %$self,
-    'Nick' => 'dcpppBot',
+    'Nick' => 'NetDCBot',
     'port' => 411,
     'host' => 'localhost',
     #        'myport' => 6779 + int(rand(1000)),
@@ -51,7 +51,7 @@ sub init {
     'auto_GetNickList' => 1,
     'follow_forcemove' => 1,
     @_,
-    'incomingclass' => 'dcppp::clicli',
+    'incomingclass' => 'Net::DC::clicli',
     'periodic'      => sub {
       $self->cmd( 'search_buffer', ) if $self->{'socket'};
     },
@@ -101,8 +101,8 @@ if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no 
       #        $_[0] =~ /EXTENDEDPROTOCOL::\S+::(CTRL\[[^\]]+)\]/ or $_[0] =~ /(\S+)/;
       $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
       #print "lock[$1]\n";
-      $self->cmd( 'Key', dcppp::lock2key($1) );
-      #	$self->cmd('Key', dcppp::lock2key($_[0]));
+      $self->cmd( 'Key', Net::DC::lock2key($1) );
+      #	$self->cmd('Key', Net::DC::lock2key($_[0]));
       #!!!!!ALL $self->cmd
       $self->{'sendbuf'} = 0;
       $self->cmd('ValidateNick');
@@ -178,7 +178,7 @@ if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no 
       $self->{'PortList'}->{$host} = $port;
       #$self->{'log'}->('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
       return if $self->{'clients'}{ $host . ':' . $port }->{'socket'};
-      $self->{'clients'}{ $host . ':' . $port } = dcppp::clicli->new(
+      $self->{'clients'}{ $host . ':' . $port } = Net::DC::clicli->new(
         %$self, $self->clear(),
         'host'     => $host,
         'port'     => $port,
@@ -187,7 +187,7 @@ if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no 
         'IpList'   => \%{ $self->{'IpList'} },
         'PortList' => \%{ $self->{'PortList'} },
         'handler'  => \%{ $self->{'handler'} },
- #         $self->{'clients'}{$host .':'. $port} = dcppp::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port,
+ #         $self->{'clients'}{$host .':'. $port} = Net::DC::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port,
  #'clients' => {},
  #'debug'=>1,
  #    'auto_listen' => 0,

@@ -1,41 +1,22 @@
 #!/usr/bin/perl -w
 # $Id$ $URL$
 
-=copyright
-tests
-Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
-or download it from http://www.gnu.org/licenses/gpl.html
-=cut
 use strict;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use lib './lib';
-use dcppp::clihub;
-#  require 'lib/dcppp.pm';
-#  require 'lib/dcppp/clihub.pm';
-#  require 'lib/dcppp/clicli.pm';
-#  use dcppp;
-#  use dcppp::client;
+use Net::DC::clihub;
+#  require 'lib/Net::DC.pm';
+#  require 'lib/Net::DC/clihub.pm';
+#  require 'lib/Net::DC/clicli.pm';
+#  use Net::DC;
+#  use Net::DC::client;
 #for my $host (qw(dc.setun.net  dc.setun.net dc.setun.net dc.crossnet.ru dc.lanport.ru )) {
 #for my $host (qw(dc.setun.net  )) {
 #for my $host (qw(dc.lanport.ru )) {
 for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
   #  for my $host (qw(fili.no-ip.org dc-files.info)) {
-  my $dc = dcppp::clihub->new(
+  my $dc = Net::DC::clihub->new(
     #  'host' => 'dc.setun.net',
     #  'myip' => '10.20.199.104',
     #  'port' => 4111,

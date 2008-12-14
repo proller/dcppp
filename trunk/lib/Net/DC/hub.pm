@@ -1,28 +1,28 @@
 #Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 my $Id = '$Id: hubcli.pm 246 2007-10-04 21:35:54Z pro $';
 # reserved for future 8)
-package dcppp::hub;
-use dcppp;
-use dcppp::hubcli;
+package Net::DC::hub;
+use Net::DC;
+use Net::DC::hubcli;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision: 246 $' ) )[1];
-#our @ISA = ('dcppp');
-use base 'dcppp';
+#our @ISA = ('Net::DC');
+use base 'Net::DC';
 
 sub init {
   my $self = shift;
   %$self = (
     %$self,
     #
-    'incomingclass' => 'dcppp::hubcli',
+    'incomingclass' => 'Net::DC::hubcli',
     'auto_connect'  => 0,
     'auto_listen'   => 1,
     'myport'        => 411,
     'myport_base'   => 0,
     'myport_random' => 0,
     'myport_tries'  => 1,
-    'HubName'       => 'dcppp test hub',
+    'HubName'       => 'Net::DC test hub',
     , @_
   );
   $self->baseinit();

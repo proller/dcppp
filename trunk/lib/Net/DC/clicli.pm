@@ -1,15 +1,15 @@
 #Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 my $Id = '$Id$';
 
-package dcppp::clicli;
-#eval { use dcppp; };
+package Net::DC::clicli;
+#eval { use Net::DC; };
 #use lib '../..';
-use dcppp;
+use Net::DC;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
-#our @ISA = ('dcppp');
-use base 'dcppp';
+#our @ISA = ('Net::DC');
+use base 'Net::DC';
 
 sub init {
   my $self = shift;
@@ -80,12 +80,12 @@ sub init {
         #          $_[0] =~ /^(.+) Pk=/i;
         #          $_[0] =~ /^(.+?)( Pk=.+)?$/i;
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-        $self->cmd( 'Key', dcppp::lock2key($1) );
-        #	  $self->cmd('Key', dcppp::lock2key($_[0]));
+        $self->cmd( 'Key', Net::DC::lock2key($1) );
+        #	  $self->cmd('Key', Net::DC::lock2key($_[0]));
       } else {
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-        #	  $self->cmd('Key', dcppp::lock2key($1));
-        $self->{'Key'} = dcppp::lock2key($1);
+        #	  $self->cmd('Key', Net::DC::lock2key($1));
+        $self->{'Key'} = Net::DC::lock2key($1);
         #         $self->{'sendbuf'} = 1;
         #         $self->cmd('MyNick');
         #	  $self->{'sendbuf'} = 0;
