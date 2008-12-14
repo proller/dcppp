@@ -46,9 +46,11 @@ print '<script type="text/javascript" src="pslib/lib.js"></script>';
 do $root_path . 'stat.pl';
 #print 'hi';
 $config{'log_all'} = '0' unless $param->{'debug'};
-#$config{'log_default'} = '#';
+$config{'log_default'} = '#';
 #$config{'log_trace'} = $config{'log_dmpbef'} = 0;
-$config{'log_dmp'} = 1 if $param->{'debug'};
+$config{'log_dmp'} = 1 ,
+$db->{'explain'} =1,
+if $param->{'debug'};
 $config{'view'} = 'html';
 $db->set_names();
 $config{'query_default'} = { 'LIMIT' => psmisc::check_int($param->{'on_page'},10,100,10) , };
@@ -104,7 +106,7 @@ $queries{'tth'} = {
   'GROUP BY' => 'filename',
 };
 print '<a href="?">home</a> days ', 
-( map { qq{<a href="?time=$_" onclick="createCookie('time', '$_')">}.psmisc::human( 'time_period',$_).'</a> ' } 3600, map {$_ * 86400}qw(1 7 30 365) ), 
+( map { qq{<a href="?time=$_" onclick="createCookie('time', '$_')">}.psmisc::human( 'time_period',$_).'</a> ' } 3600, map {$_ * 86400}qw(1 7 30 366) ), 
 ' limit ',
 ( map { qq{<a href="?on_page=$_" onclick="createCookie('on_page', '$_')">$_</a> } } qw(10 50 100) ), 
 
@@ -133,7 +135,7 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
   print "$_ ($q->{'desc'}):<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
-  $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'}, ( $param->{'time'} ? "time >= " . $param->{'time'} : '' ),
+  $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'}, ( $param->{'time'} ? "time >= " . int (time - $param->{'time'}) : '' ),
     map { "$_=" . $db->quote( $param->{$_} ) } grep { length $param->{$_} } qw(string tth);
   my $sql = join ' ',
     map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } qw(SELECT FROM WHERE),
