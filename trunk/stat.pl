@@ -147,11 +147,13 @@ unless (caller) {
     exit;
   } elsif ( $ARGV[0] eq 'calc' ) {
 
-
+local $config{'log_dmp'}=1;
 $db->do(
 'CREATE TABLE IF NOT EXISTS queries'.$_.'tmp LIKE queries'.$_,
-'REPLACE LOW_PRIORITY queries'.$_.'tmp (string, cnt) SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1 LIMIT '.$config{'limit_max'},
-'REPLACE LOW_PRIORITY queries'.$_.'tmp (tth, cnt) SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY tth HAVING cnt > 1 LIMIT '.$config{'limit_max'},
+#'REPLACE LOW_PRIORITY queries'.$_.'tmp (string, cnt) SELECT * FROM (SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1 ) AS t LIMIT '.$config{'limit_max'}.'',
+#'REPLACE LOW_PRIORITY queries'.$_.'tmp (tth, cnt) SELECT (SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY tth HAVING cnt > 1 ) LIMIT '.$config{'limit_max'} . '',
+'REPLACE LOW_PRIORITY queries'.$_.'tmp (string, cnt) SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1 ORDER BY cnt DESC LIMIT '.$config{'limit_max'}.'',
+'REPLACE LOW_PRIORITY queries'.$_.'tmp (tth, cnt) SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '.$config{'limit_max'} . '',
 'DROP TABLE queries'.$_,
 'RENAME TABLE queries'.$_.'tmp TO queries'.$_,
 )
