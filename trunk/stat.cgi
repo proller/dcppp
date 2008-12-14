@@ -74,24 +74,24 @@ $queries{'queries top string'} = {
 };
 $queries{'results top tth'} = {
   %{ $queries{'queries top tth'} },
-  'show' => [qw(cnt tth filename size )],    #time
-'desc' => 'Most stored',
+  'show' => [qw(cnt string tth filename size )],    #time
+  'desc' => 'Most stored',
   'FROM' => 'results',
-
+'WHERE'    => ['tth != ""'],
 };
-$queries{'results top string'} = {
-  %{ $queries{'queries top string'} },
-  'show' => [qw(cnt string filename size )],    #time
-  'FROM' => 'results',
-};
+#$queries{'results top string'} = {
+#  %{ $queries{'queries top string'} },
+#  'show' => [qw(cnt string tth filename size )],    #time
+#  'FROM' => 'results',
+#};
 
 $queries{'string'} = {
 
-  'show'     => [qw(cnt tth)],          #time
+  'show'     => [qw(cnt tth filename size)],          #time
                                         #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
   'SELECT'   => '*, COUNT(*) as cnt',
 #  'FROM'     => 'queries',
-#  'WHERE'    => ['tth != ""'],
+  'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'tth',
 #  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
@@ -105,6 +105,8 @@ $queries{'string'} = {
 $queries{'tth'} = {
 %{$queries{'string'}},
   'show'     => [qw(cnt string filename size)],          #time
+#'WHERE'    => ['tth != ""'],
+
   'GROUP BY' => 'filename',
 
 };
