@@ -66,9 +66,6 @@ sub init {
   $self->baseinit();
   #print('dcdbg', "myip : $self->{'myip'}", "\n");
   #  %{
-$self->{'make_hub'} ||= sub {
-    $self->{'hub'} ||= $self->{'host'} . ( $self->{'port'} and $self->{'port'} != 411 ? $self->{'port'} : '' );
-};
 
   $self->{'parse'}
     #}
@@ -76,11 +73,24 @@ $self->{'make_hub'} ||= sub {
     'chatline' => sub {
       #$self->log('dcdev', 'chatline parse', Dumper(@_));
       my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/;
-      $self->log( 'warn', "[$nick] oper, set interval = $1" ), $self->{'search_every'} = $1,
+
+
+#v: chatline <[++T]øýþú> You are already in the hub.
+      $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), 
+      $self->cmd('nick_generate'), $self->reconnect(),
+        if ( (!keys %{$self->{'NickList'}} or  $self->{'NickList'}->{$nick}{'oper'}) and $text eq 'You are already in the hub.' );
+
+
+
+      $self->log( 'warn', "[$nick] oper: set interval = $1" ), $self->{'search_every'} = $1,
         if ( $self->{'NickList'}->{$nick}{'oper'} and $text =~ /^Minimum search interval is:(\d+)s/ )
         or $nick eq 'Hub-Security'
         and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
       $self->search_retry();
+
+
+
+
     },    #print("welcome:", @_) unless $self->{'no_print_welcome'}; },
     'welcome' => sub { },    #print("welcome:", @_)
     'Lock' => sub {
@@ -113,9 +123,10 @@ $self->{'make_hub'} ||= sub {
     'Supports' => sub {
       $self->supports_parse( $_[0], $self );
     },
+
+
     'ValidateDenide' => sub {
-      $self->{'nick_base'} ||= $self->{'Nick'};
-      $self->{'Nick'} = $self->{'nick_base'} . int( rand( $self->{'nick_random'} || 100 ) );
+      $self->cmd('nick_generate');
       $self->cmd('ValidateNick');
     },
     'To' => sub {
@@ -198,7 +209,7 @@ $self->{'make_hub'} ||= sub {
     'Search' => sub {
       my $search = $_[0];
 
-$self->{'make_hub'}->();
+$self->cmd('make_hub');
 
       my %s      = (
         'time' => int( time() ),
@@ -225,7 +236,7 @@ $s{'string'} = $s{'tth'}, $s{'tth'} = undef  unless length $s{'tth'} == 39 and $
     },    #todo
     'SR' => sub {
       #=z
-$self->{'make_hub'}->();
+$self->cmd('make_hub');
 
       my %s = (
         'time' => int( time() ),
@@ -376,6 +387,20 @@ $self->{'make_hub'}->();
         if ref $self->{'search_last'} eq 'ARRAY';
       $self->{'search_last'} = undef;
     },
+
+
+
+'make_hub'=> sub {
+    $self->{'hub'} ||= $self->{'host'} . ( $self->{'port'} and $self->{'port'} != 411 ? $self->{'port'} : '' );
+},
+
+'nick_generate'=> sub {
+
+      $self->{'nick_base'} ||= $self->{'Nick'};
+      $self->{'Nick'} = $self->{'nick_base'} . int( rand( $self->{'nick_random'} || 100 ) );
+},
+
+
     };
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
