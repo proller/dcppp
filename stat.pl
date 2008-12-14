@@ -45,6 +45,7 @@ $config{'ask_retry'}          ||= 3600;
 #print "Arg=",$ARGV[0],"\n";
 #print "to=[$1]";
 $config{'row_all'} = { 'not null' => 1, };
+$config{'periods'} = {'h' => 3600, 'd' => 86400, 'w'=>7*86400, 'm'=>31*86400, 'y'=>366*86400};
 $config{'sql'} = {
   'driver'       => 'mysql',    #'sqlite',
   'dbname'       => 'dcstat',
@@ -84,6 +85,14 @@ $config{'sql'} = {
     },
   }
 };
+
+$config{'sql'}{'table'}{'queries'.$_} = {
+      'tth'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
+      'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', 'index' => 1 ),
+      'cnt'     => pssql::row( undef, 'type' => 'INT',   'index'  => 1 ),
+
+}
+for keys %{$config{'periods'}};#qw(h d w m y);
 
 =z
             'file' => 'MUSIC\\UNSORTED_MUSIC_FROM_UPLOAD\\ћузыка от √а√а\\ћу«ика1\\G-Unit - 19 - Porno Star.mp3',
@@ -133,7 +142,14 @@ unless (caller) {
     $db->query_log(qq{SELECT COUNT(*) FROM $_}) for keys %{ $config{'sql'}{'table'} };
     #WHERE cnt >= '1'
     exit;
+  } elsif ( $ARGV[0] eq 'calc' ) {
+
+$db->do('REPLACE LOW_PRIORITY queries'.$_.' (string, cnt) SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string')
+for keys %{$config{'periods'}}
+;
+exit;
   }
+
   #my $hubname=$1 . ($2 ? ':'.$2:'' );
   our %work;
   #our %stat;
