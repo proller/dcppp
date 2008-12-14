@@ -102,7 +102,7 @@ $queries{'queries top string'} = {
 #
 
 $queries{'results top'} = {
-  %{ $queries{'queries top tth raw'} },
+#  %{ $queries{'queries top tth raw'} },
   'main'     => 1,
   'show'  => [qw(cnt string tth filename size )],    #time
   'desc'  => 'Most stored',
@@ -114,6 +114,21 @@ $queries{'results top'} = {
   'ORDER BY' => 'cnt DESC',
 
 };
+
+$queries{'results ext'} = {
+#  %{ $queries{'queries top tth raw'} },
+  'main'     => 1,
+  'show'  => [qw(cnt ext )],    #time
+  'desc'  => 'by extention',
+  'SELECT'   => '*, COUNT(*) as cnt',
+  'FROM'  => 'results',
+  'WHERE' => ['ext != ""'],
+  'GROUP BY' => 'ext',
+#!  'HAVING'   => 'cnt > 1',
+  'ORDER BY' => 'cnt DESC',
+'LIMIT' => 10,
+};
+
 #$queries{'results top string'} = {
 #  %{ $queries{'queries top string'} },
 #  'show' => [qw(cnt string tth filename size )],    #time
