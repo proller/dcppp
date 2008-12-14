@@ -120,7 +120,7 @@ our $db = pssql->new(
   #'insert_by' => 1,
   %{ $config{'sql'} or {} },
 );
-$db->install() unless $ENV{'SERVER_PORT'};
+#$db->install() unless $ENV{'SERVER_PORT'};
 #my $dbh = DBI->connect("dbi:SQLite:dbname=stat.sqlite","","");
 #print 'zz:',
 #$db->do('CREATE TABLE IF NOT EXIST queries (varchar ())');
@@ -147,7 +147,7 @@ unless (caller) {
     exit;
   } elsif ( $ARGV[0] eq 'calc' ) {
 
-local $config{'log_dmp'}=1;
+#local $config{'log_dmp'}=1;
 $db->do(
 'CREATE TABLE IF NOT EXISTS queries'.$_.'tmp LIKE queries'.$_,
 #'REPLACE LOW_PRIORITY queries'.$_.'tmp (string, cnt) SELECT * FROM (SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1 ) AS t LIMIT '.$config{'limit_max'}.'',
@@ -157,7 +157,7 @@ $db->do(
 'DROP TABLE queries'.$_,
 'RENAME TABLE queries'.$_.'tmp TO queries'.$_,
 )
-for sort {$config{'periods'}{$a}<=>$config{'periods'}{$b}} keys %{$config{'periods'}}
+for $ARGV[1] or sort {$config{'periods'}{$a}<=>$config{'periods'}{$b}} keys %{$config{'periods'}}
 ;
 exit;
   }
