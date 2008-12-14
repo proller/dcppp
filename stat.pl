@@ -44,6 +44,8 @@ $config{'queue_recalc_every'} ||= 30;
 $config{'ask_retry'}          ||= 3600;
 #print "Arg=",$ARGV[0],"\n";
 #print "to=[$1]";
+$config{'limit_max'} ||= 100;
+
 $config{'row_all'} = { 'not null' => 1, };
 $config{'periods'} = {'h' => 3600, 'd' => 86400, 'w'=>7*86400, #'m'=>31*86400, 'y'=>366*86400
 };
@@ -146,12 +148,14 @@ unless (caller) {
   } elsif ( $ARGV[0] eq 'calc' ) {
 
 
-$db->do('TRUNCATE queries'.$_,
-'REPLACE LOW_PRIORITY queries'.$_.' (string, cnt) SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1',
-'REPLACE LOW_PRIORITY queries'.$_.' (tth, cnt) SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY tth HAVING cnt > 1'
-
+$db->do(
+'CREATE TABLE IF NOT EXISTS queries'.$_.'tmp LIKE queries'.$_,
+'REPLACE LOW_PRIORITY queries'.$_.'tmp (string, cnt) SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1 LIMIT '.$config{'limit_max'},
+'REPLACE LOW_PRIORITY queries'.$_.'tmp (tth, cnt) SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY tth HAVING cnt > 1 LIMIT '.$config{'limit_max'},
+'DROP TABLE queries'.$_,
+'RENAME TABLE queries'.$_.'tmp TO queries'.$_,
 )
-for keys %{$config{'periods'}}
+for sort {$config{'periods'}{$a}<=>$config{'periods'}{$b}} keys %{$config{'periods'}}
 ;
 exit;
   }
