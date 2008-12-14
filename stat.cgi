@@ -104,7 +104,7 @@ $queries{'tth'} = {
   'GROUP BY' => 'filename',
 };
 print '<a href="?">home</a> days ', 
-( map { qq{<a href="?days=$_" onclick="createCookie('days', '$_')">$_</a> } } qw(1 7 30 365) ), 
+( map { qq{<a href="?time=$_" onclick="createCookie('time', '$_')">}.psmisc::human( 'time_period',$_).'</a> ' } 3600, map {$_ * 86400}qw(1 7 30 365) ), 
 ' limit ',
 ( map { qq{<a href="?on_page=$_" onclick="createCookie('on_page', '$_')">$_</a> } } qw(10 50 100) ), 
 
@@ -117,7 +117,10 @@ print '<a href="?">home</a> days ',
 #print "<pre>";
 #for my $days (  qw(1 7 30 365) ) {
 #for my $days (  qw(1 ) ) {
-my $days = int( $param->{'days'} ) || 7;
+#my $days =
+$param->{'time'} = psmisc::check_int($param->{'time'},3600,10*86400*365,7*86400);
+
+#int( $param->{'time'} ) || 7*86400;
 #my $period = ;
 #!$param->{'time'} =  ( int( ( time - $days * 86400 ) / 1000 ) * 1000 );
 my @ask;
@@ -143,7 +146,7 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
   for my $row (@$res) {
     print '<tr><td>', ++$n, '</td>';
 
-$row->{'tth_magnet'} = ' <a href="magnet:?xt=urn:tree:tiger:'.
+$row->{'tth_magnet'} = '&nbsp;<a href="magnet:?xt=urn:tree:tiger:'.
 $row->{'tth'}.
 ($row->{'size'} ? '&xl=' . $row->{'size'} : ''). 
 ( $row->{'filename'} ? '&dn='. psmisc::encode_url($row->{'filename'}) : '').
