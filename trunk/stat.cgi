@@ -76,17 +76,22 @@ $queries{'queries top string raw'} = {
   'WHERE'    => ['string != ""'],
 };
 
+my $queriesfast = 'queries'.($config{'periods'}{$param->{'time'}} ? $param->{'time'} : 'd');
 $queries{'queries top tth'} = {
   'main'     => 1,
   'desc'     => 'Most downloaded',
-  'show'     => [qw(cnt filename size tth )],          #time
+  'show'     => [qw(cnt string filename size tth )],          #time
                                         #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
   'SELECT'   => '*, cnt',
-  'FROM'     => 'queries'.($config{'periods'}{$param->{'time'}} ? $param->{'time'} : 'd'),
-'LEFT JOIN'=>'results',
-'USING' => '(tth)',
-  'WHERE'    => ['tth != ""'],
-#  'GROUP BY' => 'tth',
+  'FROM'     => $queriesfast,
+'LEFT JOIN'=>'results USING (tth)',
+#'STRAIGHT_JOIN'=>'results',
+#'USING' => '(tth)',
+#'NATURAL LEFT JOIN' => 'results',
+#'LEFT OUTER JOIN' => 'results USING (tth)',
+#'LEFT JOIN'=>'results ON queriesw.tth=results.tth',
+  'WHERE'    => [$queriesfast.'.tth != ""'],
+  'GROUP BY' => $queriesfast.'.tth',
 #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
 };
@@ -197,7 +202,12 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
 #( $param->{'time'} ? "time >= " . int( (time - $param->{'time'})/1000)*1000 : '' ),
     map { "$_=" . $db->quote( $param->{$_} ) } grep { length $param->{$_} } qw(string tth);
   my $sql = join ' ',
-    map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } 'SELECT', 'FROM' ,'LEFT JOIN','USING','WHERE',
+    map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } 'SELECT', 'FROM' ,
+    #'NATURAL LEFT JOIN',
+    'LEFT JOIN',
+#    'STRAIGHT_JOIN',
+#    'LEFT OUTER JOIN',
+    'USING','WHERE',
     'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT';
   #  print "[$sql]<br/>\n";
   my $res = $db->query($sql);
