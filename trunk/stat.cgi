@@ -48,7 +48,7 @@ do $root_path . 'stat.pl';
 $config{'log_all'} = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
 #$config{'log_trace'} = $config{'log_dmpbef'} = 0;
-$config{'log_dmp'} = 1 ,
+$config{'log_dmp'} = $config{'log_dbg'} =  1 ,
 $db->{'explain'} =1,
 if $param->{'debug'};
 $config{'view'} = 'html';
