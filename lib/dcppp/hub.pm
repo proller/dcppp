@@ -12,28 +12,21 @@ use base 'dcppp';
 
 sub init {
   my $self = shift;
-  %$self = ( %$self, 
-#
-
+  %$self = (
+    %$self,
+    #
     'incomingclass' => 'dcppp::hubcli',
-    'auto_connect'      => 0,
-    'auto_listen'      => 1,
-    'myport' => 411,
+    'auto_connect'  => 0,
+    'auto_listen'   => 1,
+    'myport'        => 411,
     'myport_base'   => 0,
     'myport_random' => 0,
     'myport_tries'  => 1,
-
-
-'HubName' => 'dcppp test hub',
-
-
-,@_ );
-
-
+    'HubName'       => 'dcppp test hub',
+    , @_
+  );
   $self->baseinit();
-
-
-   $self->{'parse'}  ||= {};
-   $self->{'cmd'}    ||= {};
+  $self->{'parse'} ||= {};
+  $self->{'cmd'}   ||= {};
 }
 1;

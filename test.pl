@@ -20,7 +20,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
-
 use strict;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
@@ -60,7 +59,6 @@ for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
     print "my cool info parser gets info about $1\n";
   }, 
 =cut
-
   #$dc->connect();
   #  $dc->listen();
   #$dc->{'autorecv'} = 1;
