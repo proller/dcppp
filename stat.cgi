@@ -106,9 +106,9 @@ $queries{'tth'} = {
   'GROUP BY' => 'filename',
 };
 print '<a href="?">home</a> days ', 
-( map { qq{<a href="?time=$_" onclick="createCookie('time', '$_')">}.psmisc::human( 'time_period',$_).'</a> ' } 3600, map {$_ * 86400}qw(1 7 30 366) ), 
+( map { qq{<a href="#" onclick="createCookie('time', '$_');window.location.reload(false);">}.psmisc::human( 'time_period',$_).'</a> ' } 3600, map {$_ * 86400}qw(1 7 30 366) ), 
 ' limit ',
-( map { qq{<a href="?on_page=$_" onclick="createCookie('on_page', '$_')">$_</a> } } qw(10 50 100) ), 
+( map { qq{<a href="#" onclick="createCookie('on_page', '$_');window.location.reload(false);">$_</a> } } qw(10 50 100) ), 
 
 
 
