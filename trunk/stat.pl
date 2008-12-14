@@ -134,24 +134,11 @@ sub every {
 }
 unless (caller) {
   print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
-  if ( $ARGV[0] eq 'show' ) {
-    #print Dumper
-    my $limit = 'LIMIT 10';
-    my $where = '';           #'WHERE time >' . ( int( time - 3600 ) );
-    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-    $db->query_log(qq{SELECT COUNT(*) FROM $_}) for keys %{ $config{'sql'}{'table'} };
-    #WHERE cnt >= '1'
-    exit;
-  } elsif ( $ARGV[0] eq 'calc' ) {
+  if ( $ARGV[0] eq 'calc' ) {
 
 #local $config{'log_dmp'}=1;
 $db->do(
 'CREATE TABLE IF NOT EXISTS queries'.$_.'tmp LIKE queries'.$_,
-#'REPLACE LOW_PRIORITY queries'.$_.'tmp (string, cnt) SELECT * FROM (SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1 ) AS t LIMIT '.$config{'limit_max'}.'',
-#'REPLACE LOW_PRIORITY queries'.$_.'tmp (tth, cnt) SELECT (SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY tth HAVING cnt > 1 ) LIMIT '.$config{'limit_max'} . '',
 'REPLACE LOW_PRIORITY queries'.$_.'tmp (string, cnt) SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1 ORDER BY cnt DESC LIMIT '.$config{'limit_max'}.'',
 'REPLACE LOW_PRIORITY queries'.$_.'tmp (tth, cnt) SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '.$config{'limit_max'} . '',
 'DROP TABLE queries'.$_,
@@ -193,7 +180,7 @@ exit;
         #    'host' => $1,
         #    ( $2 ? ( 'port' => $2 ) : () ),
         #      'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
-        #   'Nick'		=>	'xxxx',
+          'Nick'		=>	'dcstat',
         #    'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
         'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
         #   'log'		=>	sub {},	# no logging
@@ -201,7 +188,7 @@ exit;
         #   'min_chat_delay'	=> 0.401,
         #   'min_cmd_delay'	=> 0.401,
         'myport'       => 41111,
-        'description'  => 'dev stat bot',
+        'description'  => 'http://dc.proisk.ru/dcstat/',
         'auto_connect' => 0,
         #          'M'           => 'P',
         #    'print_search' => 1,
