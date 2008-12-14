@@ -27,7 +27,7 @@ udp UPSR
 
 =cut
 
-package dcppp;
+package Net::DC;
 use Socket;
 use IO::Socket;
 use IO::Select;
@@ -72,7 +72,7 @@ sub new {
     'myport_random' => 1000,
     'myport_tries'  => 5,
     # http://www.dcpp.net/wiki/index.php/%24MyINFO
-    'description' => 'just dcppp bot', 'connection' => 'LAN(T3)',
+    'description' => 'just perl Net::DC bot', 'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
     'flag' => '1',              # User status as ascii char (byte)

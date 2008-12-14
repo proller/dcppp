@@ -2,13 +2,9 @@
 # $Id: flood.pl 292 2008-12-07 03:09:42Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/flood.pl $
 
 =todo
-    # periods: 1h 1d 7d 30d 1y
-    # stats: top file, top query,
-    #
-    #
 
 users-share per hub -per hour
-
+chat stats
 
 
 
@@ -17,7 +13,7 @@ users-share per hub -per hour
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 #use lib './lib';
-#use dcppp::clihub;
+#use Net::DC::clihub;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 #use DBI;
