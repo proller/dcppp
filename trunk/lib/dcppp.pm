@@ -23,6 +23,7 @@ or download it from http://www.gnu.org/licenses/gpl.html
 =todo
 
 better nick-port-ip-lists
+udp UPSR
 
 =cut
 
