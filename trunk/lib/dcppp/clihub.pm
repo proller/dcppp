@@ -69,16 +69,29 @@ sub init {
       #v: chatline <[++T]шэюъ> You are already in the hub.
       $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->cmd('nick_generate'),
         $self->reconnect(),
+
         if ( ( !keys %{ $self->{'NickList'} } or $self->{'NickList'}->{$nick}{'oper'} )
         and $text eq 'You are already in the hub.' );
+
+
+
       $self->log( 'warn', "[$nick] oper: set interval = $1" ), $self->{'search_every'} = $1,
+      $self->search_retry(),
+
         if ( $self->{'NickList'}->{$nick}{'oper'} and ($text =~ /^Minimum search interval is:(\d+)s/ or 
 $text =~  /Пожалуйста подождите (\d+) секунд перед следующим поиском\./
 )
 )
-        or $nick eq 'Hub-Security'
-        and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
-      $self->search_retry();
+        or ($nick eq 'Hub-Security'        and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./)
+
+;
+
+
+      $self->search_retry(),
+if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no search, try later..';
+
+
+
     },    #print("welcome:", @_) unless $self->{'no_print_welcome'}; },
     'welcome' => sub { },    #print("welcome:", @_)
     'Lock' => sub {
