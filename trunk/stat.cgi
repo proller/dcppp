@@ -55,8 +55,8 @@ $config{'view'} = 'html';
 $db->set_names();
 $config{'query_default'} = { 'LIMIT' => psmisc::check_int($param->{'on_page'},10,100,10) , };
 my %queries;
-$queries{'queries top tth'} = {
-  'main'     => 1,
+$queries{'queries top tth raw'} = {
+#  'main'     => 1,
   'desc'     => 'Most downloaded',
   'show'     => [qw(cnt tth)],          #time
                                         #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
@@ -67,16 +67,43 @@ $queries{'queries top tth'} = {
 #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
 };
-$queries{'queries top string'} = {
-  %{ $queries{'queries top tth'} },
+$queries{'queries top string raw'} = {
+  %{ $queries{'queries top tth raw'} },
   'show'     => [qw(cnt string)],       #time
   'desc'     => 'Most searched',
   'SELECT'   => 'string, COUNT(*) as cnt',
   'GROUP BY' => 'string',
   'WHERE'    => ['string != ""'],
 };
-$queries{'results top'} = {
+
+$queries{'queries top tth'} = {
+  'main'     => 1,
+  'desc'     => 'Most downloaded',
+  'show'     => [qw(cnt tth)],          #time
+                                        #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
+  'SELECT'   => 'tth, cnt',
+  'FROM'     => 'queries'.($config{'periods'}{$param->{'time'}} ? $param->{'time'} : 'd'),
+  'WHERE'    => ['tth != ""'],
+#  'GROUP BY' => 'tth',
+#!  'HAVING'   => 'cnt > 1',
+  'ORDER BY' => 'cnt DESC',
+};
+$queries{'queries top string'} = {
   %{ $queries{'queries top tth'} },
+  'show'     => [qw(cnt string)],       #time
+  'desc'     => 'Most searched',
+  'SELECT'   => 'string, cnt',
+#  'GROUP BY' => 'string',
+  'WHERE'    => ['string != ""'],
+};
+
+
+
+#
+
+$queries{'results top'} = {
+  %{ $queries{'queries top tth raw'} },
+  'main'     => 1,
   'show'  => [qw(cnt string tth filename size )],    #time
   'desc'  => 'Most stored',
   'SELECT'   => '*, COUNT(*) as cnt',
@@ -107,9 +134,13 @@ $queries{'tth'} = {
   #'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'filename',
 };
-print '<a href="?">home</a> days ', 
-( map { qq{<a href="#" onclick="createCookie('time', '$_');window.location.reload(false);">}.psmisc::human( 'time_period',$_).'</a> ' } 3600, map {$_ * 86400}qw(1 7 30 366) ), 
-' limit ',
+print '<a href="?">home</a>';
+print ' days ', 
+( map { qq{<a href="#" onclick="createCookie('time', '$_');window.location.reload(false);">}.psmisc::human( 'time_period',$config{'periods'}{$_}).'</a> ' } sort {$config{'periods'}{$a}<=>$config{'periods'}{$b}}keys %{$config{'periods'}}
+#3600, map {$_ * 86400}qw(1 7 30 366) 
+) unless grep {$param->{$_}} qw(string tth);
+
+print ' limit ',
 ( map { qq{<a href="#" onclick="createCookie('on_page', '$_');window.location.reload(false);">$_</a> } } qw(10 50 100) ), 
 
 
@@ -122,7 +153,7 @@ print '<a href="?">home</a> days ',
 #for my $days (  qw(1 7 30 365) ) {
 #for my $days (  qw(1 ) ) {
 #my $days =
-$param->{'time'} = psmisc::check_int($param->{'time'},3600,10*86400*365,7*86400);
+#$param->{'time'} = psmisc::check_int($config{'periods'}{$param->{'time'}},3600,10*86400*365,7*86400);
 
 #int( $param->{'time'} ) || 7*86400;
 #my $period = ;
@@ -137,7 +168,8 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
   print "$_ ($q->{'desc'}):<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
-  $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'}, ( $param->{'time'} ? "time >= " . int( (time - $param->{'time'})/1000)*1000 : '' ),
+  $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'}, 
+#( $param->{'time'} ? "time >= " . int( (time - $param->{'time'})/1000)*1000 : '' ),
     map { "$_=" . $db->quote( $param->{$_} ) } grep { length $param->{$_} } qw(string tth);
   my $sql = join ' ',
     map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } qw(SELECT FROM WHERE),
