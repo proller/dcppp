@@ -20,7 +20,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA,
 or download it from http://www.gnu.org/licenses/gpl.html
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
@@ -45,8 +44,7 @@ $config{'queue_recalc_every'} ||= 30;
 $config{'ask_retry'}          ||= 3600;
 #print "Arg=",$ARGV[0],"\n";
 #print "to=[$1]";
-$config{'row_all'} = {      'not null'   => 1,
-};
+$config{'row_all'} = { 'not null' => 1, };
 $config{'sql'} = {
   'driver'       => 'mysql',    #'sqlite',
   'dbname'       => 'dcstat',
@@ -75,7 +73,7 @@ $config{'sql'} = {
       'file'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'Zindex' => 1 ),
       'filename' => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'index'  => 1 ),
       'ext'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
-      'size'     => pssql::row( undef, 'type' => 'BIGINT',   'index' => 1 ),
+      'size'     => pssql::row( undef, 'type' => 'BIGINT',   'index'  => 1 ),
     },
     'chat' => {
       'time' => pssql::row( 'time', 'index' => 1 ),
@@ -96,7 +94,6 @@ $config{'sql'} = {
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
-
 our $db = pssql->new(
   # 'driver' => 'pgpp',
   #  'dbname' => 'markers',
@@ -144,22 +141,18 @@ unless (caller) {
   # $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
   our @dc;
 
+  sub close_all {
+    flush_all();
+    $db->disconnect();
+    $_->destroy() for @dc;
+    exit;
+  }
 
-sub close_all {
-flush_all();
-$db->disconnect();
-$_->destroy() for @dc;
-exit;
-}
-sub flush_all {
-$db->flush_insert();
-}
-
-$SIG{INT} = $SIG{__DIE__} = \&close_all;
-$SIG{HUP} =  $^O =~ /win/i ? \&close_all : \&flush_all;
-
-
-
+  sub flush_all {
+    $db->flush_insert();
+  }
+  $SIG{INT} = $SIG{__DIE__} = \&close_all;
+  $SIG{HUP} = $^O =~ /win/i ? \&close_all : \&flush_all;
   for (@ARGV) {
     local @_;
     if ( /^-/ and @_ = split '=', $_ ) {
@@ -190,9 +183,7 @@ $SIG{HUP} =  $^O =~ /win/i ? \&close_all : \&flush_all;
             my $dc     = shift;
             my $search = shift;
             #        print "Sh=", Dumper(\@_);
-            my %s = (
-              %{ $_[0] },
-            );
+            my %s = ( %{ $_[0] }, );
             #        print "s:[$search]\n";
             #my ($who, $cmd)
             #        printlog('dcdev', "search", $search);
@@ -235,7 +226,7 @@ $SIG{HUP} =  $^O =~ /win/i ? \&close_all : \&flush_all;
               $work{'asked'}{$q} = int time;
               $dc->search($q);
             }
-            #}
+#}
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
 #$dc
@@ -264,7 +255,6 @@ $SIG{HUP} =  $^O =~ /win/i ? \&close_all : \&flush_all;
           and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
           $dc->search_retry(  );
 =cut
-
             #dcdmp [1] rcv: chatline <Hub-Security> Search ignored.  Please leave at least 5 seconds between search attempts.
             # printlog( "[$dc->{'number'}] chatline ", join '|',@_,  );
           },
@@ -286,6 +276,3 @@ $SIG{HUP} =  $^O =~ /win/i ? \&close_all : \&flush_all;
   }
   $_->destroy() for @dc;
 }
-
-
-

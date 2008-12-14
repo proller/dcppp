@@ -18,7 +18,7 @@ sub init {
   #print "Sc0[$self->{'socket'}]\n";
   %$self = (
     %$self,
-#    'Nick' => 'dcpppBot',
+    #    'Nick' => 'dcpppBot',
     #	'Key'	=> 'zzz',
     #	'Supports' => 'MiniSlots XmlBZList ADCGet TTHL TTHF GetZBlock ZLI',
     #	'Supports' => 'XmlBZList',
@@ -45,13 +45,9 @@ sub init {
     'Direction' => 'Download',
     #	'Direction' => 'Upload', #rand here
     #	'incomingclass' => 'dcppp::clicli',
-'reconnects' => 1,
-
+    'reconnects' => 1,
   );
-
-    $self->{'auto_connect'}      =  1 if  !$self->{'incoming'} and !defined $self->{'auto_connect'};
-
-
+  $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
   $self->baseinit();
   #print "1: $self->{'Nick'}\n";
   #print "Sc1[$self->{'socket'}]\n";
@@ -116,6 +112,7 @@ sub init {
              last;
           }
 =cut
+
       } else {
         $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
