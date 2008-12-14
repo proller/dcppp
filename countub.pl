@@ -1,9 +1,10 @@
 #!/usr/bin/perl
-my $Id = '$Id$';
+#my $Id = '$Id$';
 
 =copyright
 counting users-bytes from dchub for mrtg or cacti (snmpd)
 =cut
+
 use strict;
 use lib './lib';
 use Net::DC::clihub;

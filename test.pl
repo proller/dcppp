@@ -1,6 +1,5 @@
 #!/usr/bin/perl -w
 # $Id$ $URL$
-
 use strict;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
@@ -40,6 +39,7 @@ for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
     print "my cool info parser gets info about $1\n";
   }, 
 =cut
+
   #$dc->connect();
   #  $dc->listen();
   #$dc->{'autorecv'} = 1;

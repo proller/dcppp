@@ -4,6 +4,7 @@
 =copyright
 stat bot
 =cut
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
@@ -29,9 +30,11 @@ $config{'ask_retry'}          ||= 3600;
 #print "Arg=",$ARGV[0],"\n";
 #print "to=[$1]";
 $config{'limit_max'} ||= 100;
-
 $config{'row_all'} = { 'not null' => 1, };
-$config{'periods'} = {'h' => 3600, 'd' => 86400, 'w'=>7*86400, #'m'=>31*86400, 'y'=>366*86400
+$config{'periods'} = {
+  'h' => 3600,
+  'd' => 86400,
+  'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
 $config{'sql'} = {
   'driver'       => 'mysql',    #'sqlite',
@@ -72,14 +75,12 @@ $config{'sql'} = {
     },
   }
 };
-
-$config{'sql'}{'table'}{'queries'.$_} = {
-      'tth'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1, 'Zprimary'=>1 , ),
-      'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', 'index' => 1 , 'Zprimary'=>1 ,),
-      'cnt'     => pssql::row( undef, 'type' => 'INT',   'index'  => 1 ),
-
-}
-for keys %{$config{'periods'}};#qw(h d w m y);
+$config{'sql'}{'table'}{ 'queries' . $_ } = {
+  'tth'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1, 'Zprimary' => 1, ),
+  'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', 'index' => 1, 'Zprimary' => 1, ),
+  'cnt'    => pssql::row( undef, 'type' => 'INT',     'index'  => 1 ),
+  }
+  for keys %{ $config{'periods'} };    #qw(h d w m y);
 
 =z
             'file' => 'MUSIC\\UNSORTED_MUSIC_FROM_UPLOAD\\ћузыка от √а√а\\ћу«ика1\\G-Unit - 19 - Porno Star.mp3',
@@ -90,6 +91,7 @@ for keys %{$config{'periods'}};#qw(h d w m y);
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
+
 our $db = pssql->new(
   # 'driver' => 'pgpp',
   #  'dbname' => 'markers',
@@ -119,20 +121,28 @@ sub every {
 unless (caller) {
   print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
   if ( $ARGV[0] eq 'calc' ) {
-
-#local $config{'log_dmp'}=1;
-$db->do(
-'CREATE TABLE IF NOT EXISTS queries'.$_.'tmp LIKE queries'.$_,
-'REPLACE LOW_PRIORITY queries'.$_.'tmp (string, cnt) SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY string HAVING cnt > 1 ORDER BY cnt DESC LIMIT '.$config{'limit_max'}.'',
-'REPLACE LOW_PRIORITY queries'.$_.'tmp (tth, cnt) SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '.(int(time-$config{'periods'}{$_})).' GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '.$config{'limit_max'} . '',
-'DROP TABLE queries'.$_,
-'RENAME TABLE queries'.$_.'tmp TO queries'.$_,
-)
-for $ARGV[1] or sort {$config{'periods'}{$a}<=>$config{'periods'}{$b}} keys %{$config{'periods'}}
-;
-exit;
+    #local $config{'log_dmp'}=1;
+    $db->do(
+      'CREATE TABLE IF NOT EXISTS queries' . $_ . 'tmp LIKE queries' . $_,
+      'REPLACE LOW_PRIORITY queries' 
+        . $_
+        . 'tmp (string, cnt) SELECT string, COUNT(*) as cnt FROM queries WHERE string != "" AND time >= '
+        . ( int( time - $config{'periods'}{$_} ) )
+        . ' GROUP BY string HAVING cnt > 1 ORDER BY cnt DESC LIMIT '
+        . $config{'limit_max'} . '',
+      'REPLACE LOW_PRIORITY queries' 
+        . $_
+        . 'tmp (tth, cnt) SELECT tth, COUNT(*) as cnt FROM queries WHERE tth != "" AND time >= '
+        . ( int( time - $config{'periods'}{$_} ) )
+        . ' GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '
+        . $config{'limit_max'} . '',
+      'DROP TABLE queries' . $_,
+      'RENAME TABLE queries' . $_ . 'tmp TO queries' . $_,
+      )
+      for $ARGV[1]
+      or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} };
+    exit;
   }
-
   #my $hubname=$1 . ($2 ? ':'.$2:'' );
   our %work;
   #our %stat;
@@ -164,7 +174,7 @@ exit;
         #    'host' => $1,
         #    ( $2 ? ( 'port' => $2 ) : () ),
         #      'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
-          'Nick'		=>	'dcstat',
+        'Nick' => 'dcstat',
         #    'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
         'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
         #   'log'		=>	sub {},	# no logging
@@ -254,6 +264,7 @@ exit;
           and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
           $dc->search_retry(  );
 =cut
+
             #dcdmp [1] rcv: chatline <Hub-Security> Search ignored.  Please leave at least 5 seconds between search attempts.
             # printlog( "[$dc->{'number'}] chatline ", join '|',@_,  );
           },
