@@ -13,7 +13,7 @@ use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 #use DBI;
 our %config;
-use lib $root_path. './pslib';    #, $root_path.'./../pslib', $root_path. './../../pslib';
+use lib $root_path. './pslib';    
 use pssql;
 use psmisc;
 psmisc::config( 0, 0, 0, 1 );
@@ -26,8 +26,6 @@ $config{'log_dmp'} = 0;
 $config{'hit_to_ask'}         ||= 2;
 $config{'queue_recalc_every'} ||= 30;
 $config{'ask_retry'}          ||= 3600;
-#print "Arg=",$ARGV[0],"\n";
-#print "to=[$1]";
 $config{'limit_max'} ||= 100;
 $config{'row_all'} = { 'not null' => 1, };
 $config{'periods'} = {
@@ -39,6 +37,10 @@ $config{'sql'} = {
   'driver'       => 'mysql',    #'sqlite',
   'dbname'       => 'dcstat',
   'auto_connect' => 1,
+ #'insert_by'=>10, # uncomment if you have 0-100 users # !!!TODO make auto !!! TODO max time in insert cache
+  'log' => sub { shift; psmisc::printlog(@_) },
+  'cp_in' => 'cp1251',
+
   'table'        => {
     'queries' => {
       #111.111.111.111
@@ -53,7 +55,6 @@ $config{'sql'} = {
     },
     'results' => {
       'time' => pssql::row( 'time', 'index' => 1 ),
-      #      'added'  => pssql::row('added'),
       'string'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'index'  => 1 ),
       'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1 ),
       'nick'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'  => 1 ),
@@ -97,24 +98,8 @@ delete $config{'sql'}{'table'}{ 'resultsf'  }{$_} for qw(time nick ip port file)
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
 our $db = pssql->new(
-  # 'driver' => 'pgpp',
-  #  'dbname' => 'markers',
-  #   'table'    => $config{'table'},
-  # 'codepage' => $config{'cp_db'},
-  #   'log' => sub {     print join( ' ', @_ ), "\n";   },
-  'log' => sub { shift; psmisc::printlog(@_) },
-  #'log' => sub{},
-  #   'log' => \psmisc::printlog ,
-  #sub {     &psmisc::printlog   },
-  'cp_in' => 'cp1251',
-  #'insert_by' => 1,
   %{ $config{'sql'} or {} },
 );
-#$db->install() unless $ENV{'SERVER_PORT'};
-#my $dbh = DBI->connect("dbi:SQLite:dbname=stat.sqlite","","");
-#print 'zz:',
-#$db->do('CREATE TABLE IF NOT EXIST queries (varchar ())');
-#$db->do
 my %every;
 
 sub every {
@@ -161,11 +146,7 @@ unless (caller) {
 
     exit;
   } 
-  #my $hubname=$1 . ($2 ? ':'.$2:'' );
   our %work;
-  #our %stat;
-  #for ( 0 .. 1000 ) {
-  # $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
   our @dc;
 
   sub close_all {
@@ -189,22 +170,17 @@ unless (caller) {
       my $hub = $_;
       #    print "i=$_\n";
       my $dc = Net::DC::clihub->new(
-        #    'host' => $1,
-        #    ( $2 ? ( 'port' => $2 ) : () ),
-        #      'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
         'Nick' => 'dcstat',
-        #    'sharesize' => int( rand 1000000000000 ) + int( rand 100000000000 ) * int( rand 100 ),
         'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
         #   'log'		=>	sub {},	# no logging
         'log' => sub { shift; psmisc::printlog(@_) },
-        #   'min_chat_delay'	=> 0.401,
         #   'min_cmd_delay'	=> 0.401,
         'myport'       => 41111,
         'description'  => 'http://dc.proisk.ru/dcstat/',
         'auto_connect' => 0,
         #          'M'           => 'P',
-        #    'print_search' => 1,
         'reconnects' => 500,
+        #    'print_search' => 1,
         'handler'    => {
           'Search_parse_aft' => sub {
             my $dc     = shift;
@@ -271,19 +247,6 @@ unless (caller) {
             my %s;
             ( $s{nick}, $s{string} ) = $_[0] =~ /^<([^>]+)> (.+)$/;
             $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } );
-            #
-            # todo: move  to lib
-            #
-
-=z
-        printlog( 'dev', "[$nick] oper, set interval = $1" ), $dc->{'search_every'} = $1,
-          if ( $dc->{'NickList'}->{$nick}{'oper'} and $text =~ /^Minimum search interval is:(\d+)s/ )
-          or $nick eq 'Hub-Security'
-          and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
-          $dc->search_retry(  );
-=cut
-            #dcdmp [1] rcv: chatline <Hub-Security> Search ignored.  Please leave at least 5 seconds between search attempts.
-            # printlog( "[$dc->{'number'}] chatline ", join '|',@_,  );
           },
           'welcome' => sub {
             my $dc = shift;
