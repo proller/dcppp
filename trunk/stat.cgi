@@ -48,6 +48,7 @@ $config{'log_default'} = '#';
 $config{'log_dmp'} = $config{'log_dbg'} = 1, $db->{'explain'} = 1,
   if $param->{'debug'};
 $config{'view'} = 'html';
+$db->retry_off();
 $db->set_names();
 $config{'query_default'} = { 'LIMIT' => psmisc::check_int( $param->{'on_page'}, 10, 100, 10 ), };
 my %queries;
