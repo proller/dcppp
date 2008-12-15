@@ -35,7 +35,7 @@ BEGIN {
 #use psweb;
 my $param = get_params();
 print "Content-type: text/html; charset=utf-8\n\n";
-print '<html><head><title>RU DC stat</title></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
+print '<html><head><title>RU DC stat</title><style>.tth {font-family:monospace, "Courier New";font-size:4px;} .magnet-darr {font: bolder larger; text-decoration:none; color:green;}</style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #print "[$root_path]";
 #psmisc::config();
 #$config{'log_all'} = 0;
@@ -188,13 +188,13 @@ local $_ = join '&', grep {$_}
       , ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'}  : '' );
 
 
-return         '&nbsp;<a class="tth-dl" href="magnet:?xt=urn:' . $_      . '">&darr;</a>' if $_;
+return         '&nbsp;<a class="magnet-darr" href="magnet:?xt=urn:' . $_      . '">&darr;</a>' if $_;
 return '';
 
 };
 
 
-print  '<a class="tth">',$param->{'tth'}, '</a>',  psmisc::human('magnet-dl', $param->{'tth'} ) , '<br/>'if $param->{'tth'};
+print  '<a>',$param->{'tth'}, '</a>',  psmisc::human('magnet-dl', $param->{'tth'} ) , '<br/>'if $param->{'tth'};
 
 
 my @ask;
@@ -228,9 +228,9 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
     $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
     $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
     $row->{'tth_orig'} = $row->{'tth'};
-    $row->{$_} = qq{<a class="$_" href="?$_=} . psmisc::encode_url( $row->{$_} ) . qq{">$row->{$_}</a>}.
+    $row->{$_} = ($param->{$_} ? '' : qq{<a class="$_" title="}. psmisc::html_chars($row->{$_}).qq{" href="?$_=} . psmisc::encode_url( $row->{$_} ) . qq{">$row->{$_}</a>} ).
 psmisc::human('magnet-dl', $row )
-      for grep { length $row->{$_} } ($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
+      for grep { length $row->{$_} } qw(string tth);#($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
 #    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     print '</tr>';
