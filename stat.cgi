@@ -10,7 +10,6 @@ chat stats
 
 
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 #use lib './lib';
@@ -35,7 +34,8 @@ BEGIN {
 #use psweb;
 my $param = get_params();
 print "Content-type: text/html; charset=utf-8\n\n";
-print '<html><head><title>RU DC stat</title><style>.tth {font-family:monospace, "Courier New";font-size:4px;} .magnet-darr {font: bolder larger; text-decoration:none; color:green;}</style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
+print
+'<html><head><title>RU DC stat</title><style>.tth {font-family:monospace, "Courier New";font-size:4px;} .magnet-darr {font: bolder larger; text-decoration:none; color:green;}</style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #print "[$root_path]";
 #psmisc::config();
 #$config{'log_all'} = 0;
@@ -76,11 +76,11 @@ $queries{'queries top tth'} = {
   'desc' => 'Most downloaded',
   'show' => [qw(cnt string filename size tth )],    #time
        #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
-  'SELECT'    => '*',                     #cnt,filename,size,tth
+  'SELECT'    => '*',                               #cnt,filename,size,tth
   'FROM'      => $queriesfast,
   'LEFT JOIN' => 'results USING (tth)',
-  'WHERE'    => [ $queriesfast . '.tth != ""' ],
-  'GROUP BY' => $queriesfast . '.tth',
+  'WHERE'     => [ $queriesfast . '.tth != ""' ],
+  'GROUP BY'  => $queriesfast . '.tth',
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
 };
@@ -141,9 +141,9 @@ $queries{'string'} = {
 };
 $queries{'tth'} = {
   %{ $queries{'string'} },
-'desc' => 'various filenames',
+  'desc'     => 'various filenames',
   'show'     => [qw(cnt string filename size tth)],    #time
-                                                   #'WHERE'    => ['tth != ""'],
+                                                       #'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'filename',
 };
 print '<a href="?">home</a>';
@@ -169,34 +169,22 @@ print ' limit ',
 #my $period = ;
 #!$param->{'time'} =  ( int( ( time - $days * 86400 ) / 1000 ) * 1000 );
 $config{'human'}{'magnet-dl'} = sub {
-my ($row) = @_;
-$row = {'tth' => $row } unless ref $row eq 'HASH';
-my $tth = ($row->{'tth_orig'} || $row->{'tth'});
-#print length $row->{'tth'}, "[$row->{'tth'}]";
-my $string = $row->{'string'};
-$string ||= $tth,
-$tth = undef, unless 
-#length $row->{'tth'} == 39 and $row->{'tth'} =~ /^[0-9A-Z]+$/;
-
-  $tth =~ /^[0-9A-Z]{39}$/;
-
-local $_ = join '&', grep {$_}
-       ($tth ? 'tree:tiger:'. $tth : '')
-      , ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' )
-      , ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' )
-      , ( $row->{'string'} ? 'kt=' . psmisc::encode_url($row->{'string'}) : '' )
-      , ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'}  : '' );
-
-
-return         '&nbsp;<a class="magnet-darr" href="magnet:?xt=urn:' . $_      . '">&darr;</a>' if $_;
-return '';
-
+  my ($row) = @_;
+  $row = { 'tth' => $row } unless ref $row eq 'HASH';
+  my $tth = ( $row->{'tth_orig'} || $row->{'tth'} );
+  #print length $row->{'tth'}, "[$row->{'tth'}]";
+  my $string = $row->{'string_orig'} || $row->{'string'};
+  $string ||= $tth, $tth = undef,
+    unless
+    #length $row->{'tth'} == 39 and $row->{'tth'} =~ /^[0-9A-Z]+$/;
+    $tth =~ /^[0-9A-Z]{39}$/;
+  local $_ = join '&', grep { $_ } ( $tth ? 'tree:tiger:' . $tth : '' ), ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
+    ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' ),
+    ( $string ? 'kt=' . psmisc::encode_url($string) : '' ), ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'} : '' );
+  return '&nbsp;<a class="magnet-darr" href="magnet:?xt=urn:' . $_ . '">&darr;</a>' if $_;
+  return '';
 };
-
-
-print  '<a>',$param->{'tth'}, '</a>',  psmisc::human('magnet-dl', $param->{'tth'} ) , '<br/>'if $param->{'tth'};
-
-
+print '<a>', $param->{'tth'}, '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' if $param->{'tth'};
 my @ask;
 @ask = ('string') if $param->{'string'};
 @ask = ('tth')    if $param->{'tth'};
@@ -224,14 +212,22 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
   my $n;
   for my $row (@$res) {
     print '<tr><td>', ++$n, '</td>';
-#    $row->{'tth_magnet'} = psmisc::human('tth-dl', $row )      if $row->{'tth'};
+    #    $row->{'tth_magnet'} = psmisc::human('tth-dl', $row )      if $row->{'tth'};
     $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
     $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
-    $row->{'tth_orig'} = $row->{'tth'};
-    $row->{$_} = ($param->{$_} ? '' : qq{<a class="$_" title="}. psmisc::html_chars($row->{$_}).qq{" href="?$_=} . psmisc::encode_url( $row->{$_} ) . qq{">$row->{$_}</a>} ).
-psmisc::human('magnet-dl', $row )
-      for grep { length $row->{$_} } qw(string tth);#($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
-#    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
+    $row->{'tth_orig'}    = $row->{'tth'};
+    $row->{'string_orig'} = $row->{'string'};
+    $row->{$_} =
+      ( $param->{$_}
+      ? ''
+      : qq{<a class="$_" title="}
+        . psmisc::html_chars( $row->{$_} )
+        . qq{" href="?$_=}
+        . psmisc::encode_url( $row->{$_} )
+        . qq{">$row->{$_}</a>} )
+      . psmisc::human( 'magnet-dl', $row )
+      for grep { length $row->{$_} } qw(string tth);    #($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
+    #    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     print '</tr>';
   }
@@ -241,5 +237,4 @@ psmisc::human('magnet-dl', $row )
 }
 print '</body>';
 #}
-
 #print Dumper $param;

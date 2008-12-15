@@ -4,7 +4,6 @@
 =copyright
 stat bot
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
@@ -91,7 +90,6 @@ $config{'sql'}{'table'}{ 'queries' . $_ } = {
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
-
 our $db = pssql->new(
   # 'driver' => 'pgpp',
   #  'dbname' => 'markers',
@@ -264,7 +262,6 @@ unless (caller) {
           and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./;
           $dc->search_retry(  );
 =cut
-
             #dcdmp [1] rcv: chatline <Hub-Security> Search ignored.  Please leave at least 5 seconds between search attempts.
             # printlog( "[$dc->{'number'}] chatline ", join '|',@_,  );
           },

@@ -39,7 +39,6 @@ for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
     print "my cool info parser gets info about $1\n";
   }, 
 =cut
-
   #$dc->connect();
   #  $dc->listen();
   #$dc->{'autorecv'} = 1;
