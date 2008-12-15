@@ -178,10 +178,10 @@ $config{'human'}{'magnet-dl'} = sub {
     unless
     #length $row->{'tth'} == 39 and $row->{'tth'} =~ /^[0-9A-Z]+$/;
     $tth =~ /^[0-9A-Z]{39}$/;
-  local $_ = join '&', grep { $_ } ( $tth ? 'tree:tiger:' . $tth : '' ), ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
+  local $_ = join '&', grep { $_ } ( $tth ? 'xt=urn:tree:tiger:' . $tth : '' ), ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
     ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' ),
     ( $string ? 'kt=' . psmisc::encode_url($string) : '' ), ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'} : '' );
-  return '&nbsp;<a class="magnet-darr" href="magnet:?xt=urn:' . $_ . '">&darr;</a>' if $_;
+  return '&nbsp;<a class="magnet-darr" href="magnet:?' . $_ . '">&darr;</a>' if $_;
   return '';
 };
 print '<a>', $param->{'tth'}, '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' if $param->{'tth'};
