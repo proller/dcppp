@@ -143,7 +143,7 @@ $queries{'queries string last'} = {
   'desc'     => 'last searches',
 #  'show'     => [qw(time hub nick string filename size tth)],          #time
 #  'SELECT'   => 'results.*,queries.*',
-#  'FROM'     => 'queries',
+  'FROM'     => 'queries',
   'show'     => [qw(time hub nick string filename size tth)],          #time
   #'SELECT'   => 'queries.*, results.*',
 #    'SELECT'   => 'results.*,queries.*',
@@ -151,9 +151,11 @@ $queries{'queries string last'} = {
 #    'SELECT'   => '*, (SELECT filename FROM results WHERE queries.string=results.string LIMIT 1) AS filename',
 
 #no  'FROM'     => 'queries INNER JOIN results ON queries.string=results.string',
-  'FROM'     => 'queries NATURAL LEFT JOIN results ', #ON queries.string=results.string
+#  'FROM'     => 'queries NATURAL LEFT JOIN results ', #ON queries.string=results.string
+#  'FROM'     => 'queries LEFT OUTER JOIN results ON queries.string=results.string', #ON queries.string=results.string
 #  'LEFT JOIN' => 'results USING (string)',
   'WHERE'    => ['queries.string != ""'],
+#  'GROUP BY' => 'queries.string',
   'ORDER BY' => 'queries.time DESC',
 'order' => ++$order,
 };
@@ -163,6 +165,13 @@ $queries{'queries tth last'} = {
 %{$queries{'queries string last'}},
   'desc'     => 'last downloads',
 #  'LEFT JOIN' => 'results USING (tth)',
+#    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string',
+#    'SELECT'   => '*, (SELECT * FROM results WHERE queries.tth=results.tth LIMIT 1) AS r',
+#    'SELECT'   => ' (SELECT * FROM results WHERE queries.tth=results.tth LIMIT 1) AS r, *',
+#    'SELECT'   => ' (SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1) AS r, queries.*',
+#    'SELECT'   => 'queries.* ,SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1  ',
+    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string, (SELECT filename FROM results WHERE queries.tth=results.tth LIMIT 1) AS filename, (SELECT size FROM results WHERE queries.tth=results.tth LIMIT 1) AS size',
+
   'WHERE'    => ['tth != ""'],
 #  'ORDER BY' => 'queries.time DESC',
 'order' => ++$order,
