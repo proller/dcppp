@@ -149,7 +149,8 @@ $queries{'queries string last'} = {
     'SELECT'   => '*',
 #    'SELECT'   => '*, (SELECT filename FROM results WHERE queries.string=results.string LIMIT 1) AS filename',
 
-  'FROM'     => 'queries INNER JOIN results ON queries.string=results.string',
+#no  'FROM'     => 'queries INNER JOIN results ON queries.string=results.string',
+  'FROM'     => 'queries NATURAL LEFT JOIN results ', #ON queries.string=results.string
 #  'LEFT JOIN' => 'results USING (string)',
   'WHERE'    => ['queries.string != ""'],
   'ORDER BY' => 'queries.time DESC',
