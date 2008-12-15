@@ -126,6 +126,17 @@ unless (caller) {
   print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
   if ( $ARGV[0] eq 'calc' ) {
     #local $config{'log_dmp'}=1;
+
+
+    $db->do(
+      'CREATE TABLE IF NOT EXISTS resultsftmp LIKE resultsf' ,
+#      'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE string != ""  GROUP BY string HAVING cnt > 1 ORDER BY cnt DESC LIMIT '        . $config{'limit_max'} . '',
+      'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE tth != ""  GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '        . $config{'limit_max'} . '',
+      'DROP TABLE resultsf',
+      'RENAME TABLE resultsftmp TO resultsf',
+      );
+
+
     $db->do(
       'CREATE TABLE IF NOT EXISTS queries' . $_ . 'tmp LIKE queries' . $_,
       'REPLACE LOW_PRIORITY queries' 
@@ -145,22 +156,11 @@ unless (caller) {
       )
       for $ARGV[1]
       or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} };
-    exit;
-  } elsif  ( $ARGV[0] eq 'calcr' )
-{
-    $db->do(
-      'CREATE TABLE IF NOT EXISTS resultsftmp LIKE resultsf' ,
-      'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE string != ""  GROUP BY string HAVING cnt > 1 ORDER BY cnt DESC LIMIT '
-        . $config{'limit_max'} . '',
-      'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE tth != ""  GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '
-        . $config{'limit_max'} . '',
-      'DROP TABLE resultsf',
-      'RENAME TABLE resultsftmp TO resultsf',
-      );
-    exit;
 
 
-}
+
+    exit;
+  } 
   #my $hubname=$1 . ($2 ? ':'.$2:'' );
   our %work;
   #our %stat;
