@@ -287,8 +287,6 @@ for ( @ask ? @ask : sort {$queries{$a}{'order'} <=> $queries{$b}{'order'}} grep 
   for my $row (@$res) {
     print '<tr><td>', ++$n, '</td>';
     #    $row->{'tth_magnet'} = psmisc::human('tth-dl', $row )      if $row->{'tth'};
-    $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
-    $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
     $row->{'tth_orig'}    = $row->{'tth'};
     $row->{'string_orig'} = $row->{'string'};
     $row->{$_} =
@@ -302,6 +300,9 @@ for ( @ask ? @ask : sort {$queries{$a}{'order'} <=> $queries{$b}{'order'}} grep 
       . psmisc::human( 'magnet-dl', $row )
       for grep { length $row->{$_} } qw(string tth);    #($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
     #    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
+    $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
+    $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
+
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     print '</tr>';
   }
