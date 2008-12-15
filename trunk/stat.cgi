@@ -144,10 +144,14 @@ $queries{'queries string last'} = {
 #  'SELECT'   => 'results.*,queries.*',
 #  'FROM'     => 'queries',
   'show'     => [qw(time hub nick string filename size tth)],          #time
-  'SELECT'   => 'results.*,queries.*',
-  'FROM'     => 'queries',
-  'LEFT JOIN' => 'results USING (string)',
-  'WHERE'    => ['string != ""'],
+  #'SELECT'   => 'queries.*, results.*',
+#    'SELECT'   => 'results.*,queries.*',
+    'SELECT'   => '*',
+#    'SELECT'   => '*, (SELECT filename FROM results WHERE queries.string=results.string LIMIT 1) AS filename',
+
+  'FROM'     => 'queries INNER JOIN results ON queries.string=results.string',
+#  'LEFT JOIN' => 'results USING (string)',
+  'WHERE'    => ['queries.string != ""'],
   'ORDER BY' => 'queries.time DESC',
 'order' => ++$order,
 };
@@ -156,9 +160,9 @@ $queries{'queries string last'} = {
 $queries{'queries tth last'} = {
 %{$queries{'queries string last'}},
   'desc'     => 'last downloads',
-  'LEFT JOIN' => 'results USING (tth)',
+#  'LEFT JOIN' => 'results USING (tth)',
   'WHERE'    => ['tth != ""'],
-  'ORDER BY' => 'queries.time DESC',
+#  'ORDER BY' => 'queries.time DESC',
 'order' => ++$order,
 };
 
