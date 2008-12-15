@@ -80,6 +80,12 @@ $config{'sql'}{'table'}{ 'queries' . $_ } = {
   'cnt'    => pssql::row( undef, 'type' => 'INT',     'index'  => 1 ),
   }
   for keys %{ $config{'periods'} };    #qw(h d w m y);
+$config{'sql'}{'table'}{ 'resultsf'  } = {
+%{$config{'sql'}{'table'}{ 'results'  }},
+  'cnt'    => pssql::row( undef, 'type' => 'INT',     'index'  => 1 ),
+
+};
+delete $config{'sql'}{'table'}{ 'resultsf'  }{$_} for qw(time nick ip port file);
 
 =z
             'file' => 'MUSIC\\UNSORTED_MUSIC_FROM_UPLOAD\\ћузыка от √а√а\\ћу«ика1\\G-Unit - 19 - Porno Star.mp3',
@@ -140,7 +146,21 @@ unless (caller) {
       for $ARGV[1]
       or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} };
     exit;
-  }
+  } elsif  ( $ARGV[0] eq 'calcr' )
+{
+    $db->do(
+      'CREATE TABLE IF NOT EXISTS resultsftmp LIKE resultsf' ,
+      'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE string != ""  GROUP BY string HAVING cnt > 1 ORDER BY cnt DESC LIMIT '
+        . $config{'limit_max'} . '',
+      'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE tth != ""  GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '
+        . $config{'limit_max'} . '',
+      'DROP TABLE resultsf',
+      'RENAME TABLE resultsftmp TO resultsf',
+      );
+    exit;
+
+
+}
   #my $hubname=$1 . ($2 ? ':'.$2:'' );
   our %work;
   #our %stat;
