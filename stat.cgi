@@ -79,11 +79,6 @@ $queries{'queries top tth'} = {
   'SELECT'    => '*',                     #cnt,filename,size,tth
   'FROM'      => $queriesfast,
   'LEFT JOIN' => 'results USING (tth)',
-  #'STRAIGHT_JOIN'=>'results',
-  #'USING' => '(tth)',
-  #'NATURAL LEFT JOIN' => 'results',
-  #'LEFT OUTER JOIN' => 'results USING (tth)',
-  #'LEFT JOIN'=>'results ON queriesw.tth=results.tth',
   'WHERE'    => [ $queriesfast . '.tth != ""' ],
   'GROUP BY' => $queriesfast . '.tth',
   #!  'HAVING'   => 'cnt > 1',
@@ -247,13 +242,4 @@ psmisc::human('magnet-dl', $row )
 print '</body>';
 #}
 
-=z
-    my $limit = 'LIMIT 10';
-    my $where = '';           #'WHERE time >' . ( int( time - 3600 ) );
-    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-    $db->query_log(qq{SELECT *, COUNT(*) as cnt FROM results $where GROUP BY string HAVING cnt > 1 ORDER BY  cnt DESC $limit});
-    $db->query_log(qq{SELECT COUNT(*) FROM $_}) for keys %{ $config{'sql'}{'table'} };
-=cut
 #print Dumper $param;
