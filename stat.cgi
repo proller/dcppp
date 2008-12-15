@@ -67,15 +67,29 @@ $queries{'queries top string'} = {
 };
 
 
-$queries{'results top'} = {
+$queries{'results top raw'} = {
   #  %{ $queries{'queries top tth raw'} },
-  'main'     => 1,
+#  'main'     => 1,
   'show'     => [qw(cnt string filename size tth)],                                              #time
   'desc'     => 'Most stored',
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'     => 'results',
   'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'tth',
+  #!  'HAVING'   => 'cnt > 1',
+  'ORDER BY' => 'cnt DESC',
+'order' => ++$order,
+};
+
+$queries{'results top'} = {
+  #  %{ $queries{'queries top tth raw'} },
+  'main'     => 1,
+  'show'     => [qw(cnt string filename size tth)],                                              #time
+  'desc'     => 'Most stored',
+  'SELECT'   => '*',
+  'FROM'     => 'resultsf',
+  'WHERE'    => ['tth != ""'],
+#  'GROUP BY' => 'tth',
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
 'order' => ++$order,
