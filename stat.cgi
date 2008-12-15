@@ -132,7 +132,7 @@ $queries{'results ext'} = {
 #  'FROM' => 'results',
 #};
 $queries{'string'} = {
-  'show' => [qw(cnt tth filename size)],    #time
+  'show' => [qw(cnt string  filename size tth)],    #time
        #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
   'SELECT' => '*, COUNT(*) as cnt',
   #  'FROM'     => 'queries',
@@ -146,7 +146,8 @@ $queries{'string'} = {
 };
 $queries{'tth'} = {
   %{ $queries{'string'} },
-  'show'     => [qw(cnt string filename size)],    #time
+'desc' => 'various filenames',
+  'show'     => [qw(cnt string filename size tth)],    #time
                                                    #'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'filename',
 };
@@ -172,6 +173,35 @@ print ' limit ',
 #int( $param->{'time'} ) || 7*86400;
 #my $period = ;
 #!$param->{'time'} =  ( int( ( time - $days * 86400 ) / 1000 ) * 1000 );
+$config{'human'}{'magnet-dl'} = sub {
+my ($row) = @_;
+$row = {'tth' => $row } unless ref $row eq 'HASH';
+my $tth = ($row->{'tth_orig'} || $row->{'tth'});
+#print length $row->{'tth'}, "[$row->{'tth'}]";
+my $string = $row->{'string'};
+$string ||= $tth,
+$tth = undef, unless 
+#length $row->{'tth'} == 39 and $row->{'tth'} =~ /^[0-9A-Z]+$/;
+
+  $tth =~ /^[0-9A-Z]{39}$/;
+
+local $_ = join '&', grep {$_}
+       ($tth ? 'tree:tiger:'. $tth : '')
+      , ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' )
+      , ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' )
+      , ( $row->{'string'} ? 'kt=' . psmisc::encode_url($row->{'string'}) : '' )
+      , ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'}  : '' );
+
+
+return         '&nbsp;<a class="tth-dl" href="magnet:?xt=urn:' . $_      . '">&darr;</a>' if $_;
+return '';
+
+};
+
+
+print  '<a class="tth">',$param->{'tth'}, '</a>',  psmisc::human('magnet-dl', $param->{'tth'} ) , '<br/>'if $param->{'tth'};
+
+
 my @ask;
 @ask = ('string') if $param->{'string'};
 @ask = ('tth')    if $param->{'tth'};
@@ -199,20 +229,14 @@ for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
   my $n;
   for my $row (@$res) {
     print '<tr><td>', ++$n, '</td>';
-    $row->{'tth_magnet'} =
-        '&nbsp;<a href="magnet:?xt=urn:tree:tiger:'
-      . $row->{'tth'}
-      . ( $row->{'size'} ? '&xl=' . $row->{'size'} : '' )
-      . ( $row->{'filename'} ? '&dn=' . psmisc::encode_url( $row->{'filename'} ) : '' )
-      . '">&darr;</a>'
-      if $row->{'tth'};
+#    $row->{'tth_magnet'} = psmisc::human('tth-dl', $row )      if $row->{'tth'};
     $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
     $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
     $row->{'tth_orig'} = $row->{'tth'};
-    $row->{$_} = qq{<a href="?$_=} . psmisc::encode_url( $row->{$_} ) . qq{">$row->{$_}</a>}
-      for grep { length $row->{$_} } qw(string tth );
-    $row->{'tth'} .= $row->{'tth_magnet'} if $row->{'tth'};
-#magnet:?xt=urn:tree:tiger:LYCXEVB43DNEM5KNOYC2PV27VDLHZRGRPWBMYZY&xl=33995128&dn=%D0%9B%D0%B8%D0%BD%D0%B8%D1%8F+%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%B0%D0%B9%D1%81%D1%8F+[mtv]_[divx]+(dvr).avi
+    $row->{$_} = qq{<a class="$_" href="?$_=} . psmisc::encode_url( $row->{$_} ) . qq{">$row->{$_}</a>}.
+psmisc::human('magnet-dl', $row )
+      for grep { length $row->{$_} } ($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
+#    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     print '</tr>';
   }
