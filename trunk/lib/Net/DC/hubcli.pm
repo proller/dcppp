@@ -1,5 +1,5 @@
 #Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
-my $Id = '$Id$';
+#my $Id = '$Id$';
 # reserved for future 8)
 package Net::DC::hubcli;
 use Net::DC;
