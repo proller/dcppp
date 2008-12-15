@@ -6,6 +6,7 @@
 users-share per hub -per hour
 chat stats
 
+main page: only by 10 res , make pages for every req by 100
 
 
 
@@ -50,6 +51,37 @@ $config{'view'} = 'html';
 $db->set_names();
 $config{'query_default'} = { 'LIMIT' => psmisc::check_int( $param->{'on_page'}, 10, 100, 10 ), };
 my %queries;
+my $order;
+
+$queries{'queries top string'} = {
+  #  %{ $queries{'queries top tth'} },
+  'main'   => 1,
+  'show'   => [qw(cnt string)],                                                                  #time
+  'desc'   => 'Most searched',
+  'SELECT' => 'string, cnt',
+  'FROM'   => 'queries' . ( $config{'periods'}{ $param->{'time'} } ? $param->{'time'} : 'd' ),
+  #  'GROUP BY' => 'string',
+  'WHERE'    => ['string != ""'],
+  'ORDER BY' => 'cnt DESC',
+'order' => ++$order,
+};
+
+
+$queries{'results top'} = {
+  #  %{ $queries{'queries top tth raw'} },
+  'main'     => 1,
+  'show'     => [qw(cnt string filename size tth)],                                              #time
+  'desc'     => 'Most stored',
+  'SELECT'   => '*, COUNT(*) as cnt',
+  'FROM'     => 'results',
+  'WHERE'    => ['tth != ""'],
+  'GROUP BY' => 'tth',
+  #!  'HAVING'   => 'cnt > 1',
+  'ORDER BY' => 'cnt DESC',
+'order' => ++$order,
+};
+
+
 $queries{'queries top tth raw'} = {
   #  'main'     => 1,
   'desc'     => 'Most downloaded',
@@ -61,6 +93,7 @@ $queries{'queries top tth raw'} = {
   'GROUP BY' => 'tth',
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
+'order' => ++$order,
 };
 $queries{'queries top string raw'} = {
   %{ $queries{'queries top tth raw'} },
@@ -69,6 +102,7 @@ $queries{'queries top string raw'} = {
   'SELECT'   => 'string, COUNT(*) as cnt',
   'GROUP BY' => 'string',
   'WHERE'    => ['string != ""'],
+'order' => ++$order,
 };
 my $queriesfast = 'queries' . ( $config{'periods'}{ $param->{'time'} } ? $param->{'time'} : 'd' );
 $queries{'queries top tth'} = {
@@ -83,31 +117,39 @@ $queries{'queries top tth'} = {
   'GROUP BY'  => $queriesfast . '.tth',
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
-};
-$queries{'queries top string'} = {
-  #  %{ $queries{'queries top tth'} },
-  'main'   => 1,
-  'show'   => [qw(cnt string)],                                                                  #time
-  'desc'   => 'Most searched',
-  'SELECT' => 'string, cnt',
-  'FROM'   => 'queries' . ( $config{'periods'}{ $param->{'time'} } ? $param->{'time'} : 'd' ),
-  #  'GROUP BY' => 'string',
-  'WHERE'    => ['string != ""'],
-  'ORDER BY' => 'cnt DESC',
+'order' => ++$order,
 };
 #
-$queries{'results top'} = {
-  #  %{ $queries{'queries top tth raw'} },
-  'main'     => 1,
-  'show'     => [qw(cnt string filename size tth)],                                              #time
-  'desc'     => 'Most stored',
-  'SELECT'   => '*, COUNT(*) as cnt',
-  'FROM'     => 'results',
-  'WHERE'    => ['tth != ""'],
-  'GROUP BY' => 'tth',
-  #!  'HAVING'   => 'cnt > 1',
-  'ORDER BY' => 'cnt DESC',
+
+
+
+$queries{'queries string last'} = {
+    'main'     => 1,
+  'desc'     => 'last searches',
+#  'show'     => [qw(time hub nick string filename size tth)],          #time
+#  'SELECT'   => 'results.*,queries.*',
+#  'FROM'     => 'queries',
+  'show'     => [qw(time hub nick string filename size tth)],          #time
+  'SELECT'   => 'results.*,queries.*',
+  'FROM'     => 'queries',
+  'LEFT JOIN' => 'results USING (string)',
+  'WHERE'    => ['string != ""'],
+  'ORDER BY' => 'queries.time DESC',
+'order' => ++$order,
 };
+
+
+$queries{'queries tth last'} = {
+%{$queries{'queries string last'}},
+  'desc'     => 'last downloads',
+  'LEFT JOIN' => 'results USING (tth)',
+  'WHERE'    => ['tth != ""'],
+  'ORDER BY' => 'queries.time DESC',
+'order' => ++$order,
+};
+
+
+
 $queries{'results ext'} = {
   #  %{ $queries{'queries top tth raw'} },
   'main'     => 1,
@@ -120,7 +162,10 @@ $queries{'results ext'} = {
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
   'LIMIT'    => 10,
+'order' => ++$order,
 };
+
+
 #$queries{'results top string'} = {
 #  %{ $queries{'queries top string'} },
 #  'show' => [qw(cnt string tth filename size )],    #time
@@ -189,7 +234,7 @@ my @ask;
 @ask = ('string') if $param->{'string'};
 @ask = ('tth')    if $param->{'tth'};
 #print Dumper @ask;
-for ( @ask ? @ask : sort grep { $queries{$_}{'main'} } keys %queries ) {
+for ( @ask ? @ask : sort {$queries{$a}{'order'} <=> $queries{$b}{'order'}} grep { $queries{$_}{'main'} } keys %queries ) {
   #print "for $_;";
   my $q = { %{ $queries{$_} } };
   print "$_ ($q->{'desc'}):<br\n/>";
