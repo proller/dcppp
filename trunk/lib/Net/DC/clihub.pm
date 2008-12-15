@@ -43,6 +43,7 @@ sub init {
         )
     ],
     'search_every'     => 10,
+    'search_every_min'     => 10,
     'auto_connect'     => 1,
     'NoGetINFO'        => 1,          #test
     'NoHello'          => 1,
@@ -71,14 +72,29 @@ sub init {
         $self->reconnect(),
         if ( ( !keys %{ $self->{'NickList'} } or $self->{'NickList'}->{$nick}{'oper'} )
         and $text eq 'You are already in the hub.' );
-      $self->log( 'warn', "[$nick] oper: set interval = $1" ), $self->{'search_every'} = $1, $self->search_retry(),
-        if (
-        $self->{'NickList'}->{$nick}{'oper'}
-        and ($text =~ /^Minimum search interval is:(\d+)s/
-          or $text =~ /Пожалуйста подождите (\d+) секунд перед следующим поиском\./ )
-        )
-        or ($nick eq 'Hub-Security'
-        and $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./ );
+
+
+        if (        $self->{'NickList'}->{$nick}{'oper'} or $nick eq 'Hub-Security') {
+        if  ($text =~ /^Minimum search interval is:(\d+)s/
+              or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./ #Hub-Security opendchub
+
+)
+
+{
+      $self->log( 'warn', "[$nick] oper: set min interval = $1" ), $self->{'search_every'} = $1 || $self->{'search_every_min'}, $self->search_retry(),
+
+}
+
+          if ($text =~ /Пожалуйста подождите (\d+) секунд перед следующим поиском\./ or
+$text eq 'Пожалуйста не используйте поиск так часто!'
+) {
+$self->{'search_every'}+=$1 || $self->{'search_every_min'};
+
+}
+
+}
+#
+
       $self->search_retry(),
         if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no search, try later..';
     },    #print("welcome:", @_) unless $self->{'no_print_welcome'}; },
