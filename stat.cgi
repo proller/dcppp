@@ -231,7 +231,7 @@ print ' days ', (
     #3600, map {$_ * 86400}qw(1 7 30 366)
 ) unless grep { $param->{$_} } qw(string tth);
 print ' limit ',
-  ( map { qq{<a href="#" onclick="createCookie('on_page', '$_');window.location.reload(false);">$_</a> } } qw(10 50 100) ),
+  ( map { qq{<a href="#" onclick="createCookie('on_page', '$_');window.location.reload(false);">$_</a> } } qw(10 20 50 100) ),
   '<br/>';
 #);
 #print "<pre>";
