@@ -171,7 +171,8 @@ $queries{'queries tth last'} = {
 #    'SELECT'   => ' (SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1) AS r, queries.*',
 #    'SELECT'   => 'queries.* ,(SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1) as r  ', # Operand should contain 1 column(s) 
 
-    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string, (SELECT filename FROM results WHERE queries.tth=results.tth LIMIT 1) AS filename, (SELECT size FROM results WHERE queries.tth=results.tth LIMIT 1) AS size',
+#works but ugly
+  'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string, (SELECT filename FROM results WHERE queries.tth=results.tth LIMIT 1) AS filename, (SELECT size FROM results WHERE queries.tth=results.tth LIMIT 1) AS size',
   'WHERE'    => ['tth != ""'],
   'ORDER BY' => 'queries.time DESC',
 
@@ -189,10 +190,10 @@ $queries{'queries tth last'} = {
 #  'ORDER BY' => 'q.time DESC',
 
 #too slow
-#  'SELECT'   => 'q.*, r.*',
-#  'FROM'     => 'queries as q  LEFT JOIN (SELECT tth, string, filename, size FROM results GROUP BY tth, string, filename, size) AS r ON (q.tth = r.tth) ',
-#  'WHERE'    => ['q.tth != ""'], #'q.tth = r.tth',
-#  'ORDER BY' => 'q.time DESC',
+  'SELECT'   => 'q.*, r.*',
+  'FROM'     => 'queries as q  LEFT JOIN (SELECT tth, string, filename, size FROM results) AS r ON (q.tth = r.tth) ', #GROUP BY tth, string, filename, size
+  'WHERE'    => ['q.tth != ""'], #'q.tth = r.tth',
+  'ORDER BY' => 'q.time DESC',
 
 
 #  'ORDER BY' => 'queries.time DESC',
