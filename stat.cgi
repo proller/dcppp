@@ -180,6 +180,7 @@ $queries{'queries tth last'} = {
   'FROM'     => 'queries as q',
   'LEFT JOIN' => '(select tth, string, filename, size from results limit 1) as r ON (r.tth=q.tth)',
   'WHERE'    => ['q.tth = r.tth','q.tth != ""'],
+  'ORDER BY' => 'q.time DESC',
 
 #  'ORDER BY' => 'queries.time DESC',
 'order' => ++$order,
