@@ -169,10 +169,18 @@ $queries{'queries tth last'} = {
 #    'SELECT'   => '*, (SELECT * FROM results WHERE queries.tth=results.tth LIMIT 1) AS r',
 #    'SELECT'   => ' (SELECT * FROM results WHERE queries.tth=results.tth LIMIT 1) AS r, *',
 #    'SELECT'   => ' (SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1) AS r, queries.*',
-#    'SELECT'   => 'queries.* ,SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1  ',
-    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string, (SELECT filename FROM results WHERE queries.tth=results.tth LIMIT 1) AS filename, (SELECT size FROM results WHERE queries.tth=results.tth LIMIT 1) AS size',
+#    'SELECT'   => 'queries.* ,(SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1) as r  ', # Operand should contain 1 column(s) 
+#w    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string, (SELECT filename FROM results WHERE queries.tth=results.tth LIMIT 1) AS filename, (SELECT size FROM results WHERE queries.tth=results.tth LIMIT 1) AS size',
+#w  'WHERE'    => ['tth != ""'],
 
-  'WHERE'    => ['tth != ""'],
+#select q.*, r.* from queries as q join (select tth, string, filename, size from results limit 1) as r where q.tth = r.tth limit 10
+
+
+  'SELECT'   => 'q.*, r.*',
+  'FROM'     => 'queries as q',
+  'LEFT JOIN' => '(select tth, string, filename, size from results limit 1) as r ON (r.tth=q.tth)',
+  'WHERE'    => ['q.tth = r.tth','q.tth != ""'],
+
 #  'ORDER BY' => 'queries.time DESC',
 'order' => ++$order,
 };
