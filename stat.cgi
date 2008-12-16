@@ -190,10 +190,16 @@ $queries{'queries tth last'} = {
 #  'ORDER BY' => 'q.time DESC',
 
 #too slow
-  'SELECT'   => 'q.*, r.*',
-  'FROM'     => 'queries as q  LEFT JOIN (SELECT tth, string, filename, size FROM results) AS r ON (q.tth = r.tth) ', #GROUP BY tth, string, filename, size
-  'WHERE'    => ['q.tth != ""'], #'q.tth = r.tth',
-  'ORDER BY' => 'q.time DESC',
+#  'SELECT'   => 'q.*, r.*',
+#  'FROM'     => 'queries as q  LEFT JOIN (SELECT tth, string, filename, size FROM results WHERE queries.tth=results.tth) AS r ON (q.tth = r.tth) ', #GROUP BY tth, string, filename, size
+#  'WHERE'    => ['q.tth != ""'], #'q.tth = r.tth',
+#  'ORDER BY' => 'q.time DESC',
+
+
+#  'SELECT'   => 'queries.*, r.*',
+#  'FROM'     => 'queries LEFT JOIN (SELECT tth, string, filename, size FROM results WHERE queries.tth=results.tth) AS r ON (queries.tth = r.tth) ', #GROUP BY tth, string, filename, size
+#  'WHERE'    => ['queries.tth != ""'], #'q.tth = r.tth',
+#  'ORDER BY' => 'queries.time DESC',
 
 
 #  'ORDER BY' => 'queries.time DESC',
