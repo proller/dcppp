@@ -174,13 +174,18 @@ $queries{'queries tth last'} = {
 #w  'WHERE'    => ['tth != ""'],
 
 #select q.*, r.* from queries as q join (select tth, string, filename, size from results limit 1) as r where q.tth = r.tth limit 10
+#  'SELECT'   => 'q.*, r.*',
+#  'FROM'     => 'queries as q',
+#  'LEFT JOIN' => '(select tth, string, filename, size from results limit 1) as r ON (r.tth=q.tth)',
+#  'WHERE'    => ['q.tth = r.tth','q.tth != ""'],
+#  'ORDER BY' => 'q.time DESC',
 
-
+#SELECT q.*, r.* FROM queries AS q, (SELECT string, filename, size FROM results LIMIT 1) AS r LIMIT 10
   'SELECT'   => 'q.*, r.*',
-  'FROM'     => 'queries as q',
-  'LEFT JOIN' => '(select tth, string, filename, size from results limit 1) as r ON (r.tth=q.tth)',
-  'WHERE'    => ['q.tth = r.tth','q.tth != ""'],
+  'FROM'     => 'queries as q , (SELECT string, filename, size FROM results LIMIT 1) AS r',
+  'WHERE'    => ['q.tth != ""'], #'q.tth = r.tth',
   'ORDER BY' => 'q.time DESC',
+
 
 #  'ORDER BY' => 'queries.time DESC',
 'order' => ++$order,
