@@ -8,8 +8,8 @@ use strict;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use lib './lib';
-use Net::DC::hub;
-my $dc = Net::DC::hub->new();
+use Net::DirectConnect::hub;
+my $dc = Net::DirectConnect::hub->new();
 $dc->work(100);
 $dc->wait_finish();
 $dc->disconnect();

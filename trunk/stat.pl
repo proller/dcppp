@@ -8,7 +8,7 @@ use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
 use lib $root_path. './lib';
-use Net::DC::clihub;
+use Net::DirectConnect::clihub;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 #use DBI;
@@ -169,7 +169,7 @@ unless (caller) {
     } else {
       my $hub = $_;
       #    print "i=$_\n";
-      my $dc = Net::DC::clihub->new(
+      my $dc = Net::DirectConnect::clihub->new(
         'Nick' => 'dcstat',
         'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
         #   'log'		=>	sub {},	# no logging
@@ -256,6 +256,7 @@ unless (caller) {
         },
         %config,
       );
+#$dc->{'no_print'}{'SR'} => 1;
       $dc->connect($hub);
       push @dc, $dc;
       $_->work() for @dc;

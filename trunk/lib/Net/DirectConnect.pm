@@ -27,7 +27,7 @@ udp UPSR
 
 =cut
 
-package Net::DC;
+package Net::DirectConnect;
 use Socket;
 use IO::Socket;
 use IO::Select;
@@ -72,7 +72,7 @@ sub new {
     'myport_random' => 1000,
     'myport_tries'  => 5,
     # http://www.dcpp.net/wiki/index.php/%24MyINFO
-    'description' => 'just perl Net::DC bot', 'connection' => 'LAN(T3)',
+    'description' => 'just perl Net::DirectConnect bot', 'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
     'flag' => '1',              # User status as ascii char (byte)
@@ -107,7 +107,7 @@ sub new {
     'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
-    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello) },
+    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR) },
     #todo
     'reconnects'      => 5,
     'reconnect_sleep' => 5,
