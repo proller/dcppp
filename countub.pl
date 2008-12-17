@@ -6,10 +6,10 @@ counting users-bytes from dchub for mrtg or cacti (snmpd)
 =cut
 use strict;
 use lib './lib';
-use Net::DC::clihub;
+use Net::DirectConnect::clihub;
 print("usage: countub.pl [dchub://]host[:port] [bot_nick] [share_delim]\n"), exit if !$ARGV[0];
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
-my $dc = Net::DC::clihub->new(
+my $dc = Net::DirectConnect::clihub->new(
   'host' => $1,
   ( $2 ? ( 'port' => $2 ) : () ),
   'Nick' => ( $ARGV[1] or 'dcpppCnt' ),

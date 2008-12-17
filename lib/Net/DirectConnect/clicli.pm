@@ -1,15 +1,15 @@
 #Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 #my $Id = '$Id$';
 
-package Net::DC::clicli;
-#eval { use Net::DC; };
+package Net::DirectConnect::clicli;
+#eval { use Net::DirectConnect; };
 #use lib '../..';
-use Net::DC;
+use Net::DirectConnect;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
-#our @ISA = ('Net::DC');
-use base 'Net::DC';
+#our @ISA = ('Net::DirectConnect');
+use base 'Net::DirectConnect';
 
 sub init {
   my $self = shift;
@@ -80,12 +80,12 @@ sub init {
         #          $_[0] =~ /^(.+) Pk=/i;
         #          $_[0] =~ /^(.+?)( Pk=.+)?$/i;
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-        $self->cmd( 'Key', Net::DC::lock2key($1) );
-        #	  $self->cmd('Key', Net::DC::lock2key($_[0]));
+        $self->cmd( 'Key', Net::DirectConnect::lock2key($1) );
+        #	  $self->cmd('Key', Net::DirectConnect::lock2key($_[0]));
       } else {
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-        #	  $self->cmd('Key', Net::DC::lock2key($1));
-        $self->{'Key'} = Net::DC::lock2key($1);
+        #	  $self->cmd('Key', Net::DirectConnect::lock2key($1));
+        $self->{'Key'} = Net::DirectConnect::lock2key($1);
         #         $self->{'sendbuf'} = 1;
         #         $self->cmd('MyNick');
         #	  $self->{'sendbuf'} = 0;

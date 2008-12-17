@@ -1,7 +1,7 @@
 #Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 #my $Id = '$Id$';
 
-package Net::DC::clihub;
+package Net::DirectConnect::clihub;
 #use lib '../../..';
 #use lib '../..';
 #use lib '..';
@@ -9,13 +9,13 @@ package Net::DC::clihub;
 eval { use Time::HiRes qw(time sleep); };
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
-use Net::DC;
-use Net::DC::clicli;
+use Net::DirectConnect;
+use Net::DirectConnect::clicli;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
-#our @ISA = ('Net::DC');
-use base 'Net::DC';
+#our @ISA = ('Net::DirectConnect');
+use base 'Net::DirectConnect';
 #todo! move to main module
 #  my %clear = ('clients' => {},'socket' => '', 'select' => '','accept' => 0, 'filehandle'=>undef, 'parse'=>{},  'cmd'=>{}, );
 sub init {
@@ -52,7 +52,7 @@ sub init {
     'auto_GetNickList' => 1,
     'follow_forcemove' => 1,
     @_,
-    'incomingclass' => 'Net::DC::clicli',
+    'incomingclass' => 'Net::DirectConnect::clicli',
     'periodic'      => sub {
       $self->cmd( 'search_buffer', ) if $self->{'socket'};
     },
@@ -102,8 +102,8 @@ sub init {
       #        $_[0] =~ /EXTENDEDPROTOCOL::\S+::(CTRL\[[^\]]+)\]/ or $_[0] =~ /(\S+)/;
       $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
       #print "lock[$1]\n";
-      $self->cmd( 'Key', Net::DC::lock2key($1) );
-      #	$self->cmd('Key', Net::DC::lock2key($_[0]));
+      $self->cmd( 'Key', Net::DirectConnect::lock2key($1) );
+      #	$self->cmd('Key', Net::DirectConnect::lock2key($_[0]));
       #!!!!!ALL $self->cmd
       $self->{'sendbuf'} = 0;
       $self->cmd('ValidateNick');
@@ -179,7 +179,7 @@ sub init {
       $self->{'PortList'}->{$host} = $port;
       #$self->{'log'}->('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
       return if $self->{'clients'}{ $host . ':' . $port }->{'socket'};
-      $self->{'clients'}{ $host . ':' . $port } = Net::DC::clicli->new(
+      $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
         %$self, $self->clear(),
         'host'     => $host,
         'port'     => $port,
@@ -188,7 +188,7 @@ sub init {
         'IpList'   => \%{ $self->{'IpList'} },
         'PortList' => \%{ $self->{'PortList'} },
         'handler'  => \%{ $self->{'handler'} },
-#         $self->{'clients'}{$host .':'. $port} = Net::DC::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port,
+#         $self->{'clients'}{$host .':'. $port} = Net::DirectConnect::clicli->new(%$self, $self->clear(), 'host' => $host,  'port' => $port,
 #'clients' => {},
 #'debug'=>1,
 #    'auto_listen' => 0,

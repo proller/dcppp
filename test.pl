@@ -4,18 +4,18 @@ use strict;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use lib './lib';
-use Net::DC::clihub;
-#  require 'lib/Net::DC.pm';
-#  require 'lib/Net::DC/clihub.pm';
-#  require 'lib/Net::DC/clicli.pm';
-#  use Net::DC;
-#  use Net::DC::client;
+use Net::DirectConnect::clihub;
+#  require 'lib/Net::DirectConnect.pm';
+#  require 'lib/Net::DirectConnect/clihub.pm';
+#  require 'lib/Net::DirectConnect/clicli.pm';
+#  use Net::DirectConnect;
+#  use Net::DirectConnect::client;
 #for my $host (qw(dc.setun.net  dc.setun.net dc.setun.net dc.crossnet.ru dc.lanport.ru )) {
 #for my $host (qw(dc.setun.net  )) {
 #for my $host (qw(dc.lanport.ru )) {
 for my $host (qw(dc.crossnet.ru dc.ozerki.net)) {
   #  for my $host (qw(fili.no-ip.org dc-files.info)) {
-  my $dc = Net::DC::clihub->new(
+  my $dc = Net::DirectConnect::clihub->new(
     #  'host' => 'dc.setun.net',
     #  'myip' => '10.20.199.104',
     #  'port' => 4111,

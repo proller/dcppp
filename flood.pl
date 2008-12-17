@@ -8,7 +8,7 @@ use strict;
 eval { use Time::HiRes qw(time sleep); };
 use Socket;
 use lib './lib';
-use Net::DC::clihub;
+use Net::DirectConnect::clihub;
 our (%config);
 
 sub shuffle {
@@ -75,7 +75,7 @@ handler( 'mail_loop_bef', @ARGV );
 
 sub createbot {
   my ( $host, $port ) = @_;
-  local $_ = Net::DC::clihub->new(
+  local $_ = Net::DirectConnect::clihub->new(
     'host' => $host,
     ( $port ? ( 'port' => $port ) : () ),
     'auto_connect' => 0, (

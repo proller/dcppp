@@ -7,14 +7,14 @@ flood tests
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib './lib';
-use Net::DC::clihub;
+use Net::DirectConnect::clihub;
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 #print "Arg=",$ARGV[0],"\n";
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|;
 #print "to=[$1]";
 for ( 0 .. 1000 ) {
   #  print "i=$_ $1";
-  my $dc = Net::DC::clihub->new(
+  my $dc = Net::DirectConnect::clihub->new(
     'host' => $1,
     ( $2 ? ( 'port' => $2 ) : () ),
     'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
