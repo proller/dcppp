@@ -24,6 +24,8 @@ or download it from http://www.gnu.org/licenses/gpl.html
 
 better nick-port-ip-lists
 udp UPSR
+relisten
+
 
 =cut
 
@@ -102,7 +104,7 @@ sub new {
     'wait_clients'      => 200,
     'wait_clients_by'   => 0.01,
     'work_sleep'        => 0.01,
-    'cmd_recurse_sleep' => 1,
+    'cmd_recurse_sleep' => 0,
     ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
@@ -262,6 +264,8 @@ sub listen {
 
 sub disconnect {
   my $self = shift;
+  $self->handler('disconnect_bef');
+
   $self->{'status'} = 'disconnected';
   if ( $self->{'socket'} ) {
     #    $self->log( 'dev', "[$self->{'number'}] Closing socket",
@@ -281,6 +285,7 @@ sub disconnect {
   close( $self->{'filehandle'} ), delete $self->{'filehandle'} if $self->{'filehandle'};
   delete $self->{$_} for qw(NickList IpList PortList);
   #        $self->log( 'dev', "[$self->{'number'}] disconnected sock=", $self->{'socket'});
+  $self->handler('disconnect_aft');
 }
 
 sub destroy {
@@ -569,7 +574,8 @@ sub parse {
 
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
-  #    $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
+#      $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
+  $self->{'handler_int'}{$cmd}->( $self, @_ ) if ref $self->{'handler_int'}{$cmd} eq 'CODE'; #internal lib
   $self->{'handler'}{$cmd}->( $self, @_ ) if ref $self->{'handler'}{$cmd} eq 'CODE';
 }
 {
@@ -635,13 +641,13 @@ sub get {
 sub openfile {
   my $self = shift;
   my $oparam = ( ( $self->{'fileas'} eq '-' ) ? '>-' : '>' . ( $self->{'fileas'} || $self->{'filename'} ) );
-  $self->handler( 'openfile_before', $oparam );
+  $self->handler( 'openfile_bef', $oparam );
   $self->log( 'dbg', "[$self->{'number'}] openfile pre", $oparam );
   open( $self->{'filehandle'}, $oparam )
     or $self->log( 'dcerr', "[$self->{'number'}] openfile error", $!, $oparam ),
     $self->handler( 'openfile_error', $!, $oparam ), return 1;
   binmode( $self->{'filehandle'} );
-  $self->handler('openfile_after');
+  $self->handler('openfile_aft');
   $self->{'status'} = 'transfer';
   return 0;
 }
@@ -649,7 +655,7 @@ sub openfile {
 sub writefile {
   my $self = shift;
   $self->{'file_start_time'} ||= time;
-  $self->handler('writefile_before');
+  $self->handler('writefile_bef');
   my $fh = $self->{'filehandle'} || return;
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
@@ -780,15 +786,15 @@ sub info {
 #sub active {  my $self = shift;  return map { $_->{'number'} } grep { $_->{'socket'} } $self, values %{ $self->{'clients'} };}
 sub active {
   my $self = shift;
-  return 1 if grep { $self->{'status'} eq $_ } qw(connecting   connected   reconnecting);
+  return 1 if grep { $self->{'status'} eq $_ } qw(connecting   connected   reconnecting listening transfer);
   return 0;
 }
 #sub status {
 #now states:
-#connecting   connected   reconnecting disconnected destroy
+#listening  connecting   connected   reconnecting transfer  disconnected destroy
 #need checks:
-#           \ connected?/
-#\------------active?----------------/
+#                        \ connected?/             \-----/
+#\-----------------------active?-------------------------/
 #}
 #my %every;
 sub every {
