@@ -3,7 +3,7 @@
 use strict;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
-use lib './lib';
+use lib '../lib';
 use Net::DirectConnect::clihub;
 #  require 'lib/Net::DirectConnect.pm';
 #  require 'lib/Net::DirectConnect/clihub.pm';

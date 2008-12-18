@@ -7,7 +7,7 @@ stat bot
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
-use lib $root_path. './lib';
+use lib $root_path. '../../lib';
 use Net::DirectConnect::clihub;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;

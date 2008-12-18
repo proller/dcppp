@@ -7,7 +7,7 @@ flood tests
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use Socket;
-use lib './lib';
+use lib '../lib';
 use Net::DirectConnect::clihub;
 our (%config);
 

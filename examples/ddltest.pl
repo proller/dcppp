@@ -7,7 +7,7 @@ test direct downloading (without hub)
 use strict;
 #  use Time::HiRes;
 eval { use Time::HiRes qw(time sleep); };
-use lib './lib';
+use lib '../lib';
 use Net::DC::clihub;
 print("usage: ddltest.pl [dchub://]hub[:port]/nick[/path]/file [bot_nick] [fileas]\n"), exit if !$ARGV[0];
 #  $ARGV[0] =~ m|^([^:]+):((?:\w+\.?)+)(?:\:(\d+))(/.+)$|;
