@@ -8,6 +8,8 @@ chat stats
 
 main page: only by 10 res , make pages for every req by 100
 
+stats:
+fast slow slowbytime
 
 
 =cut
