@@ -26,17 +26,20 @@ relisten
 =cut
 
 package Net::DirectConnect;
+use strict;
+no warnings qw(uninitialized);
+
 use Socket;
 use IO::Socket;
 use IO::Select;
 use POSIX;
-use Data::Dumper;    #dev only
+use Time::HiRes qw(time); 
+use Data::Dumper;    
 $Data::Dumper::Sortkeys = 1;
-eval { use Time::HiRes qw(time); };
+
+our $VERSION = '0.01';
 our $AUTOLOAD;
-use strict;
-no warnings qw(uninitialized);
-our $VERSION = ( split( ' ', '$Revision$' ) )[1];
+
 our %global;
 
 sub float {          #v1
