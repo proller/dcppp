@@ -1,8 +1,9 @@
 #!/usr/bin/perl
 # $Id$ $URL$
+=readme
 
-=copyright
-flood tests
+chat watch 
+
 =cut
 use strict;
 eval { use Time::HiRes qw(time sleep); };

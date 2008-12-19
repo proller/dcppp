@@ -3,6 +3,13 @@
 
 =copyright
 flood tests
+
+flood.pl config:
+copy flooddef.pl floodmy.pl
+edit floodmy.pl
+run flood.pl dchub://1.4.5.6:4111
+
+
 =cut
 use strict;
 eval { use Time::HiRes qw(time sleep); };

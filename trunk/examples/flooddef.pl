@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 # $Id$ $URL$
-# flood default config
+#
+# flood.pl default config
 #
 use strict;
 our (%config);

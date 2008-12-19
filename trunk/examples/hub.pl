@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 # $Id$ $URL$
+=r
 
-=copyright
 dev hub test
+
 =cut
 use strict;
 use Data::Dumper;    #dev only
