@@ -1,30 +1,3 @@
-#my $Id = '$Id$';
-
-=Copyright (C) 2005-2009 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-=cut
-
-=todo
-
-better nick-port-ip-lists
-udp UPSR
-relisten
-
-
-=cut
-
 package Net::DirectConnect;
 use strict;
 no warnings qw(uninitialized);
@@ -811,3 +784,76 @@ sub AUTOLOAD {
   return $self->cmd( $name, @_ );
 }
 1;
+
+__END__
+
+=head1 NAME
+
+Net::DirectConnect - Perl Direct Connect protocol implementation
+
+=head1 SYNOPSIS
+
+  use Net::DirectConnect::clihub;
+  my $dc = Net::DirectConnect::clihub->new(
+    'host' => 'dc.mynet.com',
+    'port' => '4111', #if not 411
+    'Nick' => 'Bender', 
+    'description' => 'kill all humans',
+    'M'           => 'P', #passive mode, active by default
+  );
+  while ( $dc->active() ) {
+    $dc->work();    
+  }
+  $dc->destroy();
+
+look at examples for handlers
+
+=head1 DESCRIPTION
+
+=head1 INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+
+=head1 SEE ALSO
+
+# pro http://pro.setun.net/dcppp/ 
+      http://sourceforge.net/projects/dcppp
+
+latest snapshot
+svn co svn://svn.setun.net/dcppp/trunk/ dcppp
+
+usage example:
+used in [and created for] http://sourceforge.net/projects/pro-search  
+ ( http://pro.setun.net/search/trac.cgi/browser/trunk/crawler.pl )
+
+
+protocol info:
+http://en.wikipedia.org/wiki/Direct_Connect_network
+http://www.teamfair.info/DC-Protocol.htm
+
+also useful for creating links from web:
+http://magnet-uri.sourceforge.net/
+http://en.wikipedia.org/wiki/Magnet:_URI_scheme
+
+
+
+=head1 AUTHOR
+
+Oleg Alexeenkov, E<lt>pro@cpan.orgE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005-2009 Oleg Alexeenkov
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
+
+
+=cut
