@@ -21,7 +21,7 @@ $dc->{'handler'}{'chatline'} = sub {
   my $dc = shift;
   my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/;
   print "My chatline handler [$nick,$text]\n";
-  if ( $text =~ /^\s*!moo/i ) {        #if you type  !moo  in main chat
+  if ( $text =~ /^\s*!moo/i ) {         # if you type  !moo  in main chat
     $dc->cmd( 'chatline', 'meow!' );    # via cmd,     can be written as $dc->chatline( ...
     $dc->To( $nick, 'woof!' );          # private msg, can be written as $dc->cmd('To', $nick, ...
   }
@@ -32,6 +32,7 @@ $dc->work(10);                          # seconds
 $dc->chatline('hello world');
 # get all filelists
 $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
+#$dc->get('user', 'TTH/I2VAVWYGSVTBHSKN3BOA6EWTXSP4GAKJMRK2DJQ', 'file.zip'); # get file by tth from user
 $dc->work(10);
 $dc->wait_finish();                     # wait unfinished transfers
 #$dc->work() while  $dc->active() ; # stay
