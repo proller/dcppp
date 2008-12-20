@@ -8,7 +8,7 @@ use strict;
 #  use Time::HiRes;
 eval { use Time::HiRes qw(time sleep); };
 use lib '../lib';
-use Net::DC::clihub;
+use Net::DirectConnect::clihub;
 print("usage: ddltest.pl [dchub://]hub[:port]/nick[/path]/file [bot_nick] [fileas]\n"), exit if !$ARGV[0];
 #  $ARGV[0] =~ m|^([^:]+):((?:\w+\.?)+)(?:\:(\d+))(/.+)$|;
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?/(.+?)/(.+)$|;
