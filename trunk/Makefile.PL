@@ -1,4 +1,3 @@
-#use 5.010000;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
@@ -18,9 +17,19 @@ WriteMakefile(
 
 sub MY::postamble { qq{
 
-docs : README
+
+
+docs: README
 
 README: $_{VERSION_FROM}
 	pod2text $_{VERSION_FROM} > README
+
+fullclean: distclean clean
+	rm -f Net-DirectConnect-*.tar.gz *.bak *.old MANIFEST
+
+release: fullclean docs manifest metafile dist
+
+
+
 	}
 		}

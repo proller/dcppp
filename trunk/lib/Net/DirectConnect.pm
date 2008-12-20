@@ -8,7 +8,7 @@ use POSIX;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
-our $VERSION = '0.02';
+our $VERSION = '0.01';
 our $AUTOLOAD;
 our %global;
 
@@ -794,20 +794,17 @@ look at examples for handlers
 =head1 DESCRIPTION
 
 Currently NOT supported:
- sharing
- segmented, multisource download
- async connect
- full ADC
+sharing
+segmented, multisource download
+async connect
+full ADC
 
 =head1 INSTALLATION
 
 To install this module type the following:
 
-   perl Makefile.PL
-   make
-   make test
-   make install
-
+   perl Makefile.PL && make install clean
+   
 
 =head1 SEE ALSO
 
