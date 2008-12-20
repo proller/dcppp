@@ -10,7 +10,7 @@ use Time::HiRes qw(time);
 use Data::Dumper;    
 $Data::Dumper::Sortkeys = 1;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 our $AUTOLOAD;
 
 our %global;
@@ -367,7 +367,7 @@ sub recv {
             #$_ .= '|',
             #(          $_ ?
 
-=z
+=pod
 $self->writefile( 
           \$_, \'|'
 #          \($_. '|')
