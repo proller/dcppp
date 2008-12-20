@@ -14,7 +14,7 @@ print("usage: ddltest.pl [dchub://]hub[:port]/nick[/path]/file [bot_nick] [filea
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?/(.+?)/(.+)$|;
 #print"[$ARGV[0]] 1=$1 2=$2 3=$3 4=$4 ; \n";
 my ( $user_nick, $file ) = ( $3, $4 );
-my $dc = Net::DC::clihub->new(
+my $dc = Net::DirectConnect::clihub->new(
   'host' => $1,
   ( $2 ? ( 'port' => $2 ) : () ),
   'Nick' => ( $ARGV[1] or 'dcpppDl' . int( rand(100) ) ),
