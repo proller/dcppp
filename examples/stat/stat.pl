@@ -4,6 +4,7 @@
 =copyright
 stat bot
 =cut
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
@@ -13,7 +14,7 @@ use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 #use DBI;
 our %config;
-use lib $root_path. './pslib';    
+use lib $root_path. './pslib';
 use pssql;
 use psmisc;
 psmisc::config( 0, 0, 0, 1 );
@@ -26,7 +27,7 @@ $config{'log_dmp'} = 0;
 $config{'hit_to_ask'}         ||= 2;
 $config{'queue_recalc_every'} ||= 30;
 $config{'ask_retry'}          ||= 3600;
-$config{'limit_max'} ||= 100;
+$config{'limit_max'}          ||= 100;
 $config{'row_all'} = { 'not null' => 1, };
 $config{'periods'} = {
   'h' => 3600,
@@ -37,11 +38,10 @@ $config{'sql'} = {
   'driver'       => 'mysql',    #'sqlite',
   'dbname'       => 'dcstat',
   'auto_connect' => 1,
- #'insert_by'=>10, # uncomment if you have 0-100 users # !!!TODO make auto !!! TODO max time in insert cache
+  #'insert_by'=>10, # uncomment if you have 0-100 users # !!!TODO make auto !!! TODO max time in insert cache
   'log' => sub { shift; psmisc::printlog(@_) },
   'cp_in' => 'cp1251',
-
-  'table'        => {
+  'table' => {
     'queries' => {
       #111.111.111.111
       'time' => pssql::row( 'time', 'index' => 1 ),
@@ -81,12 +81,9 @@ $config{'sql'}{'table'}{ 'queries' . $_ } = {
   'cnt'    => pssql::row( undef, 'type' => 'INT',     'index'  => 1 ),
   }
   for keys %{ $config{'periods'} };    #qw(h d w m y);
-$config{'sql'}{'table'}{ 'resultsf'  } = {
-%{$config{'sql'}{'table'}{ 'results'  }},
-  'cnt'    => pssql::row( undef, 'type' => 'INT',     'index'  => 1 ),
-
-};
-delete $config{'sql'}{'table'}{ 'resultsf'  }{$_} for qw(time nick ip port file);
+$config{'sql'}{'table'}{'resultsf'} =
+  { %{ $config{'sql'}{'table'}{'results'} }, 'cnt' => pssql::row( undef, 'type' => 'INT', 'index' => 1 ), };
+delete $config{'sql'}{'table'}{'resultsf'}{$_} for qw(time nick ip port file);
 
 =z
             'file' => 'MUSIC\\UNSORTED_MUSIC_FROM_UPLOAD\\ћузыка от √а√а\\ћу«ика1\\G-Unit - 19 - Porno Star.mp3',
@@ -97,9 +94,8 @@ delete $config{'sql'}{'table'}{ 'resultsf'  }{$_} for qw(time nick ip port file)
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
-our $db = pssql->new(
-  %{ $config{'sql'} or {} },
-);
+
+our $db = pssql->new( %{ $config{'sql'} or {} }, );
 my %every;
 
 sub every {
@@ -111,17 +107,14 @@ unless (caller) {
   print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
   if ( $ARGV[0] eq 'calc' ) {
     #local $config{'log_dmp'}=1;
-
-
     $db->do(
-      'CREATE TABLE IF NOT EXISTS resultsftmp LIKE resultsf' ,
+      'CREATE TABLE IF NOT EXISTS resultsftmp LIKE resultsf',
 #      'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE string != ""  GROUP BY string HAVING cnt > 1 ORDER BY cnt DESC LIMIT '        . $config{'limit_max'} . '',
-      'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE tth != ""  GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '        . $config{'limit_max'} . '',
+'REPLACE LOW_PRIORITY resultsftmp (string,hub,tth,filename,ext,size, cnt) SELECT string,hub,tth,filename,ext,size, COUNT(*) as cnt FROM results WHERE tth != ""  GROUP BY tth HAVING cnt > 1 ORDER BY  cnt DESC LIMIT '
+        . $config{'limit_max'} . '',
       'DROP TABLE resultsf',
       'RENAME TABLE resultsftmp TO resultsf',
-      );
-
-
+    );
     $db->do(
       'CREATE TABLE IF NOT EXISTS queries' . $_ . 'tmp LIKE queries' . $_,
       'REPLACE LOW_PRIORITY queries' 
@@ -141,11 +134,8 @@ unless (caller) {
       )
       for $ARGV[1]
       or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} };
-
-
-
     exit;
-  } 
+  }
   our %work;
   our @dc;
 
@@ -170,7 +160,7 @@ unless (caller) {
       my $hub = $_;
       #    print "i=$_\n";
       my $dc = Net::DirectConnect::clihub->new(
-        'Nick' => 'dcstat',
+        'Nick'      => 'dcstat',
         'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
         #   'log'		=>	sub {},	# no logging
         'log' => sub { shift; psmisc::printlog(@_) },
@@ -181,7 +171,7 @@ unless (caller) {
         #          'M'           => 'P',
         'reconnects' => 500,
         #    'print_search' => 1,
-        'handler'    => {
+        'handler' => {
           'Search_parse_aft' => sub {
             my $dc     = shift;
             my $search = shift;
@@ -256,7 +246,7 @@ unless (caller) {
         },
         %config,
       );
-#$dc->{'no_print'}{'SR'} => 1;
+      #$dc->{'no_print'}{'SR'} => 1;
       $dc->connect($hub);
       push @dc, $dc;
       $_->work() for @dc;
