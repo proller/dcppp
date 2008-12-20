@@ -20,7 +20,7 @@ README: $_{VERSION_FROM}
 	pod2text $_{VERSION_FROM} > README
 
 fullclean: distclean clean
-	rm -f $(DISTNAME)-*.tar.gz *.bak *.old MANIFEST
+	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old MANIFEST
 
 release: fullclean docs manifest metafile dist
 }
