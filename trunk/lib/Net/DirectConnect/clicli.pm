@@ -1,6 +1,5 @@
 #Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
 #my $Id = '$Id$';
-
 package Net::DirectConnect::clicli;
 #eval { use Net::DirectConnect; };
 #use lib '../..';
@@ -112,7 +111,6 @@ sub init {
              last;
           }
 =cut
-
       } else {
         $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
@@ -122,8 +120,8 @@ sub init {
       }
       $self->cmd('selectfile') if $self->{'Direction'} eq 'Download';
       #print "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]\n";
-      $self->{'Get'} = $self->{'filename'} . '$' . ( $self->{'filefrom'} or 1 ),
-        $self->{'ADCGet'} = 'file ' . $self->{'filename'} . ' 0 -1',
+      $self->{'Get'} = $self->{'filename'} . '$' . ( $self->{'filefrom'} || 1 ),
+        $self->{'ADCGet'} = 'file ' . $self->{'filename'} . ' '.( $self->{'filefrom'} || 0 ).' -1',
         $self->cmd( ( $self->{'NickList'}->{ $self->{'peernick'} }{'ADCGet'} ? 'ADC' : '' ) . 'Get' )
         if $self->{'filename'};
     },
@@ -195,6 +193,7 @@ sub init {
     'selectfile' => sub {
       for ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) {
         ( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}->{ $self->{'peernick'} }{$_} );
+        next unless defined $self->{'filename'};
         last;
       }
       return unless defined $self->{'filename'};
@@ -239,7 +238,9 @@ sub init {
       $self->sendcmd( 'FileLength', $_[0] );
     },
     'ADCGet' => sub {
+#$ADCGET file TTH/I2VAVWYGSVTBHSKN3BOA6EWTXSP4GAKJMRK2DJQ 730020132 2586332
       $self->sendcmd( 'ADCGET', $self->{'ADCGet'} );
+
     },
   };
   #print " clicli aftinit clients:{", keys %{$self->{'clients'}}, "}\n";

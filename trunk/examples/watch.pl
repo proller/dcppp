@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # $Id$ $URL$
+
 =readme
 
 chat watch 
@@ -34,7 +35,7 @@ for ( 0 .. 1000 ) {
   #  print("BOT SEND to $_\n"), $dc->cmd( 'To', $_, ' HUB заражен вирусом срочно покиньте его!' )
   #    for keys %{ $dc->{'NickList'} };
   while ( $dc->active() ) {
-    $dc->work();    
+    $dc->work();
   }
   $dc->destroy();
   sleep(1);

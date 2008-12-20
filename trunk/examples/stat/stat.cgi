@@ -13,6 +13,7 @@ fast slow slowbytime
 
 
 =cut
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 #use lib './lib';
@@ -36,9 +37,11 @@ BEGIN {
 #use psmisc;
 #use psweb;
 my $param = get_params();
-print "Content-type: text/html; charset=utf-8\n\n";
-print
-'<html><head><title>RU DC stat</title><style>.tth {font-family:monospace, "Courier New";font-size:4px;} .magnet-darr {font: bolder larger; text-decoration:none; color:green;}</style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
+print "Content-type: text/html; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
+print '<html><head><title>RU DC stat</title><style>
+.tth {font-family:monospace, "Courier New";font-size:4px;} 
+.magnet-darr {font: bolder larger; text-decoration:none; color:green;}
+</style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #print "[$root_path]";
 #psmisc::config();
 #$config{'log_all'} = 0;
@@ -55,7 +58,6 @@ $db->set_names();
 $config{'query_default'} = { 'LIMIT' => psmisc::check_int( $param->{'on_page'}, 10, 100, 10 ), };
 my %queries;
 my $order;
-
 $queries{'queries top string'} = {
   #  %{ $queries{'queries top tth'} },
   'main'   => 1,
@@ -66,13 +68,11 @@ $queries{'queries top string'} = {
   #  'GROUP BY' => 'string',
   'WHERE'    => ['string != ""'],
   'ORDER BY' => 'cnt DESC',
-'order' => ++$order,
+  'order'    => ++$order,
 };
-
-
 $queries{'results top raw'} = {
   #  %{ $queries{'queries top tth raw'} },
-#  'main'     => 1,
+  #  'main'     => 1,
   'show'     => [qw(cnt string filename size tth)],                                              #time
   'desc'     => 'Most stored',
   'SELECT'   => '*, COUNT(*) as cnt',
@@ -81,24 +81,21 @@ $queries{'results top raw'} = {
   'GROUP BY' => 'tth',
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
-'order' => ++$order,
+  'order'    => ++$order,
 };
-
 $queries{'results top'} = {
   #  %{ $queries{'queries top tth raw'} },
-  'main'     => 1,
-  'show'     => [qw(cnt string filename size tth)],                                              #time
-  'desc'     => 'Most stored',
-  'SELECT'   => '*',
-  'FROM'     => 'resultsf',
-  'WHERE'    => ['tth != ""'],
-#  'GROUP BY' => 'tth',
+  'main'   => 1,
+  'show'   => [qw(cnt string filename size tth)],    #time
+  'desc'   => 'Most stored',
+  'SELECT' => '*',
+  'FROM'   => 'resultsf',
+  'WHERE'  => ['tth != ""'],
+  #  'GROUP BY' => 'tth',
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
-'order' => ++$order,
+  'order'    => ++$order,
 };
-
-
 $queries{'queries top tth raw'} = {
   #  'main'     => 1,
   'desc'     => 'Most downloaded',
@@ -110,7 +107,7 @@ $queries{'queries top tth raw'} = {
   'GROUP BY' => 'tth',
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
-'order' => ++$order,
+  'order'    => ++$order,
 };
 $queries{'queries top string raw'} = {
   %{ $queries{'queries top tth raw'} },
@@ -119,7 +116,7 @@ $queries{'queries top string raw'} = {
   'SELECT'   => 'string, COUNT(*) as cnt',
   'GROUP BY' => 'string',
   'WHERE'    => ['string != ""'],
-'order' => ++$order,
+  'order'    => ++$order,
 };
 my $queriesfast = 'queries' . ( $config{'periods'}{ $param->{'time'} } ? $param->{'time'} : 'd' );
 $queries{'queries top tth'} = {
@@ -134,86 +131,70 @@ $queries{'queries top tth'} = {
   'GROUP BY'  => $queriesfast . '.tth',
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
-'order' => ++$order,
+  'order'    => ++$order,
 };
 #
-
-
-
 $queries{'queries string last'} = {
-    'main'     => 1,
-  'desc'     => 'last searches',
-#  'show'     => [qw(time hub nick string filename size tth)],          #time
-#  'SELECT'   => 'results.*,queries.*',
-  'FROM'     => 'queries',
-  'show'     => [qw(time hub nick string filename size tth)],          #time
-  #'SELECT'   => 'queries.*, results.*',
-#    'SELECT'   => 'results.*,queries.*',
-    'SELECT'   => '*',
-#    'SELECT'   => '*, (SELECT filename FROM results WHERE queries.string=results.string LIMIT 1) AS filename',
-
-#no  'FROM'     => 'queries INNER JOIN results ON queries.string=results.string',
-#  'FROM'     => 'queries NATURAL LEFT JOIN results ', #ON queries.string=results.string
-#  'FROM'     => 'queries LEFT OUTER JOIN results ON queries.string=results.string', #ON queries.string=results.string
-#  'LEFT JOIN' => 'results USING (string)',
-  'WHERE'    => ['queries.string != ""'],
-#  'GROUP BY' => 'queries.string',
+  'main' => 1,
+  'desc' => 'last searches',
+  #  'show'     => [qw(time hub nick string filename size tth)],          #time
+  #  'SELECT'   => 'results.*,queries.*',
+  'FROM' => 'queries',
+  'show' => [qw(time hub nick string filename size tth)],    #time
+                                                             #'SELECT'   => 'queries.*, results.*',
+  #    'SELECT'   => 'results.*,queries.*',
+  'SELECT' => '*',
+  #    'SELECT'   => '*, (SELECT filename FROM results WHERE queries.string=results.string LIMIT 1) AS filename',
+  #no  'FROM'     => 'queries INNER JOIN results ON queries.string=results.string',
+  #  'FROM'     => 'queries NATURAL LEFT JOIN results ', #ON queries.string=results.string
+  #  'FROM'     => 'queries LEFT OUTER JOIN results ON queries.string=results.string', #ON queries.string=results.string
+  #  'LEFT JOIN' => 'results USING (string)',
+  'WHERE' => ['queries.string != ""'],
+  #  'GROUP BY' => 'queries.string',
   'ORDER BY' => 'queries.time DESC',
-'order' => ++$order,
+  'order'    => ++$order,
 };
-
-
 $queries{'queries tth last'} = {
-%{$queries{'queries string last'}},
-  'desc'     => 'last downloads',
+  %{ $queries{'queries string last'} },
+  'desc' => 'last downloads',
 #  'LEFT JOIN' => 'results USING (tth)',
 #    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string',
 #    'SELECT'   => '*, (SELECT * FROM results WHERE queries.tth=results.tth LIMIT 1) AS r',
 #    'SELECT'   => ' (SELECT * FROM results WHERE queries.tth=results.tth LIMIT 1) AS r, *',
 #    'SELECT'   => ' (SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1) AS r, queries.*',
-#    'SELECT'   => 'queries.* ,(SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1) as r  ', # Operand should contain 1 column(s) 
-
+#    'SELECT'   => 'queries.* ,(SELECT string,size FROM results WHERE queries.tth=results.tth LIMIT 1) as r  ', # Operand should contain 1 column(s)
 #works but ugly
-  'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string, (SELECT filename FROM results WHERE queries.tth=results.tth LIMIT 1) AS filename, (SELECT size FROM results WHERE queries.tth=results.tth LIMIT 1) AS size',
+  'SELECT' =>
+'*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string, (SELECT filename FROM results WHERE queries.tth=results.tth LIMIT 1) AS filename, (SELECT size FROM results WHERE queries.tth=results.tth LIMIT 1) AS size',
   'WHERE'    => ['tth != ""'],
   'ORDER BY' => 'queries.time DESC',
-
 #select q.*, r.* from queries as q join (select tth, string, filename, size from results limit 1) as r where q.tth = r.tth limit 10
 #  'SELECT'   => 'q.*, r.*',
 #  'FROM'     => 'queries as q',
 #  'LEFT JOIN' => '(select tth, string, filename, size from results limit 1) as r ON (r.tth=q.tth)',
 #  'WHERE'    => ['q.tth = r.tth','q.tth != ""'],
 #  'ORDER BY' => 'q.time DESC',
-
 #SELECT q.*, r.* FROM queries AS q, (SELECT string, filename, size FROM results LIMIT 1) AS r LIMIT 10
 #  'SELECT'   => 'q.*, r.*',
 #  'FROM'     => 'queries as q , (SELECT string, filename, size FROM results WHERE tth=queries.tth LIMIT 1) AS r',
 #  'WHERE'    => ['q.tth != ""'], #'q.tth = r.tth',
 #  'ORDER BY' => 'q.time DESC',
-
 #too slow
 #  'SELECT'   => 'q.*, r.*',
 #  'FROM'     => 'queries as q  LEFT JOIN (SELECT tth, string, filename, size FROM results WHERE queries.tth=results.tth) AS r ON (q.tth = r.tth) ', #GROUP BY tth, string, filename, size
 #  'WHERE'    => ['q.tth != ""'], #'q.tth = r.tth',
 #  'ORDER BY' => 'q.time DESC',
-
-
 #  'SELECT'   => 'queries.*, r.*',
 #  'FROM'     => 'queries LEFT JOIN (SELECT tth, string, filename, size FROM results WHERE queries.tth=results.tth) AS r ON (queries.tth = r.tth) ', #GROUP BY tth, string, filename, size
 #  'WHERE'    => ['queries.tth != ""'], #'q.tth = r.tth',
 #  'ORDER BY' => 'queries.time DESC',
-
-
 #  'ORDER BY' => 'queries.time DESC',
-'order' => ++$order,
+  'order' => ++$order,
 };
-
-
-
 $queries{'results ext'} = {
   #  %{ $queries{'queries top tth raw'} },
   'main'     => 1,
-  'show'     => [qw(cnt ext )],                                                                  #time
+  'show'     => [qw(cnt ext )],         #time
   'desc'     => 'by extention',
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'     => 'results',
@@ -222,10 +203,8 @@ $queries{'results ext'} = {
   #!  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
   'LIMIT'    => 10,
-'order' => ++$order,
+  'order'    => ++$order,
 };
-
-
 #$queries{'results top string'} = {
 #  %{ $queries{'queries top string'} },
 #  'show' => [qw(cnt string tth filename size )],    #time
@@ -283,7 +262,8 @@ $config{'human'}{'magnet-dl'} = sub {
     unless
     #length $row->{'tth'} == 39 and $row->{'tth'} =~ /^[0-9A-Z]+$/;
     $tth =~ /^[0-9A-Z]{39}$/;
-  local $_ = join '&', grep { $_ } ( $tth ? 'xt=urn:tree:tiger:' . $tth : '' ), ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
+  local $_ = join '&', grep { $_ } ( $tth ? 'xt=urn:tree:tiger:' . $tth : '' ),
+    ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
     ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' ),
     ( $string ? 'kt=' . psmisc::encode_url($string) : '' ), ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'} : '' );
   return '&nbsp;<a class="magnet-darr" href="magnet:?' . $_ . '">&darr;</a>' if $_;
@@ -294,7 +274,7 @@ my @ask;
 @ask = ('string') if $param->{'string'};
 @ask = ('tth')    if $param->{'tth'};
 #print Dumper @ask;
-for ( @ask ? @ask : sort {$queries{$a}{'order'} <=> $queries{$b}{'order'}} grep { $queries{$_}{'main'} } keys %queries ) {
+for ( @ask ? @ask : sort { $queries{$a}{'order'} <=> $queries{$b}{'order'} } grep { $queries{$_}{'main'} } keys %queries ) {
   #print "for $_;";
   my $q = { %{ $queries{$_} } };
   print "$_ ($q->{'desc'}):<br\n/>";
@@ -320,20 +300,20 @@ for ( @ask ? @ask : sort {$queries{$a}{'order'} <=> $queries{$b}{'order'}} grep 
     #    $row->{'tth_magnet'} = psmisc::human('tth-dl', $row )      if $row->{'tth'};
     $row->{'tth_orig'}    = $row->{'tth'};
     $row->{'string_orig'} = $row->{'string'};
-    $row->{$_} =
-      ( $param->{$_}
+    $row->{$_}            = (
+      $param->{$_}
       ? ''
       : qq{<a class="$_" title="}
         . psmisc::html_chars( $row->{$_} )
         . qq{" href="?$_=}
         . psmisc::encode_url( $row->{$_} )
-        . qq{">$row->{$_}</a>} )
+        . qq{">$row->{$_}</a>}
+      )
       . psmisc::human( 'magnet-dl', $row )
-      for grep { length $row->{$_} } qw(string tth);    #($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
-    #    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
+      for grep { length $row->{$_} } qw(string tth);   #($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
+                                                       #    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
     $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
     $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
-
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     print '</tr>';
   }

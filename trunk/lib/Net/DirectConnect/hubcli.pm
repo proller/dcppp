@@ -6,7 +6,6 @@ use strict;
 use Net::DirectConnect;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
-
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 #our @ISA = ('Net::DirectConnect');
@@ -30,9 +29,8 @@ sub init {
     'Key' => sub {
     },
     'ValidateNick' => sub {
-#$self->log('dev', 'denide', $_[0], Dumper $self->{'NickList'}),
-
-#!      return $self->cmd('ValidateDenide') if exists $self->{'NickList'}{ $_[0] } and $self->{'NickList'}{ $_[0] }{'online'};
+  #$self->log('dev', 'denide', $_[0], Dumper $self->{'NickList'}),
+  #!      return $self->cmd('ValidateDenide') if exists $self->{'NickList'}{ $_[0] } and $self->{'NickList'}{ $_[0] }{'online'};
       $self->{'peer_nick'}                          = $_[0];
       $self->{'NickList'}->{ $self->{'peer_nick'} } = $self->{'peer_supports'};
       $self->{'status'}                             = 'connected';
@@ -82,48 +80,34 @@ sub init {
     'OpList' => sub {
       $self->sendcmd( 'OpList', join '$$', grep { $self->{'NickList'}{$_}{'oper'} } keys %{ $self->{'NickList'} } );
     },
-'chatline_from' => sub {
-          my $from = shift;
-#return if $self->{'_chatline_rec'};
+    'chatline_from' => sub {
+      my $from = shift;
+      #return if $self->{'_chatline_rec'};
       for (@_) {
         return unless $self->{'socket'};
-        $self->log(
-          'dcdmp',
-          "($self->{'number'}) we send [",
-          "<$from> $_|",
-          "]:", $self->{'socket'}->send("<$from> $_|"), $!
-        );
+        $self->log( 'dcdmp', "($self->{'number'}) we send [", "<$from> $_|", "]:", $self->{'socket'}->send("<$from> $_|"), $! );
         #$self->{'log'}->('dbg', 'sleep', $self->{'min_chat_delay'}),
       }
-
-
-},
-
-'chatline' => sub {
+    },
+    'chatline' => sub {
       my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/;
-#$self->{'_chatline_rec'} = 1;
-        $self->{'log'}->('dbg',"[$self->{'number'}]" ,'chatline Rstart',);
-$self->{'log'}->('dbg',"[$self->{'number'}] to",$_->{'number'}),
-#TO API
-$_->cmd('chatline_from', $self->{'peer_nick'}, $text) for grep { $_ and $_ ne $self } values( %{ $self->{'parent'}{'clients'} } );
-#$self->{'parent'}->rcmd('chatline_from', $self->{'peer_nick'}, $text);
-#delete $self->{'_chatline_rec'};
-
-},
-
+      #$self->{'_chatline_rec'} = 1;
+      $self->{'log'}->( 'dbg', "[$self->{'number'}]",    'chatline Rstart', );
+      $self->{'log'}->( 'dbg', "[$self->{'number'}] to", $_->{'number'} ),
+        #TO API
+        $_->cmd( 'chatline_from', $self->{'peer_nick'}, $text )
+        for grep { $_ and $_ ne $self } values( %{ $self->{'parent'}{'clients'} } );
+      #$self->{'parent'}->rcmd('chatline_from', $self->{'peer_nick'}, $text);
+      #delete $self->{'_chatline_rec'};
+    },
   };
-
   $self->{'handler_int'} ||= {
-'disconnect_aft' => sub {
-#      $self->{'NickList'}{$self->{'peer_nick'}}{'online'} = 0;
-
-delete $self->{'NickList'}{$self->{'peer_nick'}};
-$self->log('dev', 'deleted', $self->{'peer_nick'}, Dumper $self->{'NickList'});
-},
-
-};
-
-
+    'disconnect_aft' => sub {
+      #      $self->{'NickList'}{$self->{'peer_nick'}}{'online'} = 0;
+      delete $self->{'NickList'}{ $self->{'peer_nick'} };
+      $self->log( 'dev', 'deleted', $self->{'peer_nick'}, Dumper $self->{'NickList'} );
+    },
+  };
   $self->{'sendbuf'} = 1;
   $self->cmd('Lock');
   $self->{'sendbuf'} = 0;

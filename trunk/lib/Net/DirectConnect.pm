@@ -1,21 +1,18 @@
 package Net::DirectConnect;
 use strict;
 no warnings qw(uninitialized);
-
 use Socket;
 use IO::Socket;
 use IO::Select;
 use POSIX;
-use Time::HiRes qw(time); 
-use Data::Dumper;    
+use Time::HiRes qw(time);
+use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
-
 our $VERSION = '0.02';
 our $AUTOLOAD;
-
 our %global;
 
-sub float {          #v1
+sub float {    #v1
   my $self = shift;
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
@@ -237,7 +234,6 @@ sub listen {
 sub disconnect {
   my $self = shift;
   $self->handler('disconnect_bef');
-
   $self->{'status'} = 'disconnected';
   if ( $self->{'socket'} ) {
     #    $self->log( 'dev', "[$self->{'number'}] Closing socket",
@@ -530,9 +526,9 @@ sub parse {
 
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
-#      $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
-  $self->{'handler_int'}{$cmd}->( $self, @_ ) if ref $self->{'handler_int'}{$cmd} eq 'CODE'; #internal lib
-  $self->{'handler'}{$cmd}->( $self, @_ ) if ref $self->{'handler'}{$cmd} eq 'CODE';
+  #      $self->log('dev', "handlerdbg [$cmd]", @_, $self->{'handler'}{$cmd});
+  $self->{'handler_int'}{$cmd}->( $self, @_ ) if ref $self->{'handler_int'}{$cmd} eq 'CODE';    #internal lib
+  $self->{'handler'}{$cmd}->( $self,     @_ ) if ref $self->{'handler'}{$cmd}     eq 'CODE';
 }
 {
   my @sendbuf;
@@ -590,7 +586,7 @@ sub rcmd {
 sub get {
   my ( $self, $nick, $file, $as ) = @_;
   $self->wait_clients();
-  $self->{'want'}->{$nick}{$file} = ( $as or $file );
+  $self->{'want'}->{$nick}{$file} =  $as || $file ;
   $self->cmd( ( ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) ? '' : 'Rev' ) . 'ConnectToMe', $nick );
 }
 
@@ -613,6 +609,7 @@ sub writefile {
   $self->{'file_start_time'} ||= time;
   $self->handler('writefile_bef');
   my $fh = $self->{'filehandle'} || return;
+#print "FH:",$fh, Dumper($fh);
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
 #       $self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );
@@ -768,7 +765,6 @@ sub AUTOLOAD {
   return $self->cmd( $name, @_ );
 }
 1;
-
 __END__
 
 =head1 NAME
@@ -785,6 +781,9 @@ Net::DirectConnect - Perl Direct Connect protocol implementation
     'description' => 'kill all humans',
     'M'           => 'P', #passive mode, active by default
   );
+  $dc->wait_connect();
+  $dc->chatline( 'hi all' );
+
   while ( $dc->active() ) {
     $dc->work();    
   }
@@ -793,6 +792,12 @@ Net::DirectConnect - Perl Direct Connect protocol implementation
 look at examples for handlers
 
 =head1 DESCRIPTION
+
+Currently NOT supported:
+ sharing
+ segmented, multisource download
+ async connect
+ full ADC
 
 =head1 INSTALLATION
 
@@ -820,6 +825,7 @@ used in [and created for] http://sourceforge.net/projects/pro-search
 protocol info:
 http://en.wikipedia.org/wiki/Direct_Connect_network
 http://www.teamfair.info/DC-Protocol.htm
+http://adc.sourceforge.net/ADC.html
 
 also useful for creating links from web:
 http://magnet-uri.sourceforge.net/
