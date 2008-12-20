@@ -16,11 +16,8 @@ fast slow slowbytime
 
 use strict;
 eval { use Time::HiRes qw(time sleep); };
-#use lib './lib';
-#use Net::DC::clihub;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
-#use DBI;
 our ( %config, $db );
 our $root_path;
 
