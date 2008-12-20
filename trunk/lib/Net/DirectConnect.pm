@@ -363,22 +363,6 @@ sub recv {
             local $_ = $1;
             last if $self->{'status'} eq 'destroy';
             #     $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
-            #     $self->log( 'dcdbg',"[$self->{'number'}] bin write ",length $_," [$_]", ),
-            #$_ .= '|',
-            #(          $_ ?
-
-=pod
-$self->writefile( 
-          \$_, \'|'
-#          \($_. '|')
-          #, \$` 
-          ) 
-          #: ()), 
-          ,
-          #next 
-          last
-          if ( $self->{'filehandle'} );
-=cut
             next unless /\w/;
             $self->parse( (
                 /^\$/ ? '' :    #$_ =
