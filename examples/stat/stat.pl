@@ -252,8 +252,8 @@ unless (caller) {
       $_->work() for @dc;
     }
   }
-  while ( grep { $_->active() } @dc ) {
-    $_->work() for @dc;
+  while ( local @_ = grep { $_->active() } @dc ) {
+    $_->work() for @_;
   }
   $_->destroy() for @dc;
 }
