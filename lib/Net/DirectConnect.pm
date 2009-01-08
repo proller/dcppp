@@ -64,6 +64,7 @@ sub new {
     'Lock'              => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
     'log'               => sub { print( join( ' ', @_ ), "\n" ) },
     'auto_recv'         => 1,
+    'max_reads' => 20,
     'wait_once'         => 0.1,
     'waits'             => 100,
     'wait_finish'       => 600,
@@ -287,7 +288,7 @@ sub recv {
   #  return unless $self->{'socket'};
   #                $self->log( 'dcdbg',"[$self->{'number'}] recv $self->{'select'};$self->{'socket'}") if $self->{'number'} > 3;
   $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
-  my ($readed);
+  my ($readed, $reads);
   $self->{'databuf'} = '';
   #  my $reads = 5;
   #LOOP:
@@ -380,7 +381,8 @@ sub recv {
         }
       }
       #     $self->log( 'dcdbg',"[$self->{'number'}] canread fin r=$readed");
-    } while ($readed);
+    } while ($readed and $reads++ < $self->{'max_reads'});
+# TODO !!! timed
   }
   for ( keys %{ $self->{'clients'} } ) {
     #    $self->{'clients'}{$_} = undef,
@@ -808,15 +810,17 @@ To install this module type the following:
 
 =head1 SEE ALSO
 
-# pro http://pro.setun.net/dcppp/ 
+# pro http://pro.setun.net/dcppp/
       http://sourceforge.net/projects/dcppp
+
+http://svn.setun.net/dcppp/timeline/browser/trunk
 
 latest snapshot
 svn co svn://svn.setun.net/dcppp/trunk/ dcppp
 
 usage example:
-used in [and created for] http://sourceforge.net/projects/pro-search  
- ( http://pro.setun.net/search/trac.cgi/browser/trunk/crawler.pl )
+used in [and created for] http://sourceforge.net/projects/pro-search http://pro.setun.net/search/
+ ( http://svn.setun.net/search/trac.cgi/browser/trunk/crawler.pl )
 
 
 protocol info:
