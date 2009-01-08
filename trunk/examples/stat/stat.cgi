@@ -45,7 +45,7 @@ print '<html><head><title>RU DC stat</title><style>
 #$config{'log_all'} = 0;
 our %queries;
 #do $root_path . 'stat.pl';
-#use stat;
+use stat;
 #print 'hi';
 $config{'log_all'} = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
