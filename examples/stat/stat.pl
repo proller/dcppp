@@ -365,9 +365,10 @@ unless (caller) {
       for my $time (
         $queries{$query}{'periods'}
         ? ( $ARGV[1] or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} } )
-        : ()
+        : ('')
         )
       {
+printlog $query ,$time;
         #        printlog 'tim', $time, $config{'periods'}{$time};
         #(!$time ? () : ('time'$config{'periods'}{$time}))
         local $queries{$query}{'WHERE'}[5] = "time >= " . int( time - $config{'periods'}{$time} )
