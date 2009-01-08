@@ -75,7 +75,7 @@ print ' days ', (
 ) unless (grep { $param->{$_} } qw(string tth)) or
 ($param->{'query'} and !$config{'queries'}{$param->{'query'}}{'periods'})
 ;
-print "pq[$config{'queries'}{$param->{'query'}}{'periods'}]";
+#print "pq[$config{'queries'}{$param->{'query'}}{'periods'}]";
 #print ' limit ',  ( map { qq{<a href="#" onclick="createCookie('on_page', '$_');window.location.reload(false);">$_</a> } } qw(10 20 50 100) ),;
 print '<br/>';
 #);
