@@ -384,7 +384,7 @@ sub init {
       $self->{'search_last'} = undef;
     },
     'make_hub' => sub {
-      $self->{'hub'} ||= $self->{'host'} . ( ($self->{'port'} and $self->{'port'} != 411) ? ':'.$self->{'port'} : '' );
+      $self->{'hub'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
     },
     'nick_generate' => sub {
       $self->{'nick_base'} ||= $self->{'Nick'};
