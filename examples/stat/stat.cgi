@@ -107,7 +107,7 @@ for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'
   grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
 {
   #print "for $_;";
-  my $q = { %{ $config{'queries'}{$_} } };
+  my $q = { %{ $config{'queries'}{$_} } }||next;
   print $q->{'no_query_link'}
     ? $_
     : qq{<a href="?query=} . psmisc::encode_url($_) . qq{">$_</a>};
