@@ -82,6 +82,8 @@ $config{'sql'} = {
     'slow' => {
       'name'   => pssql::row( undef, 'type' => 'VARCHAR', 'length'  => 32, 'index'  => 1, 'primary' => 1 ),
       'period' => pssql::row( undef, 'type' => 'VARCHAR', 'length'  => 8,  'index'  => 1, 'primary' => 1, 'default' => '' ),
+
+      'n'     => pssql::row( undef, 'type' => 'INT',   'index'  => 1, 'primary' => 1, ),
       'result' => pssql::row( undef, 'type' => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper'  => 1, ),
       'time' => pssql::row( 'time', 'index' => 1 ),
     },
@@ -397,13 +399,31 @@ sub make_query {
   my $sql;
   if ( is_slow($query) and $ENV{'SERVER_PORT'} and $config{'use_slow'} ) {
     #print "SLOWASK";
-    $sql = "SELECT result FROM slow WHERE name = " . $db->quote($query) . (
+    $sql = "SELECT * FROM slow WHERE name = " . $db->quote($query) . (
       #!$period ?'': ' AND period='. $db->quote($period)
-      ' AND period=' . $db->quote($period)
+($config{'queries'}{$query}{'periods'} ?       ' AND period=' . $db->quote($period) : '')
+
+. 
+" LIMIT $config{'query_default'}{'LIMIT'}"
     );
-    my $res = eval $db->query($sql)->[0]{'result'};
-    #print Dumper $res;
+    my $res =  $db->query($sql);
+my @ret;
+for my $row (@$res) {
+#    printlog 'preeval',$row->{'result'};
+
+push @ret, eval $row->{'result'};
+
+
+
+}
+return \@ret;
+=z
+    my $res =  $db->query($sql)->[0]{'result'};
+    printlog 'preeval',Dumper $res;
+    $res = eval $res;
+    printlog 'evaled',Dumper $res;
     return [ grep { $_ } @$res[ 0 .. $config{'query_default'}{'LIMIT'} - 1 ] ];
+=cut
   }
   #printlog 'mkparams:', Dumper $param;
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
