@@ -181,7 +181,7 @@ for (@ARGV) {
           #        printlog( 'chatline', join '!',@_ );
           my %s;
           ( $s{nick}, $s{string} ) = $_[0] =~ /^<([^>]+)> (.+)$/;
-          $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } );
+          $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } ) if $s{nick} and $s{string};
         },
         'welcome' => sub {
           my $dc = shift;

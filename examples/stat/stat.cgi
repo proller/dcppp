@@ -40,6 +40,11 @@ print "Content-type: text/html; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
 print '<html><head><title>RU DC stat</title><style>
 .tth {font-family:monospace, "Courier New";font-size:4px;} 
 .magnet-darr {font: bolder larger; text-decoration:none; color:green;}
+.onetable { border:solid 1px gray; zzmin-width:50%; zzdisplay:inline-block;}
+.half { zmin-width:50%; max-width:70%; display:inline-block;}
+
+.zright { float:right; clear:left;}
+.zleft { float:left; clear:left;}
 </style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #print "[$root_path]";
 #psmisc::config();
@@ -107,11 +112,12 @@ for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'
   grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
 {
   #print "for $_;";
-  my $q = { %{ $config{'queries'}{$_} } }||next;
-  print $q->{'no_query_link'}
+  my $q = { %{ $config{'queries'}{$_}||next } };
+  print '<div class="onetable '.$q->{'class'}.'">',$q->{'no_query_link'}
     ? $_
     : qq{<a href="?query=} . psmisc::encode_url($_) . qq{">$_</a>};
-  print " ($q->{'desc'}):<br\n/>";
+  print " ($q->{'desc'}):" if $q->{'desc'};
+print "<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
   printlog 'cgip', Dumper $param;
   my $res = statlib::make_query( $q, $_, $param->{'time'} );
@@ -133,14 +139,14 @@ for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'
         . qq{">$row->{$_}</a>}
       )
       . psmisc::human( 'magnet-dl', $row )
-      for grep { length $row->{$_} } qw(string tth);   #($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
+      for grep { length $row->{$_} and !$q->{'no_'.$_.'_link'} } qw(string tth);   #($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
                                                        #    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
     $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
     $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     print '</tr>';
   }
-  print '</table><hr/>';
+  print '</table></div>';
   #      print Dumper $res;
   psmisc::flush();
 }
