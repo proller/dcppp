@@ -13,7 +13,6 @@ fast slow slowbytime
 
 
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use Data::Dumper;    #dev only

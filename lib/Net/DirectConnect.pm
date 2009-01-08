@@ -64,7 +64,7 @@ sub new {
     'Lock'              => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
     'log'               => sub { print( join( ' ', @_ ), "\n" ) },
     'auto_recv'         => 1,
-    'max_reads' => 20,
+    'max_reads'         => 20,
     'wait_once'         => 0.1,
     'waits'             => 100,
     'wait_finish'       => 600,
@@ -288,7 +288,7 @@ sub recv {
   #  return unless $self->{'socket'};
   #                $self->log( 'dcdbg',"[$self->{'number'}] recv $self->{'select'};$self->{'socket'}") if $self->{'number'} > 3;
   $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
-  my ($readed, $reads);
+  my ( $readed, $reads );
   $self->{'databuf'} = '';
   #  my $reads = 5;
   #LOOP:
@@ -381,8 +381,8 @@ sub recv {
         }
       }
       #     $self->log( 'dcdbg',"[$self->{'number'}] canread fin r=$readed");
-    } while ($readed and $reads++ < $self->{'max_reads'});
-# TODO !!! timed
+    } while ( $readed and $reads++ < $self->{'max_reads'} );
+    # TODO !!! timed
   }
   for ( keys %{ $self->{'clients'} } ) {
     #    $self->{'clients'}{$_} = undef,
@@ -588,7 +588,7 @@ sub rcmd {
 sub get {
   my ( $self, $nick, $file, $as ) = @_;
   $self->wait_clients();
-  $self->{'want'}->{$nick}{$file} =  $as || $file ;
+  $self->{'want'}->{$nick}{$file} = $as || $file;
   $self->cmd( ( ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) ? '' : 'Rev' ) . 'ConnectToMe', $nick );
 }
 
@@ -611,7 +611,7 @@ sub writefile {
   $self->{'file_start_time'} ||= time;
   $self->handler('writefile_bef');
   my $fh = $self->{'filehandle'} || return;
-#print "FH:",$fh, Dumper($fh);
+  #print "FH:",$fh, Dumper($fh);
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
 #       $self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );

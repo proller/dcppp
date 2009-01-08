@@ -4,7 +4,6 @@
 =copyright
 stat bot
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
@@ -28,7 +27,7 @@ $config{'hit_to_ask'}         ||= 2;
 $config{'queue_recalc_every'} ||= 30;
 $config{'ask_retry'}          ||= 3600;
 $config{'limit_max'}          ||= 100;
-#$config{'use_slow'}           ||= 1;
+$config{'use_slow'}           ||= 1;
 $config{'row_all'} = { 'not null' => 1, };
 $config{'periods'} = {
   'h' => 3600,
@@ -36,8 +35,8 @@ $config{'periods'} = {
   'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
 $config{'sql'} = {
-    'driver'       => 'mysql',    #'sqlite',
-#  'driver'       => 'sqlite',
+  'driver' => 'mysql',    #'sqlite',
+  #  'driver'       => 'sqlite',
   'dbname'       => 'dcstat',
   'auto_connect' => 1,
   #'insert_by'=>10, # uncomment if you have 0-100 users # !!!TODO make auto !!! TODO max time in insert cache
@@ -80,7 +79,6 @@ $config{'sql'} = {
       'period' => pssql::row( undef, 'type' => 'VARCHAR', 'length'  => 8,  'index'  => 1, 'primary' => 1, 'default' => '' ),
       'result' => pssql::row( undef, 'type' => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper'  => 1, ),
       'time' => pssql::row( 'time', 'index' => 1 ),
-
     },
   },
   'table_param' => {
@@ -110,6 +108,7 @@ delete $config{'sql'}{'table'}{'resultsf'}{$_} for qw(time nick ip port file);
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
+
 $config{'query_default'}{'LIMIT'} ||= 100;
 our %queries;
 my $order;
@@ -157,17 +156,18 @@ $queries{'queries top tth'} = {
   'order'    => ++$order,
 };
 =cut
+
 $queries{'queries top string raw'} = {
   #  %{ $queries{'queries top tth raw'} },
-  'main'     => 1,
-  'periods'  => 1,
-  'show'     => [qw(cnt string)],            #time
-  'desc'     => 'Most searched',
-  'SELECT'   => 'string, COUNT(*) as cnt',
-  'FROM'     => 'queries',
+  'main'    => 1,
+  'periods' => 1,
+  'show'    => [qw(cnt string)],            #time
+  'desc'    => 'Most searched',
+  'SELECT'  => 'string, COUNT(*) as cnt',
+  'FROM'    => 'queries',
+  'WHERE'   => ['string != ""'],
+  #  'GROUP BY' => 'tth',
   'GROUP BY' => 'string',
-  'WHERE'    => ['string != ""'],
-  'GROUP BY' => 'tth',
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
@@ -311,7 +311,7 @@ sub make_query {
   #print Dumper $q;
   #print "is_slow($query)"
   my $sql;
-  if ( is_slow($query) and $ENV{'SERVER_PORT'} and $config{'use_slow'}) {
+  if ( is_slow($query) and $ENV{'SERVER_PORT'} and $config{'use_slow'} ) {
     #print "SLOWASK";
     $sql = "SELECT result FROM slow WHERE name = " . $db->quote($query) . (
       #!$period ?'': ' AND period='. $db->quote($period)
@@ -351,10 +351,9 @@ sub is_slow {
 }
 unless (caller) {
   print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
-  if ( $ARGV[0] eq 'calc' and $config{'use_slow'} ) {
-local  $db->{ 'cp_in'} = 'utf-8';
-
-
+  if ( $ARGV[0] eq 'calc' ) {
+    #exit unless $config{'use_slow'};
+    local $db->{'cp_in'} = 'utf-8';
     #local $config{'log_dmp'}=1;
     for my $query ( keys %queries ) {
       #      print "pre:$query ($queries{$query}{'FROM'}) { $queries{$query}{'GROUP BY'} }\n";
@@ -363,22 +362,27 @@ local  $db->{ 'cp_in'} = 'utf-8';
       #'time' =  int( time - $config{'periods'}{$_} ) ;
       #
       # if     $queries{$query}{'periods'}   ;
-      for my $time ( $queries{$query}{'periods'}
-        ? ( sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} } )
-        : () )
+      for my $time (
+        $queries{$query}{'periods'}
+        ? ( $ARGV[1] or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} } )
+        : ()
+        )
       {
-        printlog 'tim', $time, $config{'periods'}{$time};
+        #        printlog 'tim', $time, $config{'periods'}{$time};
         #(!$time ? () : ('time'$config{'periods'}{$time}))
         local $queries{$query}{'WHERE'}[5] = "time >= " . int( time - $config{'periods'}{$time} )
           if $time;
         my $res = make_query( { %{ $queries{$query} }, }, $query );
-        printlog Dumper $res;
+        #        printlog Dumper $res;
         local $Data::Dumper::Indent = 0;
         local $Data::Dumper::Terse  = 1;
         #$db->do('INSERT INTO slow VALUES ('.$db->quote($query).', '.$db->quote('').','.$db->quote(Dumper $res).' )');
-        $db->insert_hash( 'slow', { 'name' => $query, 'result' => Dumper($res), 'period' => $time, 'time'=>int(time)} );
+        $db->insert_hash( 'slow', { 'name' => $query, 'result' => Dumper($res), 'period' => $time, 'time' => int(time) } );
+        $db->flush_insert('slow');
       }
     }
+
+=z
     exit;
     $db->do(
       'CREATE TABLE IF NOT EXISTS resultsftmp LIKE resultsf',
@@ -407,6 +411,8 @@ local  $db->{ 'cp_in'} = 'utf-8';
       )
       for $ARGV[1]
       or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} };
+=cut
+
     exit;
   }
   our %work;

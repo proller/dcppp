@@ -84,7 +84,7 @@ sub init {
         if ( $text =~ /Пожалуйста подождите (\d+) секунд перед следующим поиском\./
           or $text eq 'Пожалуйста не используйте поиск так часто!' )
         {
-          $self->log( 'warn', "[$nick] oper: increase min interval +=",$1 || $self->{'search_every_min'} ),
+          $self->log( 'warn', "[$nick] oper: increase min interval +=", $1 || $self->{'search_every_min'} ),
             $self->{'search_every'} += $1 || $self->{'search_every_min'};
           $self->search_retry();
         }
