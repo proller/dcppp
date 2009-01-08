@@ -4,6 +4,7 @@
 =copyright
 stat bot
 =cut
+package stat;
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 our $root_path;
@@ -12,7 +13,7 @@ use Net::DirectConnect::clihub;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 #use DBI;
-our %config;
+our (%config, $param);
 use lib $root_path. './pslib';
 use pssql;
 use psmisc;
@@ -277,6 +278,7 @@ $queries{'results ext'} = {
 #  'FROM' => 'results',
 #};
 $queries{'string'} = {
+'desc' => $param->{'string'}, #!!! dehtml
   'show' => [qw(cnt string  filename size tth)],    #time
        #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
   'SELECT' => '*, COUNT(*) as cnt',
@@ -321,6 +323,8 @@ sub make_query {
     #print Dumper $res;
     return [ grep { $_ } @$res[ 0 .. $config{'query_default'}{'LIMIT'} - 1 ] ];
   }
+printlog Dumper $param;
+
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
   $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'},
     #( $param->{'time'} ? "time >= " . int( (time - $param->{'time'})/1000)*1000 : '' ),
