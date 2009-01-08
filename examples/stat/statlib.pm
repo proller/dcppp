@@ -27,7 +27,6 @@ our (%config, $param,  $db, ); #%queries
 
 
 
-psmisc::config( 0, 0, 0, 1 );
 #$config{'log_all'}=1;
 $config{'log_trace'} = $config{'log_dmpbef'} = 0;
 $config{'log_dmp'} = 0;
@@ -45,9 +44,10 @@ $config{'periods'} = {
   'd' => 86400,
   'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
+
 $config{'sql'} = {
   'driver' => 'mysql',    #'sqlite',
-    'driver'       => 'sqlite',
+#    'driver'       => 'sqlite',
   'dbname'       => 'dcstat',
   'auto_connect' => 1,
   #'insert_by'=>10, # uncomment if you have 0-100 users # !!!TODO make auto !!! TODO max time in insert cache
@@ -310,6 +310,10 @@ $config{'queries'}{'tth'} = {
                                                        #'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'filename',
 };
+
+psmisc::config( 0, 0, 0, 1 );
+
+
 
 my %every;
 
