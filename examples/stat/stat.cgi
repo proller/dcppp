@@ -13,11 +13,13 @@ fast slow slowbytime
 
 
 =cut
+package statcgi;
+
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
-our ( %config, $db );
+our ( %config, $param,$db );
 our $root_path;
 
 BEGIN {
@@ -42,7 +44,8 @@ print '<html><head><title>RU DC stat</title><style>
 #psmisc::config();
 #$config{'log_all'} = 0;
 our %queries;
-do $root_path . 'stat.pl';
+#do $root_path . 'stat.pl';
+#use stat;
 #print 'hi';
 $config{'log_all'} = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
@@ -103,6 +106,7 @@ for ( @ask ? @ask : sort { $queries{$a}{'order'} <=> $queries{$b}{'order'} } gre
   my $q = { %{ $queries{$_} } };
   print "$_ ($q->{'desc'}):<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
+printlog 'cgip', Dumper $param;
   my $res = make_query( $q, $_, $param->{'time'} );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
