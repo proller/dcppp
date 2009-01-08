@@ -37,7 +37,17 @@ if ( $ARGV[0] eq 'calc' ) {
       local $Data::Dumper::Indent = 0;
       local $Data::Dumper::Terse  = 1;
       #$db->do('INSERT INTO slow VALUES ('.$db->quote($query).', '.$db->quote('').','.$db->quote(Dumper $res).' )');
-      $db->insert_hash( 'slow', { 'name' => $query, 'result' => Dumper($res), 'period' => $time, 'time' => int(time) } );
+my $n=0;
+for my $row (@$res) {
+++$n;
+my $dmp = Dumper($row);
+#printlog 'res len=', length $dmp;
+
+#      $db->insert_hash( 'slow', { 'name' => $query, 'result' => $dmp, 'period' => $time, 'time' => int(time) } );
+      $db->insert_hash( 'slow', { 'name' => $query, 'n'=>$n,'result' => $dmp, 'period' => $time, 'time' => int(time) } );
+}
+$db->do("DELETE FROM slow WHERE name=".$db->quote($query)." AND period=".$db->quote($time)." AND n>$n ");
+
       $db->flush_insert('slow');
     }
   }
@@ -181,7 +191,12 @@ for (@ARGV) {
           #        printlog( 'chatline', join '!',@_ );
           my %s;
           ( $s{nick}, $s{string} ) = $_[0] =~ /^<([^>]+)> (.+)$/;
-          $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } ) if $s{nick} and $s{string};
+if ($s{nick} and $s{string}) {
+          $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } ) ;
+} else {
+          printlog( 'err','wtf chat',@_ );
+
+}
         },
         'welcome' => sub {
           my $dc = shift;

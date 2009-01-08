@@ -40,12 +40,12 @@ print "Content-type: text/html; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
 print '<html><head><title>RU DC stat</title><style>
 .tth {font-family:monospace, "Courier New";font-size:4px;} 
 .magnet-darr {font: bolder larger; text-decoration:none; color:green;}
-.onetable { border:solid 1px gray; zzmin-width:50%; zzdisplay:inline-block;}
-.half { zmin-width:50%; max-width:70%; display:inline-block;}
+.onetable { border:solid 1px gray;  }
+.half {  max-width:70%; display:inline-block;}
 
-.zright { float:right; clear:left;}
-.zleft { float:left; clear:left;}
 </style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
+#.zright { float:right; clear:left;}.zleft { float:left; clear:left;}
+
 #print "[$root_path]";
 #psmisc::config();
 #$config{'log_all'} = 0;
@@ -55,7 +55,8 @@ print '<html><head><title>RU DC stat</title><style>
 $config{'log_all'} = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
 #$config{'log_trace'} = $config{'log_dmpbef'} = 0;
-$config{'log_dmp'} = $config{'log_dbg'} = 1, $db->{'explain'} = 1,
+$config{'log_dmp'} = $config{'log_dbg'} = 1, 
+#$db->{'explain'} = 1,
   if $param->{'debug'};
 $config{'view'} = 'html';
 $db->retry_off();
@@ -71,7 +72,10 @@ print ' days ', (
     $config{'periods'}{$a} <=> $config{'periods'}{$b}
     } keys %{ $config{'periods'} }
     #3600, map {$_ * 86400}qw(1 7 30 366)
-) unless grep { $param->{$_} } qw(string tth);
+) unless (grep { $param->{$_} } qw(string tth)) or
+($param->{'query'} and !$config{'queries'}{$param->{'query'}}{'periods'})
+;
+print "pq[$config{'queries'}{$param->{'query'}}{'periods'}]";
 #print ' limit ',  ( map { qq{<a href="#" onclick="createCookie('on_page', '$_');window.location.reload(false);">$_</a> } } qw(10 20 50 100) ),;
 print '<br/>';
 #);
@@ -119,7 +123,7 @@ for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'
   print " ($q->{'desc'}):" if $q->{'desc'};
 print "<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
-  printlog 'cgip', Dumper $param;
+#  printlog 'cgip', Dumper $param;
   my $res = statlib::make_query( $q, $_, $param->{'time'} );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
