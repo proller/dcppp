@@ -4,7 +4,7 @@
 =copyright
 stat bot
 =cut
-package stat;
+package statlib;
 use strict;
 #eval { 
 use Time::HiRes qw(time sleep); 
@@ -15,11 +15,18 @@ use Net::DirectConnect::clihub;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 #use DBI;
-our (%config, $param,  $db, %queries);
 
 use lib $root_path. './pslib';
 use pssql;
 use psmisc;
+
+
+  use Exporter 'import';
+  our @EXPORT    = qw(%config  $param   $db ); #%queries
+our (%config, $param,  $db, ); #%queries
+
+
+
 psmisc::config( 0, 0, 0, 1 );
 #$config{'log_all'}=1;
 $config{'log_trace'} = $config{'log_dmpbef'} = 0;
@@ -40,7 +47,7 @@ $config{'periods'} = {
 };
 $config{'sql'} = {
   'driver' => 'mysql',    #'sqlite',
-  #  'driver'       => 'sqlite',
+    'driver'       => 'sqlite',
   'dbname'       => 'dcstat',
   'auto_connect' => 1,
   #'insert_by'=>10, # uncomment if you have 0-100 users # !!!TODO make auto !!! TODO max time in insert cache
@@ -54,7 +61,7 @@ $config{'sql'} = {
       'hub'    => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'   => 1,  'default' => '', ),
       'nick'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'   => 1,  'default' => '', ),
       'ip'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15,  'Zindex'  => 1,  'default' => '', ),
-      'port'   => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1 ),
+      'port'   => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1 ,  'default' => 0,),
       'tth'    => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 40,  'default' => '', 'index'   => 1 ),
       'string' => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 255, 'default' => '', 'index'   => 1 ),
     },
@@ -117,8 +124,8 @@ $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
 
 =z
-$queries{'queries top string'} = {
-  #  %{ $queries{'queries top tth'} },
+$config{'queries'}{'queries top string'} = {
+  #  %{ $config{'queries'}{'queries top tth'} },
 #!  'main'   => 1,
   'show'   => [qw(cnt string)],                                                                  #time
   'desc'   => 'Most searched',
@@ -129,8 +136,8 @@ $queries{'queries top string'} = {
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-$queries{'results top'} = {
-  #  %{ $queries{'queries top tth raw'} },
+$config{'queries'}{'results top'} = {
+  #  %{ $config{'queries'}{'queries top tth raw'} },
 #!  'main'   => 1,
   'show'   => [qw(cnt string filename size tth)],    #time
   'desc'   => 'Most stored',
@@ -144,7 +151,7 @@ $queries{'results top'} = {
 };
 
 my $queriesfast = 'queries' . ( $config{'periods'}{ $param->{'time'} } ? $param->{'time'} : 'd' );
-$queries{'queries top tth'} = {
+$config{'queries'}{'queries top tth'} = {
 #!  'main' => 1,
   'desc' => 'Most downloaded',
   'show' => [qw(cnt string filename size tth )],    #time
@@ -160,8 +167,8 @@ $queries{'queries top tth'} = {
 };
 =cut
 
-$queries{'queries top string raw'} = {
-  #  %{ $queries{'queries top tth raw'} },
+$config{'queries'}{'queries top string raw'} = {
+  #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
   'periods' => 1,
   'show'    => [qw(cnt string)],            #time
@@ -174,8 +181,8 @@ $queries{'queries top string raw'} = {
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-$queries{'results top raw'} = {
-  #  %{ $queries{'queries top tth raw'} },
+$config{'queries'}{'results top raw'} = {
+  #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'     => 1,
   'periods'  => 1,
   'show'     => [qw(cnt string filename size tth)],    #time
@@ -188,14 +195,17 @@ $queries{'results top raw'} = {
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-$queries{'queries top tth raw'} = {
+$config{'queries'}{'queries top tth raw'} = {
   'main'     => 1,
   'periods'  => 1,
   'desc'     => 'Most downloaded',
-  'show'     => [qw(cnt tth)],          #time
+#  'show'     => [qw(cnt tth)],          #time
+  'show' => [qw(cnt string filename size tth )],    #time
                                         #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
-  'SELECT'   => 'tth, COUNT(*) as cnt',
+#  'SELECT'   => 'tth, COUNT(*) as cnt',
+  'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'     => 'queries',
+  'LEFT JOIN' => 'results USING (tth)',
   'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'tth',
   #!  'HAVING'   => 'cnt > 1',
@@ -203,7 +213,7 @@ $queries{'queries top tth raw'} = {
   'order'    => ++$order,
 };
 #
-$queries{'queries string last'} = {
+$config{'queries'}{'queries string last'} = {
   'main' => 1,
   'desc' => 'last searches',
   #  'show'     => [qw(time hub nick string filename size tth)],          #time
@@ -223,8 +233,8 @@ $queries{'queries string last'} = {
   'ORDER BY' => 'queries.time DESC',
   'order'    => ++$order,
 };
-$queries{'queries tth last'} = {
-  %{ $queries{'queries string last'} },
+$config{'queries'}{'queries tth last'} = {
+  %{ $config{'queries'}{'queries string last'} },
   'desc' => 'last downloads',
 #  'LEFT JOIN' => 'results USING (tth)',
 #    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string',
@@ -260,8 +270,8 @@ $queries{'queries tth last'} = {
 #  'ORDER BY' => 'queries.time DESC',
   'order' => ++$order,
 };
-$queries{'results ext'} = {
-  #  %{ $queries{'queries top tth raw'} },
+$config{'queries'}{'results ext'} = {
+  #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'     => 1,
   'show'     => [qw(cnt ext )],         #time
   'desc'     => 'by extention',
@@ -274,12 +284,12 @@ $queries{'results ext'} = {
   'LIMIT'    => 10,
   'order'    => ++$order,
 };
-#$queries{'results top string'} = {
-#  %{ $queries{'queries top string'} },
+#$config{'queries'}{'results top string'} = {
+#  %{ $config{'queries'}{'queries top string'} },
 #  'show' => [qw(cnt string tth filename size )],    #time
 #  'FROM' => 'results',
 #};
-$queries{'string'} = {
+$config{'queries'}{'string'} = {
 'desc' => $param->{'string'}, #!!! dehtml
   'show' => [qw(cnt string  filename size tth)],    #time
        #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
@@ -289,24 +299,24 @@ $queries{'string'} = {
   'GROUP BY' => 'tth',
   #  'HAVING'   => 'cnt > 1',
   'ORDER BY' => 'cnt DESC',
-  #  %{ $queries{'queries top string'} },
+  #  %{ $config{'queries'}{'queries top string'} },
   #  'show' => [qw(cnt string filename size )],    #time
   'FROM' => 'results',
 };
-$queries{'tth'} = {
-  %{ $queries{'string'} },
+$config{'queries'}{'tth'} = {
+  %{ $config{'queries'}{'string'} },
   'desc'     => 'various filenames',
   'show'     => [qw(cnt string filename size tth)],    #time
                                                        #'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'filename',
 };
-$db ||= pssql->new( %{ $config{'sql'} or {} }, );
-#$db->{'dbh'}->{'unicode'} = 1;
+
 my %every;
 
 sub every {
   my ( $sec, $func ) = ( shift, shift );
-  #printlog('dev','every', $sec, $every{$func}, time, $func ),
+#  printlog('dev','everyR', $sec, $every{$func}, time, $func );
+#  printlog('dev','every', $sec, $every{$func}, time, $func ),
   $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
 }
 
@@ -325,7 +335,7 @@ sub make_query {
     #print Dumper $res;
     return [ grep { $_ } @$res[ 0 .. $config{'query_default'}{'LIMIT'} - 1 ] ];
   }
-printlog Dumper $param;
+#printlog 'mkparams:', Dumper $param;
 
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
   $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'},
@@ -345,15 +355,22 @@ printlog Dumper $param;
 sub is_slow {
   my ($query) = @_;
   return ( (
-            $config{'sql'}{'table_param'}{ $queries{$query}{'FROM'} }{'big'}
-        and $queries{$query}{'GROUP BY'}
-        and $queries{$query}{'main'}
+            $config{'sql'}{'table_param'}{ $config{'queries'}{$query}{'FROM'} }{'big'}
+        and $config{'queries'}{$query}{'GROUP BY'}
+        and $config{'queries'}{$query}{'main'}
     )
-      or $queries{$query}{'slow'}
+      or $config{'queries'}{$query}{'slow'}
     )
-    # $queries{$query}{'GROUP BY'} =~ /\bcnt\b/i
+    # $config{'queries'}{$query}{'GROUP BY'} =~ /\bcnt\b/i
     ;
-  #      print "slow:$query ($queries{$query}{'FROM'})\n";
+  #      print "slow:$query ($config{'queries'}{$query}{'FROM'})\n";
 }
+
+
+$db ||= pssql->new( %{ $config{'sql'} or {} }, );
+#$db->{'dbh'}->{'unicode'} = 1;
+#print 'db init';
+
+
 
 1;

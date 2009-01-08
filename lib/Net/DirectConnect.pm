@@ -79,7 +79,7 @@ sub new {
     'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
-    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR) },
+    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
     #todo
     'reconnects'      => 5,
     'reconnect_sleep' => 5,
@@ -158,8 +158,11 @@ sub connect {
     'Proto'    => $self->{'Proto'} || 'tcp',
     #    'Type'     => SOCK_STREAM,
     'Timeout' => $self->{'Timeout'},
-    ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
+    ( $self->{'nonblocking'} ? ( 'Blocking' => 0 , 
+) : () ),
     #    'Blocking' => 0,
+'MultiHomed' => 1, #del
+
     %{ $self->{'sockopts'} || {} },
   );
   $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1
@@ -174,6 +177,7 @@ sub connect {
 
 sub connect_check {
   my $self = shift;
+    $self->log('trace', 'DC::connect_check');
   return 0
     if $self->{'Proto'} eq 'udp'
       or $self->{'status'} eq 'listening'
@@ -280,6 +284,9 @@ sub DESTROY {
 
 sub recv {
   my $self = shift;
+    $self->log('trace', 'DC::recv', $self->{'number'});
+
+    $self->log('trace', 'DC::recv ret runned', $self->{'number'}),
   return '0E0' if $self->{'recv_runned'}{ $self->{'number'} };
   $self->{'recv_runned'}{ $self->{'number'} } = 1;
   my $sleep = shift || 0;
@@ -292,8 +299,10 @@ sub recv {
   $self->{'databuf'} = '';
   #  my $reads = 5;
   #LOOP:
+    $self->log('trace', 'DC::recv', 'bef loop');
   {
     do {
+    $self->log('trace', 'DC::recv', 'in loop', $reads);
       $readed = 0;
       $ret = '0E0', last unless $self->{'select'} and $self->{'socket'};
 #      $self->info();
@@ -305,7 +314,10 @@ sub recv {
           and !$self->{'socket'}->connected()
           and $self->{'Proto'} ne 'udp';
       for my $client ( $self->{'select'}->can_read($sleep) ) {
+    $self->log('trace', 'DC::recv', 'can_read');
+
         if ( $self->{'accept'} and $client == $self->{'socket'} ) {
+    $self->log('trace', 'DC::recv', 'accept');
           if ( $_ = $self->{'socket'}->accept() ) {
             $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
               %$self, clear(),
@@ -333,10 +345,11 @@ sub recv {
         }
         $self->{'databuf'} = '';
         #       local $_;
+    $self->log('trace', 'DC::recv', 'recv bef');
         if ( !defined( $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
           or !length( $self->{'databuf'} ) )
         {
-          #        $self->log( 'dcdbg', "[$self->{'number'}]", "recv err, disconnect," );
+                  #$self->log( 'dcdbg', "[$self->{'number'}]", "recv err, disconnect," );
           $self->{'select'}->remove($client);
           $self->disconnect();
           $self->{'status'} = 'destroy';
@@ -345,7 +358,7 @@ sub recv {
         } else {
           ++$readed;
           ++$ret;
- #                  $self->log( 'dcdbg', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
+                   #$self->log( 'dcdbg', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
         }
         if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
         else {
@@ -358,6 +371,9 @@ sub recv {
           my $endmsg = '[' . ( $self->{'buf'} =~ /^CSND\s/ ? "\n" : '' ) . '|]';
           while ( $self->{'buf'} =~ s/^(.*?)$endmsg//s ) {
             local $_ = $1;
+
+#    $self->log('trace', 'DC::recv', 'parse', $_);
+
             last if $self->{'status'} eq 'destroy';
             #     $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
             next unless /\w/;
@@ -381,9 +397,12 @@ sub recv {
         }
       }
       #     $self->log( 'dcdbg',"[$self->{'number'}] canread fin r=$readed");
+    $self->log('trace', 'DC::recv', $self->{'number'}, 'loop fin');
     } while ( $readed and $reads++ < $self->{'max_reads'} );
     # TODO !!! timed
   }
+    $self->log('trace', 'DC::recv', $self->{'number'}, 'looking at clients');
+
   for ( keys %{ $self->{'clients'} } ) {
     #    $self->{'clients'}{$_} = undef,
     #     $self->log( 'dev', "del client[$_]", ),
@@ -394,6 +413,7 @@ sub recv {
   }
   #!  ++$ret, $self->destroy() if $self->{'status'} eq 'destroy';
   $self->{'recv_runned'}{ $self->{'number'} } = undef;
+    $self->log('trace', 'DC::recv', $self->{'number'}, 'return');
   return $ret;
 }
 
@@ -472,6 +492,8 @@ sub wait_sleep {
 
 sub work {
   my $self   = shift;
+    $self->log('trace', 'DC::work');
+
   my @params = @_;
   $self->{'periodic'}->() if ref $self->{'periodic'} eq 'CODE';
   return $self->wait_sleep(@params) if @params;
@@ -741,6 +763,7 @@ sub info {
 #sub active {  my $self = shift;  return map { $_->{'number'} } grep { $_->{'socket'} } $self, values %{ $self->{'clients'} };}
 sub active {
   my $self = shift;
+    $self->log('trace', 'DC::active');
   return 1 if grep { $self->{'status'} eq $_ } qw(connecting   connected   reconnecting listening transfer);
   return 0;
 }
