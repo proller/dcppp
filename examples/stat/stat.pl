@@ -112,6 +112,18 @@ sub flush_all {
 }
 $SIG{INT} = $SIG{__DIE__} = \&close_all;
 $SIG{HUP} = $^O =~ /win/i ? \&close_all : \&flush_all;
+$SIG{INFO} = sub {
+
+#              printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+              printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+
+
+local @_ = grep { $_->active() } @dc;
+printlog 'info', 'active hubs:', map {$_->{'host'}} @_;
+
+printlog 'info', 'hashes:', map {$_.'='.scalar %{$work{$_}}} qw(asked ask_db) ;
+
+};
 for (@ARGV) {
   local @_;
   if ( /^-/ and @_ = split '=', $_ ) {
