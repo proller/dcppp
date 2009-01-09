@@ -4,6 +4,7 @@
 =copyright
 stat bot
 =cut
+
 package statlib;
 use strict;
 #eval {
@@ -23,12 +24,12 @@ our ( %config, $param, $db, );               #%queries
 $config{'log_trace'} = $config{'log_dmpbef'} = 0;
 $config{'log_dmp'} = 0;
 #$config{'log_dcdev'}=1;
-$config{'log_dcdmp'}=0;
+$config{'log_dcdmp'} = 0;
 #$config{'log_obj'}='-obj.log';
-$config{'hit_to_ask'}         ||= 2;
-$config{'ask_retry'}          ||= 3600;
-$config{'limit_max'}          ||= 100;
-$config{'use_slow'}           ||= 1;
+$config{'hit_to_ask'} ||= 2;
+$config{'ask_retry'}  ||= 3600;
+$config{'limit_max'}  ||= 100;
+$config{'use_slow'}   ||= 1;
 $config{'row_all'} = { 'not null' => 1, };
 $config{'periods'} = {
   'h' => 3600,
@@ -111,7 +112,6 @@ delete $config{'sql'}{'table'}{'resultsf'}{$_} for qw(time nick ip port file);
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
-
 $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
 
@@ -158,7 +158,6 @@ $config{'queries'}{'queries top tth'} = {
   'order'    => ++$order,
 };
 =cut
-
 $config{'queries'}{'queries top string'} = {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
@@ -340,9 +339,9 @@ $config{'queries'}{'chat last'} = {
   'class'          => 'half',
   'no_string_link' => 1,
   'show'           => [qw(time hub nick string)],    #time
-  #  'desc'    => 'top flooders',
-  'SELECT' => '*',
-  'FROM'   => 'chat',
+                                                     #  'desc'    => 'top flooders',
+  'SELECT'         => '*',
+  'FROM'           => 'chat',
   #  'WHERE'   => ['nick != ""'],
   #  'GROUP BY' => 'tth',
   #  'GROUP BY' => 'nick',
@@ -392,7 +391,6 @@ sub make_query {
     printlog 'evaled',Dumper $res;
     return [ grep { $_ } @$res[ 0 .. $config{'query_default'}{'LIMIT'} - 1 ] ];
 =cut
-
   }
   #printlog 'mkparams:', Dumper $param;
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';

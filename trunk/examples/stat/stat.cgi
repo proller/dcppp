@@ -13,6 +13,7 @@ fast slow slowbytime
 
 
 =cut
+
 package statcgi;
 use strict;
 eval { use Time::HiRes qw(time sleep); };

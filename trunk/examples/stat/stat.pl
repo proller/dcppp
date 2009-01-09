@@ -3,7 +3,6 @@
 package statpl;
 use strict;
 no warnings qw(uninitialized);
-
 our ( %config, $param, $db, );    #%queries
 use statlib;
 use Data::Dumper;                 #dev only
@@ -14,9 +13,7 @@ our $root_path;
 use lib $root_path. '../../lib';
 use lib $root_path. './';
 use Net::DirectConnect::clihub;
-
-$config{'queue_recalc_every'} ||= 10; #30
-
+$config{'queue_recalc_every'} ||= 10;    #30
 my %every;
 
 sub every {
@@ -25,8 +22,6 @@ sub every {
   #  printlog('dev','every', $sec, $every{$func}, time, $func ),
   $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
 }
-
-
 #print Dumper (\%INC, \@INC);
 print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
 if ( $ARGV[0] eq 'calc' ) {
@@ -100,7 +95,6 @@ if ( $ARGV[0] eq 'calc' ) {
       for $ARGV[1]
       or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} };
 =cut
-
   exit;
 }
 our %work;
@@ -137,8 +131,7 @@ for (@ARGV) {
       'auto_connect' => 0,
       #          'M'           => 'P',
       'reconnects' => 500,
-    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello  UserCommand) }, #SR
-
+      'no_print'   => { map { $_ => 1 } qw(Search Quit MyINFO Hello  UserCommand) },    #SR
       #    'print_search' => 1,
       'handler' => {
         'Search_parse_aft' => sub {
@@ -183,53 +176,47 @@ for (@ARGV) {
             }
           );
 ##$dc->log('hndl', 'q');
-#do 
-#my $n = 0;
+          #do
+          #my $n = 0;
           every(
             1,
             our $queueask_ ||= sub {
-
-while($q = shift @{ $work{'toask'} } or return)
-{
-
-#++$n;
-
-#          ;
-#$work{''}
- 
-#              printlog( 'info', "ch", $n, $q, $dc->{'host'});
-
-#local $config{'log_dmp'} = 1;
-
-
-my $r;
-$r = $db->line("SELECT * FROM results WHERE ". ((length $q == 39 and $q =~ /^[0-9A-Z]+$/) ? 'tth' : 'string'). "=".$db->quote($q) . " ORDER BY time DESC LIMIT 1") ,
-              printlog( 'info', "checkbase", $q, Dumper($r), exists $work{'ask_db'}{$q})
-
-if (!exists $work{'asked'}{$q} and !exists $work{'ask_db'}{$q}) ;
-              printlog( 'info', "already asked", $q, int (time - $r->{'time'})),
-$work{'ask_db'}{$q}= $work{'asked'}{$q} = $r->{'time'}, next if $r and $r->{'time'}; # + $config{'ask_retry'} > time;
-              printlog( 'info', "checked ok", $q, ) unless exists $work{'ask_db'}{$q};
-$work{'ask_db'}{$q}=0;
-
-
-last;
-} ;
-#                  printlog('dev', "q2", $q, $work{'ask'}{ $q }, Dumper $dc->{'search_todo'} );
-          #if ($q and ++$work{'ask'}{ $q }  >= $config{'hit_to_ask'}  and !exists $work{'asked'}{ $q }) {
-          if (
-            !$dc->{'search_todo'}
-            #and !@{$work{'toask'}||[]}
-            )
-          {
-            $work{'asked'}{$q} = int time;
-            $dc->search($q);
-          }
-else {              
-#printlog( 'info', "ups, todo full", $q, Dumper $dc->{'search_todo'}),
-unshift @{ $work{'toask'} }, $q;
-}
-});
+              while ( $q = shift @{ $work{'toask'} } or return ) {
+                #++$n;
+                #          ;
+                #$work{''}
+                #              printlog( 'info', "ch", $n, $q, $dc->{'host'});
+                #local $config{'log_dmp'} = 1;
+                my $r;
+                $r =
+                  $db->line( "SELECT * FROM results WHERE "
+                    . ( ( length $q == 39 and $q =~ /^[0-9A-Z]+$/ ) ? 'tth' : 'string' ) . "="
+                    . $db->quote($q)
+                    . " ORDER BY time DESC LIMIT 1" ),
+                  #              printlog( 'info', "checkbase", $q, Dumper($r), exists $work{'ask_db'}{$q})
+                  if ( !exists $work{'asked'}{$q} and !exists $work{'ask_db'}{$q} );
+                #              printlog( 'info', "already asked", $q, int (time - $r->{'time'})),
+                $work{'ask_db'}{$q} = $work{'asked'}{$q} = $r->{'time'}, next
+                  if $r and $r->{'time'};    # + $config{'ask_retry'} > time;
+                #              printlog( 'info', "checked ok", $q, ) unless exists $work{'ask_db'}{$q};
+                $work{'ask_db'}{$q} = 0;
+                last;
+              }
+              #                  printlog('dev', "q2", $q, $work{'ask'}{ $q }, Dumper $dc->{'search_todo'} );
+              #if ($q and ++$work{'ask'}{ $q }  >= $config{'hit_to_ask'}  and !exists $work{'asked'}{ $q }) {
+              if (
+                !$dc->{'search_todo'}
+                #and !@{$work{'toask'}||[]}
+                )
+              {
+                $work{'asked'}{$q} = int time;
+                $dc->search($q);
+              } else {
+                #printlog( 'info', "ups, todo full", $q, Dumper $dc->{'search_todo'}),
+                unshift @{ $work{'toask'} }, $q;
+              }
+            }
+          );
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
 #$dc
@@ -262,7 +249,7 @@ unshift @{ $work{'toask'} }, $q;
       %config,
     );
     #$dc->{'no_print'}{'SR'} => 1;
-#printlog 'info', "our version", $dc->{'V'};
+    #printlog 'info', "our version", $dc->{'V'};
     $dc->connect($hub);
     push @dc, $dc;
     $_->work() for @dc;
