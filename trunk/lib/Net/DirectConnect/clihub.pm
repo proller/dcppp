@@ -423,7 +423,7 @@ sub init {
       'parse' => {
         'SR' => $self->{'parse'}{'SR'},
 'UPSR' => sub {
-    $self->log( 'dev', "UPSR", @_ );
+#    $self->log( 'dev', "UPSR", @_ );
 
 },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
