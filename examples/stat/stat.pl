@@ -195,7 +195,7 @@ while($q = shift @{ $work{'toask'} } or return)
  
               printlog( 'info', "ch", $n, $q, );
 
-local $config{'log_dmp'} = 1;
+#local $config{'log_dmp'} = 1;
 
 
 my $r;
@@ -221,7 +221,10 @@ last;
             $work{'asked'}{$q} = int time;
             $dc->search($q);
           }
-#else {              printlog( 'info', "ups, todo full", $q, ),}
+else {              
+printlog( 'info', "ups, todo full", $q, ),
+unshift @{ $work{'toask'} }, $q;
+}
 #}
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
