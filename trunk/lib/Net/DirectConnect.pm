@@ -56,8 +56,9 @@ sub new {
                                 # 8, 9 fireball             The fireball icon is used when the client
                                 # 10, 11 fireball away      has had an upload > 100 kB/s.
     'email'  => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
-    'client' => 'dcp++',                                                              #++: indicates the client
-    'V'      => $VERSION,                                                             #V: tells you the version number
+    'client' => 'perl',#'dcp++',                                                              #++: indicates the client
+    'V'      => $VERSION. ' ' .( split( ' ', '$Revision$' ) )[1],
+,                                                             #V: tells you the version number
     'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
