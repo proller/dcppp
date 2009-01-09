@@ -8,6 +8,10 @@ use Data::Dumper;                 #dev only
 $Data::Dumper::Sortkeys = 1;
 use psmisc;
 #unless (caller) {
+our $root_path;
+use lib $root_path. '../../lib';
+use lib $root_path. './';
+use Net::DirectConnect::clihub;
 
 $config{'queue_recalc_every'} ||= 10; #30
 

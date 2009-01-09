@@ -57,6 +57,7 @@ sub new {
                                 # 10, 11 fireball away      has had an upload > 100 kB/s.
     'email'  => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
     'client' => 'perl',#'dcp++',                                                              #++: indicates the client
+'protocol' => 'nmdc',  # or 'adc'
     'V'      => $VERSION. ' ' .( split( ' ', '$Revision$' ) )[1],
 ,                                                             #V: tells you the version number
     'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
@@ -136,6 +137,24 @@ sub baseinit {
   $self->{'PortList'} ||= {};
   ++$global{'count'};
   $self->{'status'} = 'disconnected';
+$self->protocol($self->{'protocol'})
+}
+
+sub protocol {
+  my $self = shift;
+my ($p) = @_;
+
+
+if ($p =~ /adc/i) {
+$self->{'cmd_bef'} = undef;
+$self->{'cmd_aft'} = "\n";
+}elsif($p) { #$p =~ /nmdc/i
+$self->{'cmd_bef'} = '$';
+$self->{'cmd_aft'} = '|';
+}
+
+$self->{'protocol'} = $p if $p;
+return $self->{'protocol'};
 }
 
 sub connect {
@@ -580,7 +599,9 @@ sub handler {
     my $self = shift;
     $self->connect_check();
     $self->log( 'err', "[$self->{'number'}] ERROR! no socket to send" ), return unless $self->{'socket'};
-    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
+#    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
+    if ( $self->{'sendbuf'} ) { push @sendbuf, $self->{'cmd_bef'} . join( ' ', @_ ) . $self->{'cmd_aft'}; }
+
     else {
       local $_;
 #$self->log( "atmark:", $self->{'socket'}->atmark, " timeout=",$self->{'socket'}->timeout,  'conn=',$self->{'socket'}->connected,'so=', $self->{'socket'});

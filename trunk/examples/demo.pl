@@ -30,6 +30,8 @@ $dc->connect( $ARGV[0] );               # connect can parse dchub://hub:port/
 $dc->wait_connect();
 $dc->work(10);                          # seconds
 $dc->chatline('hello world');
+$dc->search('3P7MBNO5COD4TLTVXLJB53ZJBVIL2QRHIGZ2N5A');
+$dc->search('xxx');
 # get all filelists
 $dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
 #$dc->get('user', 'TTH/I2VAVWYGSVTBHSKN3BOA6EWTXSP4GAKJMRK2DJQ', 'file.zip'); # get file by tth from user
