@@ -41,7 +41,7 @@ print '<html><head><title>RU DC stat</title><style>
 .tth {font-family:monospace, "Courier New";font-size:4px;} 
 .magnet-darr {font: bolder larger; text-decoration:none; color:green;}
 .onetable { border:solid 1px gray;  }
-.half {  max-width:70%; display:inline-block;}
+.half {  zzmax-width:70%; display:inline-block;}
 
 </style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #.zright { float:right; clear:left;}.zleft { float:left; clear:left;}
