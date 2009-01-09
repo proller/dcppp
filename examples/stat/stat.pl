@@ -176,8 +176,10 @@ for (@ARGV) {
             }
           );
 ##$dc->log('hndl', 'q');
-do {{
-          $q = shift @{ $work{'toask'} } or return;
+#do 
+while($q = shift @{ $work{'toask'} } or return)
+{
+          ;
 #$work{''}
  
 
@@ -187,13 +189,13 @@ $r = $db->line("SELECT * FROM results WHERE ". ((length $q == 39 and $q =~ /^[0-
 
 if (!exists $work{'asked'}{$q} and !exists $work{'ask_db'}{$q}) ;
               printlog( 'info', "already asked", $q, int (time - $r->{'time'})),
-$work{'ask_db'}{$q}= $work{'asked'}{$q} = $r->{'time'}, redo if $r and $r->{'time'} + $config{'ask_retry'} > time;
+$work{'ask_db'}{$q}= $work{'asked'}{$q} = $r->{'time'}, next if $r and $r->{'time'}; # + $config{'ask_retry'} > time;
               printlog( 'info', "checked ok", $q, ) unless exists $work{'ask_db'}{$q};
 $work{'ask_db'}{$q}=0;
 
 
-#last;
-}} ;
+last;
+} ;
 #                  printlog('dev', "q2", $q, $work{'ask'}{ $q }, Dumper $dc->{'search_todo'} );
           #if ($q and ++$work{'ask'}{ $q }  >= $config{'hit_to_ask'}  and !exists $work{'asked'}{ $q }) {
           if (
