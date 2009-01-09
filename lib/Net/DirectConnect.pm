@@ -183,7 +183,7 @@ sub connect {
 
 sub connect_check {
   my $self = shift;
-  $self->log( 'trace', 'DC::connect_check' );
+  #$self->log( 'trace', 'DC::connect_check' );
   return 0
     if $self->{'Proto'} eq 'udp'
       or $self->{'status'} eq 'listening'
@@ -503,7 +503,7 @@ sub wait_sleep {
 
 sub work {
   my $self = shift;
-  $self->log( 'trace', 'DC::work' );
+#  $self->log( 'trace', 'DC::work' );
   my @params = @_;
   $self->{'periodic'}->() if ref $self->{'periodic'} eq 'CODE';
   return $self->wait_sleep(@params) if @params;
