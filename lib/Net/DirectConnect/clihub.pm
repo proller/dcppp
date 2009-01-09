@@ -60,7 +60,7 @@ sub init {
     ||= {
     'chatline' => sub {
       #$self->log('dcdev', 'chatline parse', Dumper(@_));
-      my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/;
+      my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/s;
       #v: chatline <[++T]øýþú> You are already in the hub.
       $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->cmd('nick_generate'),
         $self->reconnect(),

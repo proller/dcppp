@@ -117,6 +117,8 @@ for (@ARGV) {
       'auto_connect' => 0,
       #          'M'           => 'P',
       'reconnects' => 500,
+    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello  UserCommand) }, #SR
+
       #    'print_search' => 1,
       'handler' => {
         'Search_parse_aft' => sub {
@@ -189,7 +191,7 @@ for (@ARGV) {
           my $dc = shift;
           #        printlog( 'chatline', join '!',@_ );
           my %s;
-          ( $s{nick}, $s{string} ) = $_[0] =~ /^<([^>]+)> (.+)$/;
+          ( $s{nick}, $s{string} ) = $_[0] =~ /^<([^>]+)> (.+)$/s;
           if ( $s{nick} and $s{string} ) {
             $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } );
           } else {
