@@ -2,6 +2,8 @@
 # $Id: stat.pm 383 2009-01-08 03:47:59Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/examples/stat/stat.pm $
 package statpl;
 use strict;
+no warnings qw(uninitialized);
+
 our ( %config, $param, $db, );    #%queries
 use statlib;
 use Data::Dumper;                 #dev only
@@ -181,11 +183,14 @@ for (@ARGV) {
           );
 ##$dc->log('hndl', 'q');
 #do 
+my $n = 0;
 while($q = shift @{ $work{'toask'} } or return)
 {
-          ;
+++$n;
+#          ;
 #$work{''}
  
+              printlog( 'info', "ch", $n, $q, );
 
 my $r;
 $r = $db->line("SELECT * FROM results WHERE ". ((length $q == 39 and $q =~ /^[0-9A-Z]+$/) ? 'tth' : 'string'). "=".$db->quote($q) . " ORDER BY time DESC LIMIT 1") ,
