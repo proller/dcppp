@@ -164,7 +164,7 @@ for (@ARGV) {
 ##$dc->log('hndl', 'evrr');
           every(
             $config{'queue_recalc_every'},
-            our $queuerecalc ||= sub {
+            our $queuerecalc_ ||= sub {
 ##$dc->log('hndl', 'e sub');
               my $time = int time;
               $work{'toask'} = [ (
@@ -184,16 +184,20 @@ for (@ARGV) {
           );
 ##$dc->log('hndl', 'q');
 #do 
-my $n = 0;
+#my $n = 0;
+          every(
+            1,
+            our $queueask_ ||= sub {
+
 while($q = shift @{ $work{'toask'} } or return)
 {
 
-++$n;
+#++$n;
 
 #          ;
 #$work{''}
  
-              printlog( 'info', "ch", $n, $q, );
+#              printlog( 'info', "ch", $n, $q, $dc->{'host'});
 
 #local $config{'log_dmp'} = 1;
 
@@ -222,10 +226,10 @@ last;
             $dc->search($q);
           }
 else {              
-printlog( 'info', "ups, todo full", $q, ),
+#printlog( 'info', "ups, todo full", $q, Dumper $dc->{'search_todo'}),
 unshift @{ $work{'toask'} }, $q;
 }
-#}
+});
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
 #$dc
@@ -258,7 +262,7 @@ unshift @{ $work{'toask'} }, $q;
       %config,
     );
     #$dc->{'no_print'}{'SR'} => 1;
-printlog 'info', "our version", $dc->{'V'};
+#printlog 'info', "our version", $dc->{'V'};
     $dc->connect($hub);
     push @dc, $dc;
     $_->work() for @dc;
