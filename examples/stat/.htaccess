@@ -1,3 +1,4 @@
+
+AddHandler cgi-script .cgi
+Options +ExecCGI
 DirectoryIndex stat.cgi
-options +ExecCGI
-  
