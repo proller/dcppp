@@ -1,3 +1,5 @@
+#$Id$ $URL$
+
 package Net::DirectConnect;
 use strict;
 no warnings qw(uninitialized);

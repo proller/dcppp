@@ -1,11 +1,6 @@
-#Copyright (C) 2005-2006 Oleg Alexeenkov http://sourceforge.net/projects/dcppp proler@gmail.com icq#89088275
-#my $Id = '$Id$';
+# $Id$ $URL$
 package Net::DirectConnect::clihub;
-#use lib '../../..';
-#use lib '../..';
-#use lib '..';
-#  use Time::HiRes;
-eval { use Time::HiRes qw(time sleep); };
+ use Time::HiRes qw(time sleep); 
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use Net::DirectConnect;
@@ -78,14 +73,14 @@ sub init {
           )
         {
           $self->log( 'warn', "[$nick] oper: set min interval = $1" );
-          $self->{'search_every'} = $1 || $self->{'search_every_min'};
+          $self->{'search_every'} = int $1 || $self->{'search_every_min'};
           $self->search_retry();
         }
         if ( $text =~ /Пожалуйста подождите (\d+) секунд перед следующим поиском\./
           or $text eq 'Пожалуйста не используйте поиск так часто!' )
         {
-          $self->log( 'warn', "[$nick] oper: increase min interval +=", $1 || $self->{'search_every_min'} ),
-            $self->{'search_every'} += $1 || $self->{'search_every_min'};
+          $self->log( 'warn', "[$nick] oper: increase min interval +=", int $1 || $self->{'search_every_min'} ),
+            $self->{'search_every'} += int $1 || $self->{'search_every_min'};
           $self->search_retry();
         }
       }
