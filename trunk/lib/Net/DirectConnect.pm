@@ -539,7 +539,7 @@ sub parse {
 #                  ? ''
 #                  : ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
     my $cmd;
-$cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^</;
+$cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;
 
     s/^\$?(\w+)\s*//,
      $cmd = $1 unless $cmd;
