@@ -23,12 +23,11 @@ our @EXPORT = qw(%config  $param   $db );    #%queries
 our ( %config, $param, $db, );               #%queries
 #$config{'log_all'}=1;
 $config{'log_trace'} = $config{'log_dmpbef'} = 0;
-$config{'log_dmp'} = 0;
+$config{'log_dmp'} = 1;
 #$config{'log_dcdev'}=1;
 $config{'log_dcdmp'}=1;
 #$config{'log_obj'}='-obj.log';
 $config{'hit_to_ask'}         ||= 2;
-$config{'queue_recalc_every'} ||= 30;
 $config{'ask_retry'}          ||= 3600;
 $config{'limit_max'}          ||= 100;
 $config{'use_slow'}           ||= 1;
@@ -353,14 +352,6 @@ $config{'queries'}{'chat last'} = {
   'order'    => ++$order,
 };
 psmisc::config( 0, 0, 0, 1 );
-my %every;
-
-sub every {
-  my ( $sec, $func ) = ( shift, shift );
-  #  printlog('dev','everyR', $sec, $every{$func}, time, $func );
-  #  printlog('dev','every', $sec, $every{$func}, time, $func ),
-  $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
-}
 
 sub is_slow {
   my ($query) = @_;
