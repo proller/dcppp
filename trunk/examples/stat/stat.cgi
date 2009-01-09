@@ -40,10 +40,14 @@ print "Content-type: text/html; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
 print '<html><head><title>RU DC stat</title><style>
 .tth {font-family:monospace, "Courier New";font-size:4px;} 
 .magnet-darr {font: bolder larger; text-decoration:none; color:green;}
-.onetable { border:solid 1px gray;  }
-.half {  zzmax-width:70%; display:inline-block;}
+.onetable { ZZborder:solid 1px gray; text-align:center; margin:10px; }
+.half {   display:inline-block;}
 .version {text-align:center; font-size:xx-small;}
-
+tr:nth-child(2n+0) {background-color:GhostWhite;}
+tr:nth-child(2n+1) {background-color:WhiteSmoke;}
+tr {background-color:WhiteSmoke;}
+tr:hover {background-color:Gainsboro;}
+table {border:solid 1px Gainsboro; background-color:Gainsboro; margin:auto;}
 </style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #.zright { float:right; clear:left;}.zleft { float:left; clear:left;}
 #print "[$root_path]";
@@ -155,6 +159,9 @@ for (
     print '</tr>';
   }
   print '</table></div>';
+  print '<br/>'
+if  $q->{'group_end'};
+
   #      print Dumper $res;
   psmisc::flush();
 }

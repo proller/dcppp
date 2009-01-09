@@ -177,6 +177,7 @@ $config{'queries'}{'queries string last'} = {
   'main' => 1,
   #'class'=>  'right'    ,
   'class' => 'half',
+  'group_end' => 1,
   'desc'  => 'last searches',
   #  'show'     => [qw(time hub nick string filename size tth)],          #time
   #  'SELECT'   => 'results.*,queries.*',
@@ -232,6 +233,8 @@ $config{'queries'}{'queries tth last'} = {
   %{ $config{'queries'}{'queries string last'} },
   'desc'  => 'last downloads',
   'class' => 'half',
+  'group_end' => 1,
+#  'class' => '',
 #  'LEFT JOIN' => 'results USING (tth)',
 #    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string',
 #    'SELECT'   => '*, (SELECT * FROM results WHERE queries.tth=results.tth LIMIT 1) AS r',
@@ -269,6 +272,7 @@ $config{'queries'}{'queries tth last'} = {
 $config{'queries'}{'results ext'} = {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'     => 1,
+  'class'  => 'half',
   'show'     => [qw(cnt ext )],         #time
   'desc'     => 'by extention',
   'SELECT'   => '*, COUNT(*) as cnt',
@@ -285,31 +289,11 @@ $config{'queries'}{'results ext'} = {
 #  'show' => [qw(cnt string tth filename size )],    #time
 #  'FROM' => 'results',
 #};
-$config{'queries'}{'string'} = {
-  #'desc' => $param->{'string'}, #!!! dehtml
-  'show' => [qw(cnt string  filename size tth)],    #time
-       #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
-  'no_query_link' => 1,
-  'SELECT'        => '*, COUNT(*) as cnt',
-  #  'FROM'     => 'queries',
-  'WHERE'    => ['tth != ""'],
-  'GROUP BY' => 'tth',
-  #  'HAVING'   => 'cnt > 1',
-  'ORDER BY' => 'cnt DESC',
-  #  %{ $config{'queries'}{'queries top string'} },
-  #  'show' => [qw(cnt string filename size )],    #time
-  'FROM' => 'results',
-};
-$config{'queries'}{'tth'} = {
-  %{ $config{'queries'}{'string'} },
-  'desc'     => 'various filenames',
-  'show'     => [qw(cnt string filename size tth)],    #time
-                                                       #'WHERE'    => ['tth != ""'],
-  'GROUP BY' => 'filename',
-};
 $config{'queries'}{'counts'} = {
   'main' => 1,
   'show' => [qw(tbl cnt )],                            #time
+  'class'  => 'half',
+  'group_end' => 1,
   'sql'  => (
     join ' UNION ',
     map         { qq{SELECT '$_' as tbl, COUNT(*) as cnt FROM $_ } }
@@ -337,6 +321,7 @@ $config{'queries'}{'chat last'} = {
   'main' => 1,
   #  'periods' => 1,
   'class'          => 'half',
+  'group_end' => 1,
   'no_string_link' => 1,
   'show'           => [qw(time hub nick string)],    #time
                                                      #  'desc'    => 'top flooders',
@@ -348,6 +333,31 @@ $config{'queries'}{'chat last'} = {
   'ORDER BY' => 'time DESC',
   'order'    => ++$order,
 };
+
+
+$config{'queries'}{'string'} = {
+  #'desc' => $param->{'string'}, #!!! dehtml
+  'show' => [qw(cnt string  filename size tth)],    #time
+       #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
+  'no_query_link' => 1,
+  'SELECT'        => '*, COUNT(*) as cnt',
+  #  'FROM'     => 'queries',
+  'WHERE'    => ['tth != ""'],
+  'GROUP BY' => 'tth',
+  #  'HAVING'   => 'cnt > 1',
+  'ORDER BY' => 'cnt DESC',
+  #  %{ $config{'queries'}{'queries top string'} },
+  #  'show' => [qw(cnt string filename size )],    #time
+  'FROM' => 'results',
+};
+$config{'queries'}{'tth'} = {
+  %{ $config{'queries'}{'string'} },
+  'desc'     => 'various filenames',
+  'show'     => [qw(cnt string filename size tth)],    #time
+                                                       #'WHERE'    => ['tth != ""'],
+  'GROUP BY' => 'filename',
+};
+
 psmisc::config( 0, 0, 0, 1 );
 
 sub is_slow {
