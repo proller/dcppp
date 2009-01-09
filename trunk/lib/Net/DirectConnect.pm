@@ -81,7 +81,7 @@ sub new {
     'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
-#!    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
+    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
     #todo
     'reconnects'      => 5,
     'reconnect_sleep' => 5,
@@ -381,16 +381,24 @@ $separator = "\\|" if $self->{'buf'} =~ /^[\$<]/;
             last if $self->{'status'} eq 'destroy';
 #                 $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
             next unless /\w/;
-            $self->parse( (
+            $self->parse( 
+$_
+            );
+
+#(
 #                /^\$/ ? '' :                      '$'                  . 
+=z
   (
                   defined( $self->{'parse'}{ (/^\$?(\S+)/)[0] } )
                   ? ''
                   : ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
-                  )
+#                  )
               )
-              . $_
-            );
+              . 
+=cut
+
+
+
             #          $self->parse( /^\$/ ? $_ : ( #$_ =
             #                    '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_) );
             #     $self->log( 'dcdbg',"[$self->{'number'}] dev lastexit ",length($self->{'buf'} )," [$self->{'buf'} ]", );
@@ -505,8 +513,16 @@ sub parse {
   my $self = shift;
   for ( local @_ = @_ ) {
 #    s/^\$(\w+)\s*//;
-    s/^\$?(\w+)\s*//;
-    my $cmd = $1;
+
+
+#                  defined( $self->{'parse'}{ (/^\$?(\S+)/)[0] } )
+#                  ? ''
+#                  : ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
+    my $cmd;
+$cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^</;
+
+    s/^\$?(\w+)\s*//,
+     $cmd = $1 unless $cmd;
     my ( @ret, $ret );
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
     $self->handler( $cmd . '_parse_bef_bef', $_ );
