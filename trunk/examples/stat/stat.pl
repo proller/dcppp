@@ -27,6 +27,7 @@ sub every {
 }
 
 
+#print Dumper (\%INC, \@INC);
 print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
 if ( $ARGV[0] eq 'calc' ) {
   #exit unless $config{'use_slow'};
