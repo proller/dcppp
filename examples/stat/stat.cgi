@@ -108,9 +108,9 @@ $config{'human'}{'magnet-dl'} = sub {
   return '&nbsp;<a class="magnet-darr" href="magnet:?' . $_ . '">&darr;</a>' if $_;
   return '';
 };
-print '<a>', $param->{'tth'}, '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' if $param->{'tth'};
+print '<a>', psmisc::html_chars($param->{'tth'}), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' if $param->{'tth'};
 my @ask;
-$config{'queries'}{'string'}{'desc'} = $param->{'string'}, @ask = ('string') if $param->{'string'};
+$config{'queries'}{'string'}{'desc'} = psmisc::html_chars($param->{'string'}), @ask = ('string') if $param->{'string'};
 @ask = ('tth') if $param->{'tth'};
 #$param->{'on_page'} ||= 100,
 @ask = ( $param->{'query'} )
