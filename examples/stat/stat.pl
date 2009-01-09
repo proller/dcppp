@@ -8,6 +8,19 @@ use Data::Dumper;                 #dev only
 $Data::Dumper::Sortkeys = 1;
 use psmisc;
 #unless (caller) {
+
+$config{'queue_recalc_every'} ||= 10; #30
+
+my %every;
+
+sub every {
+  my ( $sec, $func ) = ( shift, shift );
+  #  printlog('dev','everyR', $sec, $every{$func}, time, $func );
+  #  printlog('dev','every', $sec, $every{$func}, time, $func ),
+  $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
+}
+
+
 print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
 if ( $ARGV[0] eq 'calc' ) {
   #exit unless $config{'use_slow'};
@@ -142,7 +155,7 @@ for (@ARGV) {
           #        printlog('dcdev', "q1", $q, $work{'ask'}{ $q });
 ##$dc->log('hndl', 'evrf');
 ##$dc->log('hndl', 'evrr');
-          statlib::every(
+          every(
             $config{'queue_recalc_every'},
             our $queuerecalc ||= sub {
 ##$dc->log('hndl', 'e sub');
@@ -163,8 +176,25 @@ for (@ARGV) {
             }
           );
 ##$dc->log('hndl', 'q');
+do {{
           $q = shift @{ $work{'toask'} } or return;
-          #        printlog('dcdev', "q2", $q, $work{'ask'}{ $q }, Dumper $dc->{'search_todo'} );
+#$work{''}
+ 
+
+my $r;
+$r = $db->line("SELECT * FROM results WHERE ". ((length $q == 39 and $q =~ /^[0-9A-Z]+$/) ? 'tth' : 'string'). "=".$db->quote($q) . " ORDER BY time DESC LIMIT 1") ,
+              printlog( 'info', "checkbase", $q, Dumper($r), exists $work{'ask_db'}{$q})
+
+if (!exists $work{'asked'}{$q} and !exists $work{'ask_db'}{$q}) ;
+              printlog( 'info', "already asked", $q, int (time - $r->{'time'})),
+$work{'ask_db'}{$q}= $work{'asked'}{$q} = $r->{'time'}, redo if $r and $r->{'time'} + $config{'ask_retry'} > time;
+              printlog( 'info', "checked ok", $q, ) unless exists $work{'ask_db'}{$q};
+$work{'ask_db'}{$q}=0;
+
+
+#last;
+}} ;
+#                  printlog('dev', "q2", $q, $work{'ask'}{ $q }, Dumper $dc->{'search_todo'} );
           #if ($q and ++$work{'ask'}{ $q }  >= $config{'hit_to_ask'}  and !exists $work{'asked'}{ $q }) {
           if (
             !$dc->{'search_todo'}
@@ -174,6 +204,7 @@ for (@ARGV) {
             $work{'asked'}{$q} = int time;
             $dc->search($q);
           }
+#else {              printlog( 'info', "ups, todo full", $q, ),}
 #}
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
@@ -207,6 +238,7 @@ for (@ARGV) {
       %config,
     );
     #$dc->{'no_print'}{'SR'} => 1;
+printlog 'info', "our version", $dc->{'V'};
     $dc->connect($hub);
     push @dc, $dc;
     $_->work() for @dc;
