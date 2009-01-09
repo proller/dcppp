@@ -4,7 +4,6 @@
 =copyright
 stat bot
 =cut
-
 package statlib;
 use strict;
 #eval {
@@ -40,8 +39,8 @@ $config{'periods'} = {
   'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
 $config{'sql'} = {
-  'driver' => 'mysql',    #'sqlite',
-  #    'driver'       => 'sqlite',
+  'driver'       => 'mysql',    #'sqlite',
+                                #    'driver'       => 'sqlite',
   'dbname'       => 'dcstat',
   'auto_connect' => 1,
   #'insert_by'=>10, # uncomment if you have 0-100 users # !!!TODO make auto !!! TODO max time in insert cache
@@ -80,12 +79,11 @@ $config{'sql'} = {
       'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 3090, 'Zindex' => 1, 'default' => '', ),
     },
     'slow' => {
-      'name'   => pssql::row( undef, 'type' => 'VARCHAR', 'length'  => 32, 'index'  => 1, 'primary' => 1 ),
-      'period' => pssql::row( undef, 'type' => 'VARCHAR', 'length'  => 8,  'index'  => 1, 'primary' => 1, 'default' => '' ),
-
-      'n'     => pssql::row( undef, 'type' => 'INT',   'index'  => 1, 'primary' => 1, ),
-      'result' => pssql::row( undef, 'type' => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper'  => 1, ),
-      'time' => pssql::row( 'time', 'index' => 1 ),
+      'name'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 32, 'index' => 1, 'primary' => 1 ),
+      'period' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 8,  'index' => 1, 'primary' => 1, 'default' => '' ),
+      'n' => pssql::row( undef, 'type' => 'INT', 'index' => 1, 'primary' => 1, ),
+      'result' => pssql::row( undef,  'type'  => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper' => 1, ),
+      'time'   => pssql::row( 'time', 'index' => 1 ),
     },
   },
   'table_param' => {
@@ -116,6 +114,7 @@ delete $config{'sql'}{'table'}{'resultsf'}{$_} for qw(time nick ip port file);
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
+
 $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
 
@@ -162,11 +161,12 @@ $config{'queries'}{'queries top tth'} = {
   'order'    => ++$order,
 };
 =cut
+
 $config{'queries'}{'queries top string'} = {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
   'periods' => 1,
-'class'=>  'half'    ,
+  'class'   => 'half',
   'show'    => [qw(cnt string)],            #time
   'desc'    => 'Most searched',
   'SELECT'  => 'string, COUNT(*) as cnt',
@@ -179,10 +179,9 @@ $config{'queries'}{'queries top string'} = {
 };
 $config{'queries'}{'queries string last'} = {
   'main' => 1,
-#'class'=>  'right'    ,
-'class'=>  'half'    ,
-
-  'desc' => 'last searches',
+  #'class'=>  'right'    ,
+  'class' => 'half',
+  'desc'  => 'last searches',
   #  'show'     => [qw(time hub nick string filename size tth)],          #time
   #  'SELECT'   => 'results.*,queries.*',
   'FROM'   => 'queries',
@@ -199,10 +198,7 @@ $config{'queries'}{'queries string last'} = {
   #  'GROUP BY' => 'queries.string',
   'ORDER BY' => 'queries.time DESC',
   'order'    => ++$order,
-
 };
-
-
 $config{'queries'}{'results top'} = {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'     => 1,
@@ -220,12 +216,12 @@ $config{'queries'}{'results top'} = {
 $config{'queries'}{'queries top tth'} = {
   'main'    => 1,
   'periods' => 1,
-'class'=>  'half'    ,
+  'class'   => 'half',
   'desc'    => 'Most downloaded',
   #  'show'     => [qw(cnt tth)],          #time
   'show' => [qw(cnt string filename size tth )],    #time
        #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
-  #  'SELECT'   => 'tth, COUNT(*) as cnt',
+       #  'SELECT'   => 'tth, COUNT(*) as cnt',
   'SELECT'    => '*, COUNT(*) as cnt',
   'FROM'      => 'queries',
   'LEFT JOIN' => 'results USING (tth)',
@@ -236,17 +232,10 @@ $config{'queries'}{'queries top tth'} = {
   'order'    => ++$order,
 };
 #
-
-
-
-
-
-
-
 $config{'queries'}{'queries tth last'} = {
   %{ $config{'queries'}{'queries string last'} },
-  'desc' => 'last downloads',
-'class'=>  'half'    ,
+  'desc'  => 'last downloads',
+  'class' => 'half',
 #  'LEFT JOIN' => 'results USING (tth)',
 #    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string',
 #    'SELECT'   => '*, (SELECT * FROM results WHERE queries.tth=results.tth LIMIT 1) AS r',
@@ -325,49 +314,44 @@ $config{'queries'}{'tth'} = {
 $config{'queries'}{'counts'} = {
   'main' => 1,
   'show' => [qw(tbl cnt )],                            #time
-  'sql' => (
+  'sql'  => (
     join ' UNION ',
     map         { qq{SELECT '$_' as tbl, COUNT(*) as cnt FROM $_ } }
       sort grep { !$config{'sql'}{'table_param'}{$_}{'no_counts'} } keys %{ $config{'sql'}{'table'} }
   ),
   'order' => ++$order,
 };
-
 $config{'queries'}{'chat top'} = {
   #  %{ $config{'queries'}{'queries top tth raw'} },
-  'main'    => 1,
-#  'periods' => 1,
-'class'=>  'half'    ,
-  'show'    => [qw(cnt hub nick)],            #time
-  'desc'    => 'top flooders',
-  'SELECT'  => '*, COUNT(*) as cnt',
-  'FROM'    => 'chat',
-#  'WHERE'   => ['nick != ""'],
+  'main' => 1,
+  #  'periods' => 1,
+  'class'  => 'half',
+  'show'   => [qw(cnt hub nick)],     #time
+  'desc'   => 'top flooders',
+  'SELECT' => '*, COUNT(*) as cnt',
+  'FROM'   => 'chat',
+  #  'WHERE'   => ['nick != ""'],
   #  'GROUP BY' => 'tth',
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-
 $config{'queries'}{'chat last'} = {
   #  %{ $config{'queries'}{'queries top tth raw'} },
-  'main'    => 1,
-#  'periods' => 1,
-'class'=>  'half'    ,
-'no_string_link' => 1,
-  'show'    => [qw(time hub nick string)],            #time
-#  'desc'    => 'top flooders',
-  'SELECT'  => '*',
-  'FROM'    => 'chat',
-#  'WHERE'   => ['nick != ""'],
+  'main' => 1,
+  #  'periods' => 1,
+  'class'          => 'half',
+  'no_string_link' => 1,
+  'show'           => [qw(time hub nick string)],    #time
+  #  'desc'    => 'top flooders',
+  'SELECT' => '*',
+  'FROM'   => 'chat',
+  #  'WHERE'   => ['nick != ""'],
   #  'GROUP BY' => 'tth',
-#  'GROUP BY' => 'nick',
+  #  'GROUP BY' => 'nick',
   'ORDER BY' => 'time DESC',
   'order'    => ++$order,
 };
-
-
-
 psmisc::config( 0, 0, 0, 1 );
 my %every;
 
@@ -401,22 +385,17 @@ sub make_query {
     #print "SLOWASK";
     $sql = "SELECT * FROM slow WHERE name = " . $db->quote($query) . (
       #!$period ?'': ' AND period='. $db->quote($period)
-($config{'queries'}{$query}{'periods'} ?       ' AND period=' . $db->quote($period) : '')
-
-. 
-" LIMIT $config{'query_default'}{'LIMIT'}"
+      ( $config{'queries'}{$query}{'periods'} ? ' AND period=' . $db->quote($period) : '' )
+      . " LIMIT $config{'query_default'}{'LIMIT'}"
     );
-    my $res =  $db->query($sql);
-my @ret;
-for my $row (@$res) {
-#    printlog 'preeval',$row->{'result'};
+    my $res = $db->query($sql);
+    my @ret;
+    for my $row (@$res) {
+      #    printlog 'preeval',$row->{'result'};
+      push @ret, eval $row->{'result'};
+    }
+    return \@ret;
 
-push @ret, eval $row->{'result'};
-
-
-
-}
-return \@ret;
 =z
     my $res =  $db->query($sql)->[0]{'result'};
     printlog 'preeval',Dumper $res;
@@ -424,6 +403,7 @@ return \@ret;
     printlog 'evaled',Dumper $res;
     return [ grep { $_ } @$res[ 0 .. $config{'query_default'}{'LIMIT'} - 1 ] ];
 =cut
+
   }
   #printlog 'mkparams:', Dumper $param;
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';

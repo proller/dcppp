@@ -13,7 +13,6 @@ fast slow slowbytime
 
 
 =cut
-
 package statcgi;
 use strict;
 eval { use Time::HiRes qw(time sleep); };
@@ -45,7 +44,6 @@ print '<html><head><title>RU DC stat</title><style>
 
 </style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #.zright { float:right; clear:left;}.zleft { float:left; clear:left;}
-
 #print "[$root_path]";
 #psmisc::config();
 #$config{'log_all'} = 0;
@@ -55,8 +53,8 @@ print '<html><head><title>RU DC stat</title><style>
 $config{'log_all'} = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
 #$config{'log_trace'} = $config{'log_dmpbef'} = 0;
-$config{'log_dmp'} = $config{'log_dbg'} = 1, 
-#$db->{'explain'} = 1,
+$config{'log_dmp'} = $config{'log_dbg'} = 1,
+  #$db->{'explain'} = 1,
   if $param->{'debug'};
 $config{'view'} = 'html';
 $db->retry_off();
@@ -72,9 +70,9 @@ print ' days ', (
     $config{'periods'}{$a} <=> $config{'periods'}{$b}
     } keys %{ $config{'periods'} }
     #3600, map {$_ * 86400}qw(1 7 30 366)
-) unless (grep { $param->{$_} } qw(string tth)) or
-($param->{'query'} and !$config{'queries'}{$param->{'query'}}{'periods'})
-;
+  )
+  unless ( grep { $param->{$_} } qw(string tth) )
+  or ( $param->{'query'} and !$config{'queries'}{ $param->{'query'} }{'periods'} );
 #print "pq[$config{'queries'}{$param->{'query'}}{'periods'}]";
 #print ' limit ',  ( map { qq{<a href="#" onclick="createCookie('on_page', '$_');window.location.reload(false);">$_</a> } } qw(10 20 50 100) ),;
 print '<br/>';
@@ -109,21 +107,24 @@ my @ask;
 $config{'queries'}{'string'}{'desc'} = $param->{'string'}, @ask = ('string') if $param->{'string'};
 @ask = ('tth') if $param->{'tth'};
 #$param->{'on_page'} ||= 100,
-$config{'query_default'}{'LIMIT'} = 100, @ask = ( $param->{'query'} )
+@ask = ( $param->{'query'} )
   if $param->{'query'} and $config{'queries'}{ $param->{'query'} };
+$config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
 #print Dumper @ask;
-for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
-  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
+for (
+  @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
+  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} }
+  )
 {
   #print "for $_;";
-  my $q = { %{ $config{'queries'}{$_}||next } };
-  print '<div class="onetable '.$q->{'class'}.'">',$q->{'no_query_link'}
+  my $q = { %{ $config{'queries'}{$_} || next } };
+  print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
     ? $_
     : qq{<a href="?query=} . psmisc::encode_url($_) . qq{">$_</a>};
   print " ($q->{'desc'}):" if $q->{'desc'};
-print "<br\n/>";
+  print "<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
-#  printlog 'cgip', Dumper $param;
+  #  printlog 'cgip', Dumper $param;
   my $res = statlib::make_query( $q, $_, $param->{'time'} );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
@@ -143,8 +144,9 @@ print "<br\n/>";
         . qq{">$row->{$_}</a>}
       )
       . psmisc::human( 'magnet-dl', $row )
-      for grep { length $row->{$_} and !$q->{'no_'.$_.'_link'} } qw(string tth);   #($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
-                                                       #    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
+      for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } }
+      qw(string tth);    #($param->{'string'} ? () : 'string' ), ($param->{'tth'} ? () : 'tth' );
+                         #    $row->{'tth'} .= psmisc::human('magnet-dl', $row ) if $row->{'tth'};
     $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
     $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
