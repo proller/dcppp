@@ -101,6 +101,9 @@ our %work;
 our @dc;
 
 sub close_all {
+
+#              printlog( 'info', 'CLOSEBYSIG'	      );
+
   flush_all();
   $db->disconnect();
   $_->destroy() for @dc;
@@ -108,6 +111,8 @@ sub close_all {
 }
 
 sub flush_all {
+#              printlog( 'info', 'FLUSHBYSIG'	      );
+
   $db->flush_insert();
 }
 $SIG{INT} = $SIG{__DIE__} = \&close_all;
@@ -115,15 +120,19 @@ $SIG{HUP} = $^O =~ /win/i ? \&close_all : \&flush_all;
 $SIG{INFO} = sub {
 
 #              printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
-              printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+              printlog( 'info', "queue len=", scalar @{ $work{'toask'}||[] }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
 
 
 local @_ = grep { $_->active() } @dc;
-printlog 'info', 'active hubs:', map {$_->{'host'}} @_;
+printlog 'info', 'active hubs:', map {$_->{'host'} . ':'. $_->{'status'}} @_;
 
-printlog 'info', 'hashes:', map {$_.'='.scalar %{$work{$_}}} qw(asked ask_db) ;
+#printlog 'info', 'hashes:', map {$_.'='. %{$work{$_}}} qw(asked ask_db) ;
+printlog 'info', 'hashes:', map {$_.'='. scalar %{$work{$_} || {}} }  qw(ask asked ask_db) ;
 
 };
+
+#printlog 'info', 'hashes:', map {$_.'='. %{$work{$_}}} qw(asked ask_db) ;
+
 for (@ARGV) {
   local @_;
   if ( /^-/ and @_ = split '=', $_ ) {
@@ -190,14 +199,17 @@ for (@ARGV) {
 ##$dc->log('hndl', 'q');
           #do
           #my $n = 0;
+#                              printlog( 'info', "ch1",  $q, $dc->{'host'});
           every(
             1,
             our $queueask_ ||= sub {
+my ($dc) = @_;
+my $q;
               while ( $q = shift @{ $work{'toask'} } or return ) {
                 #++$n;
                 #          ;
                 #$work{''}
-                #              printlog( 'info', "ch", $n, $q, $dc->{'host'});
+#                              printlog( 'info', "ch2",  $q, $dc->{'host'});
                 #local $config{'log_dmp'} = 1;
                 my $r;
                 $r =
@@ -222,12 +234,14 @@ for (@ARGV) {
                 )
               {
                 $work{'asked'}{$q} = int time;
+                printlog( 'info', "search", $q,'on', $dc->{'host'} );
                 $dc->search($q);
               } else {
                 #printlog( 'info', "ups, todo full", $q, Dumper $dc->{'search_todo'}),
                 unshift @{ $work{'toask'} }, $q;
               }
             }
+,$dc
           );
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
