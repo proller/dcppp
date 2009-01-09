@@ -79,7 +79,7 @@ sub new {
     'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
-    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
+#!    'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
     #todo
     'reconnects'      => 5,
     'reconnect_sleep' => 5,
@@ -315,9 +315,9 @@ sub recv {
           and !$self->{'socket'}->connected()
           and $self->{'Proto'} ne 'udp';
       for my $client ( $self->{'select'}->can_read($sleep) ) {
-        $self->log( 'trace', 'DC::recv', 'can_read' );
+#        $self->log( 'trace', 'DC::recv', 'can_read' );
         if ( $self->{'accept'} and $client == $self->{'socket'} ) {
-          $self->log( 'trace', 'DC::recv', 'accept' );
+#          $self->log( 'trace', 'DC::recv', 'accept' );
           if ( $_ = $self->{'socket'}->accept() ) {
             $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
               %$self, clear(),
@@ -363,23 +363,26 @@ sub recv {
         if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
         else {
           $self->{'buf'} .= $self->{'databuf'};
-  #                  $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}]" ) unless $self->{'filehandle'};
   #        $self->{'buf'} =~ s/(.*\|)//s;
   #        for ( split /\|/, $1 ) {
   #        while ($self->{'buf'} =~ s/^([^|]+)\|//) {
   #TODO HERE !!!
-          my $endmsg = '[' . ( $self->{'buf'} =~ /^CSND\s/ ? "\n" : '' ) . '|]';
-          while ( $self->{'buf'} =~ s/^(.*?)$endmsg//s ) {
+#          my $endmsg = '[' . ( $self->{'buf'} =~ /^CSND\s/ ? "\n" : '' ) . '|]';
+#          my $endmsg = '[' . ( $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,3}\s/ ? "\n" : $self->{'buf'} =~ /^[$<]/ ? '|':"\n" ) . ']';
+#          my $endmsg =  ( $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,3}\s/ ? "\n" : $self->{'buf'} =~ /^[$<]/ ? '|':"\n" ) ;
+my $separator = "\n";
+$separator = "\\|" if $self->{'buf'} =~ /^[\$<]/;
+#                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] split by[$separator]" ) unless $self->{'filehandle'};
+          while ( $self->{'buf'} =~ s/^(.*?)$separator//s ) {
             local $_ = $1;
-            #    $self->log('trace', 'DC::recv', 'parse', $_);
+#                $self->log('trace', 'DC::recv', "parse [$_]");
             last if $self->{'status'} eq 'destroy';
-            #     $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
+#                 $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
             next unless /\w/;
             $self->parse( (
-                /^\$/ ? '' :    #$_ =
-                  '$'
-                  . (
-                  defined( $self->{'parse'}{ (/^(\S+)/)[0] } )
+#                /^\$/ ? '' :                      '$'                  . 
+  (
+                  defined( $self->{'parse'}{ (/^\$?(\S+)/)[0] } )
                   ? ''
                   : ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
                   )
@@ -499,7 +502,8 @@ sub work {
 sub parse {
   my $self = shift;
   for ( local @_ = @_ ) {
-    s/^\$(\w+)\s*//;
+#    s/^\$(\w+)\s*//;
+    s/^\$?(\w+)\s*//;
     my $cmd = $1;
     my ( @ret, $ret );
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
