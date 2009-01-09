@@ -21,9 +21,9 @@ our @EXPORT = qw(%config  $param   $db );    #%queries
 our ( %config, $param, $db, );               #%queries
 #$config{'log_all'}=1;
 $config{'log_trace'} = $config{'log_dmpbef'} = 0;
-$config{'log_dmp'} = 1;
+$config{'log_dmp'} = 0;
 #$config{'log_dcdev'}=1;
-$config{'log_dcdmp'}=1;
+$config{'log_dcdmp'}=0;
 #$config{'log_obj'}='-obj.log';
 $config{'hit_to_ask'}         ||= 2;
 $config{'ask_retry'}          ||= 3600;

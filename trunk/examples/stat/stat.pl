@@ -187,11 +187,16 @@ for (@ARGV) {
 my $n = 0;
 while($q = shift @{ $work{'toask'} } or return)
 {
+
 ++$n;
+
 #          ;
 #$work{''}
  
               printlog( 'info', "ch", $n, $q, );
+
+local $config{'log_dmp'} = 1;
+
 
 my $r;
 $r = $db->line("SELECT * FROM results WHERE ". ((length $q == 39 and $q =~ /^[0-9A-Z]+$/) ? 'tth' : 'string'). "=".$db->quote($q) . " ORDER BY time DESC LIMIT 1") ,
