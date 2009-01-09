@@ -58,7 +58,7 @@ sub new {
     'email'  => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
     'client' => 'perl',#'dcp++',                                                              #++: indicates the client
 'protocol' => 'nmdc',  # or 'adc'
-    'V'      => $VERSION. ' ' .( split( ' ', '$Revision$' ) )[1],
+    'V'      => $VERSION. '_' .( split( ' ', '$Revision$' ) )[1],
 ,                                                             #V: tells you the version number
     'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'

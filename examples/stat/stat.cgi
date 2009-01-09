@@ -42,6 +42,7 @@ print '<html><head><title>RU DC stat</title><style>
 .magnet-darr {font: bolder larger; text-decoration:none; color:green;}
 .onetable { border:solid 1px gray;  }
 .half {  zzmax-width:70%; display:inline-block;}
+.version {text-align:center; font-size:xx-small;}
 
 </style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #.zright { float:right; clear:left;}.zleft { float:left; clear:left;}
@@ -157,8 +158,11 @@ for (
   #      print Dumper $res;
   psmisc::flush();
 }
+print qq{<div class="version"><a href="http://pro.setun.net/dcppp/">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}.( split( ' ', '$Revision$' ) )[1].qq{</div>};
+print '<script type="text/javascript" src="http://iekill.proisk.ru/iekill.js"></script>';
 print '</body></html>';
 #}
 #print "<pre>";
 #print Dumper $param;
 #print Dumper \%ENV;
+
