@@ -21,22 +21,22 @@ use Exporter 'import';
 our @EXPORT = qw(%config  $param   $db );    #%queries
 our ( %config, $param, $db, );               #%queries
 #$config{'log_all'}=1;
-$config{'log_trace'} = $config{'log_dmpbef'} = 0;
-$config{'log_dmp'} = 0;
+$config{'log_trace'} ||= $config{'log_dmpbef'} = 0;
+$config{'log_dmp'} ||= 0;
 #$config{'log_dcdev'}=1;
-$config{'log_dcdmp'} = 0;
+$config{'log_dcdmp'} ||= 0;
 #$config{'log_obj'}='-obj.log';
 $config{'hit_to_ask'} ||= 2;
 $config{'ask_retry'}  ||= 3600;
 $config{'limit_max'}  ||= 100;
 $config{'use_slow'}   ||= 1;
-$config{'row_all'} = { 'not null' => 1, };
-$config{'periods'} = {
+$config{'row_all'} ||= { 'not null' => 1, };
+$config{'periods'} ||= {
   'h' => 3600,
   'd' => 86400,
   'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
-$config{'sql'} = {
+$config{'sql'} ||= {
   'driver'       => 'mysql',    #'sqlite',
                                 #    'driver'       => 'sqlite',
   'dbname'       => 'dcstat',
@@ -83,11 +83,35 @@ $config{'sql'} = {
       'result' => pssql::row( undef,  'type'  => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper' => 1, ),
       'time'   => pssql::row( 'time', 'index' => 1 ),
     },
+
+    'hubs' => {
+      'time'   => pssql::row( 'time', 'index' => 1 ),
+      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1, 'default' => '', ),
+      'size' => pssql::row( undef, 'type' => 'BIGINT', 'index' => 1,  ),
+      'users' => pssql::row( undef, 'type' => 'INT', 'index' => 1, ),
+
+    },
+
+    'users' => {
+      'time'   => pssql::row( 'time', 'index' => 1 ),
+      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1, 'default' => '', ),
+      'nick'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'   => 1,  'default' => '', ),
+      'ip'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15,  'Zindex'  => 1,  'default' => '', ),
+      'port'   => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1,   'default' => 0, ),
+      'size' => pssql::row( undef, 'type' => 'BIGINT', 'index' => 1, 'default' => 0, ),
+      'online' => pssql::row( 'time', 'index' => 1 , 'default' => 0,),
+      'info' => pssql::row( undef,  'type'  => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper' => 1, ),
+
+    },
+
+
+
   },
   'table_param' => {
     'queries' => { 'big'       => 1, },
     'results' => { 'big'       => 1, },
     'slow'    => { 'no_counts' => 1, },
+    'hubs'    => { 'no_counts' => 1, },
   },
 };
 
@@ -158,7 +182,7 @@ $config{'queries'}{'queries top tth'} = {
   'order'    => ++$order,
 };
 =cut
-$config{'queries'}{'queries top string'} = {
+$config{'queries'}{'queries top string'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
   'periods' => 1,
@@ -173,7 +197,7 @@ $config{'queries'}{'queries top string'} = {
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-$config{'queries'}{'queries string last'} = {
+$config{'queries'}{'queries string last'} ||= {
   'main' => 1,
   #'class'=>  'right'    ,
   'class' => 'half',
@@ -182,7 +206,7 @@ $config{'queries'}{'queries string last'} = {
   #  'show'     => [qw(time hub nick string filename size tth)],          #time
   #  'SELECT'   => 'results.*,queries.*',
   'FROM'   => 'queries',
-  'show'   => [qw(time hub nick string filename size tth)],    #time
+  'show'   => [qw(time hub nick string )],    #time  filename size tth
                                                                #'SELECT'   => 'queries.*, results.*',
                                                                #    'SELECT'   => 'results.*,queries.*',
   'SELECT' => '*',
@@ -196,7 +220,7 @@ $config{'queries'}{'queries string last'} = {
   'ORDER BY' => 'queries.time DESC',
   'order'    => ++$order,
 };
-$config{'queries'}{'results top'} = {
+$config{'queries'}{'results top'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'     => 1,
   'periods'  => 1,
@@ -210,7 +234,7 @@ $config{'queries'}{'results top'} = {
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-$config{'queries'}{'queries top tth'} = {
+$config{'queries'}{'queries top tth'} ||= {
   'main'    => 1,
   'periods' => 1,
   'class'   => 'half',
@@ -229,11 +253,13 @@ $config{'queries'}{'queries top tth'} = {
   'order'    => ++$order,
 };
 #
-$config{'queries'}{'queries tth last'} = {
+$config{'queries'}{'queries tth last'} ||= {
   %{ $config{'queries'}{'queries string last'} },
   'desc'  => 'last downloads',
   'class' => 'half',
   'group_end' => 1,
+'show'   => [qw(time hub nick filename size tth)],    #time  filename size tth string
+
 #  'class' => '',
 #  'LEFT JOIN' => 'results USING (tth)',
 #    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string',
@@ -269,13 +295,51 @@ $config{'queries'}{'queries tth last'} = {
 #  'ORDER BY' => 'queries.time DESC',
   'order' => ++$order,
 };
-$config{'queries'}{'results ext'} = {
+
+$config{'queries'}{'hubs now'} ||= {
+
+  'main'     => 1,
+#  'group_end' => 1,
+  'class'  => 'half',
+  'show'     => [qw(hub users size)],         #time
+
+  'SELECT'         => ' *', #DISTINCT
+  'FROM'     => 'hubs',
+  'WHERE'    => ['time = (SELECT time FROM hubs ORDER BY time DESC LIMIT 1)'],
+  'ORDER BY' => 'size DESC',
+
+#      'time'        'hub'         'size'        'users'
+  'order' => ++$order,
+};
+
+
+$config{'queries'}{'hubs top'} ||= {
+
+  'main'     => 1,
+  'class'  => 'half',
+  'group_end' => 1,
+  'show'     => [qw(hub users size time)],         #time
+
+  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+  'FROM'     => 'hubs',
+  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+  'ORDER BY' => 'size DESC',
+
+#      'time'        'hub'         'size'        'users'
+  'order' => ++$order,
+};
+
+
+
+
+
+$config{'queries'}{'results ext'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'     => 1,
   'class'  => 'half',
-  'show'     => [qw(cnt ext )],         #time
+  'show'     => [qw(cnt ext size)],         #time
   'desc'     => 'by extention',
-  'SELECT'   => '*, COUNT(*) as cnt',
+  'SELECT'   => '*, SUM(size) as size , COUNT(*) as cnt',
   'FROM'     => 'results',
   'WHERE'    => ['ext != ""'],
   'GROUP BY' => 'ext',
@@ -289,7 +353,7 @@ $config{'queries'}{'results ext'} = {
 #  'show' => [qw(cnt string tth filename size )],    #time
 #  'FROM' => 'results',
 #};
-$config{'queries'}{'counts'} = {
+$config{'queries'}{'counts'} ||= {
   'main' => 1,
   'show' => [qw(tbl cnt )],                            #time
   'class'  => 'half',
@@ -301,7 +365,7 @@ $config{'queries'}{'counts'} = {
   ),
   'order' => ++$order,
 };
-$config{'queries'}{'chat top'} = {
+$config{'queries'}{'chat top'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main' => 1,
   #  'periods' => 1,
@@ -316,7 +380,7 @@ $config{'queries'}{'chat top'} = {
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-$config{'queries'}{'chat last'} = {
+$config{'queries'}{'chat last'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main' => 1,
   #  'periods' => 1,
@@ -335,7 +399,9 @@ $config{'queries'}{'chat last'} = {
 };
 
 
-$config{'queries'}{'string'} = {
+
+
+$config{'queries'}{'string'} ||= {
   #'desc' => $param->{'string'}, #!!! dehtml
   'show' => [qw(cnt string  filename size tth)],    #time
        #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
@@ -350,13 +416,14 @@ $config{'queries'}{'string'} = {
   #  'show' => [qw(cnt string filename size )],    #time
   'FROM' => 'results',
 };
-$config{'queries'}{'tth'} = {
+$config{'queries'}{'tth'} ||= {
   %{ $config{'queries'}{'string'} },
   'desc'     => 'various filenames',
   'show'     => [qw(cnt string filename size tth)],    #time
                                                        #'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'filename',
 };
+
 
 psmisc::config( 0, 0, 0, 1 );
 

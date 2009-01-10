@@ -30,6 +30,13 @@ $dc->connect( $ARGV[0] );               # connect can parse dchub://hub:port/
 $dc->wait_connect();
 $dc->work(10);                          # seconds
 $dc->chatline('hello world');
+{ # fine tuned getinfo with send buffer
+local $dc->{'sendbuf'} = 1; #enable buffer
+$dc->sendcmd( 'GetINFO', $_, $dc->{'Nick'}) for grep {$dc->{'NickList'}{$_}{'online'} and !$dc->{'NickList'}{$_}{'info'}} keys $dc->{'NickList'};
+$dc->sendcmd(); #flush buffer (actual send)
+}
+$dc->sendcmd( 'GetINFO'); 
+
 $dc->search('3P7MBNO5COD4TLTVXLJB53ZJBVIL2QRHIGZ2N5A');
 $dc->search('xxx');
 # get all filelists
