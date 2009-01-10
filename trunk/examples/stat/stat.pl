@@ -126,9 +126,8 @@ sub flush_all {
 
   $db->flush_insert();
 }
-$SIG{INT} = $SIG{__DIE__} = \&close_all;
-$SIG{HUP} = $^O =~ /win/i ? \&close_all : \&flush_all;
-$SIG{INFO} = sub {
+
+sub print_info {
 
 #              printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
               printlog( 'info', "queue len=", scalar @{ $work{'toask'}||[] }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
@@ -147,6 +146,15 @@ printlog 'info', 'hashes:', map {$_.'='. scalar %{$work{$_} || {}} }  qw(ask ask
 
 };
 
+
+
+
+$SIG{INT} = $SIG{__DIE__} = \&close_all;
+$SIG{HUP} = $^O =~ /win/i ? 
+#\&close_all 
+\&print_info
+: \&flush_all;
+$SIG{INFO} = \&print_info ;
 #printlog 'info', 'hashes:', map {$_.'='. %{$work{$_}}} qw(asked ask_db) ;
 
 for (@ARGV) {

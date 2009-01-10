@@ -343,12 +343,23 @@ $config{'queries'}{'hubs top'} ||= {
   'class'  => 'half',
   'show'     => [qw(hub users size time)],         #time
 
+
+
 #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
-'SELECT'         => '*',
-  'FROM'     => 'hubs',
+#  'FROM'     => 'hubs',
 #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
-  'GROUP BY' => 'hub',
-  'ORDER BY' => 'size DESC',
+
+#  'SELECT'         => '*',  'FROM'     => 'hubs',  'GROUP BY' => 'hub',  'ORDER BY' => 'size DESC',
+
+
+  'SELECT'         => 'h2.time,h2.users, hub, max(size) as size',  
+'FROM'     => 'hubs',  
+'LEFT JOIN' => 'hubs AS h2' ,
+'USING' => '(hub, size)',
+'GROUP BY' => 'hubs.hub',  
+'ORDER BY' => 'size DESC',
+#select    from hubs left join hubs as h2 using (hub, size) group by hubs.hub order by size desc limit 10
+
 
 #      'time'        'hub'         'size'        'users'
   'order' => ++$order,
@@ -361,11 +372,20 @@ $config{'queries'}{'hubs now'} ||= {
 #  'group_end' => 1,
   'group_end' => 1,
   'class'  => 'half',
-  'show'     => [qw(hub users size)],         #time
+  'show'     => [qw(time hub users size)],         #time
 
-  'SELECT'         => ' *', #DISTINCT
   'FROM'     => 'hubs',
+
+
+  'SELECT'         => '*', #DISTINCT
   'WHERE'    => ['time = (SELECT time FROM hubs ORDER BY time DESC LIMIT 1)'],
+
+#  'SELECT'         => 'hub, time, users, max(time)', 
+#select hub, time, max(size) from hubs group by hub limit 10
+#  'GROUP BY' => 'hub',
+#'WHERE' => [],
+
+
   'ORDER BY' => 'size DESC',
 
 #      'time'        'hub'         'size'        'users'
