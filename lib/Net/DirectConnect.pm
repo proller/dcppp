@@ -604,7 +604,7 @@ sub handler {
     $self->log( 'err', "[$self->{'number'}] ERROR! no socket to send" ), return unless $self->{'socket'};
 #    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
 push @sendbuf, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
-    if ( $self->{'sendbuf'} and @_ ) {  }
+    if ( ($self->{'sendbuf'} and @_) or !@sendbuf ) {  }
 
     else {
       local $_;
