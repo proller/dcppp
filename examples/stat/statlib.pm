@@ -320,9 +320,11 @@ $config{'queries'}{'hubs top'} ||= {
   'group_end' => 1,
   'show'     => [qw(hub users size time)],         #time
 
-  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+#  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+'SELECT'         => '*',
   'FROM'     => 'hubs',
-  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+#  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+  'GROUP BY' => 'hub',
   'ORDER BY' => 'size DESC',
 
 #      'time'        'hub'         'size'        'users'
