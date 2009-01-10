@@ -173,7 +173,7 @@ sub connect {
   return 0
     if ( $self->{'socket'} and $self->{'socket'}->connected() )
     or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
-  $self->log( 'dcdbg', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
+  $self->log( 'info', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
   $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
@@ -197,7 +197,7 @@ sub connect {
     if !$self->{'socket'};
   $self->get_my_addr();
   $self->log(
-    'dcdbg', "[$self->{'number'}]", "connect to $self->{'host'} [me=$self->{'myip'}] ok ",    #socket=[$self->{'socket'}]
+    'info', "[$self->{'number'}]", "connect to $self->{'host'} [me=$self->{'myip'}] ok ",    #socket=[$self->{'socket'}]
   );                                                                                          # Dumper($self->{'sockopts'})
   $self->recv();
   return 0;

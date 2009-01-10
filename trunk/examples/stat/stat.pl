@@ -136,8 +136,7 @@ $SIG{INFO} = sub {
 
 local @_ = grep { $_->active() } @dc;
 printlog 'info', 'active hubs:', map {$_->{'host'} . ':'. $_->{'status'}
-.
-' sock:'.$_->{'socket'}->connected() .' eof='. $_->{'socket'}->eof() 
+#.' sock:'.$_->{'socket'}->connected() .' eof='. $_->{'socket'}->eof() 
 
 
 
