@@ -118,6 +118,7 @@ sub init {
       #        $self->{'no_print_welcome'} = 1;
       #      	$self->wait();
       #$self->{'log'}->('info', "HELLO end rec st:[$self->{'status'}]");
+$self->cmd('make_hub');
     },
     'Supports' => sub {
       $self->supports_parse( $_[0], $self );
@@ -312,7 +313,15 @@ sub init {
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'description'} . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$'); },
     'GetNickList' => sub { $self->sendcmd('GetNickList'); },
-    'GetINFO'     => sub { $self->sendcmd( 'GetINFO', $_[0], $self->{'Nick'} ); },
+    'GetINFO'     => sub { 
+#$self->sendcmd( 'GetINFO', $_[0], $self->{'Nick'} ), return if scalar @_ == 1;
+@_ = grep {$self->{'NickList'}{$_}{'online'} and !$self->{'NickList'}{$_}{'info'}} keys %{$self->{'NickList'}} unless @_;
+local $self->{'sendbuf'} = 1;
+
+$self->sendcmd( 'GetINFO', $_, $self->{'Nick'}) for @_;
+#$dc->{'sendbuf'} = 0;
+$self->sendcmd();
+ },
     'ConnectToMe' => sub {
       #print "ctm [$self->{'M'}][$self->{'allow_passive_ConnectToMe'}]\n";
       return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
@@ -441,6 +450,7 @@ sub init {
     $self->log( 'err', "cant listen udp (search repiles)" )
       unless $self->{'myport_udp'};
   }
+
   #
   #$self->log('dev', "listeners created"),
   #  $self->{'clients'}{'listener'}->listen();

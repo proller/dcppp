@@ -58,6 +58,9 @@ sub new {
     'email'  => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
     'client' => 'perl',#'dcp++',                                                              #++: indicates the client
 'protocol' => 'nmdc',  # or 'adc'
+'cmd_sep' => ' ',
+
+
     'V'      => $VERSION. '_' .( split( ' ', '$Revision$' ) )[1],
 ,                                                             #V: tells you the version number
     'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
@@ -600,14 +603,15 @@ sub handler {
     $self->connect_check();
     $self->log( 'err', "[$self->{'number'}] ERROR! no socket to send" ), return unless $self->{'socket'};
 #    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
-    if ( $self->{'sendbuf'} ) { push @sendbuf, $self->{'cmd_bef'} . join( ' ', @_ ) . $self->{'cmd_aft'}; }
+push @sendbuf, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
+    if ( $self->{'sendbuf'} and @_ ) {  }
 
     else {
       local $_;
 #$self->log( "atmark:", $self->{'socket'}->atmark, " timeout=",$self->{'socket'}->timeout,  'conn=',$self->{'socket'}->connected,'so=', $self->{'socket'});
-      eval { $_ = $self->{'socket'}->send( join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ) ); };
+      eval { $_ = $self->{'socket'}->send( join( '', @sendbuf,  ) ); }; #'$' . join( ' ', @_ ) . '|'
       $self->log( 'err', "[$self->{'number'}]", 'send error', $@ ) if $@;
-      $self->log( 'dcdmp', "[$self->{'number'}] we send [", join( '', @sendbuf, '$' . join( ' ', @_ ) . '|' ), "]:", $_, $! );
+      $self->log( 'dcdmp', "[$self->{'number'}] we send [", join( '', @sendbuf),  "]:", $_, $! ); #'$' . join( ' ', @_ ) . '|' )
       @sendbuf = ();
     }
   }

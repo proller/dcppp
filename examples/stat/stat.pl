@@ -16,14 +16,25 @@ use Net::DirectConnect::clihub;
 $config{'queue_recalc_every'} ||= 10;    #30
 my %every;
 
+
+
 sub every {
   my ( $sec, $func ) = ( shift, shift );
-  #  printlog('dev','everyR', $sec, $every{$func}, time, $func );
-  #  printlog('dev','every', $sec, $every{$func}, time, $func ),
+#printlog 'everyS', Dumper([ $sec, $func ]);
+  my $firstwait;
+($firstwait, $sec) = @$sec 
+if ref $sec eq 'ARRAY';
+
+$every{$func} = time  - $sec +$firstwait
+if $firstwait and !$every{$func};
+#   printlog('dev','everyI', 'sec=', $sec, 'firstwait=',$firstwait, 'every=',$every{$func}, time, $func ),
   $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
 }
 #print Dumper (\%INC, \@INC);
-print("usage: stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n"), exit if !$ARGV[0];
+print("usage:
+ stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n
+ stat.pl calc [h|d|w|m]		-- calculate slow stats for all times or hour..day...\n
+"), exit if !$ARGV[0];
 if ( $ARGV[0] eq 'calc' ) {
   #exit unless $config{'use_slow'};
   local $db->{'cp_in'} = 'utf-8';
@@ -124,7 +135,13 @@ $SIG{INFO} = sub {
 
 
 local @_ = grep { $_->active() } @dc;
-printlog 'info', 'active hubs:', map {$_->{'host'} . ':'. $_->{'status'}} @_;
+printlog 'info', 'active hubs:', map {$_->{'host'} . ':'. $_->{'status'}
+.
+' sock:'.$_->{'socket'}->connected() .' eof='. $_->{'socket'}->eof() 
+
+
+
+} @_;
 
 #printlog 'info', 'hashes:', map {$_.'='. %{$work{$_}}} qw(asked ask_db) ;
 printlog 'info', 'hashes:', map {$_.'='. scalar %{$work{$_} || {}} }  qw(ask asked ask_db) ;
@@ -152,7 +169,6 @@ for (@ARGV) {
       'auto_connect' => 0,
       #          'M'           => 'P',
       'reconnects' => 500,
-      'no_print'   => { map { $_ => 1 } qw(Search Quit MyINFO Hello  UserCommand) },    #SR
       #    'print_search' => 1,
       'handler' => {
         'Search_parse_aft' => sub {
@@ -243,6 +259,13 @@ my $q;
             }
 ,$dc
           );
+
+
+
+
+#      'time'        'hub'         'size'        'users'
+
+
 #        print Dumper( \%stat );
 #every (10, our $dumpf ||= sub {if (open FO, '>', 'obj.log') {printlog("dumping dc");print FO Dumper(\%work, \%stat,);close FO;}});
 #$dc
@@ -282,9 +305,46 @@ my $q;
   }
 }
 #printlog "bots created, starting loop";
-while ( local @_ = grep { $_->active() } @dc ) {
+while ( my @dca = grep { $_->active() } @dc ) {
   #printlog "inloopb", @_;
-  $_->work() for @_;
+  $_->work() for @dca;
+
+          every(
+            [20, 60 * 60],  #
+            our $hubstats_ ||= sub {
+my $time = int time;
+for my $dc (@_){
+my @users = grep { $dc->{'NickList'}{$_}{'online'} } keys %{ $dc->{'NickList'} };
+my $share;
+#{
+#$dc->cmd( 'GetINFO', $_ ) for grep !$dc->{'NickList'}->{$_}{'info'}, keys %{ $dc->{'NickList'} };
+#$dc->cmd( 'GetINFO', grep {!$dc->{'NickList'}{$_}{'info'}} @users );
+$dc->cmd( 'GetINFO');
+#}
+for (1,0.. scalar(@users)/1000) {
+  $_->work(1) for @dca;
+}
+
+$dc->work(1);
+#printlog('us', $_, $dc->{'NickList'}{$_}{'sharesize'}, $share),
+$share += $dc->{'NickList'}{$_}{'sharesize'} for @users;
+
+printlog 'info', "hubsize $dc->{'hub'}: bytes = $share users=", scalar @users;
+$db->insert_hash('hubs', 
+{ 'time' => $time, 'hub' => $dc->{'hub'} ,'size' => $share, 'users' => scalar @users });
+
+
+
+#$db->do()
+}
+
+      $db->flush_insert('hubs');
+
+},
+,@dc
+          );
+
+
   #printlog "inloopa";
 }
 #printlog "afterloop";

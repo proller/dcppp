@@ -9,3 +9,6 @@ relisten
 DC++ replaces all occurrences of "|" in <message> with "&#124;" and all occurrences of "$" with "&#36;". When displaying <message> the inverse replacement should be done.
 
 check socket->send ret
+
+libevent http://paste.org.ru/?nt15er
+
