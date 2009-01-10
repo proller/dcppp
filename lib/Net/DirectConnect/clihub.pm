@@ -162,7 +162,7 @@ $self->cmd('make_hub');
     'ForceMove' => sub {
       $self->{'log'}->( 'info', "ForceMove to $_[0]" );
       $self->disconnect();
-      $self->connect(@_) if $self->{'follow_forcemove'};
+      $self->connect(@_) if $self->{'follow_forcemove'} and @_;
     },
     'Quit' => sub {
       $self->{'NickList'}->{ $_[0] }{'online'} = 0;
