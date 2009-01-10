@@ -94,8 +94,8 @@ $config{'sql'} ||= {
 
     'users' => {
       'time'   => pssql::row( 'time', 'index' => 1 ),
-      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1, 'default' => '', ),
-      'nick'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'   => 1,  'default' => '', ),
+      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1, 'default' => '', 'primary' => 1),
+      'nick'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'   => 1,  'default' => '', 'primary' => 1),
       'ip'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15,  'Zindex'  => 1,  'default' => '', ),
       'port'   => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1,   'default' => 0, ),
       'size' => pssql::row( undef, 'type' => 'BIGINT', 'index' => 1, 'default' => 0, ),
@@ -296,10 +296,70 @@ $config{'queries'}{'queries tth last'} ||= {
   'order' => ++$order,
 };
 
+
+
+#'time'   'hub'    'nick'   'ip'     'port'   'size' = 'online' 'info' =
+
+$config{'queries'}{'users top'} ||= {
+
+  'main'     => 1,
+  'class'  => 'half',
+#  'group_end' => 1,
+  'show'     => [qw(time hub nick size online )],         #time ## info 
+
+#  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+ 'SELECT'         => '*',
+  'FROM'     => 'users',
+#  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+#  'GROUP BY' => 'hub',
+  'ORDER BY' => 'size DESC',
+
+#      'time'        'hub'         'size'        'users'
+  'order' => ++$order,
+};
+$config{'queries'}{'users online'} ||= {
+
+  'main'     => 1,
+  'class'  => 'half',
+  'group_end' => 1,
+  'show'     => [qw(time hub nick size online )],         #time ## info 
+
+#  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+ 'SELECT'         => '*',
+  'FROM'     => 'users',
+'WHERE'    => ['online > 0'],
+#  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+#  'GROUP BY' => 'hub',
+  'ORDER BY' => 'size DESC',
+
+#      'time'        'hub'         'size'        'users'
+  'order' => ++$order,
+};
+
+
+$config{'queries'}{'hubs top'} ||= {
+
+  'main'     => 1,
+  'class'  => 'half',
+  'show'     => [qw(hub users size time)],         #time
+
+#  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+'SELECT'         => '*',
+  'FROM'     => 'hubs',
+#  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+  'GROUP BY' => 'hub',
+  'ORDER BY' => 'size DESC',
+
+#      'time'        'hub'         'size'        'users'
+  'order' => ++$order,
+};
+
+
 $config{'queries'}{'hubs now'} ||= {
 
   'main'     => 1,
 #  'group_end' => 1,
+  'group_end' => 1,
   'class'  => 'half',
   'show'     => [qw(hub users size)],         #time
 
@@ -313,23 +373,6 @@ $config{'queries'}{'hubs now'} ||= {
 };
 
 
-$config{'queries'}{'hubs top'} ||= {
-
-  'main'     => 1,
-  'class'  => 'half',
-  'group_end' => 1,
-  'show'     => [qw(hub users size time)],         #time
-
-#  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
-'SELECT'         => '*',
-  'FROM'     => 'hubs',
-#  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
-  'GROUP BY' => 'hub',
-  'ORDER BY' => 'size DESC',
-
-#      'time'        'hub'         'size'        'users'
-  'order' => ++$order,
-};
 
 
 
