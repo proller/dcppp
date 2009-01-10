@@ -207,7 +207,11 @@ for (@ARGV) {
               $work{'toask'} = [ (
                   sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
                     grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
-                ), (
+                )];
+
+              printlog( 'warn', "reasking" ),
+              $work{'toask'} = [ 
+                (
                   sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
                     grep {
                           $work{'ask'}{$_} >= $config{'hit_to_ask'}
@@ -215,7 +219,7 @@ for (@ARGV) {
                       and $work{'asked'}{$_} + $config{'ask_retry'} < $time
                     } keys %{ $work{'ask'} }
                 )
-              ];
+              ] unless @{$work{'toask'}};
               printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
             }
           );
@@ -224,7 +228,7 @@ for (@ARGV) {
           #my $n = 0;
 #                              printlog( 'info', "ch1",  $q, $dc->{'host'});
           every(
-            1,
+            $dc->{'search_every'},
             our $queueask_ ||= sub {
 my ($dc) = @_;
 my $q;
