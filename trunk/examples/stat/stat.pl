@@ -282,7 +282,9 @@ my $q;
           my $dc = shift;
           #        printlog( 'chatline', join '!',@_ );
           my %s;
-          ( $s{nick}, $s{string} ) = $_[0] =~ /^<([^>]+)> (.+)$/s;
+          ( $s{nick}, $s{string} ) = $_[0] =~ 
+#/^<([^>]+)> (.+)$/s;
+/^(?:<|\* )(.+?)>? (.+)$/s;
           if ( $s{nick} and $s{string} ) {
             $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } );
           } else {
@@ -293,6 +295,45 @@ my $q;
           my $dc = shift;
           printlog( 'welcome', @_ );
         },
+
+'MyINFO' => sub {
+          my $dc = shift;
+local  ($_) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
+#  print "my cool info parser gets info about $1 [$2]\n";
+
+      local $Data::Dumper::Indent = 0;
+      local $Data::Dumper::Terse  = 1;
+
+$db->insert_hash('users', 
+{ 'time' => int time, 'hub' => $dc->{'hub'} , 'nick'=> $_,  'size' => $dc->{'NickList'}{$_}{'sharesize'}, 
+'ip' => $dc->{'NickList'}{$_}{'ip'}, 
+'port' => $dc->{'NickList'}{$_}{'port'}, 
+'info' => Dumper($dc->{'NickList'}{$_}),
+'online'=> int time });
+
+
+#'time'   'hub'    'nick'   'ip'     'port'   'size' = 'online' 'info' =
+
+},
+
+'Quit' => sub {
+          my $dc = shift;
+local $_ = $_[0];
+      local $Data::Dumper::Indent = 0;
+      local $Data::Dumper::Terse  = 1;
+
+$db->insert_hash('users', 
+{ 'time' => int time, 'hub' => $dc->{'hub'} , 'nick'=> $_,  'size' => $dc->{'NickList'}{$_}{'sharesize'}, 
+'ip' => $dc->{'NickList'}{$_}{'ip'}, 
+'port' => $dc->{'NickList'}{$_}{'port'}, 
+
+
+'info' => Dumper($dc->{'NickList'}{$_}),
+'online'=> 0 });
+
+
+},
+
         #      'To' => sub {        my $dc = shift;printlog('to', @_);},
       },
       %config,
