@@ -62,8 +62,7 @@ sub init {
 #      my ( $nick, $text ) = $_[0] =~ /^[*<]([^>]+?)>? (.+)$/s;
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
 #      my ( $nick, $text ) ;( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/s or ( $nick, $text ) = $_[0] =~ /^\* (\S+) (.+)$/s;
-#* sanek_57 кончает с собой
-      $self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
+#      $self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
       #v: chatline <[++T]шэюъ> You are already in the hub.
       $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->cmd('nick_generate'),
         $self->reconnect(),
