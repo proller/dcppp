@@ -60,13 +60,15 @@ if ( $ARGV[0] eq 'calc' ) {
         if $time;
       my $res = statlib::make_query( { %{ $config{'queries'}{$query} }, }, $query );
       #        printlog Dumper $res;
-      local $Data::Dumper::Indent = 0;
-      local $Data::Dumper::Terse  = 1;
+#      local $Data::Dumper::Indent = 0;
+#      local $Data::Dumper::Terse  = 1;
       #$db->do('INSERT INTO slow VALUES ('.$db->quote($query).', '.$db->quote('').','.$db->quote(Dumper $res).' )');
       my $n = 0;
       for my $row (@$res) {
         ++$n;
-        my $dmp = Dumper($row);
+        my $dmp = 
+#Dumper($row);
+Data::Dumper->new([$row])->Indent(0)->Terse(1)->Purity(1)->Dump();
         #printlog 'res len=', length $dmp;
         #      $db->insert_hash( 'slow', { 'name' => $query, 'result' => $dmp, 'period' => $time, 'time' => int(time) } );
         $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => int(time) } );
@@ -144,6 +146,12 @@ printlog 'info', 'active hubs:', map {$_->{'host'} . ':'. $_->{'status'}
 #printlog 'info', 'hashes:', map {$_.'='. %{$work{$_}}} qw(asked ask_db) ;
 printlog 'info', 'hashes:', map {$_.'='. scalar %{$work{$_} || {}} }  qw(ask asked ask_db) ;
 
+psmisc::file_rewrite('dumper', Dumper {
+'work' => \%work,
+'dc' => \@dc,
+
+})
+
 };
 
 
@@ -152,6 +160,7 @@ printlog 'info', 'hashes:', map {$_.'='. scalar %{$work{$_} || {}} }  qw(ask ask
 $SIG{INT} = $SIG{__DIE__} = \&close_all;
 $SIG{HUP} = $^O =~ /win/i ? 
 #\&close_all 
+#sub {flush_all(); print_info();}
 \&print_info
 : \&flush_all;
 $SIG{INFO} = \&print_info ;
@@ -312,14 +321,15 @@ my $q;
 local  ($_) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
 #  print "my cool info parser gets info about $1 [$2]\n";
 
-      local $Data::Dumper::Indent = 0;
-      local $Data::Dumper::Terse  = 1;
+#      local $Data::Dumper::Indent = 0;
+#      local $Data::Dumper::Terse  = 1;
 
 $db->insert_hash('users', 
-{ 'time' => int time, 'hub' => $dc->{'hub'} , 'nick'=> $_,  'size' => $dc->{'NickList'}{$_}{'sharesize'}, 
+{ 'time' => int(time), 'hub' => $dc->{'hub'} , 'nick'=> $_,  'size' => $dc->{'NickList'}{$_}{'sharesize'}, 
 'ip' => $dc->{'NickList'}{$_}{'ip'}, 
 'port' => $dc->{'NickList'}{$_}{'port'}, 
-'info' => Dumper($dc->{'NickList'}{$_}),
+'info' => #Dumper($dc->{'NickList'}{$_}),
+Data::Dumper->new([$dc->{'NickList'}{$_}])->Indent(0)->Terse(1)->Purity(1)->Dump(),
 'online'=> int time });
 
 
@@ -330,16 +340,19 @@ $db->insert_hash('users',
 'Quit' => sub {
           my $dc = shift;
 local $_ = $_[0];
-      local $Data::Dumper::Indent = 0;
-      local $Data::Dumper::Terse  = 1;
+#      local $Data::Dumper::Indent = 0;
+#      local $Data::Dumper::Terse  = 1;
+
+   
 
 $db->insert_hash('users', 
-{ 'time' => int time, 'hub' => $dc->{'hub'} , 'nick'=> $_,  'size' => $dc->{'NickList'}{$_}{'sharesize'}, 
+{ 'time' => int(time), 'hub' => $dc->{'hub'} , 'nick'=> $_,  'size' => $dc->{'NickList'}{$_}{'sharesize'}, 
 'ip' => $dc->{'NickList'}{$_}{'ip'}, 
 'port' => $dc->{'NickList'}{$_}{'port'}, 
 
 
-'info' => Dumper($dc->{'NickList'}{$_}),
+'info' => Data::Dumper->new([$dc->{'NickList'}{$_}])->Indent(0)->Terse(1)->Purity(1)->Dump,
+#Dumper($dc->{'NickList'}{$_}),
 'online'=> 0 });
 
 
