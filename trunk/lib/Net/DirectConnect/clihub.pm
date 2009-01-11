@@ -222,13 +222,17 @@ $self->cmd('make_hub');
       }
       #my ($tth, string);
 #      if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/ ) {
-      if ( $s{'cmd'}[4] =~ /^TTH:[0-9A-Z]{39}$/ ) {
+      if ( $s{'cmd'}[4] =~ /^TTH:([0-9A-Z]{39})$/ ) {
+#      if ( $s{'cmd'}[4] =~ /^TTH:\w{39}$/ ) {
         $s{'tth'} = $1;
  #       $s{'string'} = $s{'tth'}, $s{'tth'} = undef unless length $s{'tth'} == 39 and $s{'tth'} =~ /^[0-9A-Z]+$/;
       } else {
         $s{'string'} = $s{'cmd'}[4];
       }
       $s{'string'} =~ tr/$/ /;
+#$self->log('dcdev', 'separse',"[$s{'cmd'}[4]]",Dumper \%s);
+
+
       return \%s;
     },    #todo
     'SR' => sub {

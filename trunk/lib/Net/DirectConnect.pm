@@ -383,7 +383,7 @@ sub recv {
         } else {
           ++$readed;
           ++$ret;
-          #$self->log( 'dcdbg', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
+#          $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
         }
         if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
         else {
@@ -395,12 +395,13 @@ sub recv {
 #          my $endmsg = '[' . ( $self->{'buf'} =~ /^CSND\s/ ? "\n" : '' ) . '|]';
 #          my $endmsg = '[' . ( $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,3}\s/ ? "\n" : $self->{'buf'} =~ /^[$<]/ ? '|':"\n" ) . ']';
 #          my $endmsg =  ( $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,3}\s/ ? "\n" : $self->{'buf'} =~ /^[$<]/ ? '|':"\n" ) ;
-my $separator = "\n";
-$separator = "\\|" if $self->{'buf'} =~ /^[\$<]/;
-#                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] split by[$separator]" ) unless $self->{'filehandle'};
+#my $separator = "\n"; $separator = "\\|" if $self->{'buf'} =~ /^[\$<*]/; #stupid hubs
+my $separator = "\\|"; 
+$separator = "\n" if $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /; 
+#                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$separator]" ) unless $self->{'filehandle'};
           while ( $self->{'buf'} =~ s/^(.*?)$separator//s ) {
             local $_ = $1;
-#                $self->log('trace', 'DC::recv', "parse [$_]");
+#                $self->log('dcdmp', 'DC::recv', "parse [$_]($separator)");
             last if $self->{'status'} eq 'destroy';
 #                 $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
             next unless /\w/;
@@ -546,6 +547,14 @@ $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;
 
     s/^\$?(\w+)\s*//,
      $cmd = $1 unless $cmd;
+
+      $self->log( 'dcinf',        "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
+      $self->{'parse'}{$cmd} = sub { },
+
+
+$cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) unless exists $self->{'parse'}{$cmd};
+
+
     my ( @ret, $ret );
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
     $self->handler( $cmd . '_parse_bef_bef', $_ );
@@ -579,11 +588,9 @@ $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;
       @ret = $self->{'parse'}{$cmd}->($_);
       $ret = scalar @ret > 1 ? \@ret : $ret[0];
       $self->handler( $cmd . '_parse_aft', $_, $ret );
-    } else {
-      $self->log( 'dcinf',
-        "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" );
-      $self->{'parse'}{$cmd} = sub { };
-    }
+}
+#    } else {
+#    }
     $self->handler( $cmd, $_, $ret );
     $self->handler( $cmd . '_parse_aft_aft', $_, $ret );
   }
