@@ -13,7 +13,6 @@ fast slow slowbytime
 
 
 =cut
-
 package statcgi;
 use strict;
 eval { use Time::HiRes qw(time sleep); };
@@ -70,7 +69,7 @@ $config{'query_default'}{'LIMIT'} = psmisc::check_int( $param->{'on_page'}, 10, 
 print '<a href="?">home</a>';
 print ' days ', (
   map {
-    qq{<a href="#" onclick="createCookie('time', '$_');window.location.reload(false);">}
+    qq{<a href="#" onclick="createCookie('period', '$_');window.location.reload(false);">}
       . psmisc::human( 'time_period', $config{'periods'}{$_} ) . '</a> '
     } sort {
     $config{'periods'}{$a} <=> $config{'periods'}{$b}
@@ -108,9 +107,10 @@ $config{'human'}{'magnet-dl'} = sub {
   return '&nbsp;<a class="magnet-darr" href="magnet:?' . $_ . '">&darr;</a>' if $_;
   return '';
 };
-print '<a>', psmisc::html_chars($param->{'tth'}), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' if $param->{'tth'};
+print '<a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>'
+  if $param->{'tth'};
 my @ask;
-$config{'queries'}{'string'}{'desc'} = psmisc::html_chars($param->{'string'}), @ask = ('string') if $param->{'string'};
+$config{'queries'}{'string'}{'desc'} = psmisc::html_chars( $param->{'string'} ), @ask = ('string') if $param->{'string'};
 @ask = ('tth') if $param->{'tth'};
 #$param->{'on_page'} ||= 100,
 @ask = ( $param->{'query'} )
@@ -124,6 +124,7 @@ for (
 {
   #print "for $_;";
   my $q = { %{ $config{'queries'}{$_} || next } };
+  next if $q->{'disabled'};
   print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
     ? $_
     : qq{<a href="?query=} . psmisc::encode_url($_) . qq{">$_</a>};
@@ -131,7 +132,7 @@ for (
   print "<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
   #  printlog 'cgip', Dumper $param;
-  my $res = statlib::make_query( $q, $_, $param->{'time'} );
+  my $res = statlib::make_query( $q, $_, $param->{'period'} || $config{'default_period'}  );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
   my $n;
@@ -160,16 +161,17 @@ for (
   }
   print '</table></div>';
   print '<br/>'
-if  $q->{'group_end'};
-
+    if $q->{'group_end'};
   #      print Dumper $res;
   psmisc::flush();
 }
-print qq{<div class="version"><a href="http://pro.setun.net/dcppp/">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}.( split( ' ', '$Revision$' ) )[1].qq{</div>};
+print
+qq{<div class="version"><a href="http://pro.setun.net/dcppp/">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}
+  . ( split( ' ', '$Revision$' ) )[1]
+  . qq{</div>};
 print '<script type="text/javascript" src="http://iekill.proisk.ru/iekill.js"></script>';
 print '</body></html>';
 #}
 #print "<pre>";
 #print Dumper $param;
 #print Dumper \%ENV;
-

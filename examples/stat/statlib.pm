@@ -4,7 +4,6 @@
 =copyright
 stat bot
 =cut
-
 package statlib;
 use strict;
 #eval {
@@ -30,12 +29,14 @@ $config{'hit_to_ask'} ||= 2;
 $config{'ask_retry'}  ||= 3600;
 $config{'limit_max'}  ||= 100;
 $config{'use_slow'}   ||= 1;
-$config{'row_all'} ||= { 'not null' => 1, };
-$config{'periods'} ||= {
+$config{'row_all'}    ||= { 'not null' => 1, };
+$config{'periods'}    ||= {
   'h' => 3600,
   'd' => 86400,
   'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
+$config{'default_period'} ||= 'd';
+
 $config{'sql'} ||= {
   'driver'       => 'mysql',    #'sqlite',
                                 #    'driver'       => 'sqlite',
@@ -83,29 +84,22 @@ $config{'sql'} ||= {
       'result' => pssql::row( undef,  'type'  => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper' => 1, ),
       'time'   => pssql::row( 'time', 'index' => 1 ),
     },
-
     'hubs' => {
-      'time'   => pssql::row( 'time', 'index' => 1 ),
-      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1, 'default' => '', ),
-      'size' => pssql::row( undef, 'type' => 'BIGINT', 'index' => 1,  ),
-      'users' => pssql::row( undef, 'type' => 'INT', 'index' => 1, ),
-
+      'time' => pssql::row( 'time', 'index' => 1 ),
+      'hub'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
+      'size'  => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
+      'users' => pssql::row( undef, 'type' => 'INT',     'index'  => 1, ),
     },
-
     'users' => {
-      'time'   => pssql::row( 'time', 'index' => 1 ),
-      'hub'      => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64,  'index'  => 1, 'default' => '', 'primary' => 1),
-      'nick'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32,  'index'   => 1,  'default' => '', 'primary' => 1),
-      'ip'     => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15,  'Zindex'  => 1,  'default' => '', ),
-      'port'   => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1,   'default' => 0, ),
-      'size' => pssql::row( undef, 'type' => 'BIGINT', 'index' => 1, 'default' => 0, ),
-      'online' => pssql::row( 'time', 'index' => 1 , 'default' => 0,),
-      'info' => pssql::row( undef,  'type'  => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper' => 1, ),
-
+      'time' => pssql::row( 'time', 'index' => 1 ),
+      'hub'  => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 64, 'index'   => 1, 'default' => '', 'primary' => 1 ),
+      'nick' => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 32, 'index'   => 1, 'default' => '', 'primary' => 1 ),
+      'ip'   => pssql::row( undef, 'type' => 'VARCHAR',  'length' => 15, 'Zindex'  => 1, 'default' => '', ),
+      'port' => pssql::row( undef, 'type' => 'SMALLINT', 'Zindex' => 1,  'default' => 0, ),
+      'size' => pssql::row( undef, 'type' => 'BIGINT',   'index'  => 1,  'default' => 0, ),
+      'online' => pssql::row( 'time', 'index' => 1, 'default' => 0, ),
+      'info' => pssql::row( undef, 'type' => 'VARCHAR', 'Zlength' => 32, 'Zindex' => 1, 'dumper' => 1, ),
     },
-
-
-
   },
   'table_param' => {
     'queries' => { 'big'       => 1, },
@@ -136,6 +130,7 @@ delete $config{'sql'}{'table'}{'resultsf'}{$_} for qw(time nick ip port file);
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
+
 $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
 
@@ -182,6 +177,7 @@ $config{'queries'}{'queries top tth'} = {
   'order'    => ++$order,
 };
 =cut
+
 $config{'queries'}{'queries top string'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
@@ -200,15 +196,15 @@ $config{'queries'}{'queries top string'} ||= {
 $config{'queries'}{'queries string last'} ||= {
   'main' => 1,
   #'class'=>  'right'    ,
-  'class' => 'half',
+  'class'     => 'half',
   'group_end' => 1,
-  'desc'  => 'last searches',
+  'desc'      => 'last searches',
   #  'show'     => [qw(time hub nick string filename size tth)],          #time
   #  'SELECT'   => 'results.*,queries.*',
   'FROM'   => 'queries',
   'show'   => [qw(time hub nick string )],    #time  filename size tth
-                                                               #'SELECT'   => 'queries.*, results.*',
-                                                               #    'SELECT'   => 'results.*,queries.*',
+                                              #'SELECT'   => 'queries.*, results.*',
+                                              #    'SELECT'   => 'results.*,queries.*',
   'SELECT' => '*',
   #    'SELECT'   => '*, (SELECT filename FROM results WHERE queries.string=results.string LIMIT 1) AS filename',
   #no  'FROM'     => 'queries INNER JOIN results ON queries.string=results.string',
@@ -255,11 +251,10 @@ $config{'queries'}{'queries top tth'} ||= {
 #
 $config{'queries'}{'queries tth last'} ||= {
   %{ $config{'queries'}{'queries string last'} },
-  'desc'  => 'last downloads',
-  'class' => 'half',
+  'desc'      => 'last downloads',
+  'class'     => 'half',
   'group_end' => 1,
-'show'   => [qw(time hub nick filename size tth)],    #time  filename size tth string
-
+  'show'      => [qw(time hub nick filename size tth)],    #time  filename size tth string
 #  'class' => '',
 #  'LEFT JOIN' => 'results USING (tth)',
 #    'SELECT'   => '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string',
@@ -295,92 +290,76 @@ $config{'queries'}{'queries tth last'} ||= {
 #  'ORDER BY' => 'queries.time DESC',
   'order' => ++$order,
 };
-
-
-
 #'time'   'hub'    'nick'   'ip'     'port'   'size' = 'online' 'info' =
-
 $config{'queries'}{'users top'} ||= {
-
-  'main'     => 1,
-  'class'  => 'half',
-#  'group_end' => 1,
-  'show'     => [qw(time hub nick size online )],         #time ## info 
-
-#  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
- 'SELECT'         => '*',
-  'FROM'     => 'users',
-#  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
-#  'GROUP BY' => 'hub',
+  'main'  => 1,
+  'class' => 'half',
+  #  'group_end' => 1,
+  'show' => [qw(time hub nick size online )],    #time ## info
+  #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+  'SELECT' => '*',
+  'FROM'   => 'users',
+  #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+  #  'GROUP BY' => 'hub',
   'ORDER BY' => 'size DESC',
-
-#      'time'        'hub'         'size'        'users'
+  #      'time'        'hub'         'size'        'users'
   'order' => ++$order,
 };
 $config{'queries'}{'users online'} ||= {
-
-  'main'     => 1,
-  'class'  => 'half',
+  'main'      => 1,
+  'class'     => 'half',
   'group_end' => 1,
-  'show'     => [qw(time hub nick size online )],         #time ## info 
-
-#  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
- 'SELECT'         => '*',
-  'FROM'     => 'users',
-'WHERE'    => ['online > 0'],
-#  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
-#  'GROUP BY' => 'hub',
+  'show'      => [qw(time hub nick size online )],    #time ## info
+  #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+  'SELECT' => '*',
+  'FROM'   => 'users',
+  'WHERE'  => ['online > 0'],
+  #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+  #  'GROUP BY' => 'hub',
   'ORDER BY' => 'size DESC',
-
-#      'time'        'hub'         'size'        'users'
+  #      'time'        'hub'         'size'        'users'
   'order' => ++$order,
 };
-
-
-
 $config{'queries'}{'results top users'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
   'periods' => 1,
   'class'   => 'half',
-  'show'    => [qw(cnt hub nick )],            #time
+  'show'    => [qw(cnt hub nick )],                #time
   'desc'    => 'they have anything',
   'SELECT'  => '*, COUNT(*) as cnt',
   'FROM'    => 'results',
-  'WHERE'   => ['string != ""', 'nick != ""'],
+  'WHERE'   => [ 'string != ""', 'nick != ""' ],
   #  'GROUP BY' => 'tth',
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-
 $config{'queries'}{'results top users tth'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
   'periods' => 1,
   'class'   => 'half',
-  'show'    => [qw(cnt hub  nick)],            #time
+  'show'    => [qw(cnt hub  nick)],             #time
   'desc'    => 'they know 42',
   'SELECT'  => '*, COUNT(*) as cnt',
   'FROM'    => 'results',
-  'WHERE'   => ['tth != ""', 'nick != ""'],
+  'WHERE'   => [ 'tth != ""', 'nick != ""' ],
   #  'GROUP BY' => 'tth',
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-
-
 $config{'queries'}{'queries top users'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
   'periods' => 1,
   'class'   => 'half',
-  'show'    => [qw(cnt hub nick)],            #time
+  'show'    => [qw(cnt hub nick)],                 #time
   'desc'    => 'they search "42"',
   'SELECT'  => '*, COUNT(*) as cnt',
   'FROM'    => 'queries',
-  'WHERE'   => ['string != ""', 'nick != ""'],
+  'WHERE'   => [ 'string != ""', 'nick != ""' ],
   #  'GROUP BY' => 'tth',
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
@@ -388,88 +367,58 @@ $config{'queries'}{'queries top users'} ||= {
 };
 $config{'queries'}{'queries top users tth'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
-  'main'    => 1,
-  'periods' => 1,
-  'class'   => 'half',
+  'main'      => 1,
+  'periods'   => 1,
+  'class'     => 'half',
   'group_end' => 1,
-  'show'    => [qw(cnt hub nick)],            #time
-  'desc'    => 'they have unlimited hdds',
-  'SELECT'  => '*, COUNT(*) as cnt',
-  'FROM'    => 'queries',
-  'WHERE'   => ['tth != ""', 'nick != ""'],
+  'show'      => [qw(cnt hub nick)],              #time
+  'desc'      => 'they have unlimited hdds',
+  'SELECT'    => '*, COUNT(*) as cnt',
+  'FROM'      => 'queries',
+  'WHERE'     => [ 'tth != ""', 'nick != ""' ],
   #  'GROUP BY' => 'tth',
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-
-
-
-
 $config{'queries'}{'hubs top'} ||= {
-
-  'main'     => 1,
-  'class'  => 'half',
-  'show'     => [qw(hub users size time)],         #time
-
-
-
-#  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
-#  'FROM'     => 'hubs',
-#  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
-
-  'SELECT'         => '*',  'FROM'     => 'hubs',  'GROUP BY' => 'hub',  'ORDER BY' => 'size DESC',
-
-
-#  'SELECT'         => 'h2.time,h2.users, hub, max(size) as size',  
-#  'SELECT'         => 'hubs.time, hubs.users, hub, max(size) as size',  
-#  'SELECT'         => 'hubs.time, hubs.users, hub, size',  
+  'main'  => 1,
+  'class' => 'half',
+  'show'  => [qw(hub users size time)],    #time
+  #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+  #  'FROM'     => 'hubs',
+  #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+  'SELECT' => '*', 'FROM' => 'hubs', 'GROUP BY' => 'hub', 'ORDER BY' => 'size DESC',
+#  'SELECT'         => 'h2.time,h2.users, hub, max(size) as size',
+#  'SELECT'         => 'hubs.time, hubs.users, hub, max(size) as size',
+#  'SELECT'         => 'hubs.time, hubs.users, hub, size',
 #  'SELECT'         => 'h2.time, h2.users, hub, size',  'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs AS h2' ,'USING' => '(hub, size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'size DESC',
 #select    from hubs left join hubs as h2 using (hub, size) group by hubs.hub order by size desc limit 10
-
-
 #      'time'        'hub'         'size'        'users'
   'order' => ++$order,
 };
-
-
 $config{'queries'}{'hubs now'} ||= {
-
-  'main'     => 1,
-#  'group_end' => 1,
+  'main' => 1,
+  #  'group_end' => 1,
   'group_end' => 1,
-  'class'  => 'half',
-  'show'     => [qw(time hub users size)],         #time
-
-  'FROM'     => 'hubs',
-
-
-  'SELECT'         => '*', #DISTINCT
-  'WHERE'    => ['time = (SELECT time FROM hubs ORDER BY time DESC LIMIT 1)'],
-
-#  'SELECT'         => 'hub, time, users, max(time)', 
-#select hub, time, max(size) from hubs group by hub limit 10
-#  'GROUP BY' => 'hub',
-#'WHERE' => [],
-
-
+  'class'     => 'half',
+  'show'      => [qw(time hub users size)],                                       #time
+  'FROM'      => 'hubs',
+  'SELECT'    => '*',                                                             #DISTINCT
+  'WHERE'     => ['time = (SELECT time FROM hubs ORDER BY time DESC LIMIT 1)'],
+  #  'SELECT'         => 'hub, time, users, max(time)',
+  #select hub, time, max(size) from hubs group by hub limit 10
+  #  'GROUP BY' => 'hub',
+  #'WHERE' => [],
   'ORDER BY' => 'size DESC',
-
-#      'time'        'hub'         'size'        'users'
+  #      'time'        'hub'         'size'        'users'
   'order' => ++$order,
 };
-
-
-
-
-
-
-
 $config{'queries'}{'results ext'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'     => 1,
-  'class'  => 'half',
-  'show'     => [qw(cnt ext size)],         #time
+  'class'    => 'half',
+  'show'     => [qw(cnt ext size)],                         #time
   'desc'     => 'by extention',
   'SELECT'   => '*, SUM(size) as size , COUNT(*) as cnt',
   'FROM'     => 'results',
@@ -486,11 +435,11 @@ $config{'queries'}{'results ext'} ||= {
 #  'FROM' => 'results',
 #};
 $config{'queries'}{'counts'} ||= {
-  'main' => 1,
-  'show' => [qw(tbl cnt )],                            #time
-  'class'  => 'half',
+  'main'      => 1,
+  'show'      => [qw(tbl cnt )],    #time
+  'class'     => 'half',
   'group_end' => 1,
-  'sql'  => (
+  'sql'       => (
     join ' UNION ',
     map         { qq{SELECT '$_' as tbl, COUNT(*) as cnt FROM $_ } }
       sort grep { !$config{'sql'}{'table_param'}{$_}{'no_counts'} } keys %{ $config{'sql'}{'table'} }
@@ -517,7 +466,7 @@ $config{'queries'}{'chat last'} ||= {
   'main' => 1,
   #  'periods' => 1,
   'class'          => 'half',
-  'group_end' => 1,
+  'group_end'      => 1,
   'no_string_link' => 1,
   'show'           => [qw(time hub nick string)],    #time
                                                      #  'desc'    => 'top flooders',
@@ -529,13 +478,9 @@ $config{'queries'}{'chat last'} ||= {
   'ORDER BY' => 'time DESC',
   'order'    => ++$order,
 };
-
-
-
-
 $config{'queries'}{'string'} ||= {
   #'desc' => $param->{'string'}, #!!! dehtml
-  'show' => [qw(cnt string  filename size tth)],    #time
+  'show' => [qw(cnt string  filename size tth)],     #time
        #'query' => 'SELECT *, COUNT(*) as cnt FROM queries $where GROUP BY tth HAVING cnt > 1',
   'no_query_link' => 1,
   'SELECT'        => '*, COUNT(*) as cnt',
@@ -555,8 +500,6 @@ $config{'queries'}{'tth'} ||= {
                                                        #'WHERE'    => ['tth != ""'],
   'GROUP BY' => 'filename',
 };
-
-
 psmisc::config( 0, 0, 0, 1 );
 
 sub is_slow {
@@ -600,6 +543,7 @@ sub make_query {
     printlog 'evaled',Dumper $res;
     return [ grep { $_ } @$res[ 0 .. $config{'query_default'}{'LIMIT'} - 1 ] ];
 =cut
+
   }
   #printlog 'mkparams:', Dumper $param;
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
