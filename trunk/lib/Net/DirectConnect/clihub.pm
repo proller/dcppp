@@ -220,9 +220,10 @@ $self->cmd('make_hub');
         ( $s{'ip'}, $s{'port'} ) = split /:/, $s{'who'};
       }
       #my ($tth, string);
-      if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/ ) {
+#      if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/ ) {
+      if ( $s{'cmd'}[4] =~ /^TTH:[0-9A-Z]{39}$/ ) {
         $s{'tth'} = $1;
-        $s{'string'} = $s{'tth'}, $s{'tth'} = undef unless length $s{'tth'} == 39 and $s{'tth'} =~ /^[0-9A-Z]+$/;
+ #       $s{'string'} = $s{'tth'}, $s{'tth'} = undef unless length $s{'tth'} == 39 and $s{'tth'} =~ /^[0-9A-Z]+$/;
       } else {
         $s{'string'} = $s{'cmd'}[4];
       }
