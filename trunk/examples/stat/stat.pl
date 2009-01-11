@@ -196,7 +196,7 @@ for (@ARGV) {
           my %s = ( %{ $_[0] }, );
           #        print "s:[$search]\n";
           #my ($who, $cmd)
-          #        printlog('dcdev', "search", $search);
+#                  printlog('dcdev', "search", $search, '--',%s);
           #printlog('dcdev', "ignoring self search"),
           return if $s{'nick'} eq $dc->{'Nick'};
           #print "search[$nick, $ip, $port, ",join('|', @cmd),"]\n";
