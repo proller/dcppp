@@ -4,6 +4,7 @@
 =copyright
 stat bot
 =cut
+
 package statlib;
 use strict;
 #eval {
@@ -36,8 +37,7 @@ $config{'periods'}    ||= {
   'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
 $config{'default_period'} ||= 'd';
-
-$config{'sql'} ||= {
+$config{'sql'}            ||= {
   'driver'       => 'mysql',    #'sqlite',
                                 #    'driver'       => 'sqlite',
   'dbname'       => 'dcstat',
@@ -130,7 +130,6 @@ delete $config{'sql'}{'table'}{'resultsf'}{$_} for qw(time nick ip port file);
             'size' => '4980839',
             'tth' => 'OXYCI7EHF3JIHC47QSYQFVQVNHSWOE7N4KWWK7A'
 =cut
-
 $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
 
@@ -177,7 +176,6 @@ $config{'queries'}{'queries top tth'} = {
   'order'    => ++$order,
 };
 =cut
-
 $config{'queries'}{'queries top string'} ||= {
   #  %{ $config{'queries'}{'queries top tth raw'} },
   'main'    => 1,
@@ -295,8 +293,8 @@ $config{'queries'}{'users top'} ||= {
   'main'  => 1,
   'class' => 'half',
   #  'group_end' => 1,
-  'show' => [qw(time hub nick size online )],    #time ## info
-  #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+  'show'   => [qw(time hub nick size online )],    #time ## info
+                                                   #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
   'SELECT' => '*',
   'FROM'   => 'users',
   #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
@@ -310,10 +308,10 @@ $config{'queries'}{'users online'} ||= {
   'class'     => 'half',
   'group_end' => 1,
   'show'      => [qw(time hub nick size online )],    #time ## info
-  #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
-  'SELECT' => '*',
-  'FROM'   => 'users',
-  'WHERE'  => ['online > 0'],
+                                                      #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+  'SELECT'    => '*',
+  'FROM'      => 'users',
+  'WHERE'     => ['online > 0'],
   #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
   #  'GROUP BY' => 'hub',
   'ORDER BY' => 'size DESC',
@@ -385,9 +383,9 @@ $config{'queries'}{'hubs top'} ||= {
   'main'  => 1,
   'class' => 'half',
   'show'  => [qw(hub users size time)],    #time
-  #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
-  #  'FROM'     => 'hubs',
-  #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+                                           #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
+                                           #  'FROM'     => 'hubs',
+       #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
   'SELECT' => '*', 'FROM' => 'hubs', 'GROUP BY' => 'hub', 'ORDER BY' => 'size DESC',
 #  'SELECT'         => 'h2.time,h2.users, hub, max(size) as size',
 #  'SELECT'         => 'hubs.time, hubs.users, hub, max(size) as size',
@@ -543,7 +541,6 @@ sub make_query {
     printlog 'evaled',Dumper $res;
     return [ grep { $_ } @$res[ 0 .. $config{'query_default'}{'LIMIT'} - 1 ] ];
 =cut
-
   }
   #printlog 'mkparams:', Dumper $param;
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';

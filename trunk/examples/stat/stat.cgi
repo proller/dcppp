@@ -13,6 +13,7 @@ fast slow slowbytime
 
 
 =cut
+
 package statcgi;
 use strict;
 eval { use Time::HiRes qw(time sleep); };
@@ -132,7 +133,7 @@ for (
   print "<br\n/>";
   #push @{$q->{'WHERE'}} , "time >= ".(int((time-$period)/1000)*1000); #!!! TODO Cut by hour? or 1000 sec
   #  printlog 'cgip', Dumper $param;
-  my $res = statlib::make_query( $q, $_, $param->{'period'} || $config{'default_period'}  );
+  my $res = statlib::make_query( $q, $_, $param->{'period'} || $config{'default_period'} );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
   my $n;

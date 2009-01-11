@@ -1,5 +1,4 @@
 #$Id$ $URL$
-
 package Net::DirectConnect;
 use strict;
 no warnings qw(uninitialized);
@@ -40,7 +39,7 @@ sub new {
   my $self = {
     'Listen'        => 10,
     'Timeout'       => 5,
-    'myport'        => 412,    #first try
+    'myport'        => 412,     #first try
     'myport_base'   => 40000,
     'myport_random' => 1000,
     'myport_tries'  => 5,
@@ -55,15 +54,13 @@ sub new {
                                 # 6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
                                 # 8, 9 fireball             The fireball icon is used when the client
                                 # 10, 11 fireball away      has had an upload > 100 kB/s.
-    'email'  => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
-    'client' => 'perl',#'dcp++',                                                              #++: indicates the client
-'protocol' => 'nmdc',  # or 'adc'
-'cmd_sep' => ' ',
-
-
-    'V'      => $VERSION. '_' .( split( ' ', '$Revision$' ) )[1],
-,                                                             #V: tells you the version number
-    'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
+    'client'   => 'perl',    #'dcp++',                                                              #++: indicates the client
+    'protocol' => 'nmdc',    # or 'adc'
+    'cmd_sep'  => ' ',
+    'V' => $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1],
+    ,                        #V: tells you the version number
+    'M' => 'A',              #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
@@ -140,24 +137,21 @@ sub baseinit {
   $self->{'PortList'} ||= {};
   ++$global{'count'};
   $self->{'status'} = 'disconnected';
-$self->protocol($self->{'protocol'})
+  $self->protocol( $self->{'protocol'} );
 }
 
 sub protocol {
   my $self = shift;
-my ($p) = @_;
-
-
-if ($p =~ /adc/i) {
-$self->{'cmd_bef'} = undef;
-$self->{'cmd_aft'} = "\n";
-}elsif($p) { #$p =~ /nmdc/i
-$self->{'cmd_bef'} = '$';
-$self->{'cmd_aft'} = '|';
-}
-
-$self->{'protocol'} = $p if $p;
-return $self->{'protocol'};
+  my ($p) = @_;
+  if ( $p =~ /adc/i ) {
+    $self->{'cmd_bef'} = undef;
+    $self->{'cmd_aft'} = "\n";
+  } elsif ($p) {    #$p =~ /nmdc/i
+    $self->{'cmd_bef'} = '$';
+    $self->{'cmd_aft'} = '|';
+  }
+  $self->{'protocol'} = $p if $p;
+  return $self->{'protocol'};
 }
 
 sub connect {
@@ -198,7 +192,7 @@ sub connect {
   $self->get_my_addr();
   $self->log(
     'info', "[$self->{'number'}]", "connect to $self->{'host'} [me=$self->{'myip'}] ok ",    #socket=[$self->{'socket'}]
-  );                                                                                          # Dumper($self->{'sockopts'})
+  );                                                                                         # Dumper($self->{'sockopts'})
   $self->recv();
   return 0;
 }
@@ -340,9 +334,9 @@ sub recv {
           and !$self->{'socket'}->connected()
           and $self->{'Proto'} ne 'udp';
       for my $client ( $self->{'select'}->can_read($sleep) ) {
-#        #$self->log( 'trace', 'DC::recv', 'can_read' );
+        #        #$self->log( 'trace', 'DC::recv', 'can_read' );
         if ( $self->{'accept'} and $client == $self->{'socket'} ) {
-#          #$self->log( 'trace', 'DC::recv', 'accept' );
+          #          #$self->log( 'trace', 'DC::recv', 'accept' );
           if ( $_ = $self->{'socket'}->accept() ) {
             $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
               %$self, clear(),
@@ -383,34 +377,32 @@ sub recv {
         } else {
           ++$readed;
           ++$ret;
-#          $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
+         #          $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
         }
         if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
         else {
           $self->{'buf'} .= $self->{'databuf'};
-  #        $self->{'buf'} =~ s/(.*\|)//s;
-  #        for ( split /\|/, $1 ) {
-  #        while ($self->{'buf'} =~ s/^([^|]+)\|//) {
-  #TODO HERE !!!
+#        $self->{'buf'} =~ s/(.*\|)//s;
+#        for ( split /\|/, $1 ) {
+#        while ($self->{'buf'} =~ s/^([^|]+)\|//) {
+#TODO HERE !!!
 #          my $endmsg = '[' . ( $self->{'buf'} =~ /^CSND\s/ ? "\n" : '' ) . '|]';
 #          my $endmsg = '[' . ( $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,3}\s/ ? "\n" : $self->{'buf'} =~ /^[$<]/ ? '|':"\n" ) . ']';
 #          my $endmsg =  ( $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,3}\s/ ? "\n" : $self->{'buf'} =~ /^[$<]/ ? '|':"\n" ) ;
 #my $separator = "\n"; $separator = "\\|" if $self->{'buf'} =~ /^[\$<*]/; #stupid hubs
-my $separator = "\\|"; 
-$separator = "\n" if $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /; 
+          my $separator = "\\|";
+          $separator = "\n" if $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
 #                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$separator]" ) unless $self->{'filehandle'};
           while ( $self->{'buf'} =~ s/^(.*?)$separator//s ) {
             local $_ = $1;
-#                $self->log('dcdmp', 'DC::recv', "parse [$_]($separator)");
+            #                $self->log('dcdmp', 'DC::recv', "parse [$_]($separator)");
             last if $self->{'status'} eq 'destroy';
-#                 $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
+            #                 $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
             next unless /\w/;
-            $self->parse( 
-$_
-            );
+            $self->parse( $_ );
+            #(
+            #                /^\$/ ? '' :                      '$'                  .
 
-#(
-#                /^\$/ ? '' :                      '$'                  . 
 =z
   (
                   defined( $self->{'parse'}{ (/^\$?(\S+)/)[0] } )
@@ -420,9 +412,6 @@ $_
               )
               . 
 =cut
-
-
-
             #          $self->parse( /^\$/ ? $_ : ( #$_ =
             #                    '$' . ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' ' . $_) );
             #     $self->log( 'dcdbg',"[$self->{'number'}] dev lastexit ",length($self->{'buf'} )," [$self->{'buf'} ]", );
@@ -526,7 +515,7 @@ sub wait_sleep {
 
 sub work {
   my $self = shift;
-#  $self->log( 'trace', 'DC::work' );
+  #  $self->log( 'trace', 'DC::work' );
   my @params = @_;
   $self->{'periodic'}->() if ref $self->{'periodic'} eq 'CODE';
   return $self->wait_sleep(@params) if @params;
@@ -536,25 +525,16 @@ sub work {
 sub parse {
   my $self = shift;
   for ( local @_ = @_ ) {
-#    s/^\$(\w+)\s*//;
-
-
-#                  defined( $self->{'parse'}{ (/^\$?(\S+)/)[0] } )
-#                  ? ''
-#                  : ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
+    #    s/^\$(\w+)\s*//;
+    #                  defined( $self->{'parse'}{ (/^\$?(\S+)/)[0] } )
+    #                  ? ''
+    #                  : ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
     my $cmd;
-$cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;
-
-    s/^\$?(\w+)\s*//,
-     $cmd = $1 unless $cmd;
-
-      $self->log( 'dcinf',        "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
-      $self->{'parse'}{$cmd} = sub { },
-
-
-$cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) unless exists $self->{'parse'}{$cmd};
-
-
+    $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;
+    s/^\$?(\w+)\s*//, $cmd = $1 unless $cmd;
+    $self->log( 'dcinf', "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
+      $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
+      unless exists $self->{'parse'}{$cmd};
     my ( @ret, $ret );
     #print "[$self->{'number'}] CMD:[$cmd]{$_}\n" unless $cmd eq 'Search';
     $self->handler( $cmd . '_parse_bef_bef', $_ );
@@ -588,9 +568,9 @@ $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) unless exis
       @ret = $self->{'parse'}{$cmd}->($_);
       $ret = scalar @ret > 1 ? \@ret : $ret[0];
       $self->handler( $cmd . '_parse_aft', $_, $ret );
-}
-#    } else {
-#    }
+    }
+    #    } else {
+    #    }
     $self->handler( $cmd, $_, $ret );
     $self->handler( $cmd . '_parse_aft_aft', $_, $ret );
   }
@@ -609,16 +589,15 @@ sub handler {
     my $self = shift;
     $self->connect_check();
     $self->log( 'err', "[$self->{'number'}] ERROR! no socket to send" ), return unless $self->{'socket'};
-#    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
-push @sendbuf, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
-    if ( ($self->{'sendbuf'} and @_) or !@sendbuf ) {  }
-
+    #    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
+    push @sendbuf, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
+    if ( ( $self->{'sendbuf'} and @_ ) or !@sendbuf ) { }
     else {
       local $_;
 #$self->log( "atmark:", $self->{'socket'}->atmark, " timeout=",$self->{'socket'}->timeout,  'conn=',$self->{'socket'}->connected,'so=', $self->{'socket'});
-      eval { $_ = $self->{'socket'}->send( join( '', @sendbuf,  ) ); }; #'$' . join( ' ', @_ ) . '|'
+      eval { $_ = $self->{'socket'}->send( join( '', @sendbuf, ) ); };    #'$' . join( ' ', @_ ) . '|'
       $self->log( 'err', "[$self->{'number'}]", 'send error', $@ ) if $@;
-      $self->log( 'dcdmp', "[$self->{'number'}] we send [", join( '', @sendbuf),  "]:", $_, $! ); #'$' . join( ' ', @_ ) . '|' )
+      $self->log( 'dcdmp', "[$self->{'number'}] we send [", join( '', @sendbuf ), "]:", $_, $! ); #'$' . join( ' ', @_ ) . '|' )
       @sendbuf = ();
     }
   }

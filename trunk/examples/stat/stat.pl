@@ -14,24 +14,11 @@ use lib $root_path. '../../lib';
 use lib $root_path. './';
 use Net::DirectConnect::clihub;
 $config{'queue_recalc_every'} ||= 10;    #30
-my %every;
-
-sub every {
-  my ( $sec, $func ) = ( shift, shift );
-  #printlog 'everyS', Dumper([ $sec, $func ]);
-  my $firstwait;
-  ( $firstwait, $sec ) = @$sec
-    if ref $sec eq 'ARRAY';
-  $every{$func} = time - $sec + $firstwait
-    if $firstwait and !$every{$func};
-  #   printlog('dev','everyI', 'sec=', $sec, 'firstwait=',$firstwait, 'every=',$every{$func}, time, $func ),
-  $func->(@_), $every{$func} = time if $every{$func} + $sec < time and ref $func eq 'CODE';
-}
 #print Dumper (\%INC, \@INC);
 print(
   "usage:
  stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n
- stat.pl calc [h|d|w|m]		-- calculate slow stats for all times or hour..day...\n
+ stat.pl calc [h|d|w|m]|[r]	-- calculate slow stats for all times or hour..day... r=d+w+m\n
 "
   ),
   exit
@@ -50,11 +37,13 @@ if ( $ARGV[0] eq 'calc' ) {
     # if     $config{'queries'}{$query}{'periods'}   ;
     for my $time (
       $config{'queries'}{$query}{'periods'}
-      ? ( $ARGV[1] or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} } )
+      ? ( ( $ARGV[1] ne 'r' ? $ARGV[1] : () )
+          or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} } )
       : ('')
       )
     {
       #printlog $query ,$time;
+      next if $ARGV[1] eq 'r' and ( !$config{'queries'}{$query}{'periods'} or $time eq 'h' );
       printlog 'info', 'calculating ', $time, $query;
       #(!$time ? () : ('time'$config{'periods'}{$time}))
       local $config{'queries'}{$query}{'WHERE'}[5] =
@@ -111,7 +100,6 @@ if ( $ARGV[0] eq 'calc' ) {
       for $ARGV[1]
       or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} };
 =cut
-
   exit;
 }
 our %work;
@@ -140,13 +128,7 @@ sub print_info {
   } @_;
   #printlog 'info', 'hashes:', map {$_.'='. %{$work{$_}}} qw(asked ask_db) ;
   printlog 'info', 'hashes:', map { $_ . '=' . scalar %{ $work{$_} || {} } } qw(ask asked ask_db);
-  psmisc::file_rewrite(
-    'dumper',
-    Dumper {
-      'work' => \%work,
-      'dc'   => \@dc,
-    }
-  );
+  #  psmisc::file_rewrite(    'dumper',    Dumper [      'work' => \%work,      'db'   => $db,      'dc'   => \@dc,    ]  );
 }
 $SIG{INT} = $SIG{__DIE__} = \&close_all;
 $SIG{HUP} = $^O =~ /win/i
@@ -199,7 +181,7 @@ for (@ARGV) {
           #        printlog('dcdev', "q1", $q, $work{'ask'}{ $q });
 ##$dc->log('hndl', 'evrf');
 ##$dc->log('hndl', 'evrr');
-          every(
+          psmisc::schedule(
             $config{'queue_recalc_every'},
             our $queuerecalc_ ||= sub {
 ##$dc->log('hndl', 'e sub');
@@ -226,7 +208,7 @@ for (@ARGV) {
           #do
           #my $n = 0;
           #                              printlog( 'info', "ch1",  $q, $dc->{'host'});
-          every(
+          psmisc::schedule(
             $dc->{'search_every'},
             our $queueask_ ||= sub {
               my ($dc) = @_;
@@ -343,6 +325,9 @@ for (@ARGV) {
       },
       %config,
     );
+    #my %t = %{$dc->{'sql'}{'table'}{'users'}};
+    #   tie %{$dc->{'sql'}{'table'}{'users'}}, 'hashwatch';
+    #%{$dc->{'sql'}{'table'}{'users'}} = %t;
     #$dc->{'no_print'}{'SR'} => 1;
     #printlog 'info', "our version", $dc->{'V'};
     $dc->connect($hub);
@@ -354,7 +339,7 @@ for (@ARGV) {
 while ( my @dca = grep { $_->active() } @dc ) {
   #printlog "inloopb", @_;
   $_->work() for @dca;
-  every(
+  psmisc::schedule(
     [ 20, 60 * 60 ],    #
     our $hubstats_ ||= sub {
       my $time = int time;
@@ -382,6 +367,13 @@ while ( my @dca = grep { $_->active() } @dc ) {
     ,
     @dc
   );
+  psmisc::schedule(
+    [ 60, 60 * 40 ],
+    our $hubrunhour_ ||= sub {
+      psmisc::startme('calc h');
+    }
+  );
+  psmisc::schedule( [ 300, 60 * 60 * 6 ], our $hubrunrare_ ||= sub { psmisc::startme('calc r') } );
   #printlog "inloopa";
 }
 #printlog "afterloop";
@@ -389,3 +381,23 @@ while ( my @dca = grep { $_->active() } @dc ) {
 #printlog "exiting";
 $_->destroy() for @dc;
 #}
+
+=z
+package hashwatch;
+use Data::Dumper;    #dev only
+sub TIEHASH  { bless {}, $_[0] }
+sub STORE    { 
+#print "store:", Dumper(\@_);
+print "CREATING $_[1]=$_[2] from ",caller,"\n"unless exists $_[0]->{$_[1]};
+$_[0]->{$_[1]} = $_[2] }
+sub FETCH    { 
+#print "fetch:", Dumper(\@_); 
+print "CREATING $_[1]=$_[2] from ",caller,"\n"unless exists $_[0]->{$_[1]};
+$_[0]->{$_[1]} }
+sub FIRSTKEY { my $a = scalar keys %{$_[0]}; each %{$_[0]} }
+sub NEXTKEY  { each %{$_[0]} }
+sub EXISTS   { exists $_[0]->{$_[1]} }
+sub DELETE   { delete $_[0]->{$_[1]} }
+sub CLEAR    { %{$_[0]} = () }
+sub SCALAR   { scalar %{$_[0]} }
+=cut
