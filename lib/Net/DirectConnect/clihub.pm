@@ -70,9 +70,10 @@ sub init {
         and $text eq 'You are already in the hub.' );
       if ( $self->{'NickList'}->{$nick}{'oper'} or $nick eq 'Hub-Security' ) {
         if (
-             $text =~ /^Minimum search interval is:(\d+)s/
+             $text =~ /^(?:Minimum search interval is|Минимальный интервал поиска):(\d+)s/
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
           )
+
         {
           $self->log( 'warn', "[$nick] oper: set min interval = $1" );
           $self->{'search_every'} = int $1 || $self->{'search_every_min'};
