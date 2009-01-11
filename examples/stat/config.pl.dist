@@ -1,0 +1,10 @@
+#copy me to config.pl
+#
+#$config{'sql'}{'driver'} = 'sqlite';
+#$config{'M'} = 'P'; #passive
+#
+#dev logs
+#$config{'log_dmp'}   = 1;
+#$config{'log_dcdmp'} = 1;
+#$config{'no_print'} = { map { $_ => 1 } qw(Quit Hello UserCommand) };    #SR Search MyINFO
+1;

@@ -59,11 +59,11 @@ sub init {
     #}
     ||= {
     'chatline' => sub {
-#      my ( $nick, $text ) = $_[0] =~ /^[*<]([^>]+?)>? (.+)$/s;
+      #      my ( $nick, $text ) = $_[0] =~ /^[*<]([^>]+?)>? (.+)$/s;
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
-#      my ( $nick, $text ) ;( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/s or ( $nick, $text ) = $_[0] =~ /^\* (\S+) (.+)$/s;
-#      $self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
-      #v: chatline <[++T]шэюъ> You are already in the hub.
+  #      my ( $nick, $text ) ;( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/s or ( $nick, $text ) = $_[0] =~ /^\* (\S+) (.+)$/s;
+  #      $self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
+  #v: chatline <[++T]шэюъ> You are already in the hub.
       $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->cmd('nick_generate'),
         $self->reconnect(),
         if ( ( !keys %{ $self->{'NickList'} } or $self->{'NickList'}->{$nick}{'oper'} )
@@ -73,7 +73,6 @@ sub init {
              $text =~ /^(?:Minimum search interval is|Минимальный интервал поиска):(\d+)s/
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
           )
-
         {
           $self->log( 'warn', "[$nick] oper: set min interval = $1" );
           $self->{'search_every'} = int $1 || $self->{'search_every_min'};
@@ -87,28 +86,22 @@ sub init {
           $self->search_retry();
         }
       }
-
       #
       $self->search_retry(),
         if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no search, try later..';
     },    #print("welcome:", @_) unless $self->{'no_print_welcome'}; },
-    'welcome' => sub { 
+    'welcome' => sub {
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
-#$nick, $text
-
-     if ( (!keys %{ $self->{'NickList'} } or !exists $self->{'NickList'}->{$nick} or $self->{'NickList'}->{$nick}{'oper'})
-and $text =~/^Bad nickname: unallowed characters, use these (\S+)/
-) {
-my $try = $self->{'Nick'};
-$try =~ s/[^$1]//g;
-      $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
-
-$self->{'Nick'} = $try if length $try;
-
-}
-
-
-},    #print("welcome:", @_)
+      #$nick, $text
+      if ( ( !keys %{ $self->{'NickList'} } or !exists $self->{'NickList'}->{$nick} or $self->{'NickList'}->{$nick}{'oper'} )
+        and $text =~ /^Bad nickname: unallowed characters, use these (\S+)/ )
+      {
+        my $try = $self->{'Nick'};
+        $try =~ s/[^$1]//g;
+        $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
+        $self->{'Nick'} = $try if length $try;
+      }
+    },    #print("welcome:", @_)
     'Lock' => sub {
       #print "lockparse[$_[0]]\n";
       $self->{'sendbuf'} = 1;
@@ -135,7 +128,7 @@ $self->{'Nick'} = $try if length $try;
       #        $self->{'no_print_welcome'} = 1;
       #      	$self->wait();
       #$self->{'log'}->('info', "HELLO end rec st:[$self->{'status'}]");
-$self->cmd('make_hub');
+      $self->cmd('make_hub');
     },
     'Supports' => sub {
       $self->supports_parse( $_[0], $self );
@@ -238,18 +231,16 @@ $self->cmd('make_hub');
         ( $s{'ip'}, $s{'port'} ) = split /:/, $s{'who'};
       }
       #my ($tth, string);
-#      if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/ ) {
+      #      if ( $s{'cmd'}[4] =~ /^TTH:(.*)$/ ) {
       if ( $s{'cmd'}[4] =~ /^TTH:([0-9A-Z]{39})$/ ) {
-#      if ( $s{'cmd'}[4] =~ /^TTH:\w{39}$/ ) {
+        #      if ( $s{'cmd'}[4] =~ /^TTH:\w{39}$/ ) {
         $s{'tth'} = $1;
- #       $s{'string'} = $s{'tth'}, $s{'tth'} = undef unless length $s{'tth'} == 39 and $s{'tth'} =~ /^[0-9A-Z]+$/;
+        #       $s{'string'} = $s{'tth'}, $s{'tth'} = undef unless length $s{'tth'} == 39 and $s{'tth'} =~ /^[0-9A-Z]+$/;
       } else {
         $s{'string'} = $s{'cmd'}[4];
       }
       $s{'string'} =~ tr/$/ /;
-#$self->log('dcdev', 'separse',"[$s{'cmd'}[4]]",Dumper \%s);
-
-
+      #$self->log('dcdev', 'separse',"[$s{'cmd'}[4]]",Dumper \%s);
       return \%s;
     },    #todo
     'SR' => sub {
@@ -335,15 +326,15 @@ $self->cmd('make_hub');
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'MyINFO'}); },
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'description'} . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$'); },
     'GetNickList' => sub { $self->sendcmd('GetNickList'); },
-    'GetINFO'     => sub { 
-#$self->sendcmd( 'GetINFO', $_[0], $self->{'Nick'} ), return if scalar @_ == 1;
-@_ = grep {$self->{'NickList'}{$_}{'online'} and !$self->{'NickList'}{$_}{'info'}} keys %{$self->{'NickList'}} unless @_;
-local $self->{'sendbuf'} = 1;
-
-$self->sendcmd( 'GetINFO', $_, $self->{'Nick'}) for @_;
-#$dc->{'sendbuf'} = 0;
-$self->sendcmd();
- },
+    'GetINFO'     => sub {
+      #$self->sendcmd( 'GetINFO', $_[0], $self->{'Nick'} ), return if scalar @_ == 1;
+      @_ = grep { $self->{'NickList'}{$_}{'online'} and !$self->{'NickList'}{$_}{'info'} } keys %{ $self->{'NickList'} }
+        unless @_;
+      local $self->{'sendbuf'} = 1;
+      $self->sendcmd( 'GetINFO', $_, $self->{'Nick'} ) for @_;
+      #$dc->{'sendbuf'} = 0;
+      $self->sendcmd();
+    },
     'ConnectToMe' => sub {
       #print "ctm [$self->{'M'}][$self->{'allow_passive_ConnectToMe'}]\n";
       return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
@@ -472,7 +463,6 @@ $self->sendcmd();
     $self->log( 'err', "cant listen udp (search repiles)" )
       unless $self->{'myport_udp'};
   }
-
   #
   #$self->log('dev', "listeners created"),
   #  $self->{'clients'}{'listener'}->listen();
