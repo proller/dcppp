@@ -87,11 +87,28 @@ sub init {
           $self->search_retry();
         }
       }
+
       #
       $self->search_retry(),
         if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no search, try later..';
     },    #print("welcome:", @_) unless $self->{'no_print_welcome'}; },
-    'welcome' => sub { },    #print("welcome:", @_)
+    'welcome' => sub { 
+      my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
+#$nick, $text
+
+     if ( (!keys %{ $self->{'NickList'} } or !exists $self->{'NickList'}->{$nick} or $self->{'NickList'}->{$nick}{'oper'})
+and $text =~/^Bad nickname: unallowed characters, use these (\S+)/
+) {
+my $try = $self->{'Nick'};
+$try =~ s/[^$1]//g;
+      $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
+
+$self->{'Nick'} = $try if length $try;
+
+}
+
+
+},    #print("welcome:", @_)
     'Lock' => sub {
       #print "lockparse[$_[0]]\n";
       $self->{'sendbuf'} = 1;
