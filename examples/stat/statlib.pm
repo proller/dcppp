@@ -337,6 +337,75 @@ $config{'queries'}{'users online'} ||= {
 };
 
 
+
+$config{'queries'}{'results top users'} ||= {
+  #  %{ $config{'queries'}{'queries top tth raw'} },
+  'main'    => 1,
+  'periods' => 1,
+  'class'   => 'half',
+  'show'    => [qw(cnt nick)],            #time
+  'desc'    => 'they have anything',
+  'SELECT'  => '*, COUNT(*) as cnt',
+  'FROM'    => 'results',
+  'WHERE'   => ['string != ""', 'nick != ""'],
+  #  'GROUP BY' => 'tth',
+  'GROUP BY' => 'nick',
+  'ORDER BY' => 'cnt DESC',
+  'order'    => ++$order,
+};
+
+$config{'queries'}{'results top users tth'} ||= {
+  #  %{ $config{'queries'}{'queries top tth raw'} },
+  'main'    => 1,
+  'periods' => 1,
+  'class'   => 'half',
+  'show'    => [qw(cnt nick)],            #time
+  'desc'    => 'they know 42',
+  'SELECT'  => '*, COUNT(*) as cnt',
+  'FROM'    => 'results',
+  'WHERE'   => ['tth != ""', 'nick != ""'],
+  #  'GROUP BY' => 'tth',
+  'GROUP BY' => 'nick',
+  'ORDER BY' => 'cnt DESC',
+  'order'    => ++$order,
+};
+
+
+$config{'queries'}{'queries top users'} ||= {
+  #  %{ $config{'queries'}{'queries top tth raw'} },
+  'main'    => 1,
+  'periods' => 1,
+  'class'   => 'half',
+  'show'    => [qw(cnt nick)],            #time
+  'desc'    => 'they search "42"',
+  'SELECT'  => '*, COUNT(*) as cnt',
+  'FROM'    => 'queries',
+  'WHERE'   => ['string != ""', 'nick != ""'],
+  #  'GROUP BY' => 'tth',
+  'GROUP BY' => 'nick',
+  'ORDER BY' => 'cnt DESC',
+  'order'    => ++$order,
+};
+$config{'queries'}{'queries top users tth'} ||= {
+  #  %{ $config{'queries'}{'queries top tth raw'} },
+  'main'    => 1,
+  'periods' => 1,
+  'class'   => 'half',
+  'group_end' => 1,
+  'show'    => [qw(cnt nick)],            #time
+  'desc'    => 'they have unlimited hdds',
+  'SELECT'  => '*, COUNT(*) as cnt',
+  'FROM'    => 'queries',
+  'WHERE'   => ['tth != ""', 'nick != ""'],
+  #  'GROUP BY' => 'tth',
+  'GROUP BY' => 'nick',
+  'ORDER BY' => 'cnt DESC',
+  'order'    => ++$order,
+};
+
+
+
+
 $config{'queries'}{'hubs top'} ||= {
 
   'main'     => 1,
