@@ -39,7 +39,7 @@ if ( $ARGV[0] eq 'calc' ) {
   #exit unless $config{'use_slow'};
   local $db->{'cp_in'} = 'utf-8';
   #local $config{'log_dmp'}=1;
-  for my $query ( keys %{ $config{'queries'} } ) {
+  for my $query ( sort keys %{ $config{'queries'} } ) {
     #      print "pre:$query ($config{'queries'}{$query}{'FROM'}) { $config{'queries'}{$query}{'GROUP BY'} }\n";
     next
       unless statlib::is_slow($query);
@@ -75,6 +75,7 @@ Data::Dumper->new([$row])->Indent(0)->Terse(1)->Purity(1)->Dump();
       }
       $db->do( "DELETE FROM slow WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " );
       $db->flush_insert('slow');
+sleep 3; 
     }
   }
 
@@ -396,7 +397,7 @@ $share += $dc->{'NickList'}{$_}{'sharesize'} for @users;
 
 printlog 'info', "hubsize $dc->{'hub'}: bytes = $share users=", scalar @users;
 $db->insert_hash('hubs', 
-{ 'time' => $time, 'hub' => $dc->{'hub'} ,'size' => $share, 'users' => scalar @users });
+{ 'time' => $time, 'hub' => $dc->{'hub'} ,'size' => $share, 'users' => scalar @users }) if $share;
 
 
 
