@@ -124,7 +124,7 @@ for (
   psmisc::flush();
 }
 print
-qq{<div class="version"><a href="http://pro.setun.net/dcppp/">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}
+qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/trunk/examples/stat">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}
   . ( split( ' ', '$Revision$' ) )[1]
   . qq{</div>};
 print '<script type="text/javascript" src="http://iekill.proisk.ru/iekill.js"></script>';
