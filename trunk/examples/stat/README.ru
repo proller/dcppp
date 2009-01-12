@@ -5,10 +5,10 @@
 cpan DBI Bundle::DBD::mysql DBD::SQLite
 win: через ppm
 
-Скачиваем релиз 
-http://search.cpan.org/dist/Net-DirectConnect/
-или снапшот
+Скачиваем свежее из svn:
 svn co svn://svn.setun.net/dcppp/trunk/ dcppp
+или и скачиваем более старый релиз 
+http://search.cpan.org/dist/Net-DirectConnect/
 
 идем в examples/stat
 
