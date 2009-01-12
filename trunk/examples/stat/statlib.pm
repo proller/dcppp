@@ -322,6 +322,13 @@ $config{'queries'}{'tth'} ||= {
   'show'     => [qw(cnt string filename size tth)],
   'GROUP BY' => 'filename',
 };
+$config{'queries'}{'filename'} ||= {
+  %{ $config{'queries'}{'string'} },
+  'desc'     => 'various tth',
+  'show'     => [qw(cnt string filename size tth)],
+  'GROUP BY' => 'tth',
+};
+
 psmisc::config( 0, 0, 0, 1 );
 
 sub is_slow {
@@ -353,7 +360,7 @@ sub make_query {
   }
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
   $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'},
-    map { $_ . '=' . $db->quote( $param->{$_} ) } grep { length $param->{$_} } qw(string tth);
+    map { $_ . '=' . $db->quote( $param->{$_} ) } grep { length $param->{$_} } keys %{ $config{'queries'}} ;#qw(string tth);
   $sql = join ' ', $q->{'sql'},
     map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } 'SELECT', 'FROM',
     'LEFT JOIN', 'USING', 'WHERE', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'UNION';
