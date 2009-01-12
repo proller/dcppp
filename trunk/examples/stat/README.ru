@@ -29,3 +29,14 @@ http://search.cpan.org/dist/Net-DirectConnect/
  не забыть прописать полный путь в конфиге для базы если sqlite
 
 Использовать.
+
+
+
+====
+freebsd
+cd /usr/ports/devel/subversion && make install clean
+cd /usr/local/www && svn co svn://svn.setun.net/dcppp/trunk/examples/stat dcstat
+cd /usr/ports/databases/p5-DBD-mysql && make install clean
+cd /usr/local/www/dcstat
+cp config.pl.dist config.pl
+ee config.pl
