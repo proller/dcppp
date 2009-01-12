@@ -19,26 +19,16 @@ BEGIN {
 $param = get_params();
 use statlib;
 print "Content-type: text/html; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
-print '<html><head><title>RU DC stat</title><style>
-.tth {font-family:monospace, "Courier New";font-size:4px;} 
-.magnet-darr {font: bolder larger; text-decoration:none; color:green;}
-.magnet-darr:hover { color:lightgreen; background-color:#696;}
-.onetable { ZZborder:solid 1px gray; text-align:center; margin:10px; }
-.half {   display:inline-block;}
-.version {text-align:center; font-size:xx-small;}
-tr:nth-child(2n+0) {background-color:GhostWhite;}
-tr:nth-child(2n+1) {background-color:WhiteSmoke;}
-tr {background-color:WhiteSmoke;}
-tr:hover {background-color:Gainsboro;}
-table {border:solid 1px Gainsboro; background-color:Gainsboro; margin:auto;}
-.main-top-info {text-align:center; background-color:LightSalmon;}
-</style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
+print '<html><head><title>RU DC stat</title>
+<link href="style.css" rel="stylesheet" type="text/css"/>
+<style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 $config{'log_all'}     = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
 $config{'log_dmp'}     = $config{'log_dbg'} = 1,
   #$db->{'explain'} = 1,
   if $param->{'debug'};
 $config{'view'} = 'html';
+$config{'lang'} = 'ru';
 $db->retry_off();
 $db->set_names();
 $config{'query_default'}{'LIMIT'} = psmisc::check_int( $param->{'on_page'}, 10, 100, 10 );
@@ -105,6 +95,7 @@ for (
   print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
     ? $_
     : qq{<a href="?query=} . psmisc::encode_url($_) . qq{">$_</a>};
+$q->{'desc'} = $q->{'desc'}->{$config{'lang'}} if ref $q->{'desc'} eq 'HASH';
   print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
   my $res = statlib::make_query( $q, $_, $param->{'period'} );
@@ -131,7 +122,7 @@ for (
       for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } } grep {$config{'queries'}{$_}}@{ $q->{'show'} };#qw(string tth);
 $row->{'hub'} .= psmisc::human( 'dchub-dl', {'hub' => $row->{'orig'}->{'hub'}} ) if $row->{'hub'};
 #$row->{'nick'} .= psmisc::human( 'dchub-dl', $row->{'orig'} ) if $row->{'nick'};
-    $row->{'time'} = psmisc::human( 'time_period', time - $row->{'time'} ) if int $row->{'time'};
+    $row->{$_} = psmisc::human( 'time_period', time - $row->{$_} ) for grep{ int $row->{$_} } qw(time online);
     $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     print '</tr>';

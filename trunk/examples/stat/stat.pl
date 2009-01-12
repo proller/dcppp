@@ -269,20 +269,20 @@ while ( my @dca = grep { $_->active() } @dc ) {
     @dc
   );
   psmisc::schedule(
-    [ 60, 60 * 40 ],
+    [ 300, 60 * 40 ],
     our $hubrunhour_ ||= sub {
       psmisc::startme('calch');
     }
     ),
     psmisc::schedule(
-    [ 300, 60 * 60 * 6 ],
+    [ 600, 60 * 60 * 6 ],
     our $hubrunrare_ ||= sub {
       psmisc::startme('calcr');
     }
     ) if $config{'use_slow'};
 
   psmisc::schedule(
-    $config{'purge'}/10,
+    900, $config{'purge'}/10,
     our $hubrunpurge_ ||= sub {
       psmisc::startme('purge');
     }
