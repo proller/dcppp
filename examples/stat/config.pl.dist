@@ -1,8 +1,10 @@
 #copy me to config.pl and edit?
 #
-#$config{'sql'}{'driver'} = 'sqlite';
+#$config{'sql'}{'driver'} = 'sqlite'; #mysql5 by default
+#$config{'sql'}{'driver'} = 'mysql4';
 #$config{'sql'}{'dbname'} = 'mydcstat';
 #$config{'sql'}{'dbname'} = '/tmp/mydcstat'; # for sqlite
+#$config{'sql'}{'pass'} = '1234';
 #
 #$config{'M'} = 'P'; #passive
 #
