@@ -92,11 +92,12 @@ for (
 {
   my $q = { %{ $config{'queries'}{$_} || next } };
   next if $q->{'disabled'};
-  print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
-    ? $_
-    : qq{<a href="?query=} . psmisc::encode_url($_) . qq{">$_</a>};
 $q->{'desc'} = $q->{'desc'}->{$config{'lang'}} if ref $q->{'desc'} eq 'HASH';
-  print " ($q->{'desc'}):" if $q->{'desc'};
+  print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
+    ? $_ 
+    : '<a href="?query=' . ( psmisc::encode_url($_)) . '">'.($q->{'desc'} || $_).'</a>';
+#  print " ($q->{'desc'}):" if $q->{'desc'};
+
   print "<br\n/>";
   my $res = statlib::make_query( $q, $_, $param->{'period'} );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
