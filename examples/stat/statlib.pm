@@ -113,7 +113,7 @@ $config{'queries'}{'queries string last'} ||= {
   'main'      => 1,
   'class'     => 'half',
   'group_end' => 1,
-  'desc'      => {'ru'=>'', 'en'=>'last searches'},
+  'desc'      => {'ru'=>'Сейчас ищут', 'en'=>'last searches'},
   'FROM'      => 'queries',
   'show'      => [qw(time hub nick string )],
   'SELECT'    => '*',
@@ -125,7 +125,7 @@ $config{'queries'}{'results top'} ||= {
   'main'     => 1,
   'periods'  => 1,
   'show'     => [qw(cnt string filename size tth)],    #time
-  'desc'     => 'Most stored',
+  'desc'     => {'ru'=>'Распространенные файлы', 'en'=>'Most stored'},
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'     => 'results',
   'WHERE'    => ['tth != ""'],
@@ -137,20 +137,20 @@ $config{'queries'}{'queries top tth'} ||= {
   'main'      => 1,
   'periods'   => 1,
   'class'     => 'half',
-  'desc'      => 'Most downloaded',
+  'desc'      => {'ru'=>'Чаще всего скачивают', 'en'=>'Most downloaded'},
   'show'      => [qw(cnt string filename size tth )],
   'SELECT'    => '*, COUNT(*) as cnt',
   'FROM'      => 'queries',
   'LEFT JOIN' => 'results USING (tth)',
   'WHERE'     => ['queries.tth != ""'],
-  'GROUP BY'  => 'tth',
+  'GROUP BY'  => 'queries.tth',
   'ORDER BY'  => 'cnt DESC',
   'order'     => ++$order,
 };
 #
 $config{'queries'}{'queries tth last'} ||= {
   %{ $config{'queries'}{'queries string last'} },
-  'desc'      => 'last downloads',
+  'desc'      => {'ru'=>'Сейчас скачивают', 'en'=>'last downloads'},
   'class'     => 'half',
   'group_end' => 1,
   'show'      => [qw(time hub nick filename size tth)],
@@ -185,7 +185,7 @@ $config{'queries'}{'results top users'} ||= {
   'periods'  => 1,
   'class'    => 'half',
   'show'     => [qw(cnt hub nick )],                #time
-  'desc'     => 'they have anything',
+  'desc'     => {'ru'=>'Чаще всего скачивают с', 'en'=>'they have anything'},
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'     => 'results',
   'WHERE'    => [ 'string != ""', 'nick != ""' ],
@@ -198,7 +198,7 @@ $config{'queries'}{'results top users tth'} ||= {
   'periods'  => 1,
   'class'    => 'half',
   'show'     => [qw(cnt hub  nick)],             #time
-  'desc'     => 'they know 42',
+  'desc'     => {'ru'=>'У них найдется все', 'en'=>'they know 42'},
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'     => 'results',
   'WHERE'    => [ 'tth != ""', 'nick != ""' ],
@@ -211,7 +211,7 @@ $config{'queries'}{'queries top users'} ||= {
   'periods'  => 1,
   'class'    => 'half',
   'show'     => [qw(cnt hub nick)],                 #time
-  'desc'     => 'they search "42"',
+  'desc'     => {'ru'=>'Больше всех ищут', 'en'=>'they search "42"'},
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'     => 'queries',
   'WHERE'    => [ 'string != ""', 'nick != ""' ],
@@ -225,7 +225,7 @@ $config{'queries'}{'queries top users tth'} ||= {
   'class'     => 'half',
   'group_end' => 1,
   'show'      => [qw(cnt hub nick)],              #time
-  'desc'      => 'they have unlimited hdds',
+  'desc'      => {'ru'=>'Больше всех скачивают', 'en'=>'they have unlimited hdds'},
   'SELECT'    => '*, COUNT(*) as cnt',
   'FROM'      => 'queries',
   'WHERE'     => [ 'tth != ""', 'nick != ""' ],
@@ -265,7 +265,7 @@ $config{'queries'}{'results ext'} ||= {
   'main'     => 1,
   'class'    => 'half',
   'show'     => [qw(cnt ext size)],
-  'desc'     => 'by extention',
+  'desc'     => {'ru'=>'Расширения', 'en'=>'by extention'},
   'SELECT'   => '*, SUM(size) as size , COUNT(*) as cnt',
   'FROM'     => 'results',
   'WHERE'    => ['ext != ""'],
@@ -289,7 +289,7 @@ $config{'queries'}{'chat top'} ||= {
   'main'     => 1,
   'class'    => 'half',
   'show'     => [qw(cnt hub nick)],
-  'desc'     => 'top flooders',
+  'desc'     => {'ru'=>'Находки для шпиона', 'en'=>'top flooders'},
   'SELECT'   => '*, COUNT(*) as cnt',
   'FROM'     => 'chat',
   'GROUP BY' => 'nick',
@@ -299,6 +299,7 @@ $config{'queries'}{'chat top'} ||= {
 $config{'queries'}{'chat last'} ||= {
   'main'           => 1,
   'class'          => 'half',
+  'desc'     => {'ru'=>'Сейчас в чате', 'en'=>'online'},
   'group_end'      => 1,
   'no_string_link' => 1,
   'show'           => [qw(time hub nick string)],
@@ -318,13 +319,13 @@ $config{'queries'}{'string'} ||= {
 };
 $config{'queries'}{'tth'} ||= {
   %{ $config{'queries'}{'string'} },
-  'desc'     => 'various filenames',
+  'desc'     => {'ru'=>'Имена файла', 'en'=>'various filenames'},
   'show'     => [qw(cnt string filename size tth)],
   'GROUP BY' => 'filename',
 };
 $config{'queries'}{'filename'} ||= {
   %{ $config{'queries'}{'string'} },
-  'desc'     => 'various tth',
+  'desc'     => {'ru'=>'Разное содержимое', 'en'=>'various tth'},
   'show'     => [qw(cnt string filename size tth)],
   'GROUP BY' => 'tth',
 };
@@ -365,6 +366,6 @@ sub make_query {
     map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } 'SELECT', 'FROM',
     'LEFT JOIN', 'USING', 'WHERE', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'UNION';
   return $db->query($sql);
-}
-$db ||= pssql->new( %{ $config{'sql'} or {} }, );
+}                     
+$db ||= pssql->new( %{ $config{'sql'} or {} }, ); 
 1;
