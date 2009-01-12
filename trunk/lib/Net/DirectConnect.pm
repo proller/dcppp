@@ -382,7 +382,7 @@ sub recv {
         } else {
           ++$readed;
           ++$ret;
-                   $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
+#                   $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
         }
         if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
         else {
@@ -398,10 +398,10 @@ sub recv {
 #          my $separator = "\\|";
 #          $separator 
 local  $self->{'cmd_aft'} = "\x0A" if $self->{'protocol'} ne 'adc' and  $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
-                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
-          while ( $self->{'buf'} =~ s/^(.*?)$self->{'cmd_aft'}//s ) {
+#                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
+          while ( $self->{'buf'} =~ s/^(.*?)\Q$self->{'cmd_aft'}//s ) {
             local $_ = $1;
-            #                $self->log('dcdmp', 'DC::recv', "parse [$_]($separator)");
+#                            $self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
             last if $self->{'status'} eq 'destroy';
             #                 $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
             next unless /\w/;
