@@ -25,6 +25,7 @@ $config{'periods'}    ||= {
   'd' => 86400,
   'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
+$config{'purge'}    ||= 31*86400; #366*86400;
 $config{'default_period'} ||= 'd';
 $config{'sql'}            ||= {
   'driver'       => 'mysql',
@@ -56,7 +57,7 @@ $config{'sql'}            ||= {
       'size'     => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1 ),
     },
     'chat' => {
-      'time' => pssql::row( 'time', 'index' => 1 ),
+      'time' => pssql::row( 'time', 'index' => 1, 'purge' => 366*86400, ),
       'hub'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 64,   'index'   => 1, 'default' => '', ),
       'nick'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 32,   'index'   => 1, 'default' => '', ),
       'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 3090, 'default' => '', ),
@@ -66,16 +67,16 @@ $config{'sql'}            ||= {
       'period' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 8,  'index' => 1, 'primary' => 1, 'default' => '' ),
       'n'      => pssql::row( undef,  'type'  => 'INT', 'index' => 1, 'primary' => 1, ),
       'result' => pssql::row( undef,  'type'  => 'VARCHAR', ),
-      'time'   => pssql::row( 'time', 'index' => 1 ),
+      'time'   => pssql::row( 'time', 'index' => 1, 'purge' => 1, ),
     },
     'hubs' => {
-      'time' => pssql::row( 'time', 'index' => 1 ),
+      'time' => pssql::row( 'time', 'index' => 1, 'purge' => 1, ),
       'hub'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
       'size'  => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
       'users' => pssql::row( undef, 'type' => 'INT',     'index'  => 1, ),
     },
     'users' => {
-      'time' => pssql::row( 'time', 'index' => 1 ),
+      'time' => pssql::row( 'time', 'index' => 1 , 'purge' => 1,),
       'hub'  => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 64, 'index'  => 1, 'default' => '', 'primary' => 1 ),
       'nick' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 32, 'index'  => 1, 'default' => '', 'primary' => 1 ),
       'ip'   => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 15, 'Zindex' => 1, 'default' => '', ),

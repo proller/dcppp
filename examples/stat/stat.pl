@@ -16,13 +16,18 @@ $config{'queue_recalc_every'} ||= 60;
 print(
   "usage:
  stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n
- stat.pl calc [h|d|w|m]|[r]	-- calculate slow stats for all times or hour..day... r=d+w+m\n
+ stat.pl calc[h|d|w|m]|[r]	-- calculate slow stats for all times or hour..day... r=d+w+m\n
 "
   ),
   exit
   if !$ARGV[0];
 
-if ( $ARGV[0] eq 'calc' ) {
+my $n = -1;
+for my $arg (@ARGV) {
+++$n;
+if ( $arg =~ /^calc(\w)?$/i ) {
+my $tim = $1;
+$ARGV[$n] = undef;
   local $db->{'cp_in'} = 'utf-8';
   #local $config{'log_dmp'}=1;
   for my $query ( sort keys %{ $config{'queries'} } ) {
@@ -31,12 +36,12 @@ if ( $ARGV[0] eq 'calc' ) {
       unless statlib::is_slow($query);
     for my $time (
       $config{'queries'}{$query}{'periods'}
-      ? ( ( $ARGV[1] ne 'r' ? $ARGV[1] : () )
+      ? ( ( $tim ne 'r' ? $tim : () )
           or sort { $config{'periods'}{$a} <=> $config{'periods'}{$b} } keys %{ $config{'periods'} } )
       : ('')
       )
     {
-      next if $ARGV[1] eq 'r' and ( !$config{'queries'}{$query}{'periods'} or $time eq 'h' );
+      next if $tim eq 'r' and ( !$config{'queries'}{$query}{'periods'} or $time eq 'h' );
       printlog 'info', 'calculating ', $time, $query;
       local $config{'queries'}{$query}{'WHERE'}[5] =
         $config{'queries'}{$query}{'FROM'} . ".time >= " . int( time - $config{'periods'}{$time} )
@@ -50,11 +55,28 @@ if ( $ARGV[0] eq 'calc' ) {
       }
       $db->do( "DELETE FROM slow WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " );
       $db->flush_insert('slow');
-      sleep 3;
+#      sleep 3;
     }
   }
-  exit;
+#  exit;
+}elsif  ( $arg eq 'purge' ) {
+$ARGV[$n] = undef;
+
+for my $table (sort keys %{$config{'sql'}{'table'}}) {
+#print "$table  \n";
+my ($col) = grep {$config{'sql'}{'table'}{$table}{$_}{'purge'}} keys %{$config{'sql'}{'table'}{$table}};
+my $purge = $config{'sql'}{'table'}{$table}{$col}{'purge'};
+#print "t $table c$col p$purge \n";
+$purge = $config{'purge'} if $purge and $purge <= 1;
+printlog 'info', "purge $table $col $purge =",
+$db->do( "DELETE FROM $table WHERE $col < " .int(time - $purge))
+;
 }
+
+
+}
+}
+
 our %work;
 our @dc;
 
@@ -82,7 +104,7 @@ $SIG{HUP} =
   ? \&print_info
   : \&flush_all;
 $SIG{INFO} = \&print_info;
-for (@ARGV) {
+for (grep {length $_}@ARGV) {
   local @_;
   if ( /^-/ and @_ = split '=', $_ ) {
     $config{config_file} = $_[1], psmisc::config() if $_[0] eq '--config';
@@ -248,14 +270,23 @@ while ( my @dca = grep { $_->active() } @dc ) {
   psmisc::schedule(
     [ 60, 60 * 40 ],
     our $hubrunhour_ ||= sub {
-      psmisc::startme('calc h');
+      psmisc::startme('calch');
     }
     ),
     psmisc::schedule(
     [ 300, 60 * 60 * 6 ],
     our $hubrunrare_ ||= sub {
-      psmisc::startme('calc r');
+      psmisc::startme('calcr');
     }
     ) if $config{'use_slow'};
+
+  psmisc::schedule(
+    $config{'purge'}/10,
+    our $hubrunpurge_ ||= sub {
+      psmisc::startme('purge');
+    }
+    );
+
+
 }
 $_->destroy() for @dc;
