@@ -142,7 +142,7 @@ $config{'queries'}{'queries top tth'} ||= {
   'SELECT'    => '*, COUNT(*) as cnt',
   'FROM'      => 'queries',
   'LEFT JOIN' => 'results USING (tth)',
-  'WHERE'     => ['tth != ""'],
+  'WHERE'     => ['queries.tth != ""'],
   'GROUP BY'  => 'tth',
   'ORDER BY'  => 'cnt DESC',
   'order'     => ++$order,
