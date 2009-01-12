@@ -279,6 +279,17 @@ sub init {
     #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
     #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
     'UserCommand' => sub { },    # useless
+    #
+    #
+    #
+    #
+    # ADC dev
+    'ISUP' => sub { },
+    'ISID' => sub { $self->{'sid'} = $_[0] },
+    'IINF' => sub { $self->cmd('BINF') },
+    #todo
+    'IQUI' => sub { },
+    'ISTA' => sub { $self->log( 'dcerr', @_ ) },
     };
   #  %{
   $self->{'cmd'}
@@ -410,6 +421,53 @@ sub init {
       $self->{'nick_base'} ||= $self->{'Nick'};
       $self->{'Nick'} = $self->{'nick_base'} . int( rand( $self->{'nick_random'} || 100 ) );
     },
+    #
+    #
+    #
+    # ADC dev
+    'connect' => sub { $self->cmd('HSUP') if $self->{'protocol'} eq 'adc' },
+    'HSUP' => sub {
+      $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0)];
+      $self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
+      $self->sendcmd( 'HSUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
+      #ADBAS0 ADBASE ADTIGR ADUCM0 ADBLO0
+    },
+    'BINF' => sub {
+      $self->{'BINFS'} ||= [qw(ID PD NI SL SS SF HN HR HO VE US SU)];
+      #$self->{'ID'} ||= 'FXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI';
+      #$self->{'PD'} ||='P26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY';
+      eval {
+        use MIME::Base32 qw( RFC );
+        use Digest::Tiger;
+      };
+      $self->{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
+      # hash() returns a 192 bit hash
+      #$self->log('TIGERTE',  Digest::Tiger::hash('Tiger'));
+      #$self->log('TIGERTEST',  MIME::Base32::encode(Digest::Tiger::hash('Tiger')));
+      sub hash {
+        local ($_) = @_;
+        #$_.=("\x00"x(1024 - length $_));print ( 'hlen', length $_);
+        MIME::Base32::encode( Digest::Tiger::hash($_) );
+      }
+      #$self->log('TIGERTEST',  hash('Tiger'));
+      #$self->log('TIGERTESTid',  hash('FXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI'));
+      #$self->log('TIGERTESTpd', hash('P26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY'));
+      $self->{'PD'} ||= hash( 'perl' . $self->{'myip'} . $self->{'NI'} . time );
+      $self->{'ID'} ||= hash( $self->{'PD'} );
+      $self->{'SL'} ||= $self->{'S'} || '2';
+      $self->{'SS'} ||= $self->{'sharesize'} || 20025693588;
+      $self->{'SF'} ||= 30999;
+      $self->{'HN'} ||= $self->{'H'} || 1;
+      $self->{'HR'} ||= $self->{'R'} || 0;
+      $self->{'HO'} ||= $self->{'O'} || 0;
+      $self->{'VE'} ||= $self->{'V'} || '++\s0.706';
+      $self->{'US'} ||= 10000;
+      $self->{'SU'} ||= 'ADC0';
+      #$self->{''} ||= $self->{''} || '';
+      $self->sendcmd( 'BINF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
+      #BINF UUXX IDFXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI PDP26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY NIïûðûî SL2 SS20025693588
+      #SF30999 HN2 HR0 HO0 VE++\s0.706 US5242 SUADC0
+      }
     };
 #print "[$self->{'number'}]BEF";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";

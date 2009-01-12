@@ -145,7 +145,7 @@ sub protocol {
   my ($p) = @_;
   if ( $p =~ /adc/i ) {
     $self->{'cmd_bef'} = undef;
-    $self->{'cmd_aft'} = "\n";
+    $self->{'cmd_aft'} = "\x0A";
   } elsif ($p) {    #$p =~ /nmdc/i
     $self->{'cmd_bef'} = '$';
     $self->{'cmd_aft'} = '|';
@@ -159,7 +159,11 @@ sub connect {
   #psmisc::caller_trace(10);
   if ( $_[0] ) {
     $self->{'host'} = $_[0];
-    $self->{'host'} =~ s{^.*?://}{};
+    $self->{'host'} =~ s{^(.*?)://}{};
+$self->{'protocol'} = 'adc',
+  $self->protocol( $self->{'protocol'} )
+
+if lc $1  eq 'adc';
     $self->{'host'} =~ s{/.*}{}g;
     $self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
   }
@@ -167,7 +171,7 @@ sub connect {
   return 0
     if ( $self->{'socket'} and $self->{'socket'}->connected() )
     or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
-  $self->log( 'info', "[$self->{'number'}] connecting to $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
+  $self->log( 'info', "[$self->{'number'}] connecting to $self->{'protocol'} $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
   $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
@@ -193,6 +197,7 @@ sub connect {
   $self->log(
     'info', "[$self->{'number'}]", "connect to $self->{'host'} [me=$self->{'myip'}] ok ",    #socket=[$self->{'socket'}]
   );                                                                                         # Dumper($self->{'sockopts'})
+$self->cmd('connect');
   $self->recv();
   return 0;
 }
@@ -377,7 +382,7 @@ sub recv {
         } else {
           ++$readed;
           ++$ret;
-         #          $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
+                   $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
         }
         if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
         else {
@@ -390,10 +395,11 @@ sub recv {
 #          my $endmsg = '[' . ( $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,3}\s/ ? "\n" : $self->{'buf'} =~ /^[$<]/ ? '|':"\n" ) . ']';
 #          my $endmsg =  ( $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,3}\s/ ? "\n" : $self->{'buf'} =~ /^[$<]/ ? '|':"\n" ) ;
 #my $separator = "\n"; $separator = "\\|" if $self->{'buf'} =~ /^[\$<*]/; #stupid hubs
-          my $separator = "\\|";
-          $separator = "\n" if $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
-#                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$separator]" ) unless $self->{'filehandle'};
-          while ( $self->{'buf'} =~ s/^(.*?)$separator//s ) {
+#          my $separator = "\\|";
+#          $separator 
+local  $self->{'cmd_aft'} = "\x0A" if $self->{'protocol'} ne 'adc' and  $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
+                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
+          while ( $self->{'buf'} =~ s/^(.*?)$self->{'cmd_aft'}//s ) {
             local $_ = $1;
             #                $self->log('dcdmp', 'DC::recv', "parse [$_]($separator)");
             last if $self->{'status'} eq 'destroy';
@@ -597,7 +603,7 @@ sub handler {
 #$self->log( "atmark:", $self->{'socket'}->atmark, " timeout=",$self->{'socket'}->timeout,  'conn=',$self->{'socket'}->connected,'so=', $self->{'socket'});
       eval { $_ = $self->{'socket'}->send( join( '', @sendbuf, ) ); };    #'$' . join( ' ', @_ ) . '|'
       $self->log( 'err', "[$self->{'number'}]", 'send error', $@ ) if $@;
-      $self->log( 'dcdmp', "[$self->{'number'}] we send [", join( '', @sendbuf ), "]:", $_, $! ); #'$' . join( ' ', @_ ) . '|' )
+      $self->log( 'dcdmp', "[$self->{'number'}] we send [". join( '', @sendbuf ). "]:", $_, $! ); #'$' . join( ' ', @_ ) . '|' )
       @sendbuf = ();
     }
   }
@@ -793,7 +799,7 @@ sub info {
 #sub active {  my $self = shift;  return map { $_->{'number'} } grep { $_->{'socket'} } $self, values %{ $self->{'clients'} };}
 sub active {
   my $self = shift;
-  $self->log( 'trace', 'DC::active' );
+#  $self->log( 'trace', 'DC::active' );
   return 1 if grep { $self->{'status'} eq $_ } qw(connecting   connected   reconnecting listening transfer);
   return 0;
 }
