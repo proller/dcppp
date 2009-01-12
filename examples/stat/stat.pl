@@ -13,6 +13,7 @@ use lib $root_path. '../../lib';
 use lib $root_path. './';
 use Net::DirectConnect::clihub;
 $config{'queue_recalc_every'} ||= 60;
+$static{'no_sig_log'} = 1; #test
 print(
   "usage:
  stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n
