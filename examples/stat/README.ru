@@ -1,0 +1,31 @@
+
+Установка:
+
+Установить модули:
+cpan DBI Bundle::DBD::mysql DBD::SQLite
+win: через ppm
+
+Скачиваем релиз 
+http://search.cpan.org/dist/Net-DirectConnect/
+или снапшот
+svn co svn://svn.setun.net/dcppp/trunk/ dcppp
+
+идем в examples/stat
+
+скопировать config.pl.dist в config.pl 
+отредактировать config.pl
+ например включить sqlite вместо mysql
+ Можно переопределить любые настройки найденные в stat.cgi dcstat.conf stat.pl statlib.pm
+
+Запустить например 
+ perl stat.pl dc.hub.ru dc.hub.com:41111 1.2.3.4
+
+Посмотреть статистику например
+ perl stat.cgi > stat.html
+
+Прикрутить например к апачу
+ например как dcstat.conf
+ или положить в htdocs
+ не забыть прописать полный путь в конфиге для базы если sqlite
+
+Использовать.

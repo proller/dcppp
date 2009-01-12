@@ -21,7 +21,7 @@ $dc->{'handler'}{'chatline'} = sub {
   my $dc = shift;
   my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/;
   print "My chatline handler [$nick,$text]\n";
-  if ( $text =~ /^\s*!moo/i ) {         # if you type  !moo  in main chat
+  if ( $text =~ /^\s*!moo/i ) {        # if you type  !moo  in main chat
     $dc->cmd( 'chatline', 'meow!' );    # via cmd,     can be written as $dc->chatline( ...
     $dc->To( $nick, 'woof!' );          # private msg, can be written as $dc->cmd('To', $nick, ...
   }
@@ -30,13 +30,13 @@ $dc->connect( $ARGV[0] );               # connect can parse dchub://hub:port/
 $dc->wait_connect();
 $dc->work(10);                          # seconds
 $dc->chatline('hello world');
-{ # fine tuned getinfo with send buffer
-local $dc->{'sendbuf'} = 1; #enable buffer
-$dc->sendcmd( 'GetINFO', $_, $dc->{'Nick'}) for grep {$dc->{'NickList'}{$_}{'online'} and !$dc->{'NickList'}{$_}{'info'}} keys $dc->{'NickList'};
-$dc->sendcmd(); #flush buffer (actual send)
+{                                       # fine tuned getinfo with send buffer
+  local $dc->{'sendbuf'} = 1;           #enable buffer
+  $dc->sendcmd( 'GetINFO', $_, $dc->{'Nick'} )
+    for grep { $dc->{'NickList'}{$_}{'online'} and !$dc->{'NickList'}{$_}{'info'} } keys $dc->{'NickList'};
+  $dc->sendcmd();                       #flush buffer (actual send)
 }
-$dc->sendcmd( 'GetINFO'); 
-
+$dc->sendcmd('GetINFO');
 $dc->search('3P7MBNO5COD4TLTVXLJB53ZJBVIL2QRHIGZ2N5A');
 $dc->search('xxx');
 # get all filelists
