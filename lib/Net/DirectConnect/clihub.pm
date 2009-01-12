@@ -436,16 +436,13 @@ sub init {
       $self->{'BINFS'} ||= [qw(ID PD NI SL SS SF HN HR HO VE US SU)];
       #$self->{'ID'} ||= 'FXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI';
       #$self->{'PD'} ||='P26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY';
-      eval {
-        use MIME::Base32 qw( RFC );
-        use Digest::Tiger;
-      };
       $self->{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
       # hash() returns a 192 bit hash
       #$self->log('TIGERTE',  Digest::Tiger::hash('Tiger'));
       #$self->log('TIGERTEST',  MIME::Base32::encode(Digest::Tiger::hash('Tiger')));
       sub hash {
         local ($_) = @_;
+      eval "use MIME::Base32 qw( RFC ); use Digest::Tiger;";
         #$_.=("\x00"x(1024 - length $_));print ( 'hlen', length $_);
         MIME::Base32::encode( Digest::Tiger::hash($_) );
       }
