@@ -103,8 +103,8 @@ $q->{'desc'} = $q->{'desc'}->{$config{'lang'}} if ref $q->{'desc'} eq 'HASH';
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
   my $n;
-
   for my $row (@$res) {
+
     print '<tr><td>', ++$n, '</td>';
     $row->{$_} = psmisc::html_chars( $row->{$_} ) for @{ $q->{'show'} };
     $row->{'orig'} = {%$row};
@@ -124,7 +124,7 @@ $q->{'desc'} = $q->{'desc'}->{$config{'lang'}} if ref $q->{'desc'} eq 'HASH';
 $row->{'hub'} .= psmisc::human( 'dchub-dl', {'hub' => $row->{'orig'}->{'hub'}} ) if $row->{'hub'};
 #$row->{'nick'} .= psmisc::human( 'dchub-dl', $row->{'orig'} ) if $row->{'nick'};
     $row->{$_} = psmisc::human( 'time_period', time - $row->{$_} ) for grep{ int $row->{$_} } qw(time online);
-    $row->{'size'} = psmisc::human( 'size',        $row->{'size'} )        if int $row->{'size'};
+    $row->{$_} = psmisc::human( 'size',        $row->{$_} )        for grep{ int $row->{$_} }  qw(size share); 
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     print '</tr>';
   }

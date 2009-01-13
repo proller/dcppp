@@ -184,10 +184,11 @@ $config{'queries'}{'results top users'} ||= {
   'main'     => 1,
   'periods'  => 1,
   'class'    => 'half',
-  'show'     => [qw(cnt hub nick )],                #time
+  'show'     => [qw(cnt hub nick share)],                #time
   'desc'     => {'ru'=>'Чаще всего скачивают с', 'en'=>'they have anything'},
-  'SELECT'   => '*, COUNT(*) as cnt',
+  'SELECT'   => '*, users.size as share, COUNT(*) as cnt',
   'FROM'     => 'results',
+  'LEFT JOIN' => 'users USING (hub, nick )',
   'WHERE'    => [ 'string != ""', 'nick != ""' ],
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
@@ -197,10 +198,11 @@ $config{'queries'}{'results top users tth'} ||= {
   'main'     => 1,
   'periods'  => 1,
   'class'    => 'half',
-  'show'     => [qw(cnt hub  nick)],             #time
+  'show'     => [qw(cnt hub nick  share)],             #time
   'desc'     => {'ru'=>'У них найдется все', 'en'=>'they know 42'},
-  'SELECT'   => '*, COUNT(*) as cnt',
+  'SELECT'   => '*, users.size as share, COUNT(*) as cnt',
   'FROM'     => 'results',
+  'LEFT JOIN' => 'users USING (hub, nick )',
   'WHERE'    => [ 'tth != ""', 'nick != ""' ],
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
@@ -210,10 +212,11 @@ $config{'queries'}{'queries top users'} ||= {
   'main'     => 1,
   'periods'  => 1,
   'class'    => 'half',
-  'show'     => [qw(cnt hub nick)],                 #time
+  'show'     => [qw(cnt hub nick share)],                 #time
   'desc'     => {'ru'=>'Больше всех ищут', 'en'=>'they search "42"'},
-  'SELECT'   => '*, COUNT(*) as cnt',
+  'SELECT'   => '*, users.size as share, COUNT(*) as cnt',
   'FROM'     => 'queries',
+  'LEFT JOIN' => 'users USING (hub, nick )',
   'WHERE'    => [ 'string != ""', 'nick != ""' ],
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
@@ -224,10 +227,11 @@ $config{'queries'}{'queries top users tth'} ||= {
   'periods'   => 1,
   'class'     => 'half',
   'group_end' => 1,
-  'show'      => [qw(cnt hub nick)],              #time
+  'show'      => [qw(cnt hub nick share)],              #time
   'desc'      => {'ru'=>'Больше всех скачивают', 'en'=>'they have unlimited hdds'},
-  'SELECT'    => '*, COUNT(*) as cnt',
+  'SELECT'    => '*, users.size as share, COUNT(*) as cnt',
   'FROM'      => 'queries',
+  'LEFT JOIN' => 'users USING (hub, nick )',
   'WHERE'     => [ 'tth != ""', 'nick != ""' ],
   'GROUP BY'  => 'nick',
   'ORDER BY'  => 'cnt DESC',
@@ -353,10 +357,13 @@ sub make_query {
       . ( ( $config{'queries'}{$query}{'periods'} ? ' AND period=' . $db->quote($period) : '' )
       . " LIMIT $config{'query_default'}{'LIMIT'}" );
     my $res = $db->query($sql);
+print Dumper $res if $param->{'debug'};
     my @ret;
+
     for my $row (@$res) {
       push @ret, eval $row->{'result'};
     }
+print Dumper @ret if $param->{'debug'};
     return \@ret;
   }
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
