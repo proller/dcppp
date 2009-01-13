@@ -18,10 +18,17 @@ BEGIN {
 }
 $param = get_params();
 use statlib;
-print "Content-type: text/html; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
-print '<html><head><title>RU DC stat</title>
+print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
+print '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:svg="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"><head><title>RU DC stat</title>
 <link href="style.css" rel="stylesheet" type="text/css"/>
 <style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
+
+#print '    <svg:svg version="1.1" baseProfile="full" width="300px" height="200px">      <svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>    </svg:svg>';
+
 $config{'log_all'}     = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
 $config{'log_dmp'}     = $config{'log_dbg'} = 1,
@@ -51,7 +58,7 @@ print ' days ', (
   ) or ( $param->{'query'} and !$config{'queries'}{ $param->{'query'} }{'periods'} );
 print '<br/>';
 
-print qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&darr;]</a> необходим dc клиент, например <a href="http://www.apexdc.net/download/">apexdc</a>.</div>};
+print qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим dc клиент, например <a href="http://www.apexdc.net/download/">apexdc</a>.</div>};
 
 
 $config{'human'}{'magnet-dl'} = sub {
@@ -61,18 +68,18 @@ $config{'human'}{'magnet-dl'} = sub {
   my $string = $row->{'string_orig'} || $row->{'string'};
   $string ||= $tth, $tth = undef,
     unless $tth =~ /^[0-9A-Z]{39}$/;
-  local $_ = join '&', grep { $_ } ( $tth ? 'xt=urn:tree:tiger:' . $tth : '' ),
+  local $_ = join '&amp;', grep { $_ } ( $tth ? 'xt=urn:tree:tiger:' . $tth : '' ),
     ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
     ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' ),
     ( $string ? 'kt=' . psmisc::encode_url($string) : '' ), ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'} : '' );
-  return '&nbsp;<a class="magnet-darr" href="magnet:?' . $_ . '">[&darr;]</a>' if $_;
+  return '&nbsp;<a class="magnet-darr" href="magnet:?' . $_ . '">[&dArr;]</a>' if $_;
   return '';
 };
 $config{'human'}{'dchub-dl'} = sub {
   my ($row) = @_;
   $row = { 'hub' => $row } unless ref $row eq 'HASH';
 #print "[$row->{'hub'}; $row->{'nick'}]";
-  return '&nbsp;<a class="magnet-darr" href="dchub://' . (join '/', grep{$_}map {$row->{ $_ }}  qw(hub nick)) . '">[&darr;]</a>' if length $row->{'hub'};
+  return '&nbsp;<a class="magnet-darr" href="dchub://' . (join '/', grep{$_}map {$row->{ $_ }}  qw(hub nick)) . '">[&dArr;]</a>' if length $row->{'hub'};
 
 };
 
