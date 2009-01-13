@@ -203,7 +203,7 @@ $config{'queries'}{'results top users tth'} ||= {
   'SELECT'   => '*, users.size as share, COUNT(*) as cnt',
   'FROM'     => 'results',
   'LEFT JOIN' => 'users USING (hub, nick )',
-  'WHERE'    => [ 'tth != ""', 'nick != ""' ],
+  'WHERE'    => [ 'tth != ""', 'results.nick != ""' ],
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
