@@ -85,6 +85,10 @@ sub close_all {
   flush_all();
   $db->disconnect();
   $_->destroy() for @dc;
+psmisc::caller_trace(5);
+printlog "bye close_all";
+
+
   exit;
 }
 
