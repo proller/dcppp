@@ -291,3 +291,4 @@ while ( my @dca = grep { $_->active() } @dc ) {
 
 }
 $_->destroy() for @dc;
+ printlog 'info', 'bye';
