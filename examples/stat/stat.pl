@@ -113,7 +113,7 @@ for (grep {length $_}@ARGV) {
   } else {
     my $hub = $_;
     my $dc  = Net::DirectConnect::clihub->new(
-      'Nick'      => 'dcstat_dev',
+      'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
       #   'log'		=>	sub {},	# no logging
       'log'          => sub { psmisc::printlog(@_) },
