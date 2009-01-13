@@ -240,15 +240,15 @@ $config{'queries'}{'queries top users tth'} ||= {
 $config{'queries'}{'hubs top'} ||= {
   'main'  => 1,
   'class' => 'half',
-  'show'  => [qw(hub users size time)],           #time
+  'show'  => [qw(time hub users size )],           #time
                                                   #  'SELECT'         => '*, hub as h', #DISTINCT DISTINCT hub,size,time
                                                   #  'FROM'     => 'hubs',
        #  'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
-  'SELECT' => '*', 'FROM' => 'hubs', 'GROUP BY' => 'hub', 'ORDER BY' => 'size DESC',
+#  'SELECT' => '*', 'FROM' => 'hubs', 'GROUP BY' => 'hub', 'ORDER BY' => 'size DESC',
 #  'SELECT'         => 'h2.time,h2.users, hub, max(size) as size',
 #  'SELECT'         => 'hubs.time, hubs.users, hub, max(size) as size',
 #  'SELECT'         => 'hubs.time, hubs.users, hub, size',
-#  'SELECT'         => 'h2.time, h2.users, hub, size',  'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs AS h2' ,'USING' => '(hub, size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'size DESC',
+  'SELECT'         => 'h2.time, h2.users, hub, size',  'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs AS h2' ,'USING' => '(hub, size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'size DESC',
 #select    from hubs left join hubs as h2 using (hub, size) group by hubs.hub order by size desc limit 10
 #      'time'        'hub'         'size'        'users'
   'order' => ++$order,
@@ -357,13 +357,13 @@ sub make_query {
       . ( ( $config{'queries'}{$query}{'periods'} ? ' AND period=' . $db->quote($period) : '' )
       . " LIMIT $config{'query_default'}{'LIMIT'}" );
     my $res = $db->query($sql);
-print Dumper $res if $param->{'debug'};
+#print Dumper $res if $param->{'debug'};
     my @ret;
 
     for my $row (@$res) {
       push @ret, eval $row->{'result'};
     }
-print Dumper @ret if $param->{'debug'};
+#print Dumper @ret if $param->{'debug'};
     return \@ret;
   }
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
