@@ -97,7 +97,7 @@ sub init {
         and $text =~ /^Bad nickname: unallowed characters, use these (\S+)/ )
       {
         my $try = $self->{'Nick'};
-        $try =~ s/[^$1]//g;
+        $try =~ s/[^\Q$1\E]//g;
         $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
         $self->{'Nick'} = $try if length $try;
       }

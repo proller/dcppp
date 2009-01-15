@@ -102,6 +102,13 @@ sub print_info {
   printlog 'info', 'active hubs:', map { $_->{'host'} . ':' . $_->{'status'} } @_;
   printlog 'info', 'hashes:', map { $_ . '=' . scalar %{ $work{$_} || {} } } qw(ask asked ask_db);
   #  psmisc::file_rewrite(    'dumper',    Dumper [      'work' => \%work,      'db'   => $db,      'dc'   => \@dc,    ]  );
+
+  if ($^O =~ /win/i) {
+  our $__hup_time__;
+printlog('info', 'doubleclose, bye'), exit if time - $__hup_time__ < 2;
+$__hup_time__ =time;
+  }
+
 }
 $SIG{INT} = $SIG{__DIE__} = \&close_all;
 $SIG{HUP} =
@@ -294,5 +301,8 @@ while ( my @dca = grep { $_->active() } @dc ) {
 
 
 }
+printlog 'dev', map { $_->{'host'}.":". $_->{'status'} } @dc ;
+
+psmisc::caller_trace(20);
 $_->destroy() for @dc;
  printlog 'info', 'bye';

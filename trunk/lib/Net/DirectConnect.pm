@@ -213,6 +213,10 @@ sub connect_check {
   $self->{'status'} = 'reconnecting';
   #$self->{'reconnects'}
   #$self->{'reconnect_sleep'},
+
+        $self->log(
+          'warn', "[$self->{'number'}]",'must reconnect');
+
   $self->every(
     $self->{'reconnect_sleep'},
     $self->{'reconnect_func'} ||= sub {
@@ -233,6 +237,7 @@ sub connect_check {
 sub reconnect {
   my $self = shift;
   $self->disconnect();
+  $self->{'status'}   = 'reconnecting';
   $self->connect();
 }
 
@@ -284,14 +289,15 @@ sub disconnect {
   }
   close( $self->{'filehandle'} ), delete $self->{'filehandle'} if $self->{'filehandle'};
   delete $self->{$_} for qw(NickList IpList PortList);
-  #        $self->log( 'dev', "[$self->{'number'}] disconnected sock=", $self->{'socket'});
+          $self->log( 'dev', "[$self->{'number'}] disconnected sock=", $self->{'socket'});
+          $self->log('dev', caller($_)) for 0..5;
   $self->handler('disconnect_aft');
 }
 
 sub destroy {
   my $self = shift;
   $self->disconnect();
-  #    $self->log( 'dcdbg', "[$self->{'number'}]($self)TOTAL MANUAL DESTROY from ", join( ':', caller ), " ($self)" );
+      $self->log( 'dcdbg', "[$self->{'number'}]($self)TOTAL MANUAL DESTROY from ", join( ':', caller ), " ($self)" );
   #!?  delete $self->{$_} for keys %$self;
   $self = undef;
 }
@@ -301,8 +307,8 @@ sub destroy {
 #}
 sub DESTROY {
   my $self = shift;
-  #print "\n[$self->{'number'}]DESTROY AUTO TRY\n";
-  #    $self->log( 'dcdbg', "[$self->{'number'}]($self)AUTO DESTROY from ", join( ':', caller ), " ($self)" );
+#  print "\n[$self->{'number'}]DESTROY AUTO TRY\n";
+      $self->log( 'dcdbg', "[$self->{'number'}]($self)AUTO DESTROY from ", join( ':', caller ), " ($self)" );
   #    $self->disconnect();
   $self->destroy();
   #print "NOLOG DESTROY[$self->{'number'}]\n";
@@ -317,7 +323,9 @@ sub recv {
   my $sleep = shift || 0;
   my $ret = 0;
   $self->connect_check();
-  #  return unless $self->{'socket'};
+
+#  $self->log( 'dev', 'cant recv' ),
+    return unless $self->{'socket'} and $self->{'socket'}->connected;
   #                $self->log( 'dcdbg',"[$self->{'number'}] recv $self->{'select'};$self->{'socket'}") if $self->{'number'} > 3;
   $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
   my ( $readed, $reads );
@@ -376,7 +384,7 @@ sub recv {
           #$self->log( 'dcdbg', "[$self->{'number'}]", "recv err, disconnect," );
           $self->{'select'}->remove($client);
           $self->disconnect();
-          $self->{'status'} = 'destroy';
+#!          $self->{'status'} = 'destroy';
           #}        elsif (!length( $self->{'databuf'} ) ) {
           #    $self->log( 'dcdbg', "[$self->{'number'}]","recv warn, len=", length( $self->{'databuf'} )  );
         } else {
@@ -594,9 +602,9 @@ sub handler {
   sub sendcmd {
     my $self = shift;
     $self->connect_check();
+    push @sendbuf, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
     $self->log( 'err', "[$self->{'number'}] ERROR! no socket to send" ), return unless $self->{'socket'};
     #    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
-    push @sendbuf, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
     if ( ( $self->{'sendbuf'} and @_ ) or !@sendbuf ) { }
     else {
       local $_;
@@ -800,12 +808,12 @@ sub info {
 sub active {
   my $self = shift;
 #  $self->log( 'trace', 'DC::active' );
-  return 1 if grep { $self->{'status'} eq $_ } qw(connecting   connected   reconnecting listening transfer);
+  return 1 if grep { $self->{'status'} eq $_ } qw(connecting connected reconnecting listening transfer);
   return 0;
 }
 #sub status {
 #now states:
-#listening  connecting   connected   reconnecting transfer  disconnected destroy
+#listening  connecting   connected   reconnecting transfer  disconnecting disconnected destroy
 #need checks:
 #                        \ connected?/             \-----/
 #\-----------------------active?-------------------------/
