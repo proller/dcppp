@@ -66,7 +66,7 @@ sub new {
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
     'Lock'              => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
-    'log'               => sub { print( join( ' ', @_ ), "\n" ) },
+    'log'               => sub {my $self= shift; print( join( ' ', "($self)[$self->{'number'}]", @_ ), "\n" ) },
     'auto_recv'         => 1,
     'max_reads'         => 20,
     'wait_once'         => 0.1,
@@ -112,10 +112,7 @@ sub new {
   return $self;
 }
 
-sub log {
-  my $self = shift;
-  $self->{'log'}->(@_) if $self->{'log'};
-}
+#sub log {  my $self = shift;  $self->{'log'}->(@_) if $self->{'log'};}
 
 sub myport_generate {
   my $self = shift;
@@ -171,7 +168,7 @@ if lc $1  eq 'adc';
   return 0
     if ( $self->{'socket'} and $self->{'socket'}->connected() )
     or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
-  $self->log( 'info', "[$self->{'number'}] connecting to $self->{'protocol'} $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
+  $self->log( 'info', "connecting to $self->{'protocol'} $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
   $self->{'status'}   = 'connecting';
   $self->{'outgoing'} = 1;
   $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
@@ -191,13 +188,13 @@ if lc $1  eq 'adc';
     #    'Blocking' => 0,
     %{ $self->{'sockopts'} || {} },
   );
-  $self->log( 'err', "[$self->{'number'}]", "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1
+  $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1
     if !$self->{'socket'};
   $self->get_my_addr();
   $self->log(
-    'info', "[$self->{'number'}]", "connect to $self->{'host'} [me=$self->{'myip'}] ok ",    #socket=[$self->{'socket'}]
+    'info',  "connect to $self->{'host'} [me=$self->{'myip'}] ok ",    #socket=[$self->{'socket'}]
   );                                                                                         # Dumper($self->{'sockopts'})
-$self->cmd('connect');
+$self->cmd('connect_aft');
   $self->recv();
   return 0;
 }
@@ -214,15 +211,14 @@ sub connect_check {
   #$self->{'reconnects'}
   #$self->{'reconnect_sleep'},
 
-        $self->log(
-          'warn', "[$self->{'number'}]",'must reconnect');
+#        $self->log(          'warn', "[$self->{'number'}]",'must reconnect');
 
   $self->every(
     $self->{'reconnect_sleep'},
     $self->{'reconnect_func'} ||= sub {
       if ( $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
         $self->log(
-          'warn', "[$self->{'number'}]",
+          'warn', 
           "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
           $self->{'reconnect_sleep'}
         );
@@ -255,11 +251,11 @@ sub listen {
       %{ $self->{'sockopts'} or {} },
     );
     last if $self->{'socket'};
-    $self->log( 'err', "[$self->{'number'}]", "listen $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
+    $self->log( 'err',  "listen $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
       unless $self->{'socket'};
   }
   return unless $self->{'socket'};
-  $self->log( 'dcdbg', "[$self->{'number'}]", "listening $self->{'myport'} $self->{'Proto'}" )
+  $self->log( 'dcdbg',  "listening $self->{'myport'} $self->{'Proto'}" )
     ;    # , Dumper($self->{'sockopts'}));
          #    $self->log( 'dcdbg', "[$self->{'number'}] listening $self->{'myport'} ok" );
   $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
@@ -272,6 +268,7 @@ sub disconnect {
   my $self = shift;
   $self->handler('disconnect_bef');
   $self->{'status'} = 'disconnected';
+#        $self->log( 'dev', "[$self->{'number'}] disconnected status=",$self->{'status'});
   if ( $self->{'socket'} ) {
     #    $self->log( 'dev', "[$self->{'number'}] Closing socket",
     #    $self->{'socket'}->shutdown(2);
@@ -289,15 +286,15 @@ sub disconnect {
   }
   close( $self->{'filehandle'} ), delete $self->{'filehandle'} if $self->{'filehandle'};
   delete $self->{$_} for qw(NickList IpList PortList);
-          $self->log( 'dev', "[$self->{'number'}] disconnected sock=", $self->{'socket'});
-          $self->log('dev', caller($_)) for 0..5;
+          $self->log( 'info', "disconnected");
+#          $self->log('dev', caller($_)) for 0..5;
   $self->handler('disconnect_aft');
 }
 
 sub destroy {
   my $self = shift;
   $self->disconnect();
-      $self->log( 'dcdbg', "[$self->{'number'}]($self)TOTAL MANUAL DESTROY from ", join( ':', caller ), " ($self)" );
+#      $self->log( 'dcdbg', "[$self->{'number'}]($self)TOTAL MANUAL DESTROY from ", join( ':', caller ), " ($self)" );
   #!?  delete $self->{$_} for keys %$self;
   $self = undef;
 }
@@ -308,7 +305,7 @@ sub destroy {
 sub DESTROY {
   my $self = shift;
 #  print "\n[$self->{'number'}]DESTROY AUTO TRY\n";
-      $self->log( 'dcdbg', "[$self->{'number'}]($self)AUTO DESTROY from ", join( ':', caller ), " ($self)" );
+#      $self->log( 'dcdbg', "[$self->{'number'}]($self)AUTO DESTROY from ", join( ':', caller ), " ($self)" );
   #    $self->disconnect();
   $self->destroy();
   #print "NOLOG DESTROY[$self->{'number'}]\n";
@@ -340,9 +337,9 @@ sub recv {
       $ret = '0E0', last unless $self->{'select'} and $self->{'socket'};
 #      $self->info();
 #                $self->log( 'dcdbg',"[$self->{'number'}] canread r=$readed w=$sleep $self->{'select'};$self->{'socket'}") if $self->{'number'} > 3;
-      $self->log( 'err', "[$self->{'number'}]", "SOCKET UNEXISTS must delete select" )
+      $self->log( 'err',  "SOCKET UNEXISTS must delete select" )
         unless $self->{'select'}->exists( $self->{'socket'} );
-      $self->log( 'err', "[$self->{'number'}]", "SOCKET IS NOT CONNECTED must delete select" )
+      $self->log( 'err',  "SOCKET IS NOT CONNECTED must delete select" )
         if !$self->{'accept'}
           and !$self->{'socket'}->connected()
           and $self->{'Proto'} ne 'udp';
@@ -371,7 +368,7 @@ sub recv {
             #) )
             #$self->log( 'dev', "rcv udp [$self->{'databuf'}]");
           } else {
-            $self->log( 'err', "[$self->{'number'}] Accepting fail! [$self->{'Proto'}]" );
+            $self->log( 'err', "Accepting fail! [$self->{'Proto'}]" );
           }
           next;
         }
@@ -381,9 +378,19 @@ sub recv {
         if ( !defined( $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
           or !length( $self->{'databuf'} ) )
         {
-          #$self->log( 'dcdbg', "[$self->{'number'}]", "recv err, disconnect," );
-          $self->{'select'}->remove($client);
+#          $self->log( 'dcdbg',  "recv err, " );
+#          $self->log( 'dcdbg',  "recv err, 2" );
+#          $self->log( 'dcdbg',  "recv err, rem" , $self->{'select'}->remove($client) );
+#          $self->log( 'dcdbg',  "recv err, chk ", $self->active() );
+#not now
+if ($self->active()) { 
+#          $self->log( 'dcdbg',  "recv err, reconnect," );
+          $self->reconnect();
+}  else{
+#          $self->log( 'dcdbg',  "recv err, disconnect," );
           $self->disconnect();
+}
+
 #!          $self->{'status'} = 'destroy';
           #}        elsif (!length( $self->{'databuf'} ) ) {
           #    $self->log( 'dcdbg', "[$self->{'number'}]","recv warn, len=", length( $self->{'databuf'} )  );
@@ -472,7 +479,7 @@ sub wait {
 sub finished {
   my $self = shift;
   $self->log(
-    'dcdev', "[$self->{'number'}]",
+    'dcdev', 
     'not finished file:',
     "$self->{'filebytes'} / $self->{'filetotal'}",
     $self->{'peernick'}
@@ -480,7 +487,7 @@ sub finished {
     return 0
     if ( $self->{'filebytes'} and $self->{'filetotal'} and $self->{'filebytes'} < $self->{'filetotal'} - 1 );
   local @_;
-  $self->log( 'dcdev', "[$self->{'number'}]", 'not finished clients:', @_ ), return 0
+  $self->log( 'dcdev',  'not finished clients:', @_ ), return 0
     if @_ = grep { !$self->{'clients'}{$_}->finished() } keys %{ $self->{'clients'} };
   return 1;
 }
@@ -546,7 +553,7 @@ sub parse {
     my $cmd;
     $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;
     s/^\$?(\w+)\s*//, $cmd = $1 unless $cmd;
-    $self->log( 'dcinf', "[$self->{'number'}] UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
+    $self->log( 'dcinf', "UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
       $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
       unless exists $self->{'parse'}{$cmd};
     my ( @ret, $ret );
@@ -563,7 +570,7 @@ sub parse {
           map { "$_:$self->{'skip_print_'.$_}" } grep { $self->{ 'skip_print_' . $_ } } keys %{ $self->{'no_print'} || {} };
         $self->log(
           'dcdmp',
-          "[$self->{'number'}] rcv: $cmd $_",
+          "rcv: $cmd $_",
           ( @_ ? ( '  [', @_, ']' ) : () )
             #          ( $self->{'skip_print_search'} ? ", skipped searches: $self->{'skip_print_search'}" : () ),
             #          ( $self->{'skip_print_myinfo'} ? ", skipped myinfos: $self->{'skip_print_myinfo'}"  : () ),
@@ -603,15 +610,15 @@ sub handler {
     my $self = shift;
     $self->connect_check();
     push @sendbuf, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
-    $self->log( 'err', "[$self->{'number'}] ERROR! no socket to send" ), return unless $self->{'socket'};
+    $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
     #    if ( $self->{'sendbuf'} ) { push @sendbuf, '$' . join( ' ', @_ ) . '|'; }
     if ( ( $self->{'sendbuf'} and @_ ) or !@sendbuf ) { }
     else {
       local $_;
 #$self->log( "atmark:", $self->{'socket'}->atmark, " timeout=",$self->{'socket'}->timeout,  'conn=',$self->{'socket'}->connected,'so=', $self->{'socket'});
       eval { $_ = $self->{'socket'}->send( join( '', @sendbuf, ) ); };    #'$' . join( ' ', @_ ) . '|'
-      $self->log( 'err', "[$self->{'number'}]", 'send error', $@ ) if $@;
-      $self->log( 'dcdmp', "[$self->{'number'}] we send [". join( '', @sendbuf ). "]:", $_, $! ); #'$' . join( ' ', @_ ) . '|' )
+      $self->log( 'err',  'send error', $@ ) if $@;
+      $self->log( 'dcdmp', "we send [". join( '', @sendbuf ). "]:", $_, $! ); #'$' . join( ' ', @_ ) . '|' )
       @sendbuf = ();
     }
   }
@@ -622,24 +629,37 @@ sub cmd {
   my $self = shift;
   my $cmd  = shift;
   my ( @ret, $ret );
-  $self->handler( $cmd . '_cmd_bef_bef', @_ );
+  $self->handler( $cmd . '_cmd_bef_bef', \@_ );
   if ( $self->{'min_cmd_delay'} and ( time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'} ) ) {
     $self->{'log'}->( 'dbg', 'sleepcmd', $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
     sleep( $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
   }
   $self->{'last_cmd_time'} = time;
-  if ( $self->{'cmd'}{$cmd} ) {
-    $self->handler( $cmd . '_cmd_bef', @_ );
-    @ret = $self->{'cmd'}{$cmd}->(@_);
+
+# my $func = ref $self->{'cmd'}{$cmd} eq 'CODE' ? $self->{'cmd'}{$cmd} :ref $self->{$cmd} eq 'CODE' ? $self->{$cmd} : undef;
+my $func;
+if (ref $self->{'cmd'}{$cmd} eq 'CODE') {
+ $func = $self->{'cmd'}{$cmd};
+#    $self->log( 'dev',  "cmd 1" ) unless $cmd eq 'log';
+} elsif (ref $self->{$cmd} eq 'CODE') {
+#    $self->log( 'dev',  "cmd 2" ) unless $cmd eq 'log';
+$func =  $self->{$cmd} ;
+}
+
+#  if ( ref $self->{'cmd'}{$cmd} eq 'CODE') {
+  if ( $func) {
+    $self->handler( $cmd . '_cmd_bef', \@_ );
+    @ret = $func->($self, @_); #$self->{'cmd'}{$cmd}->(@_);
     $ret = scalar @ret > 1 ? \@ret : $ret[0];
     $self->handler( $cmd . '_cmd_aft', \@_, $ret );
+#  } elsif() {
   } else {
-    $self->log( 'info', "[$self->{'number'}]", "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
+    $self->log( 'info',  "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
     $self->{'cmd'}{$cmd} = sub { };
   }
   if    ( $self->{'auto_wait'} ) { $self->wait(); }
   elsif ( $self->{'auto_recv'} ) { $self->recv(); }
-  $self->handler( $cmd . '_cmd_aft_aft', @_, $ret );
+  $self->handler( $cmd . '_cmd_aft_aft', \@_, $ret );
 }
 
 sub rcmd {
@@ -662,9 +682,9 @@ sub openfile {
   my $self = shift;
   my $oparam = ( ( $self->{'fileas'} eq '-' ) ? '>-' : '>' . ( $self->{'fileas'} || $self->{'filename'} ) );
   $self->handler( 'openfile_bef', $oparam );
-  $self->log( 'dbg', "[$self->{'number'}] openfile pre", $oparam );
+  $self->log( 'dbg', "openfile pre", $oparam );
   open( $self->{'filehandle'}, $oparam )
-    or $self->log( 'dcerr', "[$self->{'number'}] openfile error", $!, $oparam ),
+    or $self->log( 'dcerr', "openfile error", $!, $oparam ),
     $self->handler( 'openfile_error', $!, $oparam ), return 1;
   binmode( $self->{'filehandle'} );
   $self->handler('openfile_aft');
@@ -681,14 +701,14 @@ sub writefile {
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
 #       $self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );
-    $self->log( 'dcdbg', "[$self->{'number'}] recv " . length($$databuf) . " [$$databuf]" ) if length $$databuf < 10;
+    $self->log( 'dcdbg', "recv " . length($$databuf) . " [$$databuf]" ) if length $$databuf < 10;
     print $fh $$databuf;
-    $self->log( 'err', "[$self->{'number'}] file download error! extra bytes ($self->{'filebytes'}/$self->{'filetotal'}) " )
+    $self->log( 'err', "file download error! extra bytes ($self->{'filebytes'}/$self->{'filetotal'}) " )
       if $self->{'filebytes'} > $self->{'filetotal'};
     #    close($fh),
     $self->log(
       'info',
-      "[$self->{'number'}] file complete ($self->{'filebytes'}) per",
+      "file complete ($self->{'filebytes'}) per",
       $self->float( time - $self->{'file_start_time'} ),
       's at', $self->float( $self->{'filebytes'} / ( ( time - $self->{'file_start_time'} ) or 1 ) ), 'b/s'
       ),
@@ -808,7 +828,7 @@ sub info {
 sub active {
   my $self = shift;
 #  $self->log( 'trace', 'DC::active' );
-  return 1 if grep { $self->{'status'} eq $_ } qw(connecting connected reconnecting listening transfer);
+  return $self->{'status'} if grep { $self->{'status'} eq $_ } qw(connecting connected reconnecting listening transfer);
   return 0;
 }
 #sub status {
@@ -821,8 +841,16 @@ sub active {
 #my %every;
 sub every {
   my ( $self, $sec, $func ) = ( shift, shift, shift );
-  #printlog('dev','every', $sec, $every{$func}, time, $func ),
-  $func->(@_), $self->{'every'}{$func} = time if $self->{'every'}{$func} + $sec < time and ref $func eq 'CODE';
+# $self-> log('dev','every1', $sec, $self->{'every_list'}{$func}, time, $func );
+# $self->log('dev','every1', $sec, $self->{'every_list'}{$func}, time, $func ,$self->{'every_list'}{$func} + $sec, $self->{'every_list'}{$func} + $sec < time, ref $func, ($self->{'every_list'}{$func} + $sec < time and ref $func eq 'CODE'));
+if (($self->{'every_list'}{$func} + $sec < time) and (ref $func eq 'CODE')) {
+
+$self->{'every_list'}{$func} = time ;
+ $self->log('dev','every1', $sec, $self->{'every_list'}{$func}, time, $func ,$self->{'every_list'}{$func} + $sec, $self->{'every_list'}{$func} + $sec < time, ref $func, ($self->{'every_list'}{$func} + $sec < time and ref $func eq 'CODE'));
+# print('dev','every2', $sec, $self->{'every_list'}{$func}, time, $func ,$self->{'every_list'}{$func} + $sec, $self->{'every_list'}{$func} + $sec < time, ref $func, ($self->{'every_list'}{$func} + $sec < time and ref $func eq 'CODE')),
+
+  $func->(@_);
+}
 }
 
 sub AUTOLOAD {

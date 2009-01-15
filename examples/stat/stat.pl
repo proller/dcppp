@@ -127,7 +127,10 @@ for (grep {length $_}@ARGV) {
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
       #   'log'		=>	sub {},	# no logging
-      'log'          => sub { psmisc::printlog(@_) },
+#      'log'          => sub { my $dc = shift; psmisc::printlog( "[$dc->{'number'}]($dc)", @_); 
+      'log'          => sub { my $dc = shift; psmisc::printlog( "[$dc->{'number'}]", @_); 
+#psmisc::caller_trace(5) 
+},
       'myport'       => 41111,
       'description'  => 'http://dc.proisk.ru/dcstat/',
       'auto_connect' => 0,

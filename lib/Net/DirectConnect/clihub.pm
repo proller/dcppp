@@ -118,7 +118,7 @@ sub init {
     },
     'Hello' => sub {
       return unless $_[0] eq $self->{'Nick'};
-      #$self->{'log'}->('info', "HELLO recieved, connected.");
+      #$self->log('info', "HELLO recieved, connected.");
       $self->{'sendbuf'} = 1;
       $self->cmd('Version');
       $self->{'sendbuf'} = 0 unless $self->{'auto_GetNickList'};
@@ -127,7 +127,7 @@ sub init {
       $self->{'status'} = 'connected';
       #        $self->{'no_print_welcome'} = 1;
       #      	$self->wait();
-      #$self->{'log'}->('info', "HELLO end rec st:[$self->{'status'}]");
+      #$self->log('info', "HELLO end rec st:[$self->{'status'}]");
       $self->cmd('make_hub');
     },
     'Supports' => sub {
@@ -138,7 +138,7 @@ sub init {
       $self->cmd('ValidateNick');
     },
     'To' => sub {
-      $self->{'log'}->( 'msg', "Private message to", @_ );
+      $self->log( 'msg', "Private message to", @_ );
     },
     'MyINFO' => sub {
       my ( $nick, $info ) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
@@ -171,7 +171,7 @@ sub init {
       $self->{'NickList'}->{$_}{'oper'} = 1 for grep $_, split /\$\$/, $_[0];
     },
     'ForceMove' => sub {
-      $self->{'log'}->( 'info', "ForceMove to $_[0]" );
+      $self->log( 'info', "ForceMove to $_[0]" );
       $self->disconnect();
       $self->connect(@_) if $self->{'follow_forcemove'} and @_;
     },
@@ -185,7 +185,7 @@ sub init {
       #         $self->{'NickList'}->{$nick}{'ip'} = $hp;
       #         $self->{'IpList'}->{$hp} = \%{ $self->{'NickList'}->{$nick} };
       $self->{'PortList'}->{$host} = $port;
-      #$self->{'log'}->('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
+      #$self->log('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
       return if $self->{'clients'}{ $host . ':' . $port }->{'socket'};
       $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
         %$self, $self->clear(),
@@ -301,7 +301,7 @@ sub init {
         #          if ($self->{'min_chat_delay'}) {
         return unless $self->{'socket'};
         if ( $self->{'min_chat_delay'} and ( time - $self->{'last_chat_time'} < $self->{'min_chat_delay'} ) ) {
-          $self->{'log'}->( 'dbg', 'sleep', $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
+          $self->log( 'dbg', 'sleep', $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
           $self->wait_sleep( $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
         }
         $self->{'last_chat_time'} = time;
@@ -312,7 +312,7 @@ sub init {
           "<$self->{'Nick'}> $_|",
           "]:", $self->{'socket'}->send("<$self->{'Nick'}> $_|"), $!
         );
-        #$self->{'log'}->('dbg', 'sleep', $self->{'min_chat_delay'}),
+        #$self->log('dbg', 'sleep', $self->{'min_chat_delay'}),
       }
     },
     #$To: <othernick> From: <nick> $<<nick>> <message>|
@@ -349,7 +349,7 @@ sub init {
     'ConnectToMe' => sub {
       #print "ctm [$self->{'M'}][$self->{'allow_passive_ConnectToMe'}]\n";
       return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
-      $self->{'log'}->( 'err', "please define myip" ), return unless $self->{'myip'};
+      $self->log( 'err', "please define myip" ), return unless $self->{'myip'};
       $self->sendcmd( 'ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}" );
     },
     'RevConnectToMe' => sub {
@@ -425,7 +425,7 @@ sub init {
     #
     #
     # ADC dev
-    'connect' => sub { $self->cmd('HSUP') if $self->{'protocol'} eq 'adc' },
+    'connect_aft' => sub { $self->cmd('HSUP') if $self->{'protocol'} eq 'adc' },
     'HSUP' => sub {
       $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0)];
       $self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
