@@ -200,9 +200,10 @@ sub init {
 #'clients' => {},
 #'debug'=>1,
 #    'auto_listen' => 0,
+    'auto_connect' => 1,
       );
       #$self->log( 'cldmp',Dumper $self->{'clients'}{ $host . ':' . $port });
-      $self->{'clients'}{ $host . ':' . $port }->cmd('connect');
+#      $self->{'clients'}{ $host . ':' . $port }->cmd('connect_aft');
     },
     'RevConnectToMe' => sub {
       my ( $to, $from ) = split /\s+/, $_[0];
@@ -324,6 +325,8 @@ sub init {
       #	$self->{'socket'}->send('To :', "$to From: $self->{'Nick'} \$<$self->{'Nick'}> $_|") for(@_);
     },
     'Key' => sub {
+my $self = shift if ref $_[0];
+
       $self->sendcmd( 'Key', $_[0] );
     },
     'ValidateNick' => sub {
@@ -338,6 +341,8 @@ sub init {
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'description'} . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$'); },
     'GetNickList' => sub { $self->sendcmd('GetNickList'); },
     'GetINFO'     => sub {
+my $self = shift if ref $_[0];
+
       #$self->sendcmd( 'GetINFO', $_[0], $self->{'Nick'} ), return if scalar @_ == 1;
       @_ = grep { $self->{'NickList'}{$_}{'online'} and !$self->{'NickList'}{$_}{'info'} } keys %{ $self->{'NickList'} }
         unless @_;
@@ -347,15 +352,21 @@ sub init {
       $self->sendcmd();
     },
     'ConnectToMe' => sub {
+my $self = shift if ref $_[0];
+
       #print "ctm [$self->{'M'}][$self->{'allow_passive_ConnectToMe'}]\n";
       return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
       $self->log( 'err', "please define myip" ), return unless $self->{'myip'};
       $self->sendcmd( 'ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}" );
     },
     'RevConnectToMe' => sub {
+my $self = shift if ref $_[0] ;
+$self->log( "send", ( 'RevConnectToMe', $self->{'Nick'}, $_[0] ), ref $_[0]);
       $self->sendcmd( 'RevConnectToMe', $self->{'Nick'}, $_[0] );
     },
     'MyPass' => sub {
+my $self = shift if ref $_[0];
+
       my $pass = ( $_[0] or $self->{'Pass'} );
       $self->sendcmd( 'MyPass', $pass ) if $pass;
     },
@@ -392,11 +403,15 @@ sub init {
       $self->{'search_last_time'} = time();
     },
     'search_tth' => sub {
+my $self = shift if ref $_[0];
+
       #      $self->Search(  'F', 'T', '0', '9', 'TTH:'.$_[0]);
       $self->{'search_last_string'} = undef;
       $self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] );
     },
     'search_string' => sub {
+my $self = shift if ref $_[0];
+
       my $string = $_[0];
       $self->{'search_last_string'} = $string;
       $string =~ tr/ /$/;
@@ -404,6 +419,8 @@ sub init {
       $self->cmd( 'search_buffer', 'F', 'T', '0', '1', $string );
     },
     'search' => sub {
+my $self = shift if ref $_[0];
+
       return $self->cmd( 'search_tth', @_ ) if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
       return $self->cmd( 'search_string', @_ ) if length $_[0];
     },

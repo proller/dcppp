@@ -19,7 +19,7 @@ sub init {
   );
   $self->baseinit();
   $self->get_peer_addr();
-  $self->{'log'}->( 'info', "[$self->{'number'}] Incoming client $self->{'host'}:$self->{'port'}" ) if $self->{'incoming'};
+  $self->log( 'info', "[$self->{'number'}] Incoming client $self->{'host'}:$self->{'port'}" ) if $self->{'incoming'};
   $self->{'parse'} ||= {
     'Supports' => sub {
       #      $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
@@ -85,14 +85,14 @@ sub init {
       for (@_) {
         return unless $self->{'socket'};
         $self->log( 'dcdmp', "($self->{'number'}) we send [", "<$from> $_|", "]:", $self->{'socket'}->send("<$from> $_|"), $! );
-        #$self->{'log'}->('dbg', 'sleep', $self->{'min_chat_delay'}),
+        #$self->log('dbg', 'sleep', $self->{'min_chat_delay'}),
       }
     },
     'chatline' => sub {
       my ( $nick, $text ) = $_[0] =~ /^<([^>]+)> (.+)$/;
       #$self->{'_chatline_rec'} = 1;
-      $self->{'log'}->( 'dbg', "[$self->{'number'}]",    'chatline Rstart', );
-      $self->{'log'}->( 'dbg', "[$self->{'number'}] to", $_->{'number'} ),
+      $self->log( 'dbg', "[$self->{'number'}]",    'chatline Rstart', );
+      $self->log( 'dbg', "[$self->{'number'}] to", $_->{'number'} ),
         #TO API
         $_->cmd( 'chatline_from', $self->{'peer_nick'}, $text )
         for grep { $_ and $_ ne $self } values( %{ $self->{'parent'}{'clients'} } );
