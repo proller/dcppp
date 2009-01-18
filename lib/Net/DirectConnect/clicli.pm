@@ -116,10 +116,10 @@ sub init {
         $self->cmd( 'Key', $self->{'Key'} );
       }
       $self->cmd('selectfile') if $self->{'direction'} eq 'Download';
-      $self->log( "get:[filename:",$self->{'filename'},'; fileas:', $self->{'fileas'},"]");
+      $self->log( "get:[filename:", $self->{'filename'}, '; fileas:', $self->{'fileas'}, "]" );
       $self->{'get'} = $self->{'filename'} . '$' . ( $self->{'filefrom'} || 1 ),
         $self->{'adcget'} = 'file ' . $self->{'filename'} . ' ' . ( $self->{'filefrom'} || 0 ) . ' -1',
-        $self->cmd( ( $self->{'NickList'}->{ $self->{'peernick'} }{'ADCGet'} ? 'ADCGET' : 'Get' )  )
+        $self->cmd( ( $self->{'NickList'}->{ $self->{'peernick'} }{'ADCGet'} ? 'ADCGET' : 'Get' ) )
         if $self->{'filename'};
     },
     'Get' => sub {
@@ -157,7 +157,7 @@ sub init {
       $self->cmd('Send');
     },
     'ADCSND' => sub {
-$self->log('dev', "ADCSND::",@_);
+      $self->log( 'dev', "ADCSND::", @_ );
       $_[0] =~ /(\d+?)$/is;
       $self->{'filetotal'} = $1;
       return if $self->openfile();
@@ -182,7 +182,7 @@ $self->log('dev', "ADCSND::",@_);
   #    %{$self->{'cmd'}} = {
   $self->{'cmd'} ||= {
     'connect_aft' => sub {
-#      $self->connect() && return;
+      #      $self->connect() && return;
       $self->{'sendbuf'} = 1;
       $self->cmd('MyNick');
       $self->{'sendbuf'} = 0;
@@ -224,7 +224,7 @@ $self->log('dev', "ADCSND::",@_);
       #$self->{'want'}->{$self->{'peernick'}}
     },
     'Key' => sub {
-my $self = shift if ref $_[0];
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'Key', $_[0] );
     },
     'Get' => sub {
@@ -234,8 +234,7 @@ my $self = shift if ref $_[0];
       $self->sendcmd('Send');
     },
     'FileLength' => sub {
-my $self = shift if ref $_[0];
-
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'FileLength', $_[0] );
     },
     'ADCGET' => sub {

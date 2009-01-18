@@ -21,7 +21,8 @@ sub init {
     'host' => 'localhost',
     #        'myport' => 6779 + int(rand(1000)),
     #	'Version'	=> '++ V:0.673,M:A,H:0/1/0,S:2',
-    'Pass' => '', 'Key' => 'zzz',
+    'Pass' => '',
+    'key'  => 'zzz',
     #    'auto_wait'        => 1,
     #        %$self,
     'supports_avail' => [ qw(
@@ -103,13 +104,17 @@ sub init {
       }
     },    #print("welcome:", @_)
     'Lock' => sub {
-      #print "lockparse[$_[0]]\n";
+      $self->log( "lockparse", @_ );
       $self->{'sendbuf'} = 1;
       $self->cmd('Supports');
       #        $_[0] =~ /EXTENDEDPROTOCOL::\S+::(CTRL\[[^\]]+)\]/ or $_[0] =~ /(\S+)/;
       $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-      #print "lock[$1]\n";
-      $self->cmd( 'Key', Net::DirectConnect::lock2key($1) );
+      print "lock[$1]\n";
+      #my $k = $self->lock2key($1);
+      #      $self->log( "key=", $k);
+      #      $self->cmd( 'Key', $k );
+      $self->cmd( 'Key', $self->lock2key($1) );
+      #Net::DirectConnect::
       #	$self->cmd('Key', Net::DirectConnect::lock2key($_[0]));
       #!!!!!ALL $self->cmd
       $self->{'sendbuf'} = 0;
@@ -171,8 +176,9 @@ sub init {
       $self->{'NickList'}->{$_}{'oper'} = 1 for grep $_, split /\$\$/, $_[0];
     },
     'ForceMove' => sub {
-      $self->log( 'info', "ForceMove to $_[0]" );
+      $self->log( 'warn', "ForceMove to $_[0]" );
       $self->disconnect();
+      sleep(1);
       $self->connect(@_) if $self->{'follow_forcemove'} and @_;
     },
     'Quit' => sub {
@@ -200,10 +206,10 @@ sub init {
 #'clients' => {},
 #'debug'=>1,
 #    'auto_listen' => 0,
-    'auto_connect' => 1,
+        'auto_connect' => 1,
       );
       #$self->log( 'cldmp',Dumper $self->{'clients'}{ $host . ':' . $port });
-#      $self->{'clients'}{ $host . ':' . $port }->cmd('connect_aft');
+      #      $self->{'clients'}{ $host . ':' . $port }->cmd('connect_aft');
     },
     'RevConnectToMe' => sub {
       my ( $to, $from ) = split /\s+/, $_[0];
@@ -279,15 +285,15 @@ sub init {
     #
     #      'UserIP' => sub { print"todo[UserIP]$_[0]\n"}, #todo
     #      'ConnectToMe' => sub { print"todo[ConnectToMe]$_[0]\n"}, #todo
-    'UserCommand' => sub { },    # useless
-    #
-    #
-    #
-    #
-    # ADC dev
-    'ISUP' => sub { },
-    'ISID' => sub { $self->{'sid'} = $_[0] },
-    'IINF' => sub { $self->cmd('BINF') },
+    'UserCommand' => sub { },                          # useless
+                                                       #
+                                                       #
+                                                       #
+                                                       #
+                                                       # ADC dev
+    'ISUP'        => sub { },
+    'ISID'        => sub { $self->{'sid'} = $_[0] },
+    'IINF'        => sub { $self->cmd('BINF') },
     #todo
     'IQUI' => sub { },
     'ISTA' => sub { $self->log( 'dcerr', @_ ) },
@@ -300,7 +306,7 @@ sub init {
       for (@_) {
         #  	  sleep($self->{'min_chat_delay'}) if $self->{'min_chat_delay'};
         #          if ($self->{'min_chat_delay'}) {
-        return unless $self->{'socket'};
+        #        return unless $self->{'socket'};
         if ( $self->{'min_chat_delay'} and ( time - $self->{'last_chat_time'} < $self->{'min_chat_delay'} ) ) {
           $self->log( 'dbg', 'sleep', $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
           $self->wait_sleep( $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
@@ -325,8 +331,8 @@ sub init {
       #	$self->{'socket'}->send('To :', "$to From: $self->{'Nick'} \$<$self->{'Nick'}> $_|") for(@_);
     },
     'Key' => sub {
-my $self = shift if ref $_[0];
-
+      my $self = shift if ref $_[0];
+      $self->log( 'dev', "sendkey", $_[0] );
       $self->sendcmd( 'Key', $_[0] );
     },
     'ValidateNick' => sub {
@@ -341,8 +347,7 @@ my $self = shift if ref $_[0];
 #      'MyINFO'	=> sub { $self->sendcmd('MyINFO', '$ALL', $self->{'Nick'}, $self->{'description'} . '$ $' . $self->{'connection'} . chr($self->{'flag'}) . '$' . $self->{'email'} . '$' . $self->{'sharesize'} . '$'); },
     'GetNickList' => sub { $self->sendcmd('GetNickList'); },
     'GetINFO'     => sub {
-my $self = shift if ref $_[0];
-
+      my $self = shift if ref $_[0];
       #$self->sendcmd( 'GetINFO', $_[0], $self->{'Nick'} ), return if scalar @_ == 1;
       @_ = grep { $self->{'NickList'}{$_}{'online'} and !$self->{'NickList'}{$_}{'info'} } keys %{ $self->{'NickList'} }
         unless @_;
@@ -352,21 +357,19 @@ my $self = shift if ref $_[0];
       $self->sendcmd();
     },
     'ConnectToMe' => sub {
-my $self = shift if ref $_[0];
-
+      my $self = shift if ref $_[0];
       #print "ctm [$self->{'M'}][$self->{'allow_passive_ConnectToMe'}]\n";
       return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
       $self->log( 'err', "please define myip" ), return unless $self->{'myip'};
       $self->sendcmd( 'ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}" );
     },
     'RevConnectToMe' => sub {
-my $self = shift if ref $_[0] ;
-$self->log( "send", ( 'RevConnectToMe', $self->{'Nick'}, $_[0] ), ref $_[0]);
+      my $self = shift if ref $_[0];
+      $self->log( "send", ( 'RevConnectToMe', $self->{'Nick'}, $_[0] ), ref $_[0] );
       $self->sendcmd( 'RevConnectToMe', $self->{'Nick'}, $_[0] );
     },
     'MyPass' => sub {
-my $self = shift if ref $_[0];
-
+      my $self = shift if ref $_[0];
       my $pass = ( $_[0] or $self->{'Pass'} );
       $self->sendcmd( 'MyPass', $pass ) if $pass;
     },
@@ -378,11 +381,13 @@ my $self = shift if ref $_[0];
       $self->disconnect();
     },
     'Search' => sub {
+      my $self = shift if ref $_[0];
       #$self->log('dcdev', 'Search', @_);
       $self->sendcmd( 'Search', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),
         join '?', @_ );
     },
     'search_buffer' => sub {
+      my $self = shift if ref $_[0];
       #      $self->log('dcdev', 'Search_buffer', @_);
       #return;
       push( @{ $self->{'search_todo'} }, [@_] ) if @_;
@@ -403,15 +408,13 @@ my $self = shift if ref $_[0];
       $self->{'search_last_time'} = time();
     },
     'search_tth' => sub {
-my $self = shift if ref $_[0];
-
+      my $self = shift if ref $_[0];
       #      $self->Search(  'F', 'T', '0', '9', 'TTH:'.$_[0]);
       $self->{'search_last_string'} = undef;
       $self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] );
     },
     'search_string' => sub {
-my $self = shift if ref $_[0];
-
+      my $self = shift if ref $_[0];
       my $string = $_[0];
       $self->{'search_last_string'} = $string;
       $string =~ tr/ /$/;
@@ -419,12 +422,12 @@ my $self = shift if ref $_[0];
       $self->cmd( 'search_buffer', 'F', 'T', '0', '1', $string );
     },
     'search' => sub {
-my $self = shift if ref $_[0];
-
+      my $self = shift if ref $_[0];
       return $self->cmd( 'search_tth', @_ ) if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
       return $self->cmd( 'search_string', @_ ) if length $_[0];
     },
     'search_retry' => sub {
+      my $self = shift if ref $_[0];
       #      $self->cmd( 'search_buffer', @{$self->{'search_last'}})
       #unshift( @{ $self->{'search_todo'} }, [@{$self->{'search_last'}}] )
       unshift( @{ $self->{'search_todo'} }, $self->{'search_last'} )
@@ -459,7 +462,7 @@ my $self = shift if ref $_[0];
       #$self->log('TIGERTEST',  MIME::Base32::encode(Digest::Tiger::hash('Tiger')));
       sub hash {
         local ($_) = @_;
-      eval "use MIME::Base32 qw( RFC ); use Digest::Tiger;";
+        eval "use MIME::Base32 qw( RFC ); use Digest::Tiger;";
         #$_.=("\x00"x(1024 - length $_));print ( 'hlen', length $_);
         MIME::Base32::encode( Digest::Tiger::hash($_) );
       }
