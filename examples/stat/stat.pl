@@ -107,6 +107,21 @@ $SIG{HUP} =
   ? \&print_info
   : \&flush_all;
 $SIG{INFO} = \&print_info;
+
+
+ $SIG{__WARN__} = sub {
+    printlog( 'warn', $!, $@, @_ );
+#    printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
+caller_trace(15);
+  };
+  $SIG{__DIE__} = sub {
+    printlog( 'die', $!, $@, @_ );
+    printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
+caller_trace(15);
+
+  };
+
+
 for ( grep { length $_ } @ARGV ) {
   local @_;
   if ( /^-/ and @_ = split '=', $_ ) {
@@ -260,6 +275,16 @@ for ( grep { length $_ } @ARGV ) {
       %config,
     );
     $dc->connect($hub);
+
+$dc->{'clients'}{'listener_http'}{'handler'}{''} = sub {
+my $dc = shift;
+  printlog "my cool cansend [$dc->{'geturl'}]";
+$dc->{'socket'}->send("Content-type: text/html\n\n"."hi");
+#$dc->{'socket'}->close();
+$dc->destroy();
+};
+
+
     push @dc, $dc;
     $_->work() for @dc;
   }
