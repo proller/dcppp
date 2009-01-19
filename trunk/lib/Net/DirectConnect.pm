@@ -176,8 +176,8 @@ sub AUTOLOAD {
   #print "AL0[$AUTOLOAD]:",join ':', @_, "\n" if !grep {$AUTOLOAD =~ /$_$/} qw(recv connect_check);
   my $self = shift || return;
   #print "AL1[$AUTOLOAD]:",join ':', @_, "\n" if !grep {$AUTOLOAD =~ /$_$/} qw(recv connect_check);
-    my $type = ref($self) || 
-(print("AUTOLOAD: $self is not ref\n"),(map { print ('caller', $_, caller($_), "\n") } 0 .. 5),die);
+    my $type = ref($self) || return;
+#(print("AUTOLOAD: $self is not ref\n"),(map { print ('caller', $_, caller($_), "\n") } 0 .. 5),die);
   my @p    = @_;
   my $name = $AUTOLOAD;
   #print "AL2[$AUTOLOAD,$name]:",join ':', @_, "\n" if !grep {$AUTOLOAD =~ /$_$/} qw(recv connect_check);
