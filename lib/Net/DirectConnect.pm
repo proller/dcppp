@@ -66,7 +66,7 @@ sub new {
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
-    'Lock'              => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
+    'lock'              => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
     'log'               => sub { my $self = shift; print( join( ' ', "($self)[$self->{'number'}]", @_ ), "\n" ) },
     'auto_recv'         => 1,
     'max_reads'         => 20,
@@ -158,7 +158,7 @@ sub cmd {
   } elsif ( exists $self->{$cmd} ) {
     @ret = ( $self->{$cmd} );
   } else {
-    $self->log( 'info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };" );
+    $self->log( 'info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };", Dumper $self->{'cmd'}, $self->{'parse'} );
     $self->{'cmd'}{$cmd} = sub { };
   }
   #  if    ( $self->{'auto_wait'} and $cmd ne 'wait') { $self->wait(); }
@@ -176,7 +176,8 @@ sub AUTOLOAD {
   #print "AL0[$AUTOLOAD]:",join ':', @_, "\n" if !grep {$AUTOLOAD =~ /$_$/} qw(recv connect_check);
   my $self = shift || return;
   #print "AL1[$AUTOLOAD]:",join ':', @_, "\n" if !grep {$AUTOLOAD =~ /$_$/} qw(recv connect_check);
-  #  my $type = ref($self) || return;
+    my $type = ref($self) || 
+(print("AUTOLOAD: $self is not ref\n"),(map { print ('caller', $_, caller($_), "\n") } 0 .. 5),die);
   my @p    = @_;
   my $name = $AUTOLOAD;
   #print "AL2[$AUTOLOAD,$name]:",join ':', @_, "\n" if !grep {$AUTOLOAD =~ /$_$/} qw(recv connect_check);
@@ -435,8 +436,8 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
         for my $client ( $self->{'select'}->can_read($sleep) ) {
           #        #$self->log( 'trace', 'DC::recv', 'can_read' );
           if ( $self->{'accept'} and $client eq $self->{'socket'} ) {
-            #          #$self->log( 'trace', 'DC::recv', 'accept' );
             if ( $_ = $self->{'socket'}->accept() ) {
+                      $self->log( 'trace', 'DC::recv', 'accept' , $self->{'incomingclass'});
               $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
                 %$self, clear(),
                 'socket'       => $_,

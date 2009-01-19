@@ -112,7 +112,7 @@ $SIG{INFO} = \&print_info;
  $SIG{__WARN__} = sub {
     printlog( 'warn', $!, $@, @_ );
 #    printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
-caller_trace(15);
+psmisc::caller_trace(15);
   };
   $SIG{__DIE__} = sub {
     printlog( 'die', $!, $@, @_ );

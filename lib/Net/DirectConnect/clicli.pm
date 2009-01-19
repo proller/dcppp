@@ -51,7 +51,7 @@ sub init {
   #    $self->{'peerip'}  = inet_ntoa($self->{'peerip'}) if $self->{'peerip'};
   $self->get_peer_addr();
   #     $self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
-  $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'}" ) if $self->{'incoming'};
+  $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
   #print("{{  $self->{'NickList'} }}");
   #print("[$_]")for sort keys %{$self->{'NickList'}};
   #print " clicli init clients:{", keys %{$self->{'clients'}}, "}\n";
@@ -80,7 +80,7 @@ sub init {
       } else {
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
         #	  $self->cmd('Key', Net::DirectConnect::lock2key($1));
-        $self->{'Key'} = Net::DirectConnect::lock2key($1);
+        $self->{'key'} = Net::DirectConnect::lock2key($1);
         #         $self->{'sendbuf'} = 1;
         #         $self->cmd('MyNick');
         #	  $self->{'sendbuf'} = 0;
@@ -113,7 +113,7 @@ sub init {
         $self->cmd('Supports');
         $self->cmd('Direction');
         $self->{'sendbuf'} = 0;
-        $self->cmd( 'Key', $self->{'Key'} );
+        $self->cmd( 'Key', $self->{'key'} );
       }
       $self->cmd('selectfile') if $self->{'direction'} eq 'Download';
       $self->log( "get:[filename:", $self->{'filename'}, '; fileas:', $self->{'fileas'}, "]" );
@@ -178,7 +178,7 @@ sub init {
       $self->disconnect();
       }
   };
-  #print "cmd init ($self->{'cmd'})\n";
+  $self->log ( "cmd init ($self->{'cmd'})", Dumper $self->{'cmd'});
   #    %{$self->{'cmd'}} = {
   $self->{'cmd'} ||= {
     'connect_aft' => sub {
@@ -215,7 +215,7 @@ sub init {
       $self->sendcmd( 'MyNick', $self->{'Nick'} );
     },
     'Lock' => sub {
-      $self->sendcmd( 'Lock', $self->{'Lock'} );
+      $self->sendcmd( 'Lock', $self->{'lock'} );
     },
     #      'Supports'	=> sub { $self->sendcmd('Supports', $self->{'Supports'}); },
     'Supports' => sub { $self->sendcmd( 'Supports', ( $self->supports() or return ) ); },
@@ -243,5 +243,6 @@ sub init {
     },
   };
   #print " clicli aftinit clients:{", keys %{$self->{'clients'}}, "}\n";
+  $self->log ( "init end");
 }
 1;
