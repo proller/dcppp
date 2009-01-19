@@ -540,7 +540,7 @@ sub init {
       unless $self->{'myport_udp'};
   }
 
-#=z
+=z
   $self->log( 'dev', "making listeners: http" );
     $self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
       %$self, $self->clear(),
@@ -557,11 +557,11 @@ sub init {
     $self->{'myport_http'}  = $self->{'clients'}{'listener_http'}{'myport'};
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
-#=cut
+=cut
 
 
   #
-  $self->log('dev', "listeners created"),
+#  $self->log('dev', "listeners created"),
   #  $self->{'clients'}{'listener'}->listen();
   #print "[$self->{'number'}]AFT";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 }
