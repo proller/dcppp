@@ -5,6 +5,7 @@ use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use Net::DirectConnect;
 use Net::DirectConnect::clicli;
+use Net::DirectConnect::http;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
@@ -490,8 +491,8 @@ sub init {
 #print "[$self->{'number'}]CLR";print "[$_ = $clear{$_}]"for sort keys %clear;print "\n";
 #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, %clear, 'socket' => $_, 'LocalPort'=>$self->{'myport'}, 'want' => \%{$self->{'want'}},
 #print "Listen on port $self->{'myport'} \n";
-  $self->log( 'dev', "making listeners: tcp" );
   if ( $self->{'M'} eq 'A' ) {
+  $self->log( 'dev', "making listeners: tcp" );
     $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
       %$self, $self->clear(),
       'want'     => \%{ $self->{'want'} },
@@ -538,8 +539,29 @@ sub init {
     $self->log( 'err', "cant listen udp (search repiles)" )
       unless $self->{'myport_udp'};
   }
+
+#=z
+  $self->log( 'dev', "making listeners: http" );
+    $self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
+      %$self, $self->clear(),
+#      'want'     => \%{ $self->{'want'} },
+#      'NickList' => \%{ $self->{'NickList'} },
+#      'IpList'   => \%{ $self->{'IpList'} },
+##      'PortList' => \%{ $self->{'PortList'} },
+      'handler'  => \%{ $self->{'handler'} },
+      #    $self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
+      #'LocalPort'=>$self->{'myport'},
+      #'debug'=>1,
+      'auto_listen' => 1,
+    );
+    $self->{'myport_http'}  = $self->{'clients'}{'listener_http'}{'myport'};
+    $self->log( 'err', "cant listen http" )
+      unless $self->{'myport_http'};
+#=cut
+
+
   #
-  #$self->log('dev', "listeners created"),
+  $self->log('dev', "listeners created"),
   #  $self->{'clients'}{'listener'}->listen();
   #print "[$self->{'number'}]AFT";print "[$_ = $self->{$_}]"for sort keys %$self;print "\n";
 }

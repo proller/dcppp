@@ -36,6 +36,7 @@ sub new {
   my $class = shift;
   my @param = @_;
   #print "init1:", Dumper(\@_);
+#print "NEW\n";
   my $self = {
     'Listen'        => 10,
     'Timeout'       => 5,
@@ -147,7 +148,7 @@ sub cmd {
   #  if ( ref $self->{'cmd'}{$cmd} eq 'CODE') {
   if ($func) {
     $self->handler( $cmd . $handler . '_bef', \@_ );
-    #  $self->{'log'}->($self,'dev', 'cmdrun', $cmd, $self, @_) if $cmd ne 'log';
+#      $self->{'log'}->($self,'dev', 'cmdrun', $cmd, $self, @_) if !grep {$cmd eq $_} qw(log active recv connect_check work periodic search_buffer);
     #  $self->{'log'}->($self,'dev', 'cmdrun', $cmd, $self, @_) if $cmd eq 'lock2key';
     @ret = $func->( $self, @_ );    #$self->{'cmd'}{$cmd}->(@_);
     #  $self->{'log'}->($self,'dev', 'cmdret', $cmd, $self, @ret) if $cmd eq 'lock2key';
@@ -238,6 +239,11 @@ sub func {
     if ( $p =~ /adc/i ) {
       $self->{'cmd_bef'} = undef;
       $self->{'cmd_aft'} = "\x0A";
+    } elsif ( $p =~ /http/i ) {
+      $self->{'cmd_bef'} = undef;
+#      $self->{'cmd_aft'} = "\x0D\x0D";
+      $self->{'cmd_aft'} = "\n";
+#      $self->{'cmd_aft'} = "\n\n";
     } elsif ($p) {    #$p =~ /nmdc/i
       $self->{'cmd_bef'} = '$';
       $self->{'cmd_aft'} = '|';
@@ -404,7 +410,7 @@ sub func {
     my $sleep = shift || 0;
     my $ret = 0;
     $self->connect_check();
-    $self->log( 'dev', 'cant recv, ret' ), return unless $self->{'socket'} and $self->{'socket'}->connected;
+    $self->log( 'dev', 'cant recv, ret' ), return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->{'socket'}->connected);
   #                $self->log( 'dcdbg',"[$self->{'number'}] recv $self->{'select'};$self->{'socket'}") if $self->{'number'} > 3;
     $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
     my ( $readed, $reads );
@@ -482,7 +488,7 @@ sub func {
           } else {
             ++$readed;
             ++$ret;
-#                   $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
+                   $self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
           }
           if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
           else {
@@ -498,14 +504,15 @@ sub func {
 #          my $separator = "\\|";
 #          $separator
             local $self->{'cmd_aft'} = "\x0A" if $self->{'protocol'} ne 'adc' and $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
-#                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
+                    $self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
             while ( $self->{'buf'} =~ s/^(.*?)\Q$self->{'cmd_aft'}//s ) {
               local $_ = $1;
-              #$self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
+              $self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
               last if $self->{'status'} eq 'destroy';
               #                 $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
               last unless length $_ and length $self->{'cmd_aft'};
-              next unless /\w/;
+#              next unless /\w/;
+              next unless length;
               $self->parser($_);
               #(
               #                /^\$/ ? '' :                      '$'                  .
@@ -637,7 +644,7 @@ sub func {
       #                  : ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) . ' '
       my $cmd;
       $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;
-      s/^\$?(\w+)\s*//, $cmd = $1 unless $cmd;
+      s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
       #return if $cmd eq 'log' and ;
       $self->log( 'dcinf', "UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
         $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
