@@ -5,7 +5,7 @@ use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use Net::DirectConnect;
 use Net::DirectConnect::clicli;
-use Net::DirectConnect::http;
+#use Net::DirectConnect::http;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
