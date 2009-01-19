@@ -57,6 +57,7 @@ sub init {
   #print " clicli init clients:{", keys %{$self->{'clients'}}, "}\n";
   #print "parse init\n";
   #    %{$self->{'parse'}} = (
+$self->{'parse'} = undef if $self->{'parse'} and  !keys %{$self->{'parse'}};
   $self->{'parse'} ||= {
     'Lock' => sub {
       #print "CLICLI lock parse\n";
@@ -178,8 +179,13 @@ sub init {
       $self->disconnect();
       }
   };
-  $self->log ( "cmd init ($self->{'cmd'})", Dumper $self->{'cmd'});
+  $self->log ( 'dev',"cmd init1 [$self]", ); #Dumper $self
+  $self->log ( 'dev',"cmd init2 [$self] z ( $self->{'cmd'} )", ); #Dumper $self->{'cmd'}
   #    %{$self->{'cmd'}} = {
+
+  $self->log ( 'dev', "del empty cmd", ), #Dumper $self
+$self->{'cmd'} = undef if $self->{'cmd'} and  !keys %{$self->{'cmd'}};
+
   $self->{'cmd'} ||= {
     'connect_aft' => sub {
       #      $self->connect() && return;
