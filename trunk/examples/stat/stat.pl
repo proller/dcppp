@@ -148,7 +148,7 @@ for ( grep { length $_ } @ARGV ) {
         'Search_parse_aft' => sub {
           my $dc     = shift;
           my $search = shift;
-          my %s      = ( %{ $_[0] }, );
+          my %s      = ( %{ $_[0] ||{}}, );
           return if $s{'nick'} eq $dc->{'Nick'};
           $db->insert_hash( 'queries', \%s );
           my $q = $s{'tth'} || $s{'string'} || return;
