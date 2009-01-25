@@ -949,10 +949,10 @@ look at examples for handlers
 =head1 DESCRIPTION
 
 Currently NOT supported:
-sharing
-segmented, multisource download
-async connect
-full ADC
+sharing;
+segmented, multisource download;
+async connect;
+full ADC;
 
 =head1 INSTALLATION
 
