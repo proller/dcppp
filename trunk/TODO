@@ -5,6 +5,7 @@ better nick-port-ip-lists
 udp UPSR
 relisten
 
+tests
 
 DC++ replaces all occurrences of "|" in <message> with "&#124;" and all occurrences of "$" with "&#36;". When displaying <message> the inverse replacement should be done.
 
