@@ -117,7 +117,7 @@ psmisc::caller_trace(15);
   $SIG{__DIE__} = sub {
     printlog( 'die', $!, $@, @_ );
     printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
-caller_trace(5);
+psmisc::caller_trace(5);
 
   };
 
@@ -289,7 +289,7 @@ $dc->destroy();
     $_->work() for @dc;
   }
 }
-while ( my @dca = grep { $_->active() } @dc ) {
+while ( my @dca = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dca;
   psmisc::schedule(
     [ 20, 60 * 60 ],
