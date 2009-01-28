@@ -333,7 +333,7 @@ sub init {
     },
     'Key' => sub {
       my $self = shift if ref $_[0];
-      $self->log( 'dev', "sendkey", $_[0] );
+#      $self->log( 'dev', "sendkey", $_[0] );
       $self->sendcmd( 'Key', $_[0] );
     },
     'ValidateNick' => sub {

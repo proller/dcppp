@@ -378,6 +378,10 @@ sub func {
 #  $self->log('dev',"delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n") for grep {$_} keys %{ $self->{'clients'} };
     if ( $self->{'disconnect_recursive'} ) {
       for ( grep { $self->{'clients'}{$_} } keys %{ $self->{'clients'} } ) {
+
+
+    $self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
+
         $self->{'clients'}{$_}->destroy() if ref $self->{'clients'}{$_};
         delete( $self->{'clients'}{$_} );
       }
