@@ -380,7 +380,7 @@ sub func {
       for ( grep { $self->{'clients'}{$_} } keys %{ $self->{'clients'} } ) {
 
 
-    $self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
+#    $self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
 
         $self->{'clients'}{$_}->destroy() if ref $self->{'clients'}{$_};
         delete( $self->{'clients'}{$_} );
