@@ -127,14 +127,12 @@ sub init {
       #$self->log('info', "HELLO recieved, connected.");
       $self->{'sendbuf'} = 1;
       $self->cmd('Version');
-# was:
-#      $self->{'sendbuf'} = 0 unless $self->{'auto_GetNickList'};
-#      $self->cmd('MyINFO');
-#      $self->{'sendbuf'} = 0, $self->cmd('GetNickList') if $self->{'auto_GetNickList'};
-# now: verlihub fix
-      $self->cmd('GetNickList') if $self->{'auto_GetNickList'};
       $self->{'sendbuf'} = 0 unless $self->{'auto_GetNickList'};
       $self->cmd('MyINFO');
+      $self->{'sendbuf'} = 0, $self->cmd('GetNickList') if $self->{'auto_GetNickList'};
+#      $self->cmd('GetNickList') if $self->{'auto_GetNickList'};
+#      $self->{'sendbuf'} = 0 unless $self->{'auto_GetNickList'};
+#      $self->cmd('MyINFO');
 
 
       $self->{'status'} = 'connected';
