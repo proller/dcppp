@@ -35,31 +35,31 @@ $config{'sql'}            ||= {
   'cp_in'        => 'cp1251',
   'table'        => {
     'queries' => {
-      'time' => pssql::row( 'time', 'index' => 1, 'purge' => 1, ),
-      'hub'    => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 64,  'index'   => 1,  'default' => '', ),
-      'nick'   => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 32,  'index'   => 1,  'default' => '', ),
-      'ip'     => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 15,  'default' => '', ),
-      'port'   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, ),
-      'tth'    => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 40,  'default' => '', 'index'   => 1 ),
-      'string' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 255, 'default' => '', 'index'   => 1 ),
+      'time' => pssql::row( 'time', 'index' => 1,         'purge'  => 1, ),
+      'hub'  => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
+      'nick' => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 32, 'index' => 1, 'default' => '', ),
+      'ip'   => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 15, 'default' => '', ),
+      'port' => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, ),
+      'tth'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
+      'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', 'index' => 1 ),
     },
     'results' => {
-      'time' => pssql::row( 'time', 'index' => 1, 'purge' => 1, ),
-      'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'index'   => 1, 'default' => '', ),
-      'hub'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 64,  'index'   => 1, 'default' => '', ),
-      'nick'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 32,  'index'   => 1, 'default' => '', ),
-      'ip'     => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 15,  'default' => '', ),
-      'port'   => pssql::row( undef, 'type' => 'SMALLINT', ),
-      'tth'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'index'   => 1, 'default' => '', ),
-      'file' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', ),
-      'filename' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'index' => 1, 'default' => '', ),
-      'ext'      => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 32,  'index' => 1, 'default' => '', ),
+      'time'   => pssql::row( 'time', 'index' => 1,         'purge'  => 1, ),
+      'string' => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 255, 'index' => 1, 'default' => '', ),
+      'hub'    => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
+      'nick'   => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 32, 'index' => 1, 'default' => '', ),
+      'ip'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 15, 'default' => '', ),
+      'port' => pssql::row( undef, 'type' => 'SMALLINT', ),
+      'tth'      => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'index'   => 1, 'default' => '', ),
+      'file'     => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', ),
+      'filename' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'index'   => 1, 'default' => '', ),
+      'ext'      => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 32,  'index'   => 1, 'default' => '', ),
       'size'     => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1 ),
     },
     'chat' => {
-      'time' => pssql::row( 'time', 'index' => 1, 'purge' => 366 * 86400, ),
-      'hub'    => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 64,   'index'   => 1, 'default' => '', ),
-      'nick'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 32,   'index'   => 1, 'default' => '', ),
+      'time' => pssql::row( 'time', 'index' => 1,         'purge'  => 366 * 86400, ),
+      'hub'  => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
+      'nick' => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 32, 'index' => 1, 'default' => '', ),
       'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 3090, 'default' => '', ),
     },
     'slow' => {
@@ -70,15 +70,15 @@ $config{'sql'}            ||= {
       'time' => pssql::row( 'time', 'index' => 1, 'purge' => 1, ),
     },
     'hubs' => {
-      'time' => pssql::row( 'time', 'index' => 1, 'purge' => 1, ),
-      'hub'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
-      'size'  => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
-      'users' => pssql::row( undef, 'type' => 'INT',     'index'  => 1, ),
+      'time'  => pssql::row( 'time', 'index' => 1,         'purge'  => 1, ),
+      'hub'   => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
+      'size'  => pssql::row( undef,  'type'  => 'BIGINT',  'index'  => 1, ),
+      'users' => pssql::row( undef,  'type'  => 'INT',     'index'  => 1, ),
     },
     'users' => {
-      'time' => pssql::row( 'time', 'index' => 1, 'purge' => 1, ),
-      'hub'  => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 64, 'index'  => 1, 'default' => '', 'primary' => 1 ),
-      'nick' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 32, 'index'  => 1, 'default' => '', 'primary' => 1 ),
+      'time' => pssql::row( 'time', 'index' => 1,         'purge'  => 1, ),
+      'hub'  => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', 'primary' => 1 ),
+      'nick' => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 32, 'index' => 1, 'default' => '', 'primary' => 1 ),
       'ip'   => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 15, 'Zindex' => 1, 'default' => '', ),
       'port' => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, ),
       'size'   => pssql::row( undef,  'type'  => 'BIGINT', 'index'        => 1, 'default' => 0, ),
@@ -238,13 +238,13 @@ $config{'queries'}{'queries top users tth'} ||= {
   'order'    => ++$order,
 };
 $config{'queries'}{'hubs top'} ||= {
-  'main'   => 1,
-  'class'  => 'half',
-  'show'   => [qw(time hub users size )],    #time
-                                             #'SELECT'         => 'DISTINCT hub , MAX(size), h2.*', # DISTINCT hub,size,time
+  'main'  => 1,
+  'class' => 'half',
+  'show'  => [qw(time hub users size )],    #time
+  #'SELECT'         => 'DISTINCT hub , MAX(size), h2.*', # DISTINCT hub,size,time
   'SELECT' => '*, hub as h1'
   , #DISTINCT DISTINCT hub,size,time                                                    'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs as h2 USING (hub,size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'h2.size DESC',
-    #         'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+  #         'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
   'WHERE' => ['time = (SELECT time FROM hubs WHERE hub=h1 ORDER BY size DESC LIMIT 1)'],
   #'GROUP BY' => 'hubs.hub',
   #'ORDER BY' => 'size DESC',
@@ -367,9 +367,7 @@ sub make_query {
     my $res = $db->query($sql);
     #print Dumper $res if $param->{'debug'};
     my @ret;
-    for my $row (@$res) {
-      push @ret, eval $row->{'result'};
-    }
+    for my $row (@$res) { push @ret, eval $row->{'result'}; }
     #print Dumper @ret if $param->{'debug'};
     return \@ret;
   }

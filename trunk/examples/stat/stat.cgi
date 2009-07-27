@@ -41,7 +41,7 @@ $param->{'period'} ||= $config{'default_period'};
 print '<a href="?">home</a>';
 print ' days ', (
   map {
-        '<a '
+    '<a '
       . ( $param->{'period'} eq $_ ? '' : 'href="#"' )
       . qq{ onclick="createCookie('period', '$_');window.location.reload(false);">}
       . psmisc::human( 'time_period', $config{'periods'}{$_} ) . '</a> '
@@ -62,8 +62,7 @@ $config{'human'}{'magnet-dl'} = sub {
   $row = { 'tth' => $row } unless ref $row eq 'HASH';
   my $tth = ( $row->{'tth_orig'} || $row->{'tth'} );
   my $string = $row->{'string_orig'} || $row->{'string'};
-  $string ||= $tth, $tth = undef,
-    unless $tth =~ /^[0-9A-Z]{39}$/;
+  $string ||= $tth, $tth = undef, unless $tth =~ /^[0-9A-Z]{39}$/;
   local $_ = join '&amp;', grep { $_ } ( $tth ? 'xt=urn:tree:tiger:' . $tth : '' ),
     ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
     ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' ),
@@ -75,7 +74,8 @@ $config{'human'}{'dchub-dl'} = sub {
   my ($row) = @_;
   $row = { 'hub' => $row } unless ref $row eq 'HASH';
   #print "[$row->{'hub'}; $row->{'nick'}]";
-  return '&nbsp;<a class="magnet-darr" href="dchub://'
+  return
+      '&nbsp;<a class="magnet-darr" href="dchub://'
     . ( join '/', grep { $_ } map { $row->{$_} } qw(hub nick) )
     . '">[&dArr;]</a>'
     if length $row->{'hub'};
@@ -86,21 +86,17 @@ my @ask;
 $config{'queries'}{'string'}{'desc'} = psmisc::html_chars( $param->{'string'} ), @ask = ('string') if $param->{'string'};
 @ask = ('tth')      if $param->{'tth'};
 @ask = ('filename') if $param->{'filename'};
-@ask = ( $param->{'query'} )
-  if $param->{'query'} and $config{'queries'}{ $param->{'query'} };
+@ask = ( $param->{'query'} ) if $param->{'query'} and $config{'queries'}{ $param->{'query'} };
 $config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
 
-for (
-  @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
-  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} }
-  )
+for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
+  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
 {
   my $q = { %{ $config{'queries'}{$_} || next } };
   next if $q->{'disabled'};
   $q->{'desc'} = $q->{'desc'}->{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
-  print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
-    ? $_
-    : '<a href="?query=' . ( psmisc::encode_url($_) ) . '">' . ( $q->{'desc'} || $_ ) . '</a>';
+  print '<div class="onetable ' . $q->{'class'} . '">',
+    $q->{'no_query_link'} ? $_ : '<a href="?query=' . ( psmisc::encode_url($_) ) . '">' . ( $q->{'desc'} || $_ ) . '</a>';
   #  print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
   my $res = statlib::make_query( $q, $_, $param->{'period'} );
@@ -113,15 +109,14 @@ for (
     $row->{'orig'} = {%$row};
     #    $row->{'tth_orig'}    = $row->{'tth'};
     #    $row->{'string_orig'} = $row->{'string'};
-    $row->{$_} = (
-      $param->{$_}
+    $row->{$_} =
+      ( $param->{$_}
       ? ''
       : qq{<a class="$_" title="}
         . psmisc::html_chars( $row->{$_} )
         . qq{" href="?$_=}
         . psmisc::encode_url( $row->{$_} )
-        . qq{">$row->{$_}</a>}
-      )
+        . qq{">$row->{$_}</a>} )
       . psmisc::human( 'magnet-dl', $row->{'orig'} )
       for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } }
       grep { $config{'queries'}{$_} } @{ $q->{'show'} };    #qw(string tth);
@@ -133,8 +128,7 @@ for (
     print '</tr>';
   }
   print '</table></div>';
-  print '<br/>'
-    if $q->{'group_end'};
+  print '<br/>' if $q->{'group_end'};
   psmisc::flush();
 }
 print
