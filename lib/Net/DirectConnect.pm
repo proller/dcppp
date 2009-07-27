@@ -952,42 +952,42 @@ look at examples for handlers
 
 =head1 DESCRIPTION
 
-Currently NOT supported:
-sharing;
-segmented, multisource download;
-async connect;
-full ADC;
+ Currently NOT supported:
+ sharing;
+ segmented, multisource download;
+ async connect;
+ full ADC;
 
 =head1 INSTALLATION
 
-To install this module type the following:
+ To install this module type the following:
 
    perl Makefile.PL && make install clean
    
 
 =head1 SEE ALSO
 
-# pro http://pro.setun.net/dcppp/
+ # pro http://pro.setun.net/dcppp/
       http://sourceforge.net/projects/dcppp
 
-http://svn.setun.net/dcppp/timeline/browser/trunk
+ http://svn.setun.net/dcppp/timeline/browser/trunk
 
-latest snapshot
-svn co svn://svn.setun.net/dcppp/trunk/ dcppp
+ latest snapshot
+ svn co svn://svn.setun.net/dcppp/trunk/ dcppp
 
-usage example:
-used in [and created for] http://sourceforge.net/projects/pro-search http://pro.setun.net/search/
+ usage example:
+ used in [and created for] http://sourceforge.net/projects/pro-search http://pro.setun.net/search/
  ( http://svn.setun.net/search/trac.cgi/browser/trunk/crawler.pl )
 
 
-protocol info:
-http://en.wikipedia.org/wiki/Direct_Connect_network
-http://www.teamfair.info/DC-Protocol.htm
-http://adc.sourceforge.net/ADC.html
+ protocol info:
+ http://en.wikipedia.org/wiki/Direct_Connect_network
+ http://www.teamfair.info/DC-Protocol.htm
+ http://adc.sourceforge.net/ADC.html
 
-also useful for creating links from web:
-http://magnet-uri.sourceforge.net/
-http://en.wikipedia.org/wiki/Magnet:_URI_scheme
+ also useful for creating links from web:
+ http://magnet-uri.sourceforge.net/
+ http://en.wikipedia.org/wiki/Magnet:_URI_scheme
 
 
 
