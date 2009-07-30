@@ -1,20 +1,18 @@
 # $Id$ $URL$
-# reserved for future 8)
+# reserved for future 8), but something works
 package Net::DirectConnect::hubcli;
 use strict;
 use Net::DirectConnect;
-use Data::Dumper;    #dev only
+use Data::Dumper;    
 $Data::Dumper::Sortkeys = 1;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
-#our @ISA = ('Net::DirectConnect');
 use base 'Net::DirectConnect';
 
 sub init {
   my $self = shift;
   %$self = (
     %$self,
-    #
     , @_
   );
   $self->baseinit();
@@ -22,14 +20,14 @@ sub init {
   $self->log( 'info', "[$self->{'number'}] Incoming client $self->{'host'}:$self->{'port'}" ) if $self->{'incoming'};
   $self->{'parse'} ||= {
     'Supports' => sub {
-      #      $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
+      #$self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
       $self->supports_parse( $_[0], $self->{'peer_supports'} );
     },
     'Key' => sub {
     },
     'ValidateNick' => sub {
   #$self->log('dev', 'denide', $_[0], Dumper $self->{'NickList'}),
-  #!      return $self->cmd('ValidateDenide') if exists $self->{'NickList'}{ $_[0] } and $self->{'NickList'}{ $_[0] }{'online'};
+  #!return $self->cmd('ValidateDenide') if exists $self->{'NickList'}{ $_[0] } and $self->{'NickList'}{ $_[0] }{'online'};
       $self->{'peer_nick'}                          = $_[0];
       $self->{'NickList'}->{ $self->{'peer_nick'} } = $self->{'peer_supports'};
       $self->{'status'}                             = 'connected';
@@ -44,14 +42,10 @@ sub init {
     },
     'MyINFO' => sub {
       my ( $nick, $info ) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
-      #        print("Bad nick:[$_[0]]"), return unless length $nick;
       return if $nick ne $self->{'peer_nick'};
       $self->{'NickList'}{$nick}{'Nick'} = $nick;
-      #        $self->{'NickList'}->{$nick}{'info'} = $info;
-      #print "preinfo[$info] to $self->{'NickList'}->{$nick}\n";
       $self->info_parse( $info, $self->{'NickList'}{$nick} );
       $self->{'NickList'}{$nick}{'online'} = 1;
-      #        print  "info:$nick [$info]\n";
     },
     'GetINFO' => sub {
       my $to = shift;

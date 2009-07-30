@@ -5,14 +5,12 @@ use Net::DirectConnect::hubcli;
 use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
-#our @ISA = ('Net::DirectConnect');
 use base 'Net::DirectConnect';
 
 sub init {
   my $self = shift;
   %$self = (
     %$self,
-    #
     'incomingclass' => 'Net::DirectConnect::hubcli',
     'auto_connect'  => 0,
     'auto_listen'   => 1,
