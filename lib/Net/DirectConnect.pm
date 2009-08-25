@@ -35,31 +35,27 @@ sub clear {
 sub new {
   my $class = shift;
   my @param = @_;
-  my $self = {
-    'Listen'        => 10,
-    'Timeout'       => 5,
-    'myport'        => 412,     #first try
-    'myport_base'   => 40000,
-    'myport_random' => 1000,
-    'myport_tries'  => 5,
-    # http://www.dcpp.net/wiki/index.php/%24MyINFO
+  my $self  = {
+    'Listen'      => 10,
+    'Timeout'     => 5,
+    'myport'      => 412,                                                   #first try
+    'myport_base' => 40000, 'myport_random' => 1000, 'myport_tries' => 5,
+    #http://www.dcpp.net/wiki/index.php/%24MyINFO
     'description' => 'just perl Net::DirectConnect bot', 'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
-    'flag' => '1',              # User status as ascii char (byte)
-                                # 1 normal
-                                # 2, 3 away
-                                # 4, 5 server               The server icon is used when the client has
-                                # 6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
-                                # 8, 9 fireball             The fireball icon is used when the client
-                                # 10, 11 fireball away      has had an upload > 100 kB/s.
+    'flag' => '1',                                                          # User status as ascii char (byte)
+    #1 normal
+    #2, 3 away
+    #4, 5 server               The server icon is used when the client has
+    #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
+    #8, 9 fireball             The fireball icon is used when the client
+    #10, 11 fireball away      has had an upload > 100 kB/s.
     'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
     'client'   => 'perl',    #'dcp++',                                                              #++: indicates the client
     'protocol' => 'nmdc',    # or 'adc'
-    'cmd_sep'  => ' ',
-    'V' => $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1],
-    ,                        #V: tells you the version number
-    'M' => 'A',              #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    'cmd_sep' => ' ', 'V' => $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1],,    #V: tells you the version number
+    'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
@@ -83,22 +79,22 @@ sub new {
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
     'disconnect_recursive' => 1,
     'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
-    'reconnects'      => 5,
-    'reconnect_sleep' => 5,
+    'reconnects'           => 5,
+    'reconnect_sleep'      => 5,
   };
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
   bless( $self, $class );
   $self->func(@param);
   $self->init(@param);
-  if ( $self->{'auto_listen'} ) {
-    $self->listen();
-  } elsif ( $self->{'auto_connect'} ) {
+  if ( $self->{'auto_listen'} ) { $self->listen(); }
+  elsif ( $self->{'auto_connect'} ) {
     $self->connect();
     $self->work();
   }
   return $self;
 }
+
 sub log(@) {
   my $self = shift;
   return $self->{'log'}->( $self, @_ ) if ref $self->{'log'} eq 'CODE';
@@ -109,7 +105,7 @@ sub cmd {
   my $self = shift;
   my $cmd  = shift;
   my ( @ret, $ret );
-  #  $self->{'log'}->($self,'dev', 'cmd', $cmd, @_) if $cmd ne 'log';
+  #$self->{'log'}->($self,'dev', 'cmd', $cmd, @_) if $cmd ne 'log';
   my ( $func, $handler );
   if ( ref $self->{'cmd'}{$cmd} eq 'CODE' ) {
     $func    = $self->{'cmd'}{$cmd};
@@ -131,7 +127,12 @@ sub cmd {
   } elsif ( exists $self->{$cmd} ) {
     @ret = ( $self->{$cmd} );
   } else {
-    $self->log( 'info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };", Dumper $self->{'cmd'}, $self->{'parse'} );
+    $self->log(
+      'info',
+      "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
+      Dumper $self->{'cmd'},
+      $self->{'parse'}
+    );
     $self->{'cmd'}{$cmd} = sub { };
   }
   if ( $self->{'cmd'}{$cmd} ) {
@@ -143,8 +144,8 @@ sub cmd {
 }
 
 sub AUTOLOAD {
-  my $self = shift || return;
-    my $type = ref($self) || return;
+  my $self = shift      || return;
+  my $type = ref($self) || return;
   my @p    = @_;
   my $name = $AUTOLOAD;
   $name =~ s/.*\://;
@@ -160,7 +161,7 @@ sub DESTROY {
 sub handler {
   my ( $self, $cmd ) = ( shift, shift );
   $self->{'handler_int'}{$cmd}->( $self, @_ ) if ref $self->{'handler_int'}{$cmd} eq 'CODE';    #internal lib
-  $self->{'handler'}{$cmd}->( $self,     @_ ) if ref $self->{'handler'}{$cmd}     eq 'CODE';
+  $self->{'handler'}{$cmd}->( $self, @_ ) if ref $self->{'handler'}{$cmd} eq 'CODE';
 }
 
 sub baseinit {
@@ -206,8 +207,7 @@ sub func {
     if ( $_[0] ) {
       $self->{'host'} = $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
-      $self->{'protocol'} = 'adc', $self->protocol( $self->{'protocol'} )
-        if lc $1 eq 'adc';
+      $self->{'protocol'} = 'adc', $self->protocol( $self->{'protocol'} ) if lc $1 eq 'adc';
       $self->{'host'} =~ s{/.*}{}g;
       $self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
     }
@@ -223,7 +223,7 @@ sub func {
       'PeerAddr' => $self->{'host'},
       'PeerPort' => $self->{'port'},
       'Proto'    => $self->{'Proto'} || 'tcp',
-      'Timeout' => $self->{'Timeout'}, (
+      'Timeout'  => $self->{'Timeout'}, (
         $self->{'nonblocking'}
         ? (
           'Blocking'   => 0,
@@ -233,12 +233,9 @@ sub func {
       ),
       %{ $self->{'sockopts'} || {} },
     );
-    $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1
-      if !$self->{'socket'};
+    $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
     $self->get_my_addr();
-    $self->log(
-      'info', "connect to $self->{'host'} [me=$self->{'myip'}] ok ",    
-    );                                                                  
+    $self->log( 'info', "connect to $self->{'host'} [me=$self->{'myip'}] ok ", );
     $self->cmd('connect_aft');
     $self->recv();
     return 0;
@@ -251,7 +248,7 @@ sub func {
         or ( $self->{'socket'} and $self->{'socket'}->connected() )
         or !$self->active();
     $self->{'status'} = 'reconnecting';
-    #        $self->log(          'warn', 'connect_check: must reconnect');
+    #$self->log(          'warn', 'connect_check: must reconnect');
     $self->every(
       $self->{'reconnect_sleep'},
       $self->{'reconnect_func'} ||= sub {
@@ -280,15 +277,13 @@ sub func {
         'LocalPort' => $self->{'myport'},
         'Proto'     => $self->{'Proto'} || 'tcp',
         ( $self->{'Proto'} ne 'udp' ? ( 'Listen' => $self->{'Listen'} ) : () ),
-        ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
-        %{ $self->{'sockopts'} or {} },
+        ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ), %{ $self->{'sockopts'} or {} },
       );
       last if $self->{'socket'};
-      $self->log( 'err', "listen $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
-        unless $self->{'socket'};
+      $self->log( 'err', "listen $self->{'myport'} socket error: $@" ), $self->myport_generate(1), unless $self->{'socket'};
     }
     return unless $self->{'socket'};
-    $self->log( 'dcdbg', "listening $self->{'myport'} $self->{'Proto'}" );    
+    $self->log( 'dcdbg', "listening $self->{'myport'} $self->{'Proto'}" );
     $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
     $self->{'status'} = 'listening';
     $self->recv();
@@ -306,10 +301,7 @@ sub func {
 #$self->log('dev',"delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n") for grep {$_} keys %{ $self->{'clients'} };
     if ( $self->{'disconnect_recursive'} ) {
       for ( grep { $self->{'clients'}{$_} } keys %{ $self->{'clients'} } ) {
-
-
-#$self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
-
+        #$self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
         $self->{'clients'}{$_}->destroy() if ref $self->{'clients'}{$_};
         delete( $self->{'clients'}{$_} );
       }
@@ -332,8 +324,8 @@ sub func {
     my $sleep = shift || 0;
     my $ret = 0;
     $self->connect_check();
-#$self->log( 'dev', 'cant recv, ret' ), 
-return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->{'socket'}->connected);
+    #$self->log( 'dev', 'cant recv, ret' ),
+    return unless $self->{'socket'} and ( $self->{'status'} eq 'listening' or $self->{'socket'}->connected );
     $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
     my ( $readed, $reads );
     $self->{'databuf'} = '';
@@ -343,8 +335,7 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
         #$self->log( 'trace', 'DC::recv', 'in loop', $reads );
         $readed = 0;
         $ret = '0E0', last unless $self->{'select'} and $self->{'socket'};
-        $self->log( 'err', "SOCKET UNEXISTS must delete select" )
-          unless $self->{'select'}->exists( $self->{'socket'} );
+        $self->log( 'err', "SOCKET UNEXISTS must delete select" ) unless $self->{'select'}->exists( $self->{'socket'} );
         $self->log( 'err', "SOCKET IS NOT CONNECTED must delete select" )
           if !$self->{'accept'}
             and !$self->{'socket'}->connected()
@@ -352,7 +343,7 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
         for my $client ( $self->{'select'}->can_read($sleep) ) {
           if ( $self->{'accept'} and $client eq $self->{'socket'} ) {
             if ( $_ = $self->{'socket'}->accept() ) {
-                      $self->log( 'trace', 'DC::recv', 'accept' , $self->{'incomingclass'});
+              $self->log( 'trace', 'DC::recv', 'accept', $self->{'incomingclass'} );
               $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
                 %$self, clear(),
                 'socket'       => $_,
@@ -365,22 +356,19 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
                 'auto_listen'  => 0,
                 'auto_connect' => 0,
                 'parent'       => $self,
-              );    
+              );
               ++$ret;
             } else {
               $self->log( 'err', "Accepting fail! [$self->{'Proto'}]" );
             }
             next;
           }
-          $self->log( 'dev', "SOCKERR", $client, $self->{'socket'}, $self->{'select'} )
-            if $client ne $self->{'socket'};
+          $self->log( 'dev', "SOCKERR", $client, $self->{'socket'}, $self->{'select'} ) if $client ne $self->{'socket'};
           $self->{'databuf'} = '';
           if ( !defined( $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
             or !length( $self->{'databuf'} ) )
           {
-            if (  $self->active()
-              and $self->{'reconnect_tries'}++ < $self->{'reconnects'} )
-            {
+            if ( $self->active() and $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
               #$self->log( 'dcdbg',  "recv err, reconnect," );
               $self->reconnect();
             } else {
@@ -390,7 +378,7 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
           } else {
             ++$readed;
             ++$ret;
-#$self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
+            #$self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
           }
           if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
           else {
@@ -399,9 +387,9 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
 #$self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
             while ( $self->{'buf'} =~ s/^(.*?)\Q$self->{'cmd_aft'}//s ) {
               local $_ = $1;
-#$self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
+              #$self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
               last if $self->{'status'} eq 'destroy';
-              #                 $self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
+              #$self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
               last unless length $_ and length $self->{'cmd_aft'};
               next unless length;
               $self->parser($_);
@@ -411,11 +399,10 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
           }
         }
       } while ( $readed and $reads++ < $self->{'max_reads'} );
-      # TODO !!! timed
+      #TODO !!! timed
     }
     for ( keys %{ $self->{'clients'} } ) {
-      $self->log( 'dev', "del client[$self->{'clients'}{$_}{'number'}][$_]", ),
-        delete( $self->{'clients'}{$_} ),
+      $self->log( 'dev', "del client[$self->{'clients'}{$_}{'number'}][$_]", ), delete( $self->{'clients'}{$_} ),
         $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } keys %{ $self->{'clients'} } ), next
         if !$self->{'clients'}{$_}{'socket'}
           or !$self->{'clients'}{$_}{'status'}
@@ -483,7 +470,7 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
     $self->wait(@_) while $starttime + $how > time();
   };
   $self->{'work'} ||= sub {
-    my $self = shift;
+    my $self   = shift;
     my @params = @_;
     $self->periodic();
     return $self->wait_sleep(@params) if @params;
@@ -502,29 +489,21 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
       #$self->log( 'dcinf', "parsing", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd});
       $self->handler( $cmd . '_parse_bef_bef', $_ );
       if ( ref $self->{'parse'}{$cmd} eq 'CODE' ) {
-        if (
-          !exists $self->{'no_print'}{$cmd}
-          )
-        {
+        if ( !exists $self->{'no_print'}{$cmd} ) {
           local $_ = $_;
           local @_ =
             map { "$_:$self->{'skip_print_'.$_}" } grep { $self->{ 'skip_print_' . $_ } } keys %{ $self->{'no_print'} || {} };
-          $self->log(
-            'dcdmp',
-            "rcv: $cmd $_",
-            ( @_ ? ( '  [', @_, ']' ) : () )
-          );
+          $self->log( 'dcdmp', "rcv: $cmd $_", ( @_ ? ( '  [', @_, ']' ) : () ) );
           $self->{ 'skip_print_' . $_ } = 0 for keys %{ $self->{'no_print'} || {} };
         } else {
-          ++$self->{ 'skip_print_' . $cmd },
-            if exists $self->{'no_print'}{$cmd};
+          ++$self->{ 'skip_print_' . $cmd }, if exists $self->{'no_print'}{$cmd};
         }
         $self->handler( $cmd . '_parse_bef', $_ );
         @ret = $self->{'parse'}{$cmd}->($_);
         $ret = scalar @ret > 1 ? \@ret : $ret[0];
         $self->handler( $cmd . '_parse_aft', $_, $ret );
       }
-      $self->handler( $cmd, $_, $ret );
+      $self->handler( $cmd,                    $_, $ret );
       $self->handler( $cmd . '_parse_aft_aft', $_, $ret );
     }
   };
@@ -536,12 +515,11 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
     if ( ( $self->{'sendbuf'} and @_ ) or !@{ $self->{'send_buffer'} || [] } ) { }
     else {
       local $_;
-      eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };    
+      eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };
       $self->log( 'err', 'send error', $@ ) if $@;
-      $self->{'log'}->( $self, 'dcdmp', "we send [" . join( '', @{ $self->{'send_buffer'} } ) . "]:", $_, $! )
-        ;                                                                                    
+      $self->{'log'}->( $self, 'dcdmp', "we send [" . join( '', @{ $self->{'send_buffer'} } ) . "]:", $_, $! );
       $self->{'send_buffer'} = [];
-      $self->{'sendbuf'} = 0;
+      $self->{'sendbuf'}     = 0;
     }
   };
   $self->{'rcmd'} ||= sub {
@@ -606,10 +584,10 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
     eval { @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) ) };
     return unless $_[1];
     return unless $_[1] = inet_ntoa( $_[1] );
-    # $self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
+    #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
     return $self->{'myip'} ||= $_[1];
   };
-  # http://www.dcpp.net/wiki/index.php/LockToKey :
+  #http://www.dcpp.net/wiki/index.php/LockToKey :
   $self->{'lock2key'} ||= sub {
     my $self = shift;
     my @lock = split( //, shift );
@@ -620,6 +598,7 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
     for ( $i = 1 ; $i < @lock ; $i++ ) { push( @key, ( $lock[$i] ^ $lock[ $i - 1 ] ) ); }
     for ( $i = 0 ; $i < @key ; $i++ ) { $key[$i] = ( ( ( $key[$i] << 4 ) & 240 ) | ( ( $key[$i] >> 4 ) & 15 ) ) & 0xff; }
     $key[0] = $key[0] ^ $key[ @key - 1 ];
+
     foreach (@key) {
       if ( $_ == 0 || $_ == 5 || $_ == 36 || $_ == 96 || $_ == 124 || $_ == 126 ) { $_ = sprintf( '/%%DCN%03i%%/', $_ ); }
       else                                                                        { $_ = chr; }
@@ -632,7 +611,8 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
   };
   $self->{'myinfo'} ||= sub {
     my $self = shift;
-    return $self->{'Nick'} . ' '
+    return
+        $self->{'Nick'} . ' '
       . $self->{'description'} . '<'
       . $self->tag() . '>' . '$' . ' ' . '$'
       . $self->{'connection'}
@@ -690,7 +670,7 @@ return unless $self->{'socket'} and ($self->{'status'} eq 'listening' or $self->
   #now states:
   #listening  connecting   connected   reconnecting transfer  disconnecting disconnected destroy
   #need checks:
-  #                        \ connected?/             \-----/
+  #\ connected?/             \-----/
   #\-----------------------active?-------------------------/
   #}
   $self->{'every'} ||= sub {
@@ -745,7 +725,7 @@ look at examples for handlers
 
 =head1 SEE ALSO
 
- # pro http://pro.setun.net/dcppp/
+#pro http://pro.setun.net/dcppp/
       http://sourceforge.net/projects/dcppp
 
  http://svn.setun.net/dcppp/timeline/browser/trunk

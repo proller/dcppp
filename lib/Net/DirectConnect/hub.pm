@@ -1,4 +1,4 @@
-# $Id$ $URL$
+#$Id$ $URL$
 package Net::DirectConnect::hub;
 use Net::DirectConnect;
 use Net::DirectConnect::hubcli;
