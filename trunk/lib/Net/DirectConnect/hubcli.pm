@@ -1,9 +1,9 @@
-# $Id$ $URL$
-# reserved for future 8), but something works
+#$Id$ $URL$
+#reserved for future 8), but something works
 package Net::DirectConnect::hubcli;
 use strict;
 use Net::DirectConnect;
-use Data::Dumper;    
+use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
@@ -11,10 +11,7 @@ use base 'Net::DirectConnect';
 
 sub init {
   my $self = shift;
-  %$self = (
-    %$self,
-    , @_
-  );
+  %$self = ( %$self,, @_ );
   $self->baseinit();
   $self->get_peer_addr();
   $self->log( 'info', "[$self->{'number'}] Incoming client $self->{'host'}:$self->{'port'}" ) if $self->{'incoming'};
@@ -26,8 +23,8 @@ sub init {
     'Key' => sub {
     },
     'ValidateNick' => sub {
-  #$self->log('dev', 'denide', $_[0], Dumper $self->{'NickList'}),
-  #!return $self->cmd('ValidateDenide') if exists $self->{'NickList'}{ $_[0] } and $self->{'NickList'}{ $_[0] }{'online'};
+      #$self->log('dev', 'denide', $_[0], Dumper $self->{'NickList'}),
+      #!return $self->cmd('ValidateDenide') if exists $self->{'NickList'}{ $_[0] } and $self->{'NickList'}{ $_[0] }{'online'};
       $self->{'peer_nick'}                          = $_[0];
       $self->{'NickList'}->{ $self->{'peer_nick'} } = $self->{'peer_supports'};
       $self->{'status'}                             = 'connected';
@@ -55,19 +52,11 @@ sub init {
     },
   };
   $self->{'cmd'} ||= {
-    'Lock' => sub {
-      $self->sendcmd( 'Lock', $self->{'Lock'} );
-    },
-    'HubName' => sub {
-      $self->sendcmd( 'HubName', $self->{'HubName'} );
-    },
-    'ValidateDenide' => sub {
-      $self->sendcmd('ValidateDenide');
-    },
-    'Hello' => sub {
-      $self->sendcmd( 'Hello', $self->{'peer_nick'} );
-    },
-    'NickList' => sub {
+    'Lock'           => sub { $self->sendcmd( 'Lock',    $self->{'Lock'} ); },
+    'HubName'        => sub { $self->sendcmd( 'HubName', $self->{'HubName'} ); },
+    'ValidateDenide' => sub { $self->sendcmd('ValidateDenide'); },
+    'Hello'          => sub { $self->sendcmd( 'Hello',   $self->{'peer_nick'} ); },
+    'NickList'       => sub {
       $self->sendcmd( 'NickList', join '$$', grep { !$self->{'NickList'}{$_}{'oper'} } keys %{ $self->{'NickList'} } );
     },
     'OpList' => sub {
@@ -96,7 +85,7 @@ sub init {
   };
   $self->{'handler_int'} ||= {
     'disconnect_aft' => sub {
-      #      $self->{'NickList'}{$self->{'peer_nick'}}{'online'} = 0;
+      #$self->{'NickList'}{$self->{'peer_nick'}}{'online'} = 0;
       delete $self->{'NickList'}{ $self->{'peer_nick'} };
       $self->log( 'dev', 'deleted', $self->{'peer_nick'}, Dumper $self->{'NickList'} );
     },

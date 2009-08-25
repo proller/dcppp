@@ -1,4 +1,4 @@
-# $Id$ $URL$
+#$Id$ $URL$
 package Net::DirectConnect::clicli;
 use Net::DirectConnect;
 use strict;
@@ -31,7 +31,7 @@ sub init {
     'MiniSlots' => 1,
     @_,
     'direction' => 'Download',
-    #	'Direction' => 'Upload', #rand here
+    #'Direction' => 'Upload', #rand here
     'reconnects' => 0,
   );
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
@@ -39,7 +39,7 @@ sub init {
   $self->get_peer_addr();
   #$self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
   $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
-$self->{'parse'} = undef if $self->{'parse'} and  !keys %{$self->{'parse'}};
+  $self->{'parse'} = undef if $self->{'parse'} and !keys %{ $self->{'parse'} };
   $self->{'parse'} ||= {
     'Lock' => sub {
       if ( $self->{'incoming'} ) {
@@ -63,9 +63,8 @@ $self->{'parse'} = undef if $self->{'parse'} and  !keys %{$self->{'parse'}};
       else                         { $self->{'direction'} = 'Download'; }
     },
     'Key' => sub {
-      if ( $self->{'incoming'} ) {
-
-      } else {
+      if ( $self->{'incoming'} ) { }
+      else {
         $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
         $self->cmd('Direction');
@@ -85,16 +84,13 @@ $self->{'parse'} = undef if $self->{'parse'} and  !keys %{$self->{'parse'}};
     },
     'MyNick' => sub {
       $self->log( 'info', "peer is [", ( $self->{'peernick'} = $_[0] ), "]" );
-      $self->{'NickList'}->{ $self->{'peernick'} }{'ip'} = $self->{'host'};
+      $self->{'NickList'}->{ $self->{'peernick'} }{'ip'}   = $self->{'host'};
       $self->{'NickList'}->{ $self->{'peernick'} }{'port'} = $self->{'port'};
-      $self->{'IpList'}->{ $self->{'host'} } = \%{ $self->{'NickList'}->{ $self->{'peernick'} } };
-      $self->{'IpList'}->{ $self->{'host'} }->{'port'} = $self->{'PortList'}->{ $self->{'host'} };
+      $self->{'IpList'}->{ $self->{'host'} }               = \%{ $self->{'NickList'}->{ $self->{'peernick'} } };
+      $self->{'IpList'}->{ $self->{'host'} }->{'port'}     = $self->{'PortList'}->{ $self->{'host'} };
       $self->handler( 'user_ip', $self->{'peernick'}, $self->{'host'}, $self->{'port'} );
-      if ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) {
-        $self->{'direction'} = 'Download';
-      } else {
-        $self->{'direction'} = 'Upload';
-      }
+      if   ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) { $self->{'direction'} = 'Download'; }
+      else                                                        { $self->{'direction'} = 'Upload'; }
     },
     'FileLength' => sub {
       $self->{'filetotal'} = $_[0];
@@ -119,10 +115,8 @@ $self->{'parse'} = undef if $self->{'parse'} and  !keys %{$self->{'parse'}};
       $self->disconnect();
       }
   };
-
-  #$self->log ( 'dev', "del empty cmd", ), 
-$self->{'cmd'} = undef if $self->{'cmd'} and  !keys %{$self->{'cmd'}};
-
+  #$self->log ( 'dev', "del empty cmd", ),
+  $self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
   $self->{'cmd'} ||= {
     'connect_aft' => sub {
       $self->{'sendbuf'} = 1;
@@ -157,7 +151,9 @@ $self->{'cmd'} = undef if $self->{'cmd'} and  !keys %{$self->{'cmd'}};
     'Lock' => sub {
       $self->sendcmd( 'Lock', $self->{'lock'} );
     },
-    'Supports' => sub { $self->sendcmd( 'Supports', ( $self->supports() or return ) ); },
+    'Supports' => sub {
+      $self->sendcmd( 'Supports', ( $self->supports() or return ) );
+    },
     'Direction' => sub {
       $self->sendcmd( 'Direction', $self->{'direction'}, int( rand(0x7FFF) ) );
     },
@@ -180,6 +176,5 @@ $self->{'cmd'} = undef if $self->{'cmd'} and  !keys %{$self->{'cmd'}};
       $self->sendcmd( 'ADCGET', $self->{'adcget'} );
     },
   };
-
 }
 1;

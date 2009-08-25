@@ -1,5 +1,5 @@
-# $Id$ $URL$
-# reserved for future 8)
+#$Id$ $URL$
+#reserved for future 8)
 package Net::DirectConnect::hubhub;
 use Net::DirectConnect;
 use strict;
