@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-# $Id$ $URL$
+#$Id$ $URL$
 #
-# flood.pl default config
+#flood.pl default config
 #
 use strict;
 our (%config);
@@ -16,7 +16,7 @@ $config{'log_filter'}       = 1;
 #$config{'bots'}        = 5; #parallel
 $config{'dcbot_param'} = sub {
   return {
-    #      'Timeout'       => 15,
+    #'Timeout'       => 15,
     'Nick' => ( $ARGV[1] or rand_str( rand_int( 1, 10 ) ) ),
     'sharesize'   => rand_int( 1,           1000000000000 ),
     'client'      => rand_str( rand_int( 1, 5 ) ),
@@ -25,17 +25,17 @@ $config{'dcbot_param'} = sub {
     'Version' => rand_int( 1,           1000 ),
     'V'       => rand_int( 1,           1000 ),
     'M'       => 'P',                   #mode - passive
-                                                                                              #   'log'		=>	sub {},	# no logging
-           #   'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
-           #   'min_chat_delay'	=> 0.401,
-           #   'min_cmd_delay'	=> 0.401,
+    #'log'		=>	sub {},	# no logging
+    #'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
+    #'min_chat_delay'	=> 0.401,
+    #'min_cmd_delay'	=> 0.401,
   };
 };
 $config{'handler'}{'create_aft'} = sub {
   my ($dc) = @_;
   $dc->{'handler'}{'To'} = $dc->{'handler'}{'welcome'} = sub {
     for (@_) {
-      #            print("ban test[$_]\n");
+      #print("ban test[$_]\n");
       print("[$dc->{'number'}]BANNED! disconnect.[$_]\n"), $dc->disconnect(), delete $config{'proxy'}{ $dc->{'proxy'} },
         delete $proxyok{ $dc->{'proxy'} }, ++$proxyerr{ $dc->{'proxy'} }, last
         if
@@ -51,14 +51,14 @@ $config{'handler'}{'create_aft'} = sub {
 $config{'handler'}{'send'} = sub {
   my ( $dc, $n ) = @_;
 #
-# simple chat line
-# $dc->rcmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
+#simple chat line
+#$dc->rcmd( 'chatline', 'Доброго времени суток! Пользуясь случаем, хотим сказать вам: ВЫ Э@3Б@ЛИ СПАМИТЬ!' );
 #
-# randomized line
-# $dc->rcmd('chatline',rand_str_ex( 'Доброго времени суток! Пользуясь случаем, хотим попросить Вас больше никогда не рекламировать свой хаб где попало. Спасибо. '. $n ) );
+#randomized line
+#$dc->rcmd('chatline',rand_str_ex( 'Доброго времени суток! Пользуясь случаем, хотим попросить Вас больше никогда не рекламировать свой хаб где попало. Спасибо. '. $n ) );
 #
-# to every private
-#  $dc->rcmd('To', $_, 'HUB заражен вирусом срочно покиньте его!') for keys %{$dc->{'NickList'}};
+#to every private
+#$dc->rcmd('To', $_, 'HUB заражен вирусом срочно покиньте его!') for keys %{$dc->{'NickList'}};
 #
 };
 
@@ -100,7 +100,7 @@ $config{'handler'}{'create_aft0'} = sub {
   local @_;
   @_ = keys %proxyok if $config{'proxy_first'};
   @_ = keys %{ $config{'proxy'} } unless @_;
-  #  $self->log( 'info','selecting proxy from', @_);
+#$self->log( 'info','selecting proxy from', @_);
   return
     unless my $proxy = ( shuffle(@_) )[0]
       or $self->{'status'} = 'todestroy', $self->log( 'err', 'no good socks', ), return;

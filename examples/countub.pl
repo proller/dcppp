@@ -17,7 +17,7 @@ my $dc = Net::DirectConnect::clihub->new(
   'log' => sub { },    # no logging
 );
 $dc->connect();
-#  $dc->cmd('GetNickList');
+#$dc->cmd('GetNickList');
 my ($share) = (0);
 $dc->wait_connect();    #for 1 .. 3;
 $dc->cmd('GetINFO');

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: stat.pm 383 2009-01-08 03:47:59Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/examples/stat/stat.pm $
+#$Id: stat.pm 383 2009-01-08 03:47:59Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/examples/stat/stat.pm $
 package statpl;
 use strict;
 no warnings qw(uninitialized);
@@ -55,10 +55,10 @@ for my $arg (@ARGV) {
         }
         $db->do( "DELETE FROM slow WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " );
         $db->flush_insert('slow');
-        #      sleep 3;
+        #sleep 3;
       }
     }
-    #  exit;
+    #exit;
   } elsif ( $arg eq 'purge' ) {
     $ARGV[$n] = undef;
     for my $table ( sort keys %{ $config{'sql'}{'table'} } ) {
@@ -90,7 +90,7 @@ sub print_info {
   printlog 'info', 'active hubs:', map { $_->{'host'} . ':' . $_->{'status'} } @_;
   printlog 'info', 'hashes:',      map { $_ . '=' . scalar %{ $work{$_} || {} } } qw(ask asked ask_db);
   printlog 'info', 'stat:',        map { $_ . '=' . $work{'stat'}{$_} } keys %{ $work{'stat'} || {} };
-  #  psmisc::file_rewrite(    'dumper',    Dumper [      'work' => \%work,      'db'   => $db,      'dc'   => \@dc,    ]  );
+  #psmisc::file_rewrite(    'dumper',    Dumper [      'work' => \%work,      'db'   => $db,      'dc'   => \@dc,    ]  );
   if ( $^O =~ /win/i ) {
     our $__hup_time__;
     printlog( 'info', 'doubleclose, bye' ), exit if time - $__hup_time__ < 2;
@@ -102,7 +102,7 @@ $SIG{HUP}      = $^O =~ /win/i ? \&print_info : \&flush_all;
 $SIG{INFO}     = \&print_info;
 $SIG{__WARN__} = sub {
   printlog( 'warn', $!, $@, @_ );
-  #    printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
+  #printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
   psmisc::caller_trace(15);
 };
 $SIG{__DIE__} = sub {
@@ -121,8 +121,8 @@ for ( grep { length $_ } @ARGV ) {
     my $dc = Net::DirectConnect::clihub->new(
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
-      #   'log'		=>	sub {},	# no logging
-      #      'log'          => sub { my $dc = shift; psmisc::printlog( "[$dc->{'number'}]($dc)", @_);
+      #'log'		=>	sub {},	# no logging
+      #'log'          => sub { my $dc = shift; psmisc::printlog( "[$dc->{'number'}]($dc)", @_);
       'log' => sub {
         my $dc = shift;
         psmisc::printlog( "[$dc->{'number'}]", @_ );
@@ -254,7 +254,7 @@ for ( grep { length $_ } @ARGV ) {
           );
           ++$work{'stat'}{'Quit'};
         },
-        #      'To' => sub {        my $dc = shift;printlog('to', @_);},
+        #'To' => sub {        my $dc = shift;printlog('to', @_);},
       },
       %config,
     );

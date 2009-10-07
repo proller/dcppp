@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id$ $URL$
+#$Id$ $URL$
 package statlib;
 use strict;
 use Time::HiRes qw(time sleep);
@@ -244,27 +244,27 @@ $config{'queries'}{'hubs top'} ||= {
   #'SELECT'         => 'DISTINCT hub , MAX(size), h2.*', # DISTINCT hub,size,time
   'SELECT' => '*, hub as h1'
   , #DISTINCT DISTINCT hub,size,time                                                    'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs as h2 USING (hub,size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'h2.size DESC',
-  #         'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+  #'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
   'WHERE' => ['time = (SELECT time FROM hubs WHERE hub=h1 ORDER BY size DESC LIMIT 1)'],
   #'GROUP BY' => 'hubs.hub',
   #'ORDER BY' => 'size DESC',
-  #  'SELECT' => '*',
+  #'SELECT' => '*',
   'FROM' => 'hubs',
   #'GROUP BY' => 'hub',
   'ORDER BY' => 'size DESC',
-#  'SELECT'         => 'h2.time,h2.users, hub, max(size) as size',
-#  'SELECT'         => 'hubs.time, hubs.users, hub, max(size) as size',
-#  'SELECT'         => 'hubs.time, hubs.users, hub, size',
-#  'SELECT'         => 'h2.time, h2.users, hub, size',  'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs AS h2' ,'USING' => '(hub, size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'size DESC',
-#  'SELECT'         => 'h2.time, h2.users, DISTINCT (hub), size',  'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs AS h2' ,'USING' => '(hub, size)',
+#'SELECT'         => 'h2.time,h2.users, hub, max(size) as size',
+#'SELECT'         => 'hubs.time, hubs.users, hub, max(size) as size',
+#'SELECT'         => 'hubs.time, hubs.users, hub, size',
+#'SELECT'         => 'h2.time, h2.users, hub, size',  'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs AS h2' ,'USING' => '(hub, size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'size DESC',
+#'SELECT'         => 'h2.time, h2.users, DISTINCT (hub), size',  'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs AS h2' ,'USING' => '(hub, size)',
 #'ORDER BY' => 'size DESC',
 #select    from hubs left join hubs as h2 using (hub, size) group by hubs.hub order by size desc limit 10
-#      'time'        'hub'         'size'        'users'
+#'time'        'hub'         'size'        'users'
   'order' => ++$order,
 };
 $config{'queries'}{'hubs now'} ||= {
   'main' => 1,
-  #  'group_end' => 1,
+  #'group_end' => 1,
   'group_end' => 1,
   'class'     => 'half',
   'show'      => [qw(time hub users size)],
