@@ -6,12 +6,12 @@ test direct downloading (without hub)
 =cut
 
 use strict;
-#  use Time::HiRes;
+#use Time::HiRes;
 eval { use Time::HiRes qw(time sleep); };
 use lib '../lib';
 use Net::DirectConnect::clihub;
 print("usage: ddltest.pl [dchub://]hub[:port]/nick[/path]/file [bot_nick] [fileas]\n"), exit if !$ARGV[0];
-#  $ARGV[0] =~ m|^([^:]+):((?:\w+\.?)+)(?:\:(\d+))(/.+)$|;
+#$ARGV[0] =~ m|^([^:]+):((?:\w+\.?)+)(?:\:(\d+))(/.+)$|;
 $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?/(.+?)/(.+)$|;
 #print"[$ARGV[0]] 1=$1 2=$2 3=$3 4=$4 ; \n";
 my ( $user_nick, $file ) = ( $3, $4 );
@@ -22,4 +22,4 @@ my $dc = Net::DirectConnect::clihub->new(
   'log' => sub { },    # no logging
 );
 $dc->get( $user_nick, $file, ( $ARGV[2] or $file ) );    #.get
-#  $dc->recv(); sleep(5); $dc->recv();
+#$dc->recv(); sleep(5); $dc->recv();

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id$ $URL$
+#$Id$ $URL$
 
 =copyright
 flood tests
@@ -71,7 +71,7 @@ sub rand_str_ex {
 
 sub handler {
   my $name = shift;
-  #  print "handler($name) = [$config{'handler'}{$name}]\n";
+  #print "handler($name) = [$config{'handler'}{$name}]\n";
   $config{'handler'}{ $name . $_ }->(@_) for grep { ref $config{'handler'}{ $name . $_ } eq 'CODE' } 0 .. 5;
   return $config{'handler'}{$name}->(@_) if ref $config{'handler'}{$name} eq 'CODE';
   return;
@@ -113,33 +113,33 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   };
   #=cut
   $dc->{'disconnect_recursive'} = 0;
-  #  print("prebot[$bn/$config{'bots'}]\n");
+  #print("prebot[$bn/$config{'bots'}]\n");
   $dc->{'clients'}{$_} = createbot( $1, $2 ), print("addbot[$_/$config{'bots'}] = $dc->{'clients'}{$_}{'number'}\n"),
-    #  handler( 'create_aft', $dc->{'clients'}{$_} ),
-    #  $dc->wait(),
-    #  sleep(0.1),
+    #handler( 'create_aft', $dc->{'clients'}{$_} ),
+    #$dc->wait(),
+    #sleep(0.1),
     $dc->recv(),
-    #    $dc->wait_sleep(),
-    #  $dc->info(),
+    #$dc->wait_sleep(),
+    #$dc->info(),
     for ( 2 .. $config{'bots'} );
   #
-  #  print "added..\n";
+  #print "added..\n";
   $dc->wait();
   $dc->info();
-  #  print("destroy1.\n"),
+  #print("destroy1.\n"),
   handler( 'destroy', $dc ), next if !$dc->active();    #!$dc->{'socket'} and $dc->{'disconnect_recursive'};
   for ( 1 .. $config{'connect_wait'} ) {                #sleep(5); $dc->recv();
-        #    last if (!$dc->{'socket'} and $dc->{'disconnect_recursive'}) or $dc->{'status'} eq 'connected';
+    #last if (!$dc->{'socket'} and $dc->{'disconnect_recursive'}) or $dc->{'status'} eq 'connected';
     last if ( !$dc->active() ) or $dc->{'status'} eq 'connected';
-    $dc->wait_sleep(10);    #for 0 .. 10;
-                            #    sleep(1);
+    $dc->wait_sleep(10);                                #for 0 .. 10;
+    #sleep(1);
   }
-  #  print("destroy2.\n"),
+  #print("destroy2.\n"),
   handler( 'destroy', $dc ), next if !$dc->active();    #!$dc->{'socket'} and $dc->{'disconnect_recursive'};
   $dc->wait(),
-    #    sleep(1)
+    #sleep(1)
     for ( 0 .. $config{'connect_aft_wait'} );
-  #  print("destroy3.\n"),
+  #print("destroy3.\n"),
   handler( 'destroy', $dc ), next if !$dc->active();    #$dc->{'socket'} and $dc->{'disconnect_recursive'};
   handler( 'send_bef', $dc );
   for ( 0 .. $config{'send_tries'} ) {
@@ -148,7 +148,7 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
     last if !$dc->active();
     handler( 'send', $dc, $_ );
     $dc->wait_sleep( $config{'send_sleep'} );
-    #    $dc->recv(),;
+    #$dc->recv(),;
   }
   handler( 'send_aft', $dc );
   $dc->recv();
@@ -157,7 +157,7 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   handler( 'destroy_bef', $dc );
   handler( 'destroy',     $dc );
   $dc->destroy() if !$config{'no_destroy'};
-  #  $dc->wait_finish();
+  #$dc->wait_finish();
   sleep( $config{'after_sleep'} );
   print "ok\n";
   handler( 'aft', $dc );

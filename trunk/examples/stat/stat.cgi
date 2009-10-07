@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id$ $URL$
+#$Id$ $URL$
 package statcgi;
 use strict;
 eval { use Time::HiRes qw(time sleep); };
@@ -97,7 +97,7 @@ for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'
   $q->{'desc'} = $q->{'desc'}->{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
   print '<div class="onetable ' . $q->{'class'} . '">',
     $q->{'no_query_link'} ? $_ : '<a href="?query=' . ( psmisc::encode_url($_) ) . '">' . ( $q->{'desc'} || $_ ) . '</a>';
-  #  print " ($q->{'desc'}):" if $q->{'desc'};
+  #print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
   my $res = statlib::make_query( $q, $_, $param->{'period'} );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
@@ -107,8 +107,8 @@ for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'
     print '<tr><td>', ++$n, '</td>';
     $row->{$_} = psmisc::html_chars( $row->{$_} ) for @{ $q->{'show'} };
     $row->{'orig'} = {%$row};
-    #    $row->{'tth_orig'}    = $row->{'tth'};
-    #    $row->{'string_orig'} = $row->{'string'};
+    #$row->{'tth_orig'}    = $row->{'tth'};
+    #$row->{'string_orig'} = $row->{'string'};
     $row->{$_} =
       ( $param->{$_}
       ? ''
