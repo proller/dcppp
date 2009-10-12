@@ -9,11 +9,11 @@ use POSIX;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
-our $VERSION = '0.03'; # . '.' .( split( ' ', '$Revision$' ) )[1]
+our $VERSION = '0.03';    # . '.' .( split( ' ', '$Revision$' ) )[1]
 our $AUTOLOAD;
 our %global;
 
-sub float {    #v1
+sub float {               #v1
   my $self = shift;
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
@@ -55,7 +55,7 @@ sub new {
     'client'   => 'perl',    #'dcp++',                                                              #++: indicates the client
     'protocol' => 'nmdc',    # or 'adc'
     'cmd_sep' => ' ', 'V' => $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1],,    #V: tells you the version number
-    'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
@@ -125,6 +125,7 @@ sub cmd {
     $ret = scalar @ret > 1 ? \@ret : $ret[0];
     $self->handler( $cmd . $handler . '_aft', \@_, $ret );
   } elsif ( exists $self->{$cmd} ) {
+    $self->log( 'dev', "cmd call by var name $cmd=$self->{$cmd}" );
     @ret = ( $self->{$cmd} );
   } else {
     $self->log(
@@ -204,18 +205,19 @@ sub func {
   };
   $self->{'connect'} ||= sub {
     my $self = shift;
-    if ( $_[0] ) {
-      $self->{'host'} = $_[0];
+    if ( $_[0] or $self->{'host'} =~ /:/ ) {
+      $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
-      $self->{'protocol'} = 'adc', $self->protocol( $self->{'protocol'} ) if lc $1 eq 'adc';
+      $self->{'protocol'} = 'adc', $self->protocol_init( $self->{'protocol'} ) if lc $1 eq 'adc';
       $self->{'host'} =~ s{/.*}{}g;
       $self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
     }
     $self->{'port'} = $_[1] if $_[1];
+    #print "Hhohohhhh" ,$self->{'protocol'},$self->{'host'};
     return 0
       if ( $self->{'socket'} and $self->{'socket'}->connected() )
       or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
-    $self->log( 'info', "connecting to $self->{'protocol'} $self->{'host'}, $self->{'port'}", %{ $self->{'sockopts'} || {} } );
+    $self->log( 'info', "connecting to $self->{'protocol'}://$self->{'host'}:$self->{'port'}", %{ $self->{'sockopts'} || {} } );
     $self->{'status'}   = 'connecting';
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
@@ -235,9 +237,19 @@ sub func {
     );
     $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
     $self->get_my_addr();
-    $self->log( 'info', "connect to $self->{'host'} [me=$self->{'myip'}] ok ", );
+    $self->get_peer_addr();
+    $self->{'hostip'} ||= $self->{'host'};
+    sub is_local_ip ($) { return $_[0] =~ /^(?:10|172.[123]\d|192\.168)\./; }
+    $self->log( 'info', "internal ip detected, using passive mode", $self->{'myip'}, $self->{'hostip'} ), $self->{'M'} = 'P'
+      if !$self->{'M'}
+        and is_local_ip $self->{'myip'}
+        and !is_local_ip $self->{'hostip'};
+    $self->{'M'} ||= 'A';
+    $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}) [me=$self->{'myip'}] ok ", );
     $self->cmd('connect_aft');
+    #$self->log( 'dev', "connect_aft after", );
     $self->recv();
+    #$self->log( 'dev', "connect recv after", );
     return 0;
   };
   $self->{'connect_check'} ||= sub {
@@ -479,9 +491,11 @@ sub func {
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
-      my $cmd;
-      $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;
+      my ( $dst, $cmd );
+      $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;    #farcolorer
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
+      $cmd =~ s/^(\w)//, $dst = $1 if $self->{'protocol'} eq 'adc';
+      $cmd = $dst . $cmd if !exists $self->{'parse'}{$cmd} and exists $self->{'parse'}{ $dst . $cmd };
       $self->log( 'dcinf', "UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
         $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
         unless exists $self->{'parse'}{$cmd};
@@ -493,13 +507,13 @@ sub func {
           local $_ = $_;
           local @_ =
             map { "$_:$self->{'skip_print_'.$_}" } grep { $self->{ 'skip_print_' . $_ } } keys %{ $self->{'no_print'} || {} };
-          $self->log( 'dcdmp', "rcv: $cmd $_", ( @_ ? ( '  [', @_, ']' ) : () ) );
+          $self->log( 'dcdmp', "rcv: $dst$cmd $_", ( @_ ? ( '  [', @_, ']' ) : () ) );
           $self->{ 'skip_print_' . $_ } = 0 for keys %{ $self->{'no_print'} || {} };
         } else {
           ++$self->{ 'skip_print_' . $cmd }, if exists $self->{'no_print'}{$cmd};
         }
         $self->handler( $cmd . '_parse_bef', $_ );
-        @ret = $self->{'parse'}{$cmd}->($_);
+        @ret = $self->{'parse'}{$cmd}->( $_, $dst );
         $ret = scalar @ret > 1 ? \@ret : $ret[0];
         $self->handler( $cmd . '_parse_aft', $_, $ret );
       }
@@ -576,7 +590,8 @@ sub func {
     return unless $_[1];
     return unless $_[1] = inet_ntoa( $_[1] );
     $self->{'port'} = $_[0] if $_[0] and !$self->{'incoming'};
-    return $self->{'host'} = $_[1] if $_[1];
+    $self->{'hostip'} = $_[1], $self->{'host'} ||= $self->{'hostip'} if $_[1];
+    return $self->{'hostip'};
   };
   $self->{'get_my_addr'} ||= sub {
     my ($self) = @_;

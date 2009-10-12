@@ -7,7 +7,7 @@ $Data::Dumper::Sortkeys = 1;
 use lib '../lib';
 use Net::DirectConnect::clihub;
 my $dc = Net::DirectConnect::clihub->new(
-  'M'            => 'P',
+  'M'            => 'P',               #passive mode
   'sharesize'    => 10_000_000_000,    # 10G
   'auto_connect' => 0,                 # dont connect in ->new
 );
@@ -33,7 +33,7 @@ $dc->chatline('hello world');
 {                                       # fine tuned getinfo with send buffer
   local $dc->{'sendbuf'} = 1;           #enable buffer
   $dc->sendcmd( 'GetINFO', $_, $dc->{'Nick'} )
-    for grep { $dc->{'NickList'}{$_}{'online'} and !$dc->{'NickList'}{$_}{'info'} } keys $dc->{'NickList'};
+    for grep { $dc->{'NickList'}{$_}{'online'} and !$dc->{'NickList'}{$_}{'info'} } keys %{ $dc->{'NickList'} };
   $dc->sendcmd();                       #flush buffer (actual send)
 }
 $dc->sendcmd('GetINFO');

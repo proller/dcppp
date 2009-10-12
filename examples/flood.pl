@@ -100,7 +100,7 @@ sub createbot {
 }
 TRY: for ( 0 .. $config{'flood_tries'} ) {
   print("try $_\n"), handler( 'create_bef', $_ );
-  $ARGV[0] =~ m|^(?:dchub\://)?(.+?)(?:\:(\d+))?$|i;
+  $ARGV[0] =~ m|^(?:\w+\://)?(.+?)(?:\:(\d+))?$|i;
   #print("host=$1; port=$2;\n");
   my $dc = createbot( $1, $2 );
   #=c

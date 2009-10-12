@@ -215,14 +215,22 @@ sub init {
     },
     'UserCommand' => sub {
     },
-    #
-    #=================
-    #ADC dev
-    #
-    'ISUP' => sub { }, 'ISID' => sub { $self->{'sid'} = $_[0] }, 'IINF' => sub { $self->cmd('BINF') },
-    #todo
-    'IQUI' => sub { },
-    'ISTA' => sub { $self->log( 'dcerr', @_ ) },
+#
+#=================
+#ADC dev
+#
+#'ISUP' => sub { }, 'ISID' => sub { $self->{'sid'} = $_[0] }, 'IINF' => sub { $self->cmd('BINF') },    'IQUI' => sub { },    'ISTA' => sub { $self->log( 'dcerr', @_ ) },
+    'SUP' => sub { },
+    'SID' => sub { $self->{'sid'} = $_[0] },
+    'IINF' => sub {
+      #test $_[1] eq 'I'!
+      $self->cmd('BINF');
+    },
+    'QUI' => sub {
+    },
+    'STA' => sub {
+      $self->log( 'dcerr', @_ );
+    },
   };
   $self->{'cmd'} = {
     'chatline' => sub {
@@ -341,7 +349,10 @@ sub init {
     #=================
     #ADC dev
     #
-    'connect_aft' => sub { $self->cmd('HSUP') if $self->{'protocol'} eq 'adc' },
+    'connect_aft' => sub {
+      #print "RUNADC![$self->{'protocol'}]";
+      $self->cmd('HSUP') if $self->{'protocol'} eq 'adc';
+    },
     'HSUP' => sub {
       $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0)];
       $self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
@@ -350,30 +361,34 @@ sub init {
     },
     'BINF' => sub {
       $self->{'BINFS'} ||= [qw(ID PD NI SL SS SF HN HR HO VE US SU)];
-      #$self->{'ID'} ||= 'FXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI';
-      #$self->{'PD'} ||='P26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY';
       $self->{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
-      #hash() returns a 192 bit hash
-      #$self->log('TIGERTE',  Digest::Tiger::hash('Tiger'));
-      #$self->log('TIGERTEST',  MIME::Base32::encode(Digest::Tiger::hash('Tiger')));
-      sub hash {
+      eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
+      sub base32 ($) { MIME::Base32::encode( $_[0] ); }
+      sub hash ($)   { base32( tiger( $_[0] ) ); }
+
+      sub tiger ($) {
         local ($_) = @_;
-        eval "use MIME::Base32 qw( RFC ); use Digest::Tiger;";
-        #$_.=("\x00"x(1024 - length $_));print ( 'hlen', length $_);
-        MIME::Base32::encode( Digest::Tiger::hash($_) );
+        #use Mhash qw( mhash mhash_hex MHASH_TIGER);
+        #eval "use MIME::Base32 qw( RFC ); use Digest::Tiger;" or $self->log('err', 'cant use', $@);
+        #$_.=("\x00"x(1024 - length $_));        print ( 'hlen', length $_);
+        Digest::Tiger::hash($_);
+        #mhash(Mhash::MHASH_TIGER, $_);
       }
-      #$self->log('TIGERTEST',  hash('Tiger'));
-      #$self->log('TIGERTESTid',  hash('FXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI'));
-      #$self->log('TIGERTESTpd', hash('P26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY'));
-      $self->{'PD'} ||= hash( 'perl' . $self->{'myip'} . $self->{'NI'} . time );
-      $self->{'ID'} ||= hash( $self->{'PD'} );
-      $self->{'SL'} ||= $self->{'S'} || '2';
+      #$self->log('tiger of NULL is', hash(''));#''=      LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
+      #
+      $self->{'PID'} ||= MIME::Base32::decode $self->{'PD'} if $self->{'PD'};
+      $self->{'CID'} ||= MIME::Base32::decode $self->{'ID'} if $self->{'ID'};
+      $self->{'PID'} ||= tiger 'perl' . $self->{'myip'} . $self->{'NI'};
+      $self->{'CID'} ||= tiger $self->{'PID'};
+      $self->{'PD'}  ||= base32 $self->{'PID'};
+      $self->{'ID'}  ||= base32 $self->{'CID'};
+      $self->{'SL'} ||= $self->{'S'}         || '2';
       $self->{'SS'} ||= $self->{'sharesize'} || 20025693588;
       $self->{'SF'} ||= 30999;
-      $self->{'HN'} ||= $self->{'H'} || 1;
-      $self->{'HR'} ||= $self->{'R'} || 0;
-      $self->{'HO'} ||= $self->{'O'} || 0;
-      $self->{'VE'} ||= $self->{'V'} || '++\s0.706';
+      $self->{'HN'} ||= $self->{'H'}         || 1;
+      $self->{'HR'} ||= $self->{'R'}         || 0;
+      $self->{'HO'} ||= $self->{'O'}         || 0;
+      $self->{'VE'} ||= $self->{'V'}         || '++\s0.706';
       $self->{'US'} ||= 10000;
       $self->{'SU'} ||= 'ADC0';
       #$self->{''} ||= $self->{''} || '';
