@@ -94,19 +94,19 @@ sub init {
     },
     'FileLength' => sub {
       $self->{'filetotal'} = $_[0];
-      return if $self->openfile();
+      return if $self->file_open();
       $self->cmd('Send');
     },
     'ADCSND' => sub {
       $self->log( 'dev', "ADCSND::", @_ );
       $_[0] =~ /(\d+?)$/is;
       $self->{'filetotal'} = $1;
-      return if $self->openfile();
+      return if $self->file_open();
     },
     'CSND' => sub {
       $_[0] =~ /^file\s+\S+\s+(\d+)\s(\d+)$/is;
       $self->{'filetotal'} = $2;
-      return if $self->openfile();
+      return if $self->file_open();
     },
     'Supports' => sub {
       $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
