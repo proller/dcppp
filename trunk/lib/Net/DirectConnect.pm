@@ -81,6 +81,8 @@ sub new {
     'no_print'             => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
     'reconnects'           => 5,
     'reconnect_sleep'      => 5,
+    'partial_ext'          => '.partial',
+    #'partial_prefix' => './partial/',
   };
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
@@ -318,7 +320,7 @@ sub func {
         delete( $self->{'clients'}{$_} );
       }
     }
-    close( $self->{'filehandle'} ), delete $self->{'filehandle'} if $self->{'filehandle'};
+    $self->file_close();
     delete $self->{$_} for qw(NickList IpList PortList);
     $self->log( 'info', "disconnected" );
     #$self->log('dev', caller($_)) for 0..5;
@@ -392,7 +394,7 @@ sub func {
             ++$ret;
             #$self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
           }
-          if ( $self->{'filehandle'} ) { $self->writefile( \$self->{'databuf'} ); }
+          if ( $self->{'filehandle'} ) { $self->file_write( \$self->{'databuf'} ); }
           else {
             $self->{'buf'} .= $self->{'databuf'};
             local $self->{'cmd_aft'} = "\x0A" if $self->{'protocol'} ne 'adc' and $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
@@ -407,7 +409,7 @@ sub func {
               $self->parser($_);
               last if ( $self->{'filehandle'} );
             }
-            $self->writefile( \$self->{'buf'} ), $self->{'buf'} = '' if length( $self->{'buf'} ) and $self->{'filehandle'};
+            $self->file_write( \$self->{'buf'} ), $self->{'buf'} = '' if length( $self->{'buf'} ) and $self->{'filehandle'};
           }
         }
       } while ( $readed and $reads++ < $self->{'max_reads'} );
@@ -551,18 +553,21 @@ sub func {
     $self->cmd( ( ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) ? '' : 'Rev' ) . 'ConnectToMe',
       $nick );
   };
-  $self->{'openfile'} ||= sub {
+  $self->{'file_open'} ||= sub {
     my $self = shift;
-    my $oparam = ( ( $self->{'fileas'} eq '-' ) ? '>-' : '>' . ( $self->{'fileas'} || $self->{'filename'} ) );
-    $self->handler( 'openfile_bef', $oparam );
-    $self->log( 'dbg', "openfile pre", $oparam );
+    my $oparam =
+      ( ( $self->{'fileas'} eq '-' )
+      ? '>-'
+      : '>' . $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'} );
+    $self->handler( 'file_open_bef', $oparam );
+    $self->log( 'dbg', "file_open pre", $oparam );
     open( $self->{'filehandle'}, $oparam )
-      or $self->log( 'dcerr', "openfile error", $!, $oparam ), $self->handler( 'openfile_error', $!, $oparam ), return 1;
+      or $self->log( 'dcerr', "file_open error", $!, $oparam ), $self->handler( 'file_open_error', $!, $oparam ), return 1;
     binmode( $self->{'filehandle'} );
     $self->{'status'} = 'transfer';
     return 0;
   };
-  $self->{'writefile'} ||= sub {
+  $self->{'file_write'} ||= sub {
     my $self = shift;
     $self->{'file_start_time'} ||= time;
     my $fh = $self->{'filehandle'} || return;
@@ -581,6 +586,27 @@ sub func {
         ),
         $self->disconnect(), $self->{'status'} = 'destroy', $self->{'file_start_time'} = 0
         if $self->{'filebytes'} >= $self->{'filetotal'};
+    }
+  };
+  $self->{'openfile'} ||= sub {
+    my $self = shift;
+    $self->log( 'dcwarn', 'openfile is deprecated, use file_open' );
+    $self->file_open(@_);
+  };
+  $self->{'writefile'} ||= sub {
+    my $self = shift;
+    $self->log( 'dcwarn', 'openfile is deprecated, use file_write' );
+    $self->file_write(@_);
+  };
+  $self->{'file_close'} ||= sub {
+    my $self = shift;
+    if ( $self->{'filehandle'} ) {
+      close( $self->{'filehandle'} ), delete $self->{'filehandle'};
+      if ( length $self->{'partial_ext'} ) {
+        $self->log( 'dcerr', 'cant move finished file' )
+          if !rename $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'},
+            ( $self->{'fileas'} || $self->{'filename'} );
+      }
     }
   };
   $self->{'get_peer_addr'} ||= sub {
@@ -762,6 +788,11 @@ look at examples for handlers
  http://magnet-uri.sourceforge.net/
  http://en.wikipedia.org/wiki/Magnet:_URI_scheme
 
+
+=head1 Last changes
+
+ writefile -> file_write
+ openfile -> file_open
 
 
 =head1 AUTHOR
