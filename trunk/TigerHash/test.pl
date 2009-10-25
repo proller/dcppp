@@ -1,6 +1,6 @@
 use lib ('blib/lib', 'blib/arch');
 #use lib ('blib/lib');
-use TigerHash;
+use Net::DirectConnect::TigerHash qw(tth);
 
 use Mhash qw( mhash mhash_hex MHASH_TIGER);  
 use Digest::Tiger; use
@@ -26,7 +26,7 @@ MIME::Base32::encode                      Digest::Tiger::hash($_);
 #print join ' ',"[",tiger::tth('Tiger'),"]\n";
 #''=>LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
 #'Tiger' => VD5PXIETOFDRL47QTK2K3XPX2A6LG5XTQFAC5OA
-print join ' ',$_,"=[",TigerHash::tth($_),tiger1($_), tiger2($_),"]\n"
+print join ' ',$_,"=[",tth($_),tiger1($_), tiger2($_),"]\n"
 
 for '', 'Tiger', (join '', 1..1024);
 

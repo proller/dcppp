@@ -362,7 +362,10 @@ sub init {
     'BINF' => sub {
       $self->{'BINFS'} ||= [qw(ID PD NI SL SS SF HN HR HO VE US SU)];
       $self->{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
-      eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
+#      eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
+      eval "use MIME::Base32 qw( RFC ); " or $self->log( 'err', 'cant use', $@ );
+      eval "use Net::DirectConnect::TigerHash;" or $self->log( 'err', 'cant use', $@ );
+      
       sub base32 ($) { MIME::Base32::encode( $_[0] ); }
       sub hash ($)   { base32( tiger( $_[0] ) ); }
 
@@ -371,7 +374,8 @@ sub init {
         #use Mhash qw( mhash mhash_hex MHASH_TIGER);
         #eval "use MIME::Base32 qw( RFC ); use Digest::Tiger;" or $self->log('err', 'cant use', $@);
         #$_.=("\x00"x(1024 - length $_));        print ( 'hlen', length $_);
-        Digest::Tiger::hash($_);
+#        Digest::Tiger::hash($_);
+Net::DirectConnect::TigerHash::tthbin($_);
         #mhash(Mhash::MHASH_TIGER, $_);
       }
       #$self->log('tiger of NULL is', hash(''));#''=      LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ

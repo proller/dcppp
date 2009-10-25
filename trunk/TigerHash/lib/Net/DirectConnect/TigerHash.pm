@@ -1,6 +1,6 @@
-package TigerHash;
+package Net::DirectConnect::TigerHash;
 
-use 5.010001;
+use 5.006001;
 use strict;
 use warnings;
 
@@ -31,7 +31,7 @@ our @EXPORT = qw(
 our $VERSION = '0.01';
 
 require XSLoader;
-XSLoader::load('TigerHash', $VERSION);
+XSLoader::load('Net::DirectConnect::TigerHash', $VERSION);
 
 # Preloaded methods go here.
 
@@ -62,9 +62,6 @@ None by default.
 
 =head2 Exportable functions
 
-  void shutdown()
-  void startup(void (*f)(void*, const string&), void* p)
-  void tigerhash(void * data, int len, void * result)
 
 
 
@@ -81,7 +78,7 @@ If you have a web site set up for your module, mention it here.
 
 =head1 AUTHOR
 
-Charlie &, E<lt>root@setun.netE<gt>
+Charlie &, E<lt>pro@cpanE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

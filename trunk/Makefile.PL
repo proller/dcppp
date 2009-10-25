@@ -4,15 +4,30 @@ use ExtUtils::MakeMaker;
 %_ = (
   NAME         => 'Net::DirectConnect',
   VERSION_FROM => 'lib/Net/DirectConnect.pm',                      # finds $VERSION
-  INSTALLDIRS  => 'site', PREREQ_PM => { 'Time::HiRes' => '0', }
+  INSTALLDIRS  => 'site', PREREQ_PM => { 'Time::HiRes' => '0', },
     #($] >= 5.005 ?     ## Add these new keywords supported since 5.005
     #(ABSTRACT_FROM  => 'lib/Net/DirectConnect.pm', # retrieve abstract from module
     #AUTHOR         => 'A. U. Thor <a.u.thor@a.galaxy.far.far.away>') : ()    ),
+#    MYEXTLIB => 'lib/Net/DirectConnect/TigerHash/TigerHash$(LIB_EXT)',
+#MYEXTLIB => 'lib/Net/DirectConnect/TigerHash/Makefile',
+# PL_FILES => {'lib/Net/DirectConnect/TigerHash/Makefile.PL' => ''},
 );
 WriteMakefile(%_);
 
 sub MY::postamble {
   qq{
+#lib/Net/DirectConnect/TigerHash/makefile:
+#	cd lib/Net/DirectConnect/TigerHash && perl Makefile.PL 
+
+
+#lib/Net/DirectConnect/TigerHash/TigerHash.o: lib/Net/DirectConnect/TigerHash/makefile
+	
+
+#\$(MYEXTLIB): lib/Net/DirectConnect/TigerHash/makefile
+#	pwd
+#		cd lib/Net/DirectConnect/TigerHash && perl Makefile.PL && \$(MAKE) \$(PASSTHRU)
+#		cd lib/Net/DirectConnect/TigerHash && \$(MAKE) \$(PASSTHRU)
+
 docs: README
 
 README: $_{VERSION_FROM}
