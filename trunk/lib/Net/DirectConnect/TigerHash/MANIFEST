@@ -1,0 +1,8 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+TigerHash.xs
+typemap
+t/TigerHash.t
+lib/TigerHash.pm
