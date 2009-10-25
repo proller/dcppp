@@ -9,7 +9,7 @@ use POSIX;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
-our $VERSION = '0.03';    # . '.' .( split( ' ', '$Revision$' ) )[1]
+our $VERSION = '0.03' . '.' .( split( ' ', '$Revision$' ) )[1];
 our $AUTOLOAD;
 our %global;
 

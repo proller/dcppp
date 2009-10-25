@@ -12,30 +12,23 @@ extern "C" {
 #endif
 
 //#include <tth.h>
+// files from linuxdcpp-1.0.3/client
 // bzr branch lp:linuxdcpp
 #include "stdinc.h"
 #include "config.h"
 #include "DCPlusPlus.h"
 #include "TigerHash.cpp"
-//#include "CID.h"
 #include "Encoder.cpp"
 
 
 
-MODULE = TigerHash		PACKAGE = TigerHash		
+MODULE = Net::DirectConnect::TigerHash		PACKAGE = Net::DirectConnect::TigerHash		
 
-
-int
-hello()
-	CODE:
-	        printf("Hello, world!\n");
-	    RETVAL = 42;
-		    OUTPUT:
-			    RETVAL	        
 
 SV * 
 tthbin(s)
     SV *s
+    PROTOTYPE: $
     CODE:
         STRLEN len;
             char *  ptr = SvPV(s, len);
@@ -54,6 +47,7 @@ tthbin(s)
 SV *
 tth(s)
     SV *s
+    PROTOTYPE: $
         CODE:
         STRLEN len;
                     char *  ptr = SvPV(s, len);
