@@ -11,6 +11,30 @@ no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 
+sub adc_string_decode ($) {
+  local ($_) = @_;
+  s{\\s}{ }g;
+  s{\\n}{\x0A}g;
+  s{\\\\}{\\}g;
+  $_;
+}
+
+sub adc_strings_decode (\@) {
+  map { adc_string_decode $_} @_;
+}
+
+sub adc_parse_named (@) {
+  #my ($dst,$peerid) = @{ shift() };
+  local %_;
+  for (@_) {
+    s/^([A-Z][A-Z0-9])//;
+    #my $name=
+    $_{$1} = adc_string_decode $_;
+  }
+  return \%_;
+  #return ($dst,$peerid)
+}
+
 sub init {
   my $self = shift;
   %$self = (
@@ -45,6 +69,41 @@ sub init {
     @_,
     'incomingclass' => 'Net::DirectConnect::clicli',
     'periodic'      => sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; },
+    'codesSTA'      => {
+      '00' => 'Generic, show description',
+      'x0' => 'Same as 00, but categorized according to the rough structure set below',
+      '10' => 'Generic hub error',
+      '11' => 'Hub full',
+      '12' => 'Hub disabled',
+      '20' => 'Generic login/access error',
+      '21' => 'Nick invalid',
+      '22' => 'Nick taken',
+      '23' => 'Invalid password',
+      '24' => 'CID taken',
+      '25' =>
+'Access denied, flag "FC" is the FOURCC of the offending command. Sent when a user is not allowed to execute a particular command',
+      '26' => 'Registered users only',
+      '27' => 'Invalid PID supplied',
+      '30' => 'Kicks/bans/disconnects generic',
+      '31' => 'Permanently banned',
+      '32' =>
+'Temporarily banned, flag "TL" is an integer specifying the number of seconds left until it expires (This is used for kick as well…).',
+      '40' => 'Protocol error',
+      '41' =>
+qq{Transfer protocol unsupported, flag "TO" the token, flag "PR" the protocol string. The client receiving a CTM or RCM should send this if it doesn't support the C-C protocol. },
+      '42' =>
+qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string. The client receiving a CTM or RCM should send this if it tried but couldn't connect. },
+      '43' => 'Required INF field missing/bad, flag "FM" specifies missing field, "FB" specifies invalid field.',
+      '44' => 'Invalid state, flag "FC" the FOURCC of the offending command.',
+      '45' => 'Required feature missing, flag "FC" specifies the FOURCC of the missing feature.',
+      '46' => 'Invalid IP supplied in INF, flag "I4" or "I6" specifies the correct IP.',
+      '47' => 'No hash support overlap in SUP between client and hub.',
+      '50' => 'Client-client / file transfer error',
+      '51' => 'File not available',
+      '52' => 'File part not available',
+      '53' => 'Slots full',
+      '54' => 'No hash support overlap in SUP between clients.',
+    },
   );
   $self->baseinit();
   $self->{'parse'} ||= {
@@ -220,18 +279,94 @@ sub init {
 #ADC dev
 #
 #'ISUP' => sub { }, 'ISID' => sub { $self->{'sid'} = $_[0] }, 'IINF' => sub { $self->cmd('BINF') },    'IQUI' => sub { },    'ISTA' => sub { $self->log( 'dcerr', @_ ) },
-    'SUP' => sub { },
-    'SID' => sub { $self->{'sid'} = $_[0] },
-    'IINF' => sub {
+    'SUP' => sub {
+      my ( $dst, $peerid ) = @{ shift() };
+      #for my $feature (split /\s+/, $_[0])
+      $self->log( 'adcdev', 'SUP:', @_ );
+
+=z
+      for (@_) {
+        if ( (s/^(AD|RM)//)[0] eq 'RM' ) {
+          delete $self->{'peers'}{$peerid}{'SUP'}{$_};
+        } else {
+          $self->{'peers'}{$peerid}levf{'SUP'}{$_} = 1;
+        }
+      }
+=cut      
+
+      my $params = adc_parse_named(@_);
+      for ( keys %$params ) {
+        delete $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } if $_ eq 'RM';
+        $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
+      }
+      return $self->{'peers'}{$peerid}{'SUP'};
+    },
+    'SID' => sub {
+      $self->{'sid'} = $_[1];
+      $self->log( 'adcdev', 'SID:', $self->{'sid'} );
+      return $self->{'sid'};
+    },
+    'INF' => sub {
+      my ( $dst, $peerid ) = @{ shift() };
       #test $_[1] eq 'I'!
-      $self->cmd('BINF');
+      #$self->log('adcdev', '0INF:', "[d=$dst,p=$peerid]", join ':', @_);
+      my $params = adc_parse_named(@_);
+      #for (@_) {
+      #s/^(\w\w)//;
+      #my ($code)= $1;
+      #$self->log('adcdev', 'INF:', $peerid, "[$code=$_]");
+      #$self->{'peers'}{$peerid}{'INF'}{$code} = $_;
+      #}
+      $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
+      $self->cmd( 'B', 'INF' ) if $dst eq 'I';
+      return $self->{'peers'}{$peerid}{'INF'};
     },
     'QUI' => sub {
+      my ($dst) = @{ shift() };
+      #$peerid
+      $self->log( 'adcdev', 'QUI', $dst, $_[0], Dumper $self->{'peers'}{ $_[0] } );
+      delete $self->{'peers'}{ $_[0] };    # or mark time
     },
     'STA' => sub {
-      $self->log( 'dcerr', @_ );
+      my ( $dst, $peerid ) = @{ shift() };
+      #$self->log( 'dcerr', @_ );
+      my $code = shift;
+      $code =~ s/^(.)//;
+      my $severity = $1;
+#TODO: $severity :
+#0 	Success (used for confirming commands), error code must be "00", and an additional flag "FC" contains the FOURCC of the command being confirmed if applicable.
+#1 	Recoverable (error but no disconnect)
+#2 	Fatal (disconnect)
+#my $desc = $self->{'codesSTA'}{$code};
+      adc_strings_decode(@_);
+      $self->log( 'adcdev', 'STA', $severity, $code, @_, "[$self->{'codesSTA'}{$code}]" );
+      return $severity, $code, $self->{'codesSTA'}{$code}, @_;
+    },
+    'SCH' => sub {
+      my ( $dst, $peerid ) = @{ shift() };
+      my $params = adc_parse_named(@_);
+      return $params;
+    },
+    'MSG' => sub {
+      my ( $dst, $peerid ) = @{ shift() };
+      #@_ = map {adc_string_decode} @_;
+      adc_strings_decode(@_);
+      $self->log( 'adcdev', 'MSG', "<" . $self->{'peers'}{$peerid}{'INF'}{'NI'} . '>', @_ );
+      @_;
     },
   };
+
+=COMMANDS
+
+
+
+
+
+
+
+
+=cut  
+
   $self->{'cmd'} = {
     'chatline' => sub {
       for (@_) {
@@ -350,22 +485,29 @@ sub init {
     #ADC dev
     #
     'connect_aft' => sub {
-      #print "RUNADC![$self->{'protocol'}]";
-      $self->cmd('HSUP') if $self->{'protocol'} eq 'adc';
+      #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
+      $self->cmd( 'H', 'SUP' ) if $self->{'adc'};
     },
-    'HSUP' => sub {
+    'SUP' => sub {
+      my $self = shift if ref $_[0];
+      my $dst = shift;
       $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0)];
       $self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
-      $self->sendcmd( 'HSUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
+      $self->sendcmd(
+        $dst, 'SUP',
+        ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ),
+        ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ),
+      );
       #ADBAS0 ADBASE ADTIGR ADUCM0 ADBLO0
     },
-    'BINF' => sub {
+    'INF' => sub {
+      my $self = shift if ref $_[0];
+      my $dst = shift;
       $self->{'BINFS'} ||= [qw(ID PD NI SL SS SF HN HR HO VE US SU)];
       $self->{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
-#      eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
-      eval "use MIME::Base32 qw( RFC ); " or $self->log( 'err', 'cant use', $@ );
-      eval "use Net::DirectConnect::TigerHash;" or $self->log( 'err', 'cant use', $@ );
-      
+      #eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
+      eval "use MIME::Base32 qw( RFC ); 1;"        or $self->log( 'err', 'cant use', $@ );
+      eval "use Net::DirectConnect::TigerHash; 1;" or $self->log( 'err', 'cant use', $@ );
       sub base32 ($) { MIME::Base32::encode( $_[0] ); }
       sub hash ($)   { base32( tiger( $_[0] ) ); }
 
@@ -374,8 +516,8 @@ sub init {
         #use Mhash qw( mhash mhash_hex MHASH_TIGER);
         #eval "use MIME::Base32 qw( RFC ); use Digest::Tiger;" or $self->log('err', 'cant use', $@);
         #$_.=("\x00"x(1024 - length $_));        print ( 'hlen', length $_);
-#        Digest::Tiger::hash($_);
-Net::DirectConnect::TigerHash::tthbin($_);
+        #Digest::Tiger::hash($_);
+        Net::DirectConnect::TigerHash::tthbin($_);
         #mhash(Mhash::MHASH_TIGER, $_);
       }
       #$self->log('tiger of NULL is', hash(''));#''=      LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
@@ -392,11 +534,12 @@ Net::DirectConnect::TigerHash::tthbin($_);
       $self->{'HN'} ||= $self->{'H'}         || 1;
       $self->{'HR'} ||= $self->{'R'}         || 0;
       $self->{'HO'} ||= $self->{'O'}         || 0;
-      $self->{'VE'} ||= $self->{'V'}         || '++\s0.706';
+      $self->{'VE'} ||= $self->{'client'} . $self->{'V'}
+        || 'perl' . $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
       $self->{'US'} ||= 10000;
       $self->{'SU'} ||= 'ADC0';
       #$self->{''} ||= $self->{''} || '';
-      $self->sendcmd( 'BINF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
+      $self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
       #BINF UUXX IDFXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI PDP26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY NIïûðûî SL2 SS20025693588
       #SF30999 HN2 HR0 HO0 VE++\s0.706 US5242 SUADC0
       }
@@ -428,8 +571,8 @@ Net::DirectConnect::TigerHash::tthbin($_);
       #'debug'=>1,
       #'nonblocking' => 0,
       'parse' => {
-        'SR'   => $self->{'parse'}{'SR'},
-        'UPSR' => sub {
+        'SR'  => $self->{'parse'}{'SR'},
+        'PSR' => sub {                     #U
           #$self->log( 'dev', "UPSR", @_ );
         },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
