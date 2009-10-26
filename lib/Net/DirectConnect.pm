@@ -9,11 +9,11 @@ use POSIX;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
-our $VERSION = '0.03' . '.' .( split( ' ', '$Revision$' ) )[1];
+our $VERSION = '0.03' . '_' . ( split( ' ', '$Revision$' ) )[1];
 our $AUTOLOAD;
 our %global;
 
-sub float {               #v1
+sub float {    #v1
   my $self = shift;
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
@@ -54,7 +54,7 @@ sub new {
     'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
     'client'   => 'perl',    #'dcp++',                                                              #++: indicates the client
     'protocol' => 'nmdc',    # or 'adc'
-    'cmd_sep' => ' ', 'V' => $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1],,    #V: tells you the version number
+    'cmd_sep' => ' ', 'V' => $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
     #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
@@ -105,15 +105,23 @@ sub log(@) {
 
 sub cmd {
   my $self = shift;
-  my $cmd  = shift;
+  my $dst;
+  $dst =    #$_[0]
+    shift if $self->{'adc'} and length $_[0] == 1;
+  my $cmd = shift;
   my ( @ret, $ret );
   #$self->{'log'}->($self,'dev', 'cmd', $cmd, @_) if $cmd ne 'log';
   my ( $func, $handler );
   if ( ref $self->{'cmd'}{$cmd} eq 'CODE' ) {
     $func    = $self->{'cmd'}{$cmd};
     $handler = '_cmd';
+    unshift @_, $dst if $dst;
   } elsif ( ref $self->{$cmd} eq 'CODE' ) {
     $func = $self->{$cmd};
+  } elsif ( ref $self->{'cmd'}{ $dst . $cmd } eq 'CODE' ) {
+    $func    = $self->{'cmd'}{ $dst . $cmd };
+    $handler = '_cmd';
+    #unshift @_, $dst if $dst;
   }
   $self->handler( $cmd . $handler . '_bef_bef', \@_ );
   if ( $self->{'min_cmd_delay'} and ( time - $self->{'last_cmd_time'} < $self->{'min_cmd_delay'} ) ) {
@@ -202,7 +210,7 @@ sub func {
       $self->{'cmd_bef'} = '$';
       $self->{'cmd_aft'} = '|';
     }
-    $self->{'protocol'} = $p if $p;
+    $self->{'protocol'} = $p, $self->{$p} = 1, if $p;
     return $self->{'protocol'};
   };
   $self->{'connect'} ||= sub {
@@ -210,7 +218,7 @@ sub func {
     if ( $_[0] or $self->{'host'} =~ /:/ ) {
       $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
-      $self->{'protocol'} = 'adc', $self->protocol_init( $self->{'protocol'} ) if lc $1 eq 'adc';
+      $self->protocol_init($1) if lc $1 eq 'adc';
       $self->{'host'} =~ s{/.*}{}g;
       $self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
     }
@@ -242,14 +250,14 @@ sub func {
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
     sub is_local_ip ($) { return $_[0] =~ /^(?:10|172.[123]\d|192\.168)\./; }
-    $self->log( 'info', "internal ip detected, using passive mode", $self->{'myip'}, $self->{'hostip'} ), $self->{'M'} = 'P'
+    $self->log( 'info', "my internal ip detected, using passive mode", $self->{'myip'}, $self->{'hostip'} ), $self->{'M'} = 'P'
       if !$self->{'M'}
         and is_local_ip $self->{'myip'}
         and !is_local_ip $self->{'hostip'};
     $self->{'M'} ||= 'A';
     $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}) [me=$self->{'myip'}] ok ", );
     $self->cmd('connect_aft');
-    #$self->log( 'dev', "connect_aft after", );
+    $self->log( 'dev', "connect_aft after", );
     $self->recv();
     #$self->log( 'dev', "connect recv after", );
     return 0;
@@ -281,6 +289,7 @@ sub func {
     my $self = shift;
     $self->disconnect();
     $self->{'status'} = 'reconnecting';
+    sleep $self->{'reconnect_sleep'};
     $self->connect();
   };
   $self->{'listen'} ||= sub {
@@ -397,7 +406,7 @@ sub func {
           if ( $self->{'filehandle'} ) { $self->file_write( \$self->{'databuf'} ); }
           else {
             $self->{'buf'} .= $self->{'databuf'};
-            local $self->{'cmd_aft'} = "\x0A" if $self->{'protocol'} ne 'adc' and $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
+            local $self->{'cmd_aft'} = "\x0A" if !$self->{'adc'} and $self->{'buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
 #$self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
             while ( $self->{'buf'} =~ s/^(.*?)\Q$self->{'cmd_aft'}//s ) {
               local $_ = $1;
@@ -493,39 +502,57 @@ sub func {
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
-      my ( $dst, $cmd );
+      my ( $dst, $cmd, @param );
       $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;    #farcolorer
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
-      $cmd =~ s/^(\w)//, $dst = $1 if $self->{'protocol'} eq 'adc';
+      if ( $self->{'adc'} ) {
+        $cmd =~ s/^([BCDEFHIU])//, $dst = $1;
+        @param = ( [$dst], split / / );
+        if ( $dst eq 'B' or $dst eq 'F' or $dst eq 'U' ) {
+          #$self->log( 'dcdmp', "P0 $dst$cmd p=",(Dumper \@param));
+          #push @{ $param[0] }, shift@param;
+          push @{ $param[0] }, splice @param, 1, 1;
+          #$self->log( 'dcdmp', "P1 $dst$cmd p=",(Dumper \@param));
+        } elsif ( $dst eq 'D' or $dst eq 'E' ) {
+          #push @{ $param[0] }, shift@param, shift@param;
+          push @{ $param[0] }, splice @param, 1, 2;
+        }
+        #elsif ( $dst eq 'I'  ) { push @{ $param[0] }, undef }
+      } else {
+        @param = ($_);
+      }
+      #$self->log( 'dcdmp', "P3 $dst$cmd p=",(Dumper \@param));
       $cmd = $dst . $cmd if !exists $self->{'parse'}{$cmd} and exists $self->{'parse'}{ $dst . $cmd };
-      $self->log( 'dcinf', "UNKNOWN PEERCMD:[$cmd]{$_} : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
-        $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
+      #$self->log( 'dcinf', "UNKNOWN PEERCMD:[$cmd]->($_) : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
+      $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
         unless exists $self->{'parse'}{$cmd};
       my ( @ret, $ret );
       #$self->log( 'dcinf', "parsing", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd});
-      $self->handler( $cmd . '_parse_bef_bef', $_ );
+      $self->handler( $cmd . '_parse_bef_bef', @param );
       if ( ref $self->{'parse'}{$cmd} eq 'CODE' ) {
         if ( !exists $self->{'no_print'}{$cmd} ) {
           local $_ = $_;
           local @_ =
             map { "$_:$self->{'skip_print_'.$_}" } grep { $self->{ 'skip_print_' . $_ } } keys %{ $self->{'no_print'} || {} };
-          $self->log( 'dcdmp', "rcv: $dst$cmd $_", ( @_ ? ( '  [', @_, ']' ) : () ) );
+          #$self->log( 'dcdmp', "rcv: $dst$cmd p=[",(Dumper \@param),"] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
+          $self->log( 'dcdmp', "rcv: $dst$cmd p=[", (@param), "] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
           $self->{ 'skip_print_' . $_ } = 0 for keys %{ $self->{'no_print'} || {} };
         } else {
           ++$self->{ 'skip_print_' . $cmd }, if exists $self->{'no_print'}{$cmd};
         }
-        $self->handler( $cmd . '_parse_bef', $_ );
-        @ret = $self->{'parse'}{$cmd}->( $_, $dst );
+        $self->handler( $cmd . '_parse_bef', @param );
+        @ret = $self->{'parse'}{$cmd}->(@param);
         $ret = scalar @ret > 1 ? \@ret : $ret[0];
-        $self->handler( $cmd . '_parse_aft', $_, $ret );
+        $self->handler( $cmd . '_parse_aft', @param, $ret );
       }
-      $self->handler( $cmd,                    $_, $ret );
-      $self->handler( $cmd . '_parse_aft_aft', $_, $ret );
+      $self->handler( $cmd,                    @param, $ret );
+      $self->handler( $cmd . '_parse_aft_aft', @param, $ret );
     }
   };
   $self->{'sendcmd'} ||= sub {
     my $self = shift;
     $self->connect_check();
+    $_[0] .= splice @_, 1, 1 if $self->{'adc'} and length $_[0] == 1;
     push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
     $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
     if ( ( $self->{'sendbuf'} and @_ ) or !@{ $self->{'send_buffer'} || [] } ) { }
