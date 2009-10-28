@@ -502,6 +502,7 @@ sub func {
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
+      $self->log( 'dcdmp', "rawrcv:", $_);
       my ( $dst, $cmd, @param );
       $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;    #farcolorer
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
@@ -535,7 +536,7 @@ sub func {
           local @_ =
             map { "$_:$self->{'skip_print_'.$_}" } grep { $self->{ 'skip_print_' . $_ } } keys %{ $self->{'no_print'} || {} };
           #$self->log( 'dcdmp', "rcv: $dst$cmd p=[",(Dumper \@param),"] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
-          $self->log( 'dcdmp', "rcv: $dst$cmd p=[", (@param), "] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
+        #  $self->log( 'dcdmp', "rcv: $dst$cmd p=[", (map {ref $_ eq 'ARRAY'?@$_:$_}@param), "] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
           $self->{ 'skip_print_' . $_ } = 0 for keys %{ $self->{'no_print'} || {} };
         } else {
           ++$self->{ 'skip_print_' . $cmd }, if exists $self->{'no_print'}{$cmd};
@@ -748,7 +749,51 @@ sub func {
       $func->(@_);
     }
   };
+  $self->{'cmd_adc'} ||= sub {
+    my ( $self, $dst, $cmd ) = ( shift, shift, shift );
+  
+    #$self->sendcmd( $dst, $cmd,map {ref $_ eq 'HASH'}@_);
+    $self->sendcmd( $dst, $cmd,
+    #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
+        map {
+      ref $_ eq 'ARRAY' ? @$_ : ref $_ eq 'HASH' ? do {
+        my $h = $_;
+        map { "$_:$h->{$_}" } keys %$h;
+        }
+        : $_
+      } @_
+
+    );
+  
+  };
+  
 }
+
+
+sub adc_string_decode ($) {
+  local ($_) = @_;
+  s{\\s}{ }g;
+  s{\\n}{\x0A}g;
+  s{\\\\}{\\}g;
+  $_;
+}
+
+sub adc_strings_decode (\@) {
+  map { adc_string_decode $_} @_;
+}
+
+sub adc_parse_named (@) {
+  #my ($dst,$peerid) = @{ shift() };
+  local %_;
+  for (@_) {
+    s/^([A-Z][A-Z0-9])//;
+    #my $name=
+    $_{$1} = adc_string_decode $_;
+  }
+  return \%_;
+  #return ($dst,$peerid)
+}
+
 1;
 __END__
 

@@ -11,29 +11,7 @@ no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 
-sub adc_string_decode ($) {
-  local ($_) = @_;
-  s{\\s}{ }g;
-  s{\\n}{\x0A}g;
-  s{\\\\}{\\}g;
-  $_;
-}
 
-sub adc_strings_decode (\@) {
-  map { adc_string_decode $_} @_;
-}
-
-sub adc_parse_named (@) {
-  #my ($dst,$peerid) = @{ shift() };
-  local %_;
-  for (@_) {
-    s/^([A-Z][A-Z0-9])//;
-    #my $name=
-    $_{$1} = adc_string_decode $_;
-  }
-  return \%_;
-  #return ($dst,$peerid)
-}
 
 sub init {
   my $self = shift;
@@ -104,6 +82,7 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
       '53' => 'Slots full',
       '54' => 'No hash support overlap in SUP between clients.',
     },
+    'connect_protocol' => 'ADCS/0.10',
   );
   $self->baseinit();
   $self->{'parse'} ||= {
@@ -318,7 +297,7 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
       #$self->{'peers'}{$peerid}{'INF'}{$code} = $_;
       #}
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
-      $self->cmd( 'B', 'INF' ) if $dst eq 'I';
+      $self->cmd( 'B', 'INF' ), $self->{'status'} = 'connected' if $dst eq 'I';
       return $self->{'peers'}{$peerid}{'INF'};
     },
     'QUI' => sub {
@@ -346,6 +325,12 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
       my ( $dst, $peerid ) = @{ shift() };
       my $params = adc_parse_named(@_);
       return $params;
+#TRKU2OUBVHC3VXUNOHO2BS2G4ECHYB6ESJUQPYFSY TO626120869 ]
+#TRQYKHJIZEPSISFF3T25DIGKEYI645Y7PGMSI7QII TOauto ]
+#ANthe ANhossboss TO3951841973 ]
+#FSCH ABWN +TCP4 TRKX55JDOFEBX32GLBSITTSY6KUCK4NMPU2R4XUII TOauto
+      
+      
     },
     'MSG' => sub {
       my ( $dst, $peerid ) = @{ shift() };
@@ -354,6 +339,28 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
       $self->log( 'adcdev', 'MSG', "<" . $self->{'peers'}{$peerid}{'INF'}{'NI'} . '>', @_ );
       @_;
     },
+     'RCM' => sub {
+      my ( $dst, $peerid, $toid ) = @{ shift() };
+      $self->log( 'dcerr', "( $dst, $peerid, $toid )", @_ );
+      $self->cmd($dst, 'CTM',  $self->{'sid'},$peerid,
+      $_[0],
+$self->{'myport'},
+      $_[1],     ) if $toid eq $self->{'sid'} ;
+=z      
+       $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
+        %$self, $self->clear(),
+        'host'         => $host,
+        'port'         => $port,
+#        'want'         => \%{ $self->{'want'} },
+ #       'NickList'     => \%{ $self->{'NickList'} },
+  #      'IpList'       => \%{ $self->{'IpList'} },
+   #     'PortList'     => \%{ $self->{'PortList'} },
+    #    'handler'      => \%{ $self->{'handler'} },
+        'auto_connect' => 1,
+      );
+=cut
+      
+      },
   };
 
 =COMMANDS
@@ -503,7 +510,7 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
     'INF' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-      $self->{'BINFS'} ||= [qw(ID PD NI SL SS SF HN HR HO VE US SU)];
+      $self->{'BINFS'} ||= [qw(ID PD I4 I6 U4 U6 SS SF VE US DS SL AS AM EM NI DE HN HR HO TO CT AW SU RF)];
       $self->{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
       #eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
       eval "use MIME::Base32 qw( RFC ); 1;"        or $self->log( 'err', 'cant use', $@ );
@@ -537,12 +544,23 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
       $self->{'VE'} ||= $self->{'client'} . $self->{'V'}
         || 'perl' . $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
       $self->{'US'} ||= 10000;
-      $self->{'SU'} ||= 'ADC0';
+      $self->{'U4'} ||=$self->{'myport'};
+      $self->{'I4'} ||= $self->{'myip'};
+      $self->{'SU'} ||= 'ADC0,TCP4,UDP4';
       #$self->{''} ||= $self->{''} || '';
-      $self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
+     $self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
+  #    $self->cmd_adc( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
       #BINF UUXX IDFXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI PDP26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY NIïûðûî SL2 SS20025693588
       #SF30999 HN2 HR0 HO0 VE++\s0.706 US5242 SUADC0
-      }
+      }, 
+      
+       'CTM' => sub {
+      my $self = shift if ref $_[0];
+      my $dst = shift;
+      
+      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
+      $self->cmd_adc( $dst, 'CTM', @_);
+      },
   };
   if ( $self->{'M'} eq 'A' ) {
     $self->log( 'dev', "making listeners: tcp" );
