@@ -1,12 +1,12 @@
 #$Id$ $URL$
 package Net::DirectConnect::clihub;
+use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use Net::DirectConnect;
 use Net::DirectConnect::clicli;
 #use Net::DirectConnect::http;
-use strict;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
@@ -42,47 +42,21 @@ sub init {
     'Version'          => '1,0091',
     'auto_GetNickList' => 1,
     'follow_forcemove' => 1,
+
+#ADC    
+
+    'connect_protocol' => 'ADC/0.10',
+    'message_type' => 'H',
+
     @_,
     'incomingclass' => 'Net::DirectConnect::clicli',
     'periodic'      => sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; },
-    'codesSTA'      => {
-      '00' => 'Generic, show description',
-      'x0' => 'Same as 00, but categorized according to the rough structure set below',
-      '10' => 'Generic hub error',
-      '11' => 'Hub full',
-      '12' => 'Hub disabled',
-      '20' => 'Generic login/access error',
-      '21' => 'Nick invalid',
-      '22' => 'Nick taken',
-      '23' => 'Invalid password',
-      '24' => 'CID taken',
-      '25' =>
-'Access denied, flag "FC" is the FOURCC of the offending command. Sent when a user is not allowed to execute a particular command',
-      '26' => 'Registered users only',
-      '27' => 'Invalid PID supplied',
-      '30' => 'Kicks/bans/disconnects generic',
-      '31' => 'Permanently banned',
-      '32' =>
-'Temporarily banned, flag "TL" is an integer specifying the number of seconds left until it expires (This is used for kick as well…).',
-      '40' => 'Protocol error',
-      '41' =>
-qq{Transfer protocol unsupported, flag "TO" the token, flag "PR" the protocol string. The client receiving a CTM or RCM should send this if it doesn't support the C-C protocol. },
-      '42' =>
-qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string. The client receiving a CTM or RCM should send this if it tried but couldn't connect. },
-      '43' => 'Required INF field missing/bad, flag "FM" specifies missing field, "FB" specifies invalid field.',
-      '44' => 'Invalid state, flag "FC" the FOURCC of the offending command.',
-      '45' => 'Required feature missing, flag "FC" specifies the FOURCC of the missing feature.',
-      '46' => 'Invalid IP supplied in INF, flag "I4" or "I6" specifies the correct IP.',
-      '47' => 'No hash support overlap in SUP between client and hub.',
-      '50' => 'Client-client / file transfer error',
-      '51' => 'File not available',
-      '52' => 'File part not available',
-      '53' => 'Slots full',
-      '54' => 'No hash support overlap in SUP between clients.',
-    },
-    'connect_protocol' => 'ADC/0.10',
   );
+
+#$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
+
   $self->baseinit();
+$self->log($self, 'inited3',"MT:$self->{'message_type'}", ' with');
   $self->{'parse'} ||= {
     'chatline' => sub {
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
@@ -316,8 +290,8 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
 #2 	Fatal (disconnect)
 #my $desc = $self->{'codesSTA'}{$code};
       @_ = $self->adc_strings_decode(@_);
-      $self->log( 'adcdev', 'STA', $peerid, $severity, $code, @_, "=[$self->{'codesSTA'}{$code}]" );
-      return $severity, $code, $self->{'codesSTA'}{$code}, @_;
+      $self->log( 'adcdev', 'STA', $peerid, $severity, $code, @_, "=[$Net::DirectConnect::codesSTA{$code}]" );
+      return $severity, $code, $Net::DirectConnect::codesSTA{$code}, @_;
     },
     'SCH' => sub {
       my ( $dst, $peerid ) = @{ shift() };
@@ -332,7 +306,7 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
       my ( $dst, $peerid ) = @{ shift() };
       #@_ = map {adc_string_decode} @_;
       @_ = $self->adc_strings_decode(@_);
-      $self->log( 'adcdev', 'MSG', "<" . $self->{'peers'}{$peerid}{'INF'}{'NI'} . '>', @_ );
+#      $self->log( 'adcdev', 'MSG', "<" . $self->{'peers'}{$peerid}{'INF'}{'NI'} . '>', @_ );
       @_;
     },
     'RCM' => sub {
@@ -368,12 +342,15 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
         %$self, $self->clear(),
         'host'         => $host,
         'port'         => $port,
+        'parse'=>$self->{'parse'},
+        'cmd'=>$self->{'cmd'},
 #'want'         => \%{ $self->{'want'} },
 #'NickList'     => \%{ $self->{'NickList'} },
 #'IpList'       => \%{ $self->{'IpList'} },
 #'PortList'     => \%{ $self->{'PortList'} },
 #'handler'      => \%{ $self->{'handler'} },
-TO => $token,
+'TO' => $token,
+'message_type' => 'C',
         'auto_connect' => 1,
       );
 
@@ -519,12 +496,15 @@ TO => $token,
     #ADC dev
     #
     'connect_aft' => sub {
-      #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
-      $self->cmd( 'H', 'SUP' ) if $self->{'adc'};
+#      print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
+      $self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
+
+      $self->cmd( $self->{'message_type'}, 'SUP' ) if $self->{'adc'};
     },
     'SUP' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
+      $self->log($self, 'SUP inited',"MT:$self->{'message_type'}", "=== $dst");
       $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0)];
       $self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
       $self->sendcmd(
@@ -537,8 +517,8 @@ TO => $token,
     'INF' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-      $self->{'BINFS'} ||= [qw(ID PD I4 I6 U4 U6 SS SF VE US DS SL AS AM EM NI DE HN HR HO TO CT AW SU RF)];
-      $self->{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
+#      $self->{'BINFS'} ||= [qw(ID PD I4 I6 U4 U6 SS SF VE US DS SL AS AM EM NI DE HN HR HO TO CT AW SU RF)];
+      $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
       #eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
       eval "use MIME::Base32 qw( RFC ); 1;"        or $self->log( 'err', 'cant use', $@ );
       eval "use Net::DirectConnect::TigerHash; 1;" or $self->log( 'err', 'cant use', $@ );
@@ -556,26 +536,28 @@ TO => $token,
       }
       #$self->log('tiger of NULL is', hash(''));#''=      LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
       #
-      $self->{'PID'} ||= MIME::Base32::decode $self->{'PD'} if $self->{'PD'};
-      $self->{'CID'} ||= MIME::Base32::decode $self->{'ID'} if $self->{'ID'};
-      $self->{'PID'} ||= tiger 'perl' . $self->{'myip'} . $self->{'NI'};
+#      $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
+#      $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
+      $self->{'PID'} ||= tiger 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
       $self->{'CID'} ||= tiger $self->{'PID'};
-      $self->{'PD'}  ||= base32 $self->{'PID'};
-      $self->{'ID'}  ||= base32 $self->{'CID'};
-      $self->{'SL'} ||= $self->{'S'}         || '2';
-      $self->{'SS'} ||= $self->{'sharesize'} || 20025693588;
-      $self->{'SF'} ||= 30999;
-      $self->{'HN'} ||= $self->{'H'}         || 1;
-      $self->{'HR'} ||= $self->{'R'}         || 0;
-      $self->{'HO'} ||= $self->{'O'}         || 0;
-      $self->{'VE'} ||= $self->{'client'} . $self->{'V'}
+      $self->{'INF'}{'PD'}  ||= base32 $self->{'PID'};
+      $self->{'INF'}{'ID'}  ||= base32 $self->{'CID'};
+      $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
+      $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
+      $self->{'INF'}{'SF'} ||= 30999;
+      $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
+      $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
+      $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
+      $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
         || 'perl' . $VERSION ; #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
-      $self->{'US'} ||= 10000;
-      $self->{'U4'} ||= $self->{'myport_udp'};
-      $self->{'I4'} ||= $self->{'myip'};
-      $self->{'SU'} ||= 'ADC0,TCP4,UDP4';
+      $self->{'INF'}{'US'} ||= 10000;
+      $self->{'INF'}{'U4'} ||= $self->{'myport_udp'};
+      $self->{'INF'}{'I4'} ||= $self->{'myip'};
+      $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
       #$self->{''} ||= $self->{''} || '';
-      $self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
+#      $self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
+      $self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{'INF'}{$_} } keys %{$self->{'INF'} });
+      #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       #$self->cmd_adc( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
       #BINF UUXX IDFXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI PDP26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY NIïûðûî SL2 SS20025693588
       #SF30999 HN2 HR0 HO0 VE++\s0.706 US5242 SUADC0
