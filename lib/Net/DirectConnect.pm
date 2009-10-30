@@ -13,6 +13,44 @@ our $VERSION = '0.03' . '_' . ( split( ' ', '$Revision$' ) )[1];
 our $AUTOLOAD;
 our %global;
 
+
+our     %codesSTA     =(
+      '00' => 'Generic, show description',
+      'x0' => 'Same as 00, but categorized according to the rough structure set below',
+      '10' => 'Generic hub error',
+      '11' => 'Hub full',
+      '12' => 'Hub disabled',
+      '20' => 'Generic login/access error',
+      '21' => 'Nick invalid',
+      '22' => 'Nick taken',
+      '23' => 'Invalid password',
+      '24' => 'CID taken',
+      '25' =>
+'Access denied, flag "FC" is the FOURCC of the offending command. Sent when a user is not allowed to execute a particular command',
+      '26' => 'Registered users only',
+      '27' => 'Invalid PID supplied',
+      '30' => 'Kicks/bans/disconnects generic',
+      '31' => 'Permanently banned',
+      '32' =>
+'Temporarily banned, flag "TL" is an integer specifying the number of seconds left until it expires (This is used for kick as well…).',
+      '40' => 'Protocol error',
+      '41' =>
+qq{Transfer protocol unsupported, flag "TO" the token, flag "PR" the protocol string. The client receiving a CTM or RCM should send this if it doesn't support the C-C protocol. },
+      '42' =>
+qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string. The client receiving a CTM or RCM should send this if it tried but couldn't connect. },
+      '43' => 'Required INF field missing/bad, flag "FM" specifies missing field, "FB" specifies invalid field.',
+      '44' => 'Invalid state, flag "FC" the FOURCC of the offending command.',
+      '45' => 'Required feature missing, flag "FC" specifies the FOURCC of the missing feature.',
+      '46' => 'Invalid IP supplied in INF, flag "I4" or "I6" specifies the correct IP.',
+      '47' => 'No hash support overlap in SUP between client and hub.',
+      '50' => 'Client-client / file transfer error',
+      '51' => 'File not available',
+      '52' => 'File part not available',
+      '53' => 'Slots full',
+      '54' => 'No hash support overlap in SUP between clients.',
+    )                   ;
+
+
 sub float {    #v1
   my $self = shift;
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
@@ -29,6 +67,7 @@ sub clear {
     'filehandle' => undef,
     'parse'      => undef,
     'cmd'        => undef,
+    'number'        => undef,
   );
 }
 
@@ -83,6 +122,11 @@ sub new {
     'reconnect_sleep'      => 5,
     'partial_ext'          => '.partial',
     #'partial_prefix' => './partial/',
+
+    #ADC
+
+
+
   };
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
@@ -91,6 +135,7 @@ sub new {
   $self->init(@param);
   if ( $self->{'auto_listen'} ) { $self->listen(); }
   elsif ( $self->{'auto_connect'} ) {
+$self->log($self, 'new inited',"MT:$self->{'message_type'}", ' with');
     $self->connect();
     $self->work();
   }
@@ -110,7 +155,8 @@ sub cmd {
     shift if $self->{'adc'} and length $_[0] == 1;
   my $cmd = shift;
   my ( @ret, $ret );
-  #$self->{'log'}->($self,'dev', 'cmd', $cmd, @_) if $cmd ne 'log';
+#  $self->{'log'}->($self,'dev', 'cmd', $cmd, @_) if $cmd ne 'log';
+  $self->{'log'}->($self,'dev', $self->{number},'cmd', $cmd, @_) if $cmd ne 'log';
   my ( $func, $handler );
   if ( ref $self->{'cmd'}{$cmd} eq 'CODE' ) {
     $func    = $self->{'cmd'}{$cmd};
@@ -131,6 +177,7 @@ sub cmd {
   $self->{'last_cmd_time'} = time;
   if ($func) {
     $self->handler( $cmd . $handler . '_bef', \@_ );
+  $self->{'log'}->($self,'dev', $self->{number},'cmdrun', $cmd, @_, $func) if $cmd ne 'log';
     @ret = $func->( $self, @_ );    #$self->{'cmd'}{$cmd}->(@_);
     $ret = scalar @ret > 1 ? \@ret : $ret[0];
     $self->handler( $cmd . $handler . '_aft', \@_, $ret );
@@ -157,10 +204,11 @@ sub cmd {
 sub AUTOLOAD {
   my $self = shift      || return;
   my $type = ref($self) || return;
-  my @p    = @_;
+#  my @p    = @_;
   my $name = $AUTOLOAD;
   $name =~ s/.*\://;
-  return $self->cmd( $name, @p );
+#  return $self->cmd( $name, @p );
+  return $self->cmd( $name, @_ );
 }
 
 sub DESTROY {
@@ -216,6 +264,7 @@ sub func {
   };
   $self->{'connect'} ||= sub {
     my $self = shift;
+$self->log($self, 'connect0 inited',"MT:$self->{'message_type'}", ' with');
     if ( $_[0] or $self->{'host'} =~ /:/ ) {
       $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
@@ -258,7 +307,9 @@ sub func {
         and !is_local_ip $self->{'hostip'};
     $self->{'M'} ||= 'A';
     $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}) [me=$self->{'myip'}] ok ", );
+$self->log($self, 'connected1 inited',"MT:$self->{'message_type'}", ' with');
     $self->cmd('connect_aft');
+$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
     $self->log( 'dev', "connect_aft after", );
     $self->recv();
     #$self->log( 'dev', "connect recv after", );

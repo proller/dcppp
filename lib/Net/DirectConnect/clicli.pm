@@ -1,13 +1,19 @@
 #$Id$ $URL$
 package Net::DirectConnect::clicli;
-use Net::DirectConnect;
 use strict;
+use Net::DirectConnect;
+
+use Data::Dumper;    #dev only
+$Data::Dumper::Sortkeys = 1;
+
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 
 sub init {
   my $self = shift;
+#  $self->log($self, 'inited0',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
+
   %$self = (
     %$self,
     #http://www.dcpp.net/wiki/index.php/%24Supports
@@ -35,7 +41,9 @@ sub init {
     'reconnects' => 0,
   );
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
+#$self->log($self, 'inited1',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->baseinit();
+#$self->log($self, 'inited2',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->get_peer_addr();
   #$self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
   $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
