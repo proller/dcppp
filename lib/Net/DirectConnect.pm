@@ -200,9 +200,10 @@ sub func {
   $self->{'protocol_init'} ||= sub {
     my $self = shift;
     my ($p) = @_;
-    if ( $p =~ /adc/i ) {
+    if ( $p =~ /^adc/i ) {
       $self->{'cmd_bef'} = undef;
       $self->{'cmd_aft'} = "\x0A";
+      $self->{'adc'}     = 1;
     } elsif ( $p =~ /http/i ) {
       $self->{'cmd_bef'} = undef;
       $self->{'cmd_aft'} = "\n";
@@ -218,7 +219,8 @@ sub func {
     if ( $_[0] or $self->{'host'} =~ /:/ ) {
       $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
-      $self->protocol_init($1) if lc $1 eq 'adc';
+      my $p = lc $1;
+      $self->protocol_init($p) if $p =~ /^adc/;
       $self->{'host'} =~ s{/.*}{}g;
       $self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
     }
@@ -502,7 +504,7 @@ sub func {
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
-      $self->log( 'dcdmp', "rawrcv:", $_);
+      $self->log( 'dcdmp', "rawrcv:", $_ );
       my ( $dst, $cmd, @param );
       $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;    #farcolorer
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
@@ -535,8 +537,8 @@ sub func {
           local $_ = $_;
           local @_ =
             map { "$_:$self->{'skip_print_'.$_}" } grep { $self->{ 'skip_print_' . $_ } } keys %{ $self->{'no_print'} || {} };
-          #$self->log( 'dcdmp', "rcv: $dst$cmd p=[",(Dumper \@param),"] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
-        #  $self->log( 'dcdmp', "rcv: $dst$cmd p=[", (map {ref $_ eq 'ARRAY'?@$_:$_}@param), "] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
+    #$self->log( 'dcdmp', "rcv: $dst$cmd p=[",(Dumper \@param),"] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
+    #$self->log( 'dcdmp', "rcv: $dst$cmd p=[", (map {ref $_ eq 'ARRAY'?@$_:$_}@param), "] ", ( @_ ? ( '  [', @_, ']' ) : () ) );
           $self->{ 'skip_print_' . $_ } = 0 for keys %{ $self->{'no_print'} || {} };
         } else {
           ++$self->{ 'skip_print_' . $cmd }, if exists $self->{'no_print'}{$cmd};
@@ -553,7 +555,12 @@ sub func {
   $self->{'sendcmd'} ||= sub {
     my $self = shift;
     $self->connect_check();
+
+    $self->{'log'}->( $self,'sendcmd0', @_);
+
     $_[0] .= splice @_, 1, 1 if $self->{'adc'} and length $_[0] == 1;
+        $self->{'log'}->( $self,'sendcmd1', @_);
+
     push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
     $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
     if ( ( $self->{'sendbuf'} and @_ ) or !@{ $self->{'send_buffer'} || [] } ) { }
@@ -751,49 +758,64 @@ sub func {
   };
   $self->{'cmd_adc'} ||= sub {
     my ( $self, $dst, $cmd ) = ( shift, shift, shift );
-  
     #$self->sendcmd( $dst, $cmd,map {ref $_ eq 'HASH'}@_);
-    $self->sendcmd( $dst, $cmd,
-    #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-        map {
-      ref $_ eq 'ARRAY' ? @$_ : ref $_ eq 'HASH' ? do {
-        my $h = $_;
-        map { "$_:$h->{$_}" } keys %$h;
-        }
-        : $_
-      } @_
-
+    #$self->log(    'cmd_adc', Dumper \@_);
+    $self->sendcmd(
+      $dst, $cmd,
+      #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
+      $self->{'sid'},
+      map {
+        ref $_ eq 'ARRAY' ? @$_ : ref $_ eq 'HASH' ? do {
+          my $h = $_;
+          map { "$_$h->{$_}" } keys %$h;
+          }
+          : $_
+        } @_
     );
-  
   };
-  
+  #sub adc_string_decode ($) {
+  $self->{'adc_string_decode'} = sub ($) {
+    my $self = shift;
+    local ($_) = @_;
+    s{\\s}{ }g;
+    s{\\n}{\x0A}g;
+    s{\\\\}{\\}g;
+    $_;
+  };
+  #sub adc_string_encode ($) {
+  $self->{'adc_string_encode'} = sub ($) {
+    my $self = shift;
+    local ($_) = @_;
+    s{\\}{\\\\}g;
+    s{ }{\\s}g;
+    s{\x0A}{\\n}g;
+    $_;
+  };
+  #sub adc_strings_decode (\@) {
+  $self->{'adc_strings_decode'} = sub (\@) {
+    my $self = shift;
+    map { $self->adc_string_decode($_) } @_;
+  };
+  #sub adc_strings_encode (\@) {
+  $self->{'adc_strings_encode'} = sub (\@) {
+    my $self = shift;
+    map { $self->adc_string_encode($_) } @_;
+  };
+  $self->{'adc_parse_named'} = sub (@) {
+    my $self = shift;
+    #sub adc_parse_named (@) {
+    #my ($dst,$peerid) = @{ shift() };
+    local %_;
+    for (@_) {
+      s/^([A-Z][A-Z0-9])//;
+      #my $name=
+      #print "PARSE[$1=$_]\n",
+      $_{$1} = $self->adc_string_decode($_);
+    }
+    return \%_;
+    #return ($dst,$peerid)
+  };
 }
-
-
-sub adc_string_decode ($) {
-  local ($_) = @_;
-  s{\\s}{ }g;
-  s{\\n}{\x0A}g;
-  s{\\\\}{\\}g;
-  $_;
-}
-
-sub adc_strings_decode (\@) {
-  map { adc_string_decode $_} @_;
-}
-
-sub adc_parse_named (@) {
-  #my ($dst,$peerid) = @{ shift() };
-  local %_;
-  for (@_) {
-    s/^([A-Z][A-Z0-9])//;
-    #my $name=
-    $_{$1} = adc_string_decode $_;
-  }
-  return \%_;
-  #return ($dst,$peerid)
-}
-
 1;
 __END__
 
