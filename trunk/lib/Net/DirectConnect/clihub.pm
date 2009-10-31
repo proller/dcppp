@@ -36,27 +36,18 @@ sub init {
     'search_every'     => 10,
     'search_every_min' => 10,
     'auto_connect'     => 1,
-    'NoGetINFO'        => 1,          #test
-    'NoHello'          => 1,
-    'UserIP2'          => 1,
-    'Version'          => '1,0091',
-    'auto_GetNickList' => 1,
-    'follow_forcemove' => 1,
-
-#ADC    
-
+    'NoGetINFO'        => 1,                                                                                            #test
+    'NoHello'          => 1, 'UserIP2' => 1, 'Version' => '1,0091', 'auto_GetNickList' => 1, 'follow_forcemove' => 1,
+    #ADC
     'connect_protocol' => 'ADC/0.10',
-    'message_type' => 'H',
-
+    'message_type'     => 'H',
     @_,
     'incomingclass' => 'Net::DirectConnect::clicli',
     'periodic'      => sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; },
   );
-
-#$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
-
+  #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->baseinit();
-$self->log($self, 'inited3',"MT:$self->{'message_type'}", ' with');
+  $self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
   $self->{'parse'} ||= {
     'chatline' => sub {
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
@@ -102,7 +93,7 @@ $self->log($self, 'inited3',"MT:$self->{'message_type'}", ' with');
       $self->{'sendbuf'} = 1;
       $self->cmd('Supports');
       $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-      print "lock[$1]\n";
+      #print "lock[$1]\n";
       $self->cmd( 'Key', $self->lock2key($1) );
       $self->{'sendbuf'} = 0;
       $self->cmd('ValidateNick');
@@ -231,33 +222,35 @@ $self->log($self, 'inited3',"MT:$self->{'message_type'}", ' with');
 #
 #'ISUP' => sub { }, 'ISID' => sub { $self->{'sid'} = $_[0] }, 'IINF' => sub { $self->cmd('BINF') },    'IQUI' => sub { },    'ISTA' => sub { $self->log( 'dcerr', @_ ) },
     'SUP' => sub {
+      my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #for my $feature (split /\s+/, $_[0])
       $self->log( 'adcdev', 'SUP:', @_ );
+      #=z
+      for ( $self->adc_strings_decode(@_) ) {
+        if   ( (s/^(AD|RM)//)[0] eq 'RM' ) { delete $self->{'peers'}{$peerid}{'SUP'}{$_}; }
+        else                               { $self->{'peers'}{$peerid}{'SUP'}{$_} = 1; }
+      }
+      #=cut
 
 =z
-      for (@_) {
-        if ( (s/^(AD|RM)//)[0] eq 'RM' ) {
-          delete $self->{'peers'}{$peerid}{'SUP'}{$_};
-        } else {
-          $self->{'peers'}{$peerid}levf{'SUP'}{$_} = 1;
-        }
-      }
-=cut      
-
       my $params = $self->adc_parse_named(@_);
       for ( keys %$params ) {
         delete $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } if $_ eq 'RM';
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
+=cut      
+
       return $self->{'peers'}{$peerid}{'SUP'};
     },
     'SID' => sub {
+      my $self = shift if ref $_[0];
       $self->{'sid'} = $_[1];
       $self->log( 'adcdev', 'SID:', $self->{'sid'} );
       return $self->{'sid'};
     },
     'INF' => sub {
+      my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #test $_[1] eq 'I'!
       #$self->log('adcdev', '0INF:', "[d=$dst,p=$peerid]", join ':', @_);
@@ -268,17 +261,30 @@ $self->log($self, 'inited3',"MT:$self->{'message_type'}", ' with');
       #$self->log('adcdev', 'INF:', $peerid,  Dumper $params);
       #$self->{'peers'}{$peerid}{'INF'}{$code} = $_;
       #}
+      if ( $dst ne 'B' and $peerid ||= $params->{ID} ) {
+        $self->{'peerid'} = $peerid;
+        $self->{'peers'}{$peerid}{$_} = $self->{'peers'}{''}{$_} for keys %{ $self->{'peers'}{''} || {} };
+        delete $self->{'peers'}{''};
+      }
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
-      $self->cmd( 'B', 'INF' ), $self->{'status'} = 'connected' if $dst eq 'I';
+      $self->log( 'adcdev', 'INF:', $peerid, Dumper $params, $self->{'peers'} ) unless $peerid;
+      $self->cmd( 'B', 'INF' ), $self->{'status'} = 'connected' if $dst eq 'I';    #clihub
+      if ( $dst eq 'C' ) {
+        $self->cmd( $dst, 'INF' ), $self->{'status'} = 'connected';                #clicli
+        $self->cmd('file_select');
+        $self->cmd( $dst, 'GET' );
+      }
       return $self->{'peers'}{$peerid}{'INF'};
     },
     'QUI' => sub {
+      my $self = shift if ref $_[0];
       my ($dst) = @{ shift() };
       #$peerid
       #$self->log( 'adcdev', 'QUI', $dst, $_[0], Dumper $self->{'peers'}{ $_[0] } );
-      delete $self->{'peers'}{ $_[0] };    # or mark time
+      delete $self->{'peers'}{ $_[0] };                                            # or mark time
     },
     'STA' => sub {
+      my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #$self->log( 'dcerr', @_ );
       my $code = shift;
@@ -294,7 +300,9 @@ $self->log($self, 'inited3',"MT:$self->{'message_type'}", ' with');
       return $severity, $code, $Net::DirectConnect::codesSTA{$code}, @_;
     },
     'SCH' => sub {
-      my ( $dst, $peerid ) = @{ shift() };
+      my $self = shift if ref $_[0];
+      my ( $dst, $peerid, @feature ) = @{ shift() };
+      $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ), 'S=>', @_ );
       my $params = $self->adc_parse_named(@_);
       return $params;
       #TRKU2OUBVHC3VXUNOHO2BS2G4ECHYB6ESJUQPYFSY TO626120869 ]
@@ -303,13 +311,15 @@ $self->log($self, 'inited3',"MT:$self->{'message_type'}", ' with');
       #FSCH ABWN +TCP4 TRKX55JDOFEBX32GLBSITTSY6KUCK4NMPU2R4XUII TOauto
     },
     'MSG' => sub {
+      my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #@_ = map {adc_string_decode} @_;
       @_ = $self->adc_strings_decode(@_);
-#      $self->log( 'adcdev', 'MSG', "<" . $self->{'peers'}{$peerid}{'INF'}{'NI'} . '>', @_ );
+      #$self->log( 'adcdev', 'MSG', "<" . $self->{'peers'}{$peerid}{'INF'}{'NI'} . '>', @_ );
       @_;
     },
     'RCM' => sub {
+      my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       $self->log( 'dcdev', "( $dst, RCM, $peerid, $toid )", @_ );
       $self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], ) if $toid eq $self->{'sid'};
@@ -329,33 +339,37 @@ $self->log($self, 'inited3',"MT:$self->{'message_type'}", ' with');
 =cut
 
     },
-
-        'CTM' => sub {
-      my ( $dst, $peerid, $toid ) = @{ shift() };
-      my ($proto, $port, $token) = @_;
-       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
+    'CTM' => sub {
+      my $self = shift if ref $_[0];
+      my ( $dst,   $peerid, $toid )  = @{ shift() };
+      my ( $proto, $port,   $token ) = @_;
+      my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
       $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)", );
-
-$self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)") unless $host;
-       
-       $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
+      $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
+      $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} || $host . ':' . $port } = Net::DirectConnect::clicli->new(
         %$self, $self->clear(),
-        'host'         => $host,
-        'port'         => $port,
-        'parse'=>$self->{'parse'},
-        'cmd'=>$self->{'cmd'},
-#'want'         => \%{ $self->{'want'} },
-#'NickList'     => \%{ $self->{'NickList'} },
-#'IpList'       => \%{ $self->{'IpList'} },
-#'PortList'     => \%{ $self->{'PortList'} },
-#'handler'      => \%{ $self->{'handler'} },
-'TO' => $token,
-'message_type' => 'C',
+        'host'  => $host,
+        'port'  => $port,
+        'parse' => $self->{'parse'},
+        'cmd'   => $self->{'cmd'},
+        #'want'         => \%{ $self->{'want'} },
+        #'NickList'     => \%{ $self->{'NickList'} },
+        #'IpList'       => \%{ $self->{'IpList'} },
+        #'PortList'     => \%{ $self->{'PortList'} },
+        #'handler'      => \%{ $self->{'handler'} },
+        #'TO' => $token,
+        'INF'          => { %{ $self->{'INF'} }, 'TO' => $token },
+        'message_type' => 'C',
         'auto_connect' => 1,
       );
-
-},
-
+    },
+    'SND' => sub {
+      my $self = shift if ref $_[0];
+      my ( $dst, $peerid, $toid ) = @{ shift() };
+      #CSND file files.xml.bz2 0 6117
+      $self->{'filetotal'} = $_[3];
+      return $self->file_open();
+    },
   };
 
 =COMMANDS
@@ -386,6 +400,7 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
       }
     },
     'To' => sub {
+      my $self = shift if ref $_[0];
       my $to = shift;
       $self->sendcmd( 'To:', $to, "From: $self->{'Nick'} \$<$self->{'Nick'}> $_" ) for (@_);
     },
@@ -394,12 +409,15 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
       $self->sendcmd( 'Key', $_[0] );
     },
     'ValidateNick' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'ValidateNick', $self->{'Nick'} );
     },
     'Version' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'Version', $self->{'Version'} );
     },
     'MyINFO' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'MyINFO', '$ALL', $self->myinfo() );
     },
     'GetNickList' => sub {
@@ -433,6 +451,7 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
       $self->sendcmd( 'Supports', $self->supports() || return );
     },
     'Quit' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'Quit', $self->{'Nick'} );
       $self->disconnect();
     },
@@ -485,9 +504,11 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
       $self->{'search_last'} = undef;
     },
     'make_hub' => sub {
+      my $self = shift if ref $_[0];
       $self->{'hub'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
     },
     'nick_generate' => sub {
+      my $self = shift if ref $_[0];
       $self->{'nick_base'} ||= $self->{'Nick'};
       $self->{'Nick'} = $self->{'nick_base'} . int( rand( $self->{'nick_random'} || 100 ) );
     },
@@ -496,28 +517,25 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
     #ADC dev
     #
     'connect_aft' => sub {
-#      print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
-      $self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
-
+      #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
+      my $self = shift if ref $_[0];
+      #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
       $self->cmd( $self->{'message_type'}, 'SUP' ) if $self->{'adc'};
     },
     'SUP' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-      $self->log($self, 'SUP inited',"MT:$self->{'message_type'}", "=== $dst");
-      $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0)];
+      #$self->log($self, 'SUP inited',"MT:$self->{'message_type'}", "=== $dst");
+      $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0 BZIP)];
       $self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
-      $self->sendcmd(
-        $dst, 'SUP',
-        ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ),
-        ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ),
-      );
+      $self->cmd_adc    #sendcmd
+        ( $dst, 'SUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
       #ADBAS0 ADBASE ADTIGR ADUCM0 ADBLO0
     },
     'INF' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-#      $self->{'BINFS'} ||= [qw(ID PD I4 I6 U4 U6 SS SF VE US DS SL AS AM EM NI DE HN HR HO TO CT AW SU RF)];
+      #$self->{'BINFS'} ||= [qw(ID PD I4 I6 U4 U6 SS SF VE US DS SL AS AM EM NI DE HN HR HO TO CT AW SU RF)];
       $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
       #eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
       eval "use MIME::Base32 qw( RFC ); 1;"        or $self->log( 'err', 'cant use', $@ );
@@ -536,12 +554,12 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
       }
       #$self->log('tiger of NULL is', hash(''));#''=      LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
       #
-#      $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
-#      $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-      $self->{'PID'} ||= tiger 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
-      $self->{'CID'} ||= tiger $self->{'PID'};
-      $self->{'INF'}{'PD'}  ||= base32 $self->{'PID'};
-      $self->{'INF'}{'ID'}  ||= base32 $self->{'CID'};
+      #$self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
+      #$self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
+      $self->{'PID'}       ||= tiger 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
+      $self->{'CID'}       ||= tiger $self->{'PID'};
+      $self->{'INF'}{'PD'} ||= base32 $self->{'PID'};
+      $self->{'INF'}{'ID'} ||= base32 $self->{'CID'};
       $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
       $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
       $self->{'INF'}{'SF'} ||= 30999;
@@ -549,14 +567,18 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
       $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
       $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
       $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
-        || 'perl' . $VERSION ; #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
+        || 'perl' . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
       $self->{'INF'}{'US'} ||= 10000;
       $self->{'INF'}{'U4'} ||= $self->{'myport_udp'};
       $self->{'INF'}{'I4'} ||= $self->{'myip'};
       $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
-      #$self->{''} ||= $self->{''} || '';
-#      $self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
-      $self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{'INF'}{$_} } keys %{$self->{'INF'} });
+     #$self->{''} ||= $self->{''} || '';
+     #$self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
+      $self->cmd_adc             #sendcmd
+        (
+        $dst, 'INF',             #$self->{'sid'},
+        map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : sort keys %{ $self->{'INF'} }
+        );
       #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       #$self->cmd_adc( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
       #BINF UUXX IDFXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI PDP26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY NIïûðûî SL2 SS20025693588
@@ -568,13 +590,24 @@ $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($pro
       #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
       $self->cmd_adc( $dst, 'CTM', @_ );
     },
-        'RCM' => sub {
+    'RCM' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
       #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
       $self->cmd_adc( $dst, 'RCM', @_ );
     },
-
+    'GET' => sub {
+      my $self = shift if ref $_[0];
+      my $dst = shift;
+      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
+      $self->cmd_adc( $dst, 'GET', @_ || ( 'file', $self->{'filename'}, '0', '-1' ) );
+    },
+    'SND' => sub {
+      my $self = shift if ref $_[0];
+      my $dst = shift;
+      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
+      $self->cmd_adc( $dst, 'SND', @_ );
+    },
   };
   if ( $self->{'M'} eq 'A' ) {
     $self->log( 'dev', "making listeners: tcp" );

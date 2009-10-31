@@ -12,44 +12,41 @@ $Data::Dumper::Sortkeys = 1;
 our $VERSION = '0.03' . '_' . ( split( ' ', '$Revision$' ) )[1];
 our $AUTOLOAD;
 our %global;
-
-
-our     %codesSTA     =(
-      '00' => 'Generic, show description',
-      'x0' => 'Same as 00, but categorized according to the rough structure set below',
-      '10' => 'Generic hub error',
-      '11' => 'Hub full',
-      '12' => 'Hub disabled',
-      '20' => 'Generic login/access error',
-      '21' => 'Nick invalid',
-      '22' => 'Nick taken',
-      '23' => 'Invalid password',
-      '24' => 'CID taken',
-      '25' =>
+our %codesSTA = (
+  '00' => 'Generic, show description',
+  'x0' => 'Same as 00, but categorized according to the rough structure set below',
+  '10' => 'Generic hub error',
+  '11' => 'Hub full',
+  '12' => 'Hub disabled',
+  '20' => 'Generic login/access error',
+  '21' => 'Nick invalid',
+  '22' => 'Nick taken',
+  '23' => 'Invalid password',
+  '24' => 'CID taken',
+  '25' =>
 'Access denied, flag "FC" is the FOURCC of the offending command. Sent when a user is not allowed to execute a particular command',
-      '26' => 'Registered users only',
-      '27' => 'Invalid PID supplied',
-      '30' => 'Kicks/bans/disconnects generic',
-      '31' => 'Permanently banned',
-      '32' =>
+  '26' => 'Registered users only',
+  '27' => 'Invalid PID supplied',
+  '30' => 'Kicks/bans/disconnects generic',
+  '31' => 'Permanently banned',
+  '32' =>
 'Temporarily banned, flag "TL" is an integer specifying the number of seconds left until it expires (This is used for kick as well…).',
-      '40' => 'Protocol error',
-      '41' =>
+  '40' => 'Protocol error',
+  '41' =>
 qq{Transfer protocol unsupported, flag "TO" the token, flag "PR" the protocol string. The client receiving a CTM or RCM should send this if it doesn't support the C-C protocol. },
-      '42' =>
+  '42' =>
 qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string. The client receiving a CTM or RCM should send this if it tried but couldn't connect. },
-      '43' => 'Required INF field missing/bad, flag "FM" specifies missing field, "FB" specifies invalid field.',
-      '44' => 'Invalid state, flag "FC" the FOURCC of the offending command.',
-      '45' => 'Required feature missing, flag "FC" specifies the FOURCC of the missing feature.',
-      '46' => 'Invalid IP supplied in INF, flag "I4" or "I6" specifies the correct IP.',
-      '47' => 'No hash support overlap in SUP between client and hub.',
-      '50' => 'Client-client / file transfer error',
-      '51' => 'File not available',
-      '52' => 'File part not available',
-      '53' => 'Slots full',
-      '54' => 'No hash support overlap in SUP between clients.',
-    )                   ;
-
+  '43' => 'Required INF field missing/bad, flag "FM" specifies missing field, "FB" specifies invalid field.',
+  '44' => 'Invalid state, flag "FC" the FOURCC of the offending command.',
+  '45' => 'Required feature missing, flag "FC" specifies the FOURCC of the missing feature.',
+  '46' => 'Invalid IP supplied in INF, flag "I4" or "I6" specifies the correct IP.',
+  '47' => 'No hash support overlap in SUP between client and hub.',
+  '50' => 'Client-client / file transfer error',
+  '51' => 'File not available',
+  '52' => 'File part not available',
+  '53' => 'Slots full',
+  '54' => 'No hash support overlap in SUP between clients.',
+);
 
 sub float {    #v1
   my $self = shift;
@@ -59,15 +56,19 @@ sub float {    #v1
 }
 
 sub clear {
-  return (
-    'clients'    => undef,
-    'socket'     => undef,
-    'select'     => undef,
-    'accept'     => undef,
-    'filehandle' => undef,
-    'parse'      => undef,
-    'cmd'        => undef,
-    'number'        => undef,
+  return map { $_ => undef } qw(
+    clients
+    socket
+    select
+    accept
+    filehandle
+    parse
+    cmd
+    number
+    send_buffer
+    databuf
+    buf
+    peers
   );
 }
 
@@ -122,11 +123,7 @@ sub new {
     'reconnect_sleep'      => 5,
     'partial_ext'          => '.partial',
     #'partial_prefix' => './partial/',
-
     #ADC
-
-
-
   };
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
@@ -135,7 +132,7 @@ sub new {
   $self->init(@param);
   if ( $self->{'auto_listen'} ) { $self->listen(); }
   elsif ( $self->{'auto_connect'} ) {
-$self->log($self, 'new inited',"MT:$self->{'message_type'}", ' with');
+    $self->log( $self, 'new inited', "MT:$self->{'message_type'}", ' with' );
     $self->connect();
     $self->work();
   }
@@ -155,8 +152,8 @@ sub cmd {
     shift if $self->{'adc'} and length $_[0] == 1;
   my $cmd = shift;
   my ( @ret, $ret );
-#  $self->{'log'}->($self,'dev', 'cmd', $cmd, @_) if $cmd ne 'log';
-  $self->{'log'}->($self,'dev', $self->{number},'cmd', $cmd, @_) if $cmd ne 'log';
+  #$self->{'log'}->($self,'dev', 'cmd', $cmd, @_) if $cmd ne 'log';
+  #$self->{'log'}->($self,'dev', $self->{number},'cmd', $cmd, @_) if $cmd ne 'log';
   my ( $func, $handler );
   if ( ref $self->{'cmd'}{$cmd} eq 'CODE' ) {
     $func    = $self->{'cmd'}{$cmd};
@@ -177,7 +174,7 @@ sub cmd {
   $self->{'last_cmd_time'} = time;
   if ($func) {
     $self->handler( $cmd . $handler . '_bef', \@_ );
-  $self->{'log'}->($self,'dev', $self->{number},'cmdrun', $cmd, @_, $func) if $cmd ne 'log';
+    #$self->{'log'}->($self,'dev', $self->{number},'cmdrun', $cmd, @_, $func) if $cmd ne 'log';
     @ret = $func->( $self, @_ );    #$self->{'cmd'}{$cmd}->(@_);
     $ret = scalar @ret > 1 ? \@ret : $ret[0];
     $self->handler( $cmd . $handler . '_aft', \@_, $ret );
@@ -204,10 +201,10 @@ sub cmd {
 sub AUTOLOAD {
   my $self = shift      || return;
   my $type = ref($self) || return;
-#  my @p    = @_;
+  #my @p    = @_;
   my $name = $AUTOLOAD;
   $name =~ s/.*\://;
-#  return $self->cmd( $name, @p );
+  #return $self->cmd( $name, @p );
   return $self->cmd( $name, @_ );
 }
 
@@ -264,7 +261,7 @@ sub func {
   };
   $self->{'connect'} ||= sub {
     my $self = shift;
-$self->log($self, 'connect0 inited',"MT:$self->{'message_type'}", ' with');
+    #$self->log($self, 'connect0 inited',"MT:$self->{'message_type'}", ' with');
     if ( $_[0] or $self->{'host'} =~ /:/ ) {
       $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
@@ -307,9 +304,9 @@ $self->log($self, 'connect0 inited',"MT:$self->{'message_type'}", ' with');
         and !is_local_ip $self->{'hostip'};
     $self->{'M'} ||= 'A';
     $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}) [me=$self->{'myip'}] ok ", );
-$self->log($self, 'connected1 inited',"MT:$self->{'message_type'}", ' with');
+    #$self->log($self, 'connected1 inited',"MT:$self->{'message_type'}", ' with');
     $self->cmd('connect_aft');
-$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
+    #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
     $self->log( 'dev', "connect_aft after", );
     $self->recv();
     #$self->log( 'dev', "connect recv after", );
@@ -566,6 +563,10 @@ $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
           #$self->log( 'dcdmp', "P0 $dst$cmd p=",(Dumper \@param));
           #push @{ $param[0] }, shift@param;
           push @{ $param[0] }, splice @param, 1, 1;
+          if ( $dst eq 'F' ) {
+            #$self->log( 'dcdmp', 'feature'
+            push @{ $param[0] }, splice @param, 1, 1 while $param[1] =~ /^[+\-]/;
+          }
           #$self->log( 'dcdmp', "P1 $dst$cmd p=",(Dumper \@param));
         } elsif ( $dst eq 'D' or $dst eq 'E' ) {
           #push @{ $param[0] }, shift@param, shift@param;
@@ -582,7 +583,9 @@ $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
         unless exists $self->{'parse'}{$cmd};
       my ( @ret, $ret );
       #$self->log( 'dcinf', "parsing", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd});
-      $self->handler( $cmd . '_parse_bef_bef', @param );
+      my @self;
+      @self = $self if $self->{'adc'};
+      $self->handler( @self, $cmd . '_parse_bef_bef', @param );
       if ( ref $self->{'parse'}{$cmd} eq 'CODE' ) {
         if ( !exists $self->{'no_print'}{$cmd} ) {
           local $_ = $_;
@@ -594,24 +597,21 @@ $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
         } else {
           ++$self->{ 'skip_print_' . $cmd }, if exists $self->{'no_print'}{$cmd};
         }
-        $self->handler( $cmd . '_parse_bef', @param );
-        @ret = $self->{'parse'}{$cmd}->(@param);
+        $self->handler( @self, $cmd . '_parse_bef', @param );
+        @ret = $self->{'parse'}{$cmd}->( @self, @param );
         $ret = scalar @ret > 1 ? \@ret : $ret[0];
-        $self->handler( $cmd . '_parse_aft', @param, $ret );
+        $self->handler( @self, $cmd . '_parse_aft', @param, $ret );
       }
-      $self->handler( $cmd,                    @param, $ret );
-      $self->handler( $cmd . '_parse_aft_aft', @param, $ret );
+      $self->handler( @self, $cmd, @param, $ret );
+      $self->handler( @self, $cmd . '_parse_aft_aft', @param, $ret );
     }
   };
   $self->{'sendcmd'} ||= sub {
     my $self = shift;
     $self->connect_check();
-
-    $self->{'log'}->( $self,'sendcmd0', @_);
-
+    #$self->{'log'}->( $self,'sendcmd0', @_);
     $_[0] .= splice @_, 1, 1 if $self->{'adc'} and length $_[0] == 1;
-        $self->{'log'}->( $self,'sendcmd1', @_);
-
+    $self->{'log'}->( $self, 'sendcmd1', @_ );
     push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
     $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
     if ( ( $self->{'sendbuf'} and @_ ) or !@{ $self->{'send_buffer'} || [] } ) { }
@@ -634,19 +634,67 @@ $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
   $self->{'get'} ||= sub {
     my ( $self, $nick, $file, $as ) = @_;
     $self->wait_clients();
-    $self->{'want'}->{$nick}{$file} = $as || $file;
-    $self->log( 'dbg', "getting [$nick]" );
-    $self->cmd( ( ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) ? '' : 'Rev' ) . 'ConnectToMe',
-      $nick );
+    $self->{'want'}{$nick}{$file} = $as || $file || '';
+    $self->log( 'dbg', "getting [$nick] $file as $as" );
+    if ( $self->{'adc'} ) {
+      #my $token = $self->make_token($nick);
+      local @_;
+      if ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) {
+        @_ = ( 'CTM', $nick, $self->{'connect_protocol'}, $self->{'myport'}, $self->make_token($nick) );
+      } else {
+        @_ = ( 'RCM', $nick, $self->{'connect_protocol'}, $self->make_token($nick) );
+      }
+      $self->cmd( 'D', @_ );
+      #$self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], )
+    } else {
+      $self->cmd( ( ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) ? '' : 'Rev' ) . 'ConnectToMe',
+        $nick );
+    }
+  };
+  $self->{'file_select'} ||= sub {
+    my $self = shift;
+    return if length $self->{'filename'};
+    my $peerid = $self->{'peerid'} || $self->{'peernick'};
+    for ( keys %{ $self->{'want'}{$peerid} } ) {
+      ( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}{$peerid}{$_} );
+      $self->{'filecurrent'} = $self->{'filename'};
+      next unless defined $self->{'filename'};
+      #delete  $self->{'want'}{ $peerid }{$_} ;   $self->{'filecurrent'}
+      last;
+    }
+    $self->log( 'dcdev', 'file_select0', $self->{'filename'}, $self->{'fileas'} );
+    #return unless defined $self->{'filename'};
+    unless ( $self->{'filename'} ) {
+      if ( $self->{'peers'}{$peerid}{'SUP'}{'BZIP'} or $self->{'NickList'}->{$peerid}{'XmlBZList'} ) {
+        $self->{'fileext'}  = '.xml.bz2';
+        $self->{'filename'} = 'files' . $self->{'fileext'};
+      } elsif ( $self->{'adc'} ) {
+        $self->{'fileext'}  = '.xml';
+        $self->{'filename'} = 'files' . $self->{'fileext'};
+      } elsif ( $self->{'NickList'}->{$peerid}{'BZList'} ) {
+        $self->{'fileext'}  = '.bz2';
+        $self->{'filename'} = 'MyList' . $self->{'fileext'};
+      } else {
+        $self->{'fileext'}  = '.DcLst';
+        $self->{'filename'} = 'MyList' . $self->{'fileext'};
+      }
+      $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
+    }
+    $self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
   };
   $self->{'file_open'} ||= sub {
     my $self = shift;
+    #$self->{'fileas'}=$_[0] if !length $self->{'fileas'} or length $_[0];
+    #$self->{'filetotal'} = $_[1]if ! $self->{'filetotal'} or $_[1];
     my $oparam =
-      ( ( $self->{'fileas'} eq '-' )
+      $self->{'fileas'} eq '-'
       ? '>-'
-      : '>' . $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'} );
+      : '>' . $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'};
     $self->handler( 'file_open_bef', $oparam );
-    $self->log( 'dbg', "file_open pre", $oparam );
+    $self->log(
+      'dbg',             "file_open pre", $oparam, 'want bytes', $self->{'filetotal'}, 'as=',
+      $self->{'fileas'}, 'f=',            $self->{'filename'}
+    );
     open( $self->{'filehandle'}, $oparam )
       or $self->log( 'dcerr', "file_open error", $!, $oparam ), $self->handler( 'file_open_error', $!, $oparam ), return 1;
     binmode( $self->{'filehandle'} );
@@ -656,7 +704,7 @@ $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
   $self->{'file_write'} ||= sub {
     my $self = shift;
     $self->{'file_start_time'} ||= time;
-    my $fh = $self->{'filehandle'} || return;
+    my $fh = $self->{'filehandle'} or $self->log( 'err', 'cant write, no filehandle' ), return;
     for my $databuf (@_) {
       $self->{'filebytes'} += length $$databuf;
 #$self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );
@@ -670,7 +718,9 @@ $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
         $self->float( time - $self->{'file_start_time'} ),
         's at', $self->float( $self->{'filebytes'} / ( ( time - $self->{'file_start_time'} ) or 1 ) ), 'b/s'
         ),
-        $self->disconnect(), $self->{'status'} = 'destroy', $self->{'file_start_time'} = 0
+        $self->disconnect(), $self->{'status'} = 'destroy', $self->{'file_start_time'} = 0, $self->{'filename'} = '',
+        $self->{'fileas'} = '', delete $self->{'want'}{ $self->{'peerid'} }{ $self->{'filecurrent'} },
+        $self->{'filecurrent'} = '',
         if $self->{'filebytes'} >= $self->{'filetotal'};
     }
   };
@@ -814,7 +864,7 @@ $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-      $self->{'sid'},
+      ( $dst eq 'C' ? () : $self->{'sid'} ),
       map {
         ref $_ eq 'ARRAY' ? @$_ : ref $_ eq 'HASH' ? do {
           my $h = $_;
@@ -866,6 +916,18 @@ $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
     return \%_;
     #return ($dst,$peerid)
   };
+  $self->{'make_token'} = sub (;$) {
+    my $self   = shift;
+    my $peerid = shift;
+    my $token;
+    local $_;
+    $_ = $self->{'peers'}{$peerid}{'INF'}{I4} if exists $self->{'peers'}{$peerid};
+    s/\D//g;
+    $token += $_;
+    $_ = $self->{myip};
+    s/\D//g;
+    return $token + $_;
+  };
 }
 1;
 __END__
@@ -894,6 +956,7 @@ Net::DirectConnect - Perl Direct Connect protocol implementation
 
 look at examples for handlers
 
+
 =head1 DESCRIPTION
 
  Currently NOT supported:
@@ -901,6 +964,7 @@ look at examples for handlers
  segmented, multisource download;
  async connect;
  full ADC;
+
 
 =head1 INSTALLATION
 
@@ -938,6 +1002,11 @@ look at examples for handlers
 
  writefile -> file_write
  openfile -> file_open
+
+
+=head1 TODO
+
+ Rewrite better
 
 
 =head1 AUTHOR
