@@ -26,8 +26,16 @@ MIME::Base32::encode                      Digest::Tiger::hash($_);
 #print join ' ',"[",tiger::tth('Tiger'),"]\n";
 #''=>LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
 #'Tiger' => VD5PXIETOFDRL47QTK2K3XPX2A6LG5XTQFAC5OA
-print join ' ',$_,"=[",tth($_),tiger1($_), tiger2($_),"]\n"
+print join ' ',$_,"=[",tth($_),tiger1($_), tiger2($_),"]\n\n"
 
-for '', 'Tiger', (join '', 1..1024);
+for '', 
+'Tiger', 
+"\0",
+#(join '', 1..1024),
+#(
+(join '',('A' x 1024)),
+(join '',('A' x 1025)),
+#),
+;
 
 #1..1024 => 6D3N5DVHCWWWPJRJHWLY4VN2DQX3APKMR4FZLWA

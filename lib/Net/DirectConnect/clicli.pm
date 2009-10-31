@@ -2,18 +2,15 @@
 package Net::DirectConnect::clicli;
 use strict;
 use Net::DirectConnect;
-
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
-
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 
 sub init {
   my $self = shift;
-#  $self->log($self, 'inited0',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
-
+  #$self->log($self, 'inited0',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   %$self = (
     %$self,
     #http://www.dcpp.net/wiki/index.php/%24Supports
@@ -41,9 +38,9 @@ sub init {
     'reconnects' => 0,
   );
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
-#$self->log($self, 'inited1',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
+  #$self->log($self, 'inited1',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->baseinit();
-#$self->log($self, 'inited2',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
+  #$self->log($self, 'inited2',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->get_peer_addr();
   #$self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
   $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
@@ -79,7 +76,7 @@ sub init {
         $self->{'sendbuf'} = 0;
         $self->cmd( 'Key', $self->{'key'} );
       }
-      $self->cmd('selectfile') if $self->{'direction'} eq 'Download';
+      $self->cmd('file_select') if $self->{'direction'} eq 'Download';
       $self->log( "get:[filename:", $self->{'filename'}, '; fileas:', $self->{'fileas'}, "]" );
       $self->{'get'} = $self->{'filename'} . '$' . ( $self->{'filefrom'} || 1 ),
         $self->{'adcget'} = 'file ' . $self->{'filename'} . ' ' . ( $self->{'filefrom'} || 0 ) . ' -1',
@@ -109,12 +106,12 @@ sub init {
       $self->log( 'dev', "ADCSND::", @_ );
       $_[0] =~ /(\d+?)$/is;
       $self->{'filetotal'} = $1;
-      return if $self->file_open();
+      return $self->file_open();
     },
     'CSND' => sub {
       $_[0] =~ /^file\s+\S+\s+(\d+)\s(\d+)$/is;
       $self->{'filetotal'} = $2;
-      return if $self->file_open();
+      return $self->file_open();
     },
     'Supports' => sub {
       $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
@@ -131,27 +128,6 @@ sub init {
       $self->cmd('MyNick');
       $self->{'sendbuf'} = 0;
       $self->cmd('Lock');
-    },
-    'selectfile' => sub {
-      for ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) {
-        ( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}->{ $self->{'peernick'} }{$_} );
-        next unless defined $self->{'filename'};
-        last;
-      }
-      return unless defined $self->{'filename'};
-      unless ( $self->{'filename'} ) {
-        if ( $self->{'NickList'}->{ $self->{'peernick'} }{'XmlBZList'} ) {
-          $self->{'fileext'}  = '.xml.bz2';
-          $self->{'filename'} = 'files' . $self->{'fileext'};
-        } elsif ( $self->{'NickList'}->{ $self->{'peernick'} }{'BZList'} ) {
-          $self->{'fileext'}  = '.bz2';
-          $self->{'filename'} = 'MyList' . $self->{'fileext'};
-        } else {
-          $self->{'fileext'}  = '.DcLst';
-          $self->{'filename'} = 'MyList' . $self->{'fileext'};
-        }
-        $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
-      }
     },
     'MyNick' => sub {
       $self->sendcmd( 'MyNick', $self->{'Nick'} );
