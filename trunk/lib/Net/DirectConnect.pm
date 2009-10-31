@@ -94,26 +94,26 @@ sub new {
     'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
     'client'   => 'perl',    #'dcp++',                                                              #++: indicates the client
     'protocol' => 'nmdc',    # or 'adc'
-    'cmd_sep' => ' ', 'V' => $VERSION . '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
+    'cmd_sep' => ' ', 'V' => $VERSION , #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
     #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
-    'lock'              => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
-    'log'               => sub { my $self = shift; print( join( ' ', "($self)[$self->{'number'}]", @_ ), "\n" ) },
-    'auto_recv'         => 1,
-    'max_reads'         => 20,
-    'wait_once'         => 0.1,
-    'waits'             => 100,
-    'wait_finish'       => 600,
-    'wait_finish_by'    => 1,
-    'wait_connect'      => 600,
-    'clients_max'       => 50,
-    'wait_clients'      => 200,
-    'wait_clients_by'   => 0.01,
-    'work_sleep'        => 0.01,
-    'cmd_recurse_sleep' => 0,
+    'lock'               => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
+    'log'                => sub { my $self = shift; print( join( ' ', "($self)[$self->{'number'}]", @_ ), "\n" ) },
+    'auto_recv'          => 1,
+    'max_reads'          => 20,
+    'wait_once'          => 0.1,
+    'waits'              => 100,
+    'wait_finish_tries'  => 600,
+    'wait_finish_by'     => 1,
+    'wait_connect'       => 600,
+    'clients_max'        => 50,
+    'wait_clients_tries' => 200,
+    'wait_clients_by'    => 0.01,
+    'work_sleep'         => 0.01,
+    'cmd_recurse_sleep'  => 0,
     ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
     'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
@@ -172,15 +172,15 @@ sub cmd {
     sleep( $self->{'min_cmd_delay'} - time + $self->{'last_cmd_time'} );
   }
   $self->{'last_cmd_time'} = time;
+  $self->handler( $cmd . $handler . '_bef', \@_ );
+  #$self->{'log'}->($self,'dev', $self->{number},'cmdrun', $cmd, @_, $func) if $cmd ne 'log';
   if ($func) {
-    $self->handler( $cmd . $handler . '_bef', \@_ );
-    #$self->{'log'}->($self,'dev', $self->{number},'cmdrun', $cmd, @_, $func) if $cmd ne 'log';
     @ret = $func->( $self, @_ );    #$self->{'cmd'}{$cmd}->(@_);
-    $ret = scalar @ret > 1 ? \@ret : $ret[0];
-    $self->handler( $cmd . $handler . '_aft', \@_, $ret );
   } elsif ( exists $self->{$cmd} ) {
     $self->log( 'dev', "cmd call by var name $cmd=$self->{$cmd}" );
     @ret = ( $self->{$cmd} );
+  } elsif ($self->{'adc'} and  length $dst == 1 and length $cmd == 3 ) {
+    @ret = $self->cmd_adc( $dst, $cmd, @_ );
   } else {
     $self->log(
       'info',
@@ -190,6 +190,8 @@ sub cmd {
     );
     $self->{'cmd'}{$cmd} = sub { };
   }
+  $ret = scalar @ret > 1 ? \@ret : $ret[0];
+  $self->handler( $cmd . $handler . '_aft', \@_, $ret );
   if ( $self->{'cmd'}{$cmd} ) {
     if    ( $self->{'auto_wait'} ) { $self->wait(); }
     elsif ( $self->{'auto_recv'} ) { $self->recv(); }
@@ -514,7 +516,7 @@ sub func {
   };
   $self->{'wait_finish'} ||= sub {
     my $self = shift;
-    for ( 0 .. $self->{'wait_finish'} ) {
+    for ( 0 .. $self->{'wait_finish_tries'} ) {
       last if $self->finished();
       $self->wait( undef, $self->{'wait_finish_by'} );
     }
@@ -528,11 +530,13 @@ sub func {
   };
   $self->{'wait_clients'} ||= sub {
     my $self = shift;
-    for ( 0 .. $self->{'wait_clients'} ) {
+    for ( 0 .. $self->{'wait_clients_tries'} ) {
       last if $self->{'clients_max'} > scalar keys %{ $self->{'clients'} };
       $self->info() unless $_;
       $self->log( 'info',
-        "wait clients " . scalar( keys %{ $self->{'clients'} } ) . "/$self->{'clients_max'}  $_/$self->{'wait_clients'}" );
+            "wait clients "
+          . scalar( keys %{ $self->{'clients'} } )
+          . "/$self->{'clients_max'}  $_/$self->{'wait_clients_tries'}" );
       $self->wait( undef, $self->{'wait_clients_by'} );
     }
   };
@@ -634,7 +638,7 @@ sub func {
   $self->{'get'} ||= sub {
     my ( $self, $nick, $file, $as ) = @_;
     $self->wait_clients();
-    $self->{'want'}{$nick}{$file} = $as || $file || '';
+    $self->{'want'}{$self->{peers}{$nick}{'INF'}{'ID'} || $nick}{$file} = $as || $file || '';
     $self->log( 'dbg', "getting [$nick] $file as $as" );
     if ( $self->{'adc'} ) {
       #my $token = $self->make_token($nick);
@@ -654,16 +658,22 @@ sub func {
   $self->{'file_select'} ||= sub {
     my $self = shift;
     return if length $self->{'filename'};
+    
+   
+    
     my $peerid = $self->{'peerid'} || $self->{'peernick'};
+    
+#$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
     for ( keys %{ $self->{'want'}{$peerid} } ) {
       ( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}{$peerid}{$_} );
+#$self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
       $self->{'filecurrent'} = $self->{'filename'};
       next unless defined $self->{'filename'};
       #delete  $self->{'want'}{ $peerid }{$_} ;   $self->{'filecurrent'}
       last;
     }
-    $self->log( 'dcdev', 'file_select0', $self->{'filename'}, $self->{'fileas'} );
-    #return unless defined $self->{'filename'};
+#$self->log( 'dcdev', 'file_select2', $self->{'filename'}, $self->{'fileas'} );
+    return unless defined $self->{'filename'};
     unless ( $self->{'filename'} ) {
       if ( $self->{'peers'}{$peerid}{'SUP'}{'BZIP'} or $self->{'NickList'}->{$peerid}{'XmlBZList'} ) {
         $self->{'fileext'}  = '.xml.bz2';
@@ -680,7 +690,7 @@ sub func {
       }
       $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
     }
-    $self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
+    $self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'} );
   };
   $self->{'file_open'} ||= sub {
     my $self = shift;
@@ -864,7 +874,7 @@ sub func {
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-      ( $dst eq 'C' ? () : $self->{'sid'} ),
+      ( $dst eq 'C' || !length $self->{'sid'} ? () : $self->{'sid'} ),
       map {
         ref $_ eq 'ARRAY' ? @$_ : ref $_ eq 'HASH' ? do {
           my $h = $_;
@@ -921,12 +931,12 @@ sub func {
     my $peerid = shift;
     my $token;
     local $_;
-    $_ = $self->{'peers'}{$peerid}{'INF'}{I4} if exists $self->{'peers'}{$peerid};
+    $_ = $self->{'peers'}{$peerid}{'INF'}{I4} if $peerid and exists $self->{'peers'}{$peerid};
     s/\D//g;
     $token += $_;
     $_ = $self->{myip};
     s/\D//g;
-    return $token + $_;
+    return $token + $_ + int time;
   };
 }
 1;
@@ -1005,6 +1015,8 @@ look at examples for handlers
 
 
 =head1 TODO
+ 
+ CGET file files.xml.bz2 0 -1 ZL1<<<
 
  Rewrite better
 
