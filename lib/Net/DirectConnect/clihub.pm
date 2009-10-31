@@ -261,13 +261,16 @@ sub init {
       #$self->log('adcdev', 'INF:', $peerid,  Dumper $params);
       #$self->{'peers'}{$peerid}{'INF'}{$code} = $_;
       #}
+      my $peersid = $peerid;
       if ( $dst ne 'B' and $peerid ||= $params->{ID} ) {
         $self->{'peerid'} = $peerid;
         $self->{'peers'}{$peerid}{$_} = $self->{'peers'}{''}{$_} for keys %{ $self->{'peers'}{''} || {} };
         delete $self->{'peers'}{''};
       }
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
-      $self->log( 'adcdev', 'INF:', $peerid, Dumper $params, $self->{'peers'} ) unless $peerid;
+      $self->{'peers'}{ $params->{ID} } ||= $self->{'peers'}{$peerid};
+      $self->{'peers'}{$peerid}{'SID'}  ||= $peersid;
+      #    $self->log( 'adcdev', 'INF:', $peerid, Dumper $params, $self->{'peers'} ) unless $peerid;
       $self->cmd( 'B', 'INF' ), $self->{'status'} = 'connected' if $dst eq 'I';    #clihub
       if ( $dst eq 'C' ) {
         $self->cmd( $dst, 'INF' ), $self->{'status'} = 'connected';                #clicli
@@ -302,13 +305,22 @@ sub init {
     'SCH' => sub {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, @feature ) = @{ shift() };
-      $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ), 'S=>', @_ );
+      #  $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ), 'S=>', @_ );
       my $params = $self->adc_parse_named(@_);
       return $params;
       #TRKU2OUBVHC3VXUNOHO2BS2G4ECHYB6ESJUQPYFSY TO626120869 ]
       #TRQYKHJIZEPSISFF3T25DIGKEYI645Y7PGMSI7QII TOauto ]
       #ANthe ANhossboss TO3951841973 ]
       #FSCH ABWN +TCP4 TRKX55JDOFEBX32GLBSITTSY6KUCK4NMPU2R4XUII TOauto
+    },
+    'RES' => sub {
+      my $self = shift if ref $_[0];
+      my ( $dst, $peerid ) = @{ shift() };
+      #test $_[1] eq 'I'!
+      #$self->log('adcdev', '0INF:', "[d=$dst,p=$peerid]", join ':', @_);
+      my $params = $self->adc_parse_named(@_);
+      #$self->log('adcdev', 'RES:',"[d=$dst,p=$peerid]",Dumper $params);
+      $params;
     },
     'MSG' => sub {
       my $self = shift if ref $_[0];
@@ -346,12 +358,13 @@ sub init {
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
       $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)", );
       $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
-      $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} || $host . ':' . $port } = Net::DirectConnect::clicli->new(
+      $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = Net::DirectConnect::clicli->new(
         %$self, $self->clear(),
         'host'  => $host,
         'port'  => $port,
         'parse' => $self->{'parse'},
         'cmd'   => $self->{'cmd'},
+        'want'  => $self->{'want'},
         #'want'         => \%{ $self->{'want'} },
         #'NickList'     => \%{ $self->{'NickList'} },
         #'IpList'       => \%{ $self->{'IpList'} },
@@ -464,6 +477,7 @@ sub init {
       my $self = shift if ref $_[0];
       push( @{ $self->{'search_todo'} }, [@_] ) if @_;
       return unless @{ $self->{'search_todo'} || return };
+#      $self->log($self, 'search', Dumper \@_);
 #$self->log( 'dcdev', "search too fast [$self->{'search_every'}], len=", scalar @{ $self->{'search_todo'} } )        if @_ and scalar @{ $self->{'search_todo'} } > 1;
       return if time() - $self->{'search_last_time'} < $self->{'search_every'} + 2;
       $self->{'search_last'} = shift( @{ $self->{'search_todo'} } );
@@ -478,7 +492,7 @@ sub init {
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
-      if ( $self->{'adc'} ) { $self->cmd( 'search_buffer', { TO => 'auto', TH => $_[0] } ); }
+      if ( $self->{'adc'} ) { $self->cmd( 'search_buffer', { TO => $self->make_token(), TR => $_[0], } ); }    #toauto
       else                  { $self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] ); }
     },
     'search_string' => sub {
@@ -486,7 +500,7 @@ sub init {
       my $string = $_[0];
       if ( $self->{'adc'} ) {
         #$self->cmd( 'search_buffer', { TO => 'auto', map AN => $_, split /\s+/, $string } );
-        $self->cmd( 'search_buffer', { ( map { ( 'AN' => $_ ) } split /\s+/, $string ), TO => 'auto', } );
+        $self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), } );    #TOauto
       } else {
         $self->{'search_last_string'} = $string;
         $string =~ tr/ /$/;
@@ -526,8 +540,10 @@ sub init {
       my $self = shift if ref $_[0];
       my $dst = shift;
       #$self->log($self, 'SUP inited',"MT:$self->{'message_type'}", "=== $dst");
-      $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0 BZIP)];
-      $self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
+      $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0 BZIP PING)];
+      $self->{'SUPRMS'} ||= [qw()];
+      $self->{'SUP'}    ||= { ( map { $_ => 1 } @{ $self->{'SUPADS'} } ), ( map { $_ => 0 } @{ $self->{'SUPRMS'} } ) };
+      #$self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
       $self->cmd_adc    #sendcmd
         ( $dst, 'SUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
       #ADBAS0 ADBASE ADTIGR ADUCM0 ADBLO0
@@ -584,23 +600,31 @@ sub init {
       #BINF UUXX IDFXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI PDP26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY NIïûðûî SL2 SS20025693588
       #SF30999 HN2 HR0 HO0 VE++\s0.706 US5242 SUADC0
     },
-    'CTM' => sub {
+    'GET' => sub {
+      my $self = shift if ref $_[0];
+      my $dst = shift;
+      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
+      local @_ = @_;
+      if ( !@_ ) {
+        @_ = ( 'file', $self->{'filename'}, '0', '-1' ) if $self->{'filename'};
+        $self->log( 'err', "Nothing to get" ), return unless @_;
+      }
+      $self->cmd_adc( $dst, 'GET', @_ );
+    },
+  };
+
+=auto    
+      'CTM' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
       #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
       $self->cmd_adc( $dst, 'CTM', @_ );
     },
-    'RCM' => sub {
+     'RCM' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
       #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
       $self->cmd_adc( $dst, 'RCM', @_ );
-    },
-    'GET' => sub {
-      my $self = shift if ref $_[0];
-      my $dst = shift;
-      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
-      $self->cmd_adc( $dst, 'GET', @_ || ( 'file', $self->{'filename'}, '0', '-1' ) );
     },
     'SND' => sub {
       my $self = shift if ref $_[0];
@@ -608,7 +632,8 @@ sub init {
       #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
       $self->cmd_adc( $dst, 'SND', @_ );
     },
-  };
+=cut    
+
   if ( $self->{'M'} eq 'A' ) {
     $self->log( 'dev', "making listeners: tcp" );
     $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
