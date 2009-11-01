@@ -31,6 +31,7 @@ print join ' ',$_,"=[",tth($_),tiger1($_), tiger2($_),"]\n\n"
 for '', 
 'Tiger', 
 "\0",
+"\0\0",
 #(join '', 1..1024),
 #(
 (join '',('A' x 1024)),
@@ -39,7 +40,7 @@ for '',
 ;
 
 print tthfile('README'), "\n";
-print tthfile 'pm_to_blib', "\n";
+print tthfile 'pm_to_blib', "\n"; #LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
 print tthfile '0', "\n"; #VK54ZIEEVTWNAUI5D5RDFIL37LX2IQNSTAXFKSA
 print tthfile '00', "\n"; #P55IZ2KYAB36W36VHPULWPTQMUHC7XMNXNCPLRY
 #print tthfile 'C:\pub\chillout\Nebra_Skydisk_-_mixed_by_Cardamar.mp3';
