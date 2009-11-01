@@ -1,6 +1,6 @@
 use lib ('blib/lib', 'blib/arch');
 #use lib ('blib/lib');
-use Net::DirectConnect::TigerHash qw(tth);
+use Net::DirectConnect::TigerHash qw(tth tthbin tthfile);
 
 use Mhash qw( mhash mhash_hex MHASH_TIGER);  
 use Digest::Tiger; use
@@ -37,5 +37,12 @@ for '',
 (join '',('A' x 1025)),
 #),
 ;
+
+print tthfile('README'), "\n";
+print tthfile 'pm_to_blib', "\n";
+print tthfile '0', "\n"; #VK54ZIEEVTWNAUI5D5RDFIL37LX2IQNSTAXFKSA
+print tthfile '00', "\n"; #P55IZ2KYAB36W36VHPULWPTQMUHC7XMNXNCPLRY
+#print tthfile 'C:\pub\chillout\Nebra_Skydisk_-_mixed_by_Cardamar.mp3';
+#print tthfile 'Makefile.old', "\n";
 
 #1..1024 => 6D3N5DVHCWWWPJRJHWLY4VN2DQX3APKMR4FZLWA

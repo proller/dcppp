@@ -14,6 +14,7 @@ our %EXPORT_TAGS = (
   'all' => [ qw(
       tthbin
       tth
+      tthfile
       )
   ]
 );
@@ -35,16 +36,15 @@ tiger - Perl extension for blah blah blah
 
 =head1 SYNOPSIS
 
-  use tiger;
-  blah blah blah
+  use Net::DirectConnect::TigerHash qw(tthbin tth tthfile);
+  print tthbin('somestring'); #24 bytes
+  print tth('somestring'); #base32 encoded, 39 chars
+  print tthfile('/etc/passwd'); #base32 encoded
+
 
 =head1 DESCRIPTION
 
-Stub documentation for tiger, created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
-
-Blah blah blah.
+ ported from linuxdcpp-1.0.3/client
 
 =head2 EXPORT
 
@@ -52,27 +52,22 @@ None by default.
 
 =head2 Exportable functions
 
-
-
+ tthbin
+ tth
+ tthfile
 
 =head1 SEE ALSO
 
-Mention other useful documentation such as the documentation of
-related modules or operating system documentation (such as man pages
-in UNIX), or any relevant external documentation such as RFCs or
-standards.
-
-If you have a mailing list set up for your module, mention it here.
-
-If you have a web site set up for your module, mention it here.
+ https://launchpad.net/linuxdcpp
+ http://www.open-content.net/specs/draft-jchapweske-thex-02.html  
 
 =head1 AUTHOR
 
-Charlie &, E<lt>pro@cpanE<gt>
+Oleg Alexeenkov, E<lt>pro@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Charlie &
+Copyright (C) 2009 Oleg Alexeenkov, linuxdcpp authors
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.1 or,
