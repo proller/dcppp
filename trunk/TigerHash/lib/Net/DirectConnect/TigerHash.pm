@@ -40,7 +40,7 @@ tiger - Perl extension for blah blah blah
   print tthbin('somestring'); #24 bytes
   print tth('somestring'); #base32 encoded, 39 chars
   print tthfile('/etc/passwd'); #base32 encoded
-
+  print tthfile('__NOT_eXisted_file___'); #undef
 
 =head1 DESCRIPTION
 

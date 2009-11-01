@@ -5,8 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 1;
-BEGIN { use_ok('TigerHash') };
+use Test::More tests => 2;
+BEGIN { use_ok('Net::DirectConnect::TigerHash') };
 
 #########################
 
@@ -27,4 +27,5 @@ BEGIN { use_ok('TigerHash') };
 
 # ok(TigerHash::tth(join '', 1..1024)eq'6D3N5DVHCWWWPJRJHWLY4VN2DQX3APKMR4FZLWA') ;
 # ok(TigerHash::tth('Tiger') eq 'VD5PXIETOFDRL47QTK2K3XPX2A6LG5XTQFAC5OA') ;
-  
+ ok(!defined Net::DirectConnect::TigerHash::tthfile('___Not_Existen_t_ffiiiillee____') );
+ 

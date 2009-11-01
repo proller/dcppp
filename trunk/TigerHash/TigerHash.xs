@@ -2,16 +2,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 #undef do_open
 #undef do_close
+
 #ifdef __cplusplus
 }
 #endif
 
-//#include <tth.h>
+
 // files from linuxdcpp-1.0.3/client
 // bzr branch lp:linuxdcpp
 #include "stdinc.h"
@@ -24,6 +26,8 @@ extern "C" {
 //#include "Util.cpp"
 //#include "File.cpp"
 
+
+//#include <tth.h>
 //#ifndef _WIN32
 //#include <sys/mman.h> // mmap, munmap, madvise
 //#endif
@@ -53,7 +57,7 @@ tth(s)
     CODE:
         STRLEN len;
         char *  ptr = SvPV(s, len);
-//printf("calc for[%s]\n", ptr);
+//printf("calc for[%s](%d)\n", ptr, len);
         TigerHash th;
         th.update(ptr, len);
 	string enc ;
@@ -75,7 +79,10 @@ tthfile(s)
     (fd <=0 )
     {
       //return false;
-    } else {
+      //printf("NOT OPENED file[%s] fd[%d]\n",file, fd);
+        XSRETURN_UNDEF;
+    } //else {
+      //printf("opened file[%s] fd[fd]\n",file);
       struct stat buffer;
       int         status;
       status = fstat(fd, &buffer);
@@ -133,7 +140,7 @@ tthfile(s)
       //buf = NULL;
       //printf("calc for[%s]=[%s]\n", ptr,  enc.c_str());
       RETVAL = newSVpv( enc.data(), enc.length());
-    }
+    //}
     OUTPUT:
 	RETVAL  
   
