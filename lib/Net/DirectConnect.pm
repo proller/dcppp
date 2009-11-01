@@ -637,7 +637,7 @@ sub func {
   };
   $self->{'get'} ||= sub {
     my ( $self, $nick, $file, $as ) = @_;
-    my $sid, $cid;
+    my ($sid, $cid);
     $sid = $nick if $nick =~ /^[A-Z0-9]{4}$/;
     $cid = $nick if $nick =~ /^[A-Z0-9]{39}$/;
 

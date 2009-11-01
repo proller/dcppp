@@ -570,9 +570,10 @@ sub init {
       }
       #$self->log('tiger of NULL is', hash(''));#''=      LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
       #
-      #$self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
-      #$self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-      $self->{'PID'}       ||= tiger 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
+      $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
+      $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
+      $self->{'ID'}       ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
+      $self->{'PID'}       ||= tiger $self->{'ID'};
       $self->{'CID'}       ||= tiger $self->{'PID'};
       $self->{'INF'}{'PD'} ||= base32 $self->{'PID'};
       $self->{'INF'}{'ID'} ||= base32 $self->{'CID'};
