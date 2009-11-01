@@ -71,10 +71,10 @@ public:
 #else
 
 	enum Priority {
-		IDLE = 1,
+/*		IDLE = 1,
 		LOW = 1,
 		NORMAL = 0,
-		HIGH = -1
+		HIGH = -1*/
 	};
 	Thread() throw() : threadHandle(0) { }
 	virtual ~Thread() {
