@@ -4,6 +4,7 @@ use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Indent   = 1;
 use Net::DirectConnect;
 use Net::DirectConnect::clicli;
 #use Net::DirectConnect::http;
@@ -190,6 +191,34 @@ sub init {
       if   ( $s{'cmd'}[4] =~ /^TTH:([0-9A-Z]{39})$/ ) { $s{'tth'}    = $1; }
       else                                            { $s{'string'} = $s{'cmd'}[4]; }
       $s{'string'} =~ tr/$/ /;
+      $self->cmd('make_hub');
+
+      if ( $self->{'share_tth'} and $s{'tth'} and $self->{'share_tth'}{ $s{'tth'} } ) {
+        $self->log(
+          'adcdev', 'Search', $s{'who'},
+          $self->{'share_tth'}{ $s{'tth'} },
+          -s $self->{'share_tth'}{ $s{'tth'} },
+          -e $self->{'share_tth'}{ $s{'tth'} }
+          ),
+          $self->{'share_tth'}{ $s{'tth'} } =~ tr{\\}{/};
+        $self->{'share_tth'}{ $s{'tth'} } =~ s{^/+}{};
+        local @_ = (
+          'SR', (
+            ( $self->{'M'} eq 'P' or !$self->{'myport_tcp'} or !$self->{'myip'} )
+            ? $self->{'Nick'}
+            : $self->{'myip'} . ':' . $self->{'myport_tcp'}
+          ),
+          $self->adc_path_encode( $self->{'share_tth'}{ $s{'tth'} } ) . "\x05" . ( -s $self->{'share_tth'}{ $s{'tth'} } or -1 ),
+          $self->{'S'} . '/'
+            . $self->{'S'} . "\x05" . "TTH:"
+            . $s{'tth'}
+            . ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})" : '' ),
+#{ SI => -s $self->{'share_tth'}{ $params->{TR} },SL => $self->{INF}{SL},FN => $self->adc_path_encode( $self->{'share_tth'}{ $params->{TR} } ),=> $params->{TO} || $self->make_token($peerid),TR => $params->{TR}}
+        );
+        if ( $s{'ip'} and $s{'port'} ) { $self->send_udp( $s{'ip'}, $s{'port'}, join ' ', @_ ); }
+        else                           { $self->cmd(@_); }
+      }
+      #'SR', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),        join '?',
       return \%s;
     },
     'SR' => sub {
@@ -270,10 +299,12 @@ sub init {
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{ $params->{ID} } ||= $self->{'peers'}{$peerid};
       $self->{'peers'}{$peerid}{'SID'}  ||= $peersid;
-      #    $self->log( 'adcdev', 'INF:', $peerid, Dumper $params, $self->{'peers'} ) unless $peerid;
+      #$self->log( 'adcdev', 'INF:', $peerid, Dumper $params, $self->{'peers'} ) unless $peerid;
       $self->cmd( 'B', 'INF' ), $self->{'status'} = 'connected' if $dst eq 'I';    #clihub
       if ( $dst eq 'C' ) {
         $self->cmd( $dst, 'INF' ), $self->{'status'} = 'connected';                #clicli
+        if   ( $params->{TO} ) { }
+        else                   { }
         $self->cmd('file_select');
         $self->cmd( $dst, 'GET' );
       }
@@ -284,7 +315,7 @@ sub init {
       my ($dst) = @{ shift() };
       #$peerid
       #$self->log( 'adcdev', 'QUI', $dst, $_[0], Dumper $self->{'peers'}{ $_[0] } );
-      delete $self->{'peers'}{ $_[0] };                                            # or mark time
+      delete $self->{'peers'}{ $_[0] };    # or mark time
     },
     'STA' => sub {
       my $self = shift if ref $_[0];
@@ -305,8 +336,48 @@ sub init {
     'SCH' => sub {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, @feature ) = @{ shift() };
-      #  $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ), 'S=>', @_ );
+      #$self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ), 'S=>', @_ );
       my $params = $self->adc_parse_named(@_);
+      #DRES J3F4 KULX SI0 SL57 FN/Joculete/logs/stderr.txt TRLWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ TOauto
+      $self->{'share_tth'}{ $params->{TR} } =~ tr{\\}{/};
+      if (  $self->{'share_tth'}
+        and $params->{TR}
+        and $self->{'share_tth'}{ $params->{TR} }
+        and -s $self->{'share_tth'}{ $params->{TR} } )
+      {
+        $self->log(
+          'adcdev', 'SCH',
+          ( $dst, $peerid, 'F=>', @feature ),
+          $self->{'share_tth'}{ $params->{TR} },
+          -s $self->{'share_tth'}{ $params->{TR} },
+          -e $self->{'share_tth'}{ $params->{TR} }
+        );
+        local @_ = (
+          $peerid, {
+            SI => ( -s $self->{'share_tth'}{ $params->{TR} } ) || -1,
+            SL => $self->{INF}{SL},
+            FN => $self->adc_path_encode( $self->{'share_tth'}{ $params->{TR} } ),
+            TO => $params->{TO}                                || $self->make_token($peerid),
+            TR => $params->{TR}
+          }
+        );
+        if ( $self->{'peers'}{$peerid}{INF}{I4} and $self->{'peers'}{$peerid}{INF}{U4} ) {
+          $self->log(
+            'dcdev', 'SCH', 'i=', $self->{'peers'}{$peerid}{INF}{I4},
+            'u=', $self->{'peers'}{$peerid}{INF}{U4},
+            'T==>', 'U' . 'RES' . $self->adc_make_string(@_)
+          );
+          $self->send_udp(
+            $self->{'peers'}{$peerid}{INF}{I4},
+            $self->{'peers'}{$peerid}{INF}{U4},
+            'U' . 'RES ' . $self->adc_make_string(@_)
+          );
+        } else {
+          $self->cmd( 'D', 'RES', @_ );
+        }
+      }
+      #$self->adc_make_string(@_);
+      #TODO active send udp
       return $params;
       #TRKU2OUBVHC3VXUNOHO2BS2G4ECHYB6ESJUQPYFSY TO626120869 ]
       #TRQYKHJIZEPSISFF3T25DIGKEYI645Y7PGMSI7QII TOauto ]
@@ -382,6 +453,20 @@ sub init {
       #CSND file files.xml.bz2 0 6117
       $self->{'filetotal'} = $_[3];
       return $self->file_open();
+    },
+    #CGET file TTH/YDIXOH7A3W233WTOQUET3JUGMHNBYNFZ4UBXGNY 637534208 6291456
+    'GET' => sub {
+      my $self = shift if ref $_[0];
+      my ( $dst, $peerid, $toid ) = @{ shift() };
+      if ( $_[0] eq 'file' ) {
+        my $file = $_[1];
+        if ( $file =~ s{^TTH/}{} ) { $self->file_send_tth( $file, $_[2], $_[3] ); }
+        else {
+          #$self->file_send($file, $_[2], $_[3]);
+        }
+      } else {
+        $self->log( 'dcerr', 'SND', "unknown type", @_ );
+      }
     },
   };
 
@@ -468,6 +553,10 @@ sub init {
       $self->sendcmd( 'Quit', $self->{'Nick'} );
       $self->disconnect();
     },
+    'SR' => sub {
+      my $self = shift if ref $_[0];
+      $self->sendcmd( 'SR', @_ );
+    },
     'Search' => sub {
       my $self = shift if ref $_[0];
       $self->sendcmd( 'Search', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),
@@ -477,7 +566,7 @@ sub init {
       my $self = shift if ref $_[0];
       push( @{ $self->{'search_todo'} }, [@_] ) if @_;
       return unless @{ $self->{'search_todo'} || return };
-#      $self->log($self, 'search', Dumper \@_);
+#$self->log($self, 'search', Dumper \@_);
 #$self->log( 'dcdev', "search too fast [$self->{'search_every'}], len=", scalar @{ $self->{'search_todo'} } )        if @_ and scalar @{ $self->{'search_todo'} } > 1;
       return if time() - $self->{'search_last_time'} < $self->{'search_every'} + 2;
       $self->{'search_last'} = shift( @{ $self->{'search_todo'} } );
@@ -540,11 +629,11 @@ sub init {
       my $self = shift if ref $_[0];
       my $dst = shift;
       #$self->log($self, 'SUP inited',"MT:$self->{'message_type'}", "=== $dst");
-      $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0 BZIP PING)];
+      $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0 BZIP )];    #PING ZLIG
       $self->{'SUPRMS'} ||= [qw()];
-      $self->{'SUP'}    ||= { ( map { $_ => 1 } @{ $self->{'SUPADS'} } ), ( map { $_ => 0 } @{ $self->{'SUPRMS'} } ) };
+      $self->{'SUP'} ||= { ( map { $_ => 1 } @{ $self->{'SUPADS'} } ), ( map { $_ => 0 } @{ $self->{'SUPRMS'} } ) };
       #$self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
-      $self->cmd_adc    #sendcmd
+      $self->cmd_adc                                                 #sendcmd
         ( $dst, 'SUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
       #ADBAS0 ADBASE ADTIGR ADUCM0 ADBLO0
     },
@@ -572,17 +661,17 @@ sub init {
       #
       $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
       $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-      $self->{'ID'}       ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
-      $self->{'PID'}       ||= tiger $self->{'ID'};
-      $self->{'CID'}       ||= tiger $self->{'PID'};
+      $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
+      $self->{'PID'} ||= tiger $self->{'ID'};
+      $self->{'CID'} ||= tiger $self->{'PID'};
       $self->{'INF'}{'PD'} ||= base32 $self->{'PID'};
       $self->{'INF'}{'ID'} ||= base32 $self->{'CID'};
-      $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
+      $self->{'INF'}{'SL'} ||= $self->{'S'} || '2';
       $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
       $self->{'INF'}{'SF'} ||= 30999;
-      $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
-      $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
-      $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
+      $self->{'INF'}{'HN'} ||= $self->{'H'} || 1;
+      $self->{'INF'}{'HR'} ||= $self->{'R'} || 0;
+      $self->{'INF'}{'HO'} ||= $self->{'O'} || 0;
       $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
         || 'perl' . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
       $self->{'INF'}{'US'} ||= 10000;

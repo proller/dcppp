@@ -45,5 +45,6 @@ print tthfile '0', "\n"; #VK54ZIEEVTWNAUI5D5RDFIL37LX2IQNSTAXFKSA
 print tthfile '00', "\n"; #P55IZ2KYAB36W36VHPULWPTQMUHC7XMNXNCPLRY
 #print tthfile 'C:\pub\chillout\Nebra_Skydisk_-_mixed_by_Cardamar.mp3';
 #print tthfile 'Makefile.old', "\n";
+print tthfile 'uuuuuuuneeexistent', "\n";
 
 #1..1024 => 6D3N5DVHCWWWPJRJHWLY4VN2DQX3APKMR4FZLWA

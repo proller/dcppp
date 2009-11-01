@@ -9,6 +9,7 @@ use POSIX;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Indent   = 1;
 our $VERSION = '0.03' . '_' . ( split( ' ', '$Revision$' ) )[1];
 our $AUTOLOAD;
 our %global;
@@ -49,10 +50,46 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
 );
 
 sub float {    #v1
-  my $self = shift;
+  my $self = shift if ref $_[0];
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
     : int( $_[0] );
+}
+
+sub send_udp ($$;@) {
+  my $self = shift if ref $_[0];
+  #$self->log('dcdev', "sending UDP0:", Dumper \@_);
+  my $host = shift;
+  $host =~ s/:(\d+)$//;
+  my $port = shift;
+  #$port = $1 || shift ;
+  #$port = shift ;
+  $port ||= $1;
+  $self->log( 'dcdev', "sending UDP to [$host]:[$port] = [$_[0]]" );
+  my $opt = $_[1] || {};
+  if (
+    my $s = new IO::Socket::INET(
+      'PeerAddr' => $host,
+      'PeerPort' => $port,
+      'Proto'    => 'udp',
+      'Timeout'  => $opt->{'Timeout'}, (
+        $opt->{'nonblocking'}
+        ? (
+          'Blocking'   => 0,
+          'MultiHomed' => 1,    #del
+          )
+        : ()
+      ),
+      %{ $opt->{'sockopts'} || {} },
+    )
+    )
+  {
+    #$self->log('dcdev', "sending UDP to [$host]:[$port] RES=" ,$s->send($_[0]));
+    $s->send( $_[0] );
+    $s->close();
+  } else {
+    $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
+  }
 }
 
 sub clear {
@@ -94,7 +131,7 @@ sub new {
     'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
     'client'   => 'perl',    #'dcp++',                                                              #++: indicates the client
     'protocol' => 'nmdc',    # or 'adc'
-    'cmd_sep' => ' ', 'V' => $VERSION , #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
+    'cmd_sep' => ' ', 'V' => $VERSION,    #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
     #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
@@ -122,6 +159,8 @@ sub new {
     'reconnects'           => 5,
     'reconnect_sleep'      => 5,
     'partial_ext'          => '.partial',
+    'file_send_by'         => 1024 * 64,
+    'local_mask_rfc'       => [qw(10 172.[123]\d 192\.168)],
     #'partial_prefix' => './partial/',
     #ADC
   };
@@ -179,7 +218,7 @@ sub cmd {
   } elsif ( exists $self->{$cmd} ) {
     $self->log( 'dev', "cmd call by var name $cmd=$self->{$cmd}" );
     @ret = ( $self->{$cmd} );
-  } elsif ($self->{'adc'} and  length $dst == 1 and length $cmd == 3 ) {
+  } elsif ( $self->{'adc'} and length $dst == 1 and length $cmd == 3 ) {
     @ret = $self->cmd_adc( $dst, $cmd, @_ );
   } else {
     $self->log(
@@ -299,7 +338,8 @@ sub func {
     $self->get_my_addr();
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
-    sub is_local_ip ($) { return $_[0] =~ /^(?:10|172.[123]\d|192\.168)\./; }
+    my $localmask = join '|', @{ $self->{'local_mask_rfc'}, }, @{ $self->{'local_mask'} || [] };
+    sub is_local_ip ($) { return $_[0] =~ /^(?:)\./; }
     $self->log( 'info', "my internal ip detected, using passive mode", $self->{'myip'}, $self->{'hostip'} ), $self->{'M'} = 'P'
       if !$self->{'M'}
         and is_local_ip $self->{'myip'}
@@ -476,6 +516,7 @@ sub func {
       } while ( $readed and $reads++ < $self->{'max_reads'} );
       #TODO !!! timed
     }
+    if ( $self->{'filehandle_send'} ) { $self->file_send_part(); }
     for ( keys %{ $self->{'clients'} } ) {
       $self->log( 'dev', "del client[$self->{'clients'}{$_}{'number'}][$_]", ), delete( $self->{'clients'}{$_} ),
         $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } keys %{ $self->{'clients'} } ), next
@@ -637,15 +678,14 @@ sub func {
   };
   $self->{'get'} ||= sub {
     my ( $self, $nick, $file, $as ) = @_;
-    my ($sid, $cid);
+    my ( $sid, $cid );
     $sid = $nick if $nick =~ /^[A-Z0-9]{4}$/;
     $cid = $nick if $nick =~ /^[A-Z0-9]{39}$/;
-
     $cid ||= $self->{peers}{$sid}{INF}{ID};
     $sid ||= $self->{peers}{$cid}{SID};
     #todo by nick
     $self->wait_clients();
-    $self->{'want'}{$self->{peers}{$cid}{'INF'}{'ID'} || $nick}{$file} = $as || $file || '';
+    $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $nick }{$file} = $as || $file || '';
     $self->log( 'dbg', "getting [$nick] $file as $as" );
     if ( $self->{'adc'} ) {
       #my $token = $self->make_token($nick);
@@ -665,21 +705,17 @@ sub func {
   $self->{'file_select'} ||= sub {
     my $self = shift;
     return if length $self->{'filename'};
-    
-   
-    
     my $peerid = $self->{'peerid'} || $self->{'peernick'};
-    
-#$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
+    #$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
     for ( keys %{ $self->{'want'}{$peerid} } ) {
       ( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}{$peerid}{$_} );
-#$self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
+      #$self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
       $self->{'filecurrent'} = $self->{'filename'};
       next unless defined $self->{'filename'};
       #delete  $self->{'want'}{ $peerid }{$_} ;   $self->{'filecurrent'}
       last;
     }
-#$self->log( 'dcdev', 'file_select2', $self->{'filename'}, $self->{'fileas'} );
+    #$self->log( 'dcdev', 'file_select2', $self->{'filename'}, $self->{'fileas'} );
     return unless defined $self->{'filename'};
     unless ( $self->{'filename'} ) {
       if ( $self->{'peers'}{$peerid}{'SUP'}{'BZIP'} or $self->{'NickList'}->{$peerid}{'XmlBZList'} ) {
@@ -761,6 +797,45 @@ sub func {
             ( $self->{'fileas'} || $self->{'filename'} );
       }
     }
+    close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'} if $self->{'filehandle_send'};
+  };
+  $self->{'file_send_tth'} ||= sub {
+    my $self = shift;
+    my ( $file, $start, $size ) = @_;
+    if ( $self->{'share_tth'}{$file} ) { $self->file_send( $self->{'share_tth'}{$file}, $start, $size ); }
+    else                               { $self->log( 'dcerr', 'send', 'cant find file', $file ); }
+  };
+  $self->{'file_send'} ||= sub {
+    my $self = shift;
+    my ( $file, $start, $size ) = @_;
+    return unless -e $file;
+    $size = -s $file if $size < 0;
+    if ( open $self->{'filehandle_send'}, '<', $file ) {
+      binmode( $self->{'filehandle_send'} );
+      seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
+      my $name = $file;
+      $name =~ s{^.*[\\/]}{}g;
+      if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', 'file', $name, $start, $size ); }
+      else                  { }
+      $self->{'status'} = 'transfer';
+      $self->file_send_part();
+    }
+  };
+  $self->{'file_send_part'} ||= sub {
+    my $self = shift;
+    #my ($file, $start, $size) = @_;
+    my $buf;
+    my $readed = read $self->{'filehandle_send'}, $buf, $self->{'file_send_by'};
+    if ( $readed < $self->{'file_send_by'} ) {
+      $self->{'log'}->( 'dev', 'file completed' );
+      #$self->file_close();
+      $self->disconnect();
+    }
+    $self->log( 'dev', "sending bytes", length $buf );
+    #send $self->{'socket'},
+    #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+    eval { $_ = $self->{'socket'}->send($buf); };
+    $self->log( 'err', 'send error', $@ ) if $@;
   };
   $self->{'get_peer_addr'} ||= sub {
     my ($self) = @_;
@@ -874,6 +949,16 @@ sub func {
       $func->(@_);
     }
   };
+  $self->{'adc_make_string'} = sub (@) {
+    my $self = shift if ref $_[0];
+    join ' ', map {
+      ref $_ eq 'ARRAY' ? @$_ : ref $_ eq 'HASH' ? do {
+        my $h = $_;
+        map { "$_$h->{$_}" } keys %$h;
+        }
+        : $_
+    } @_;
+  };
   $self->{'cmd_adc'} ||= sub {
     my ( $self, $dst, $cmd ) = ( shift, shift, shift );
     #$self->sendcmd( $dst, $cmd,map {ref $_ eq 'HASH'}@_);
@@ -881,18 +966,12 @@ sub func {
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-      ( $dst eq 'C' || !length $self->{'sid'} ? () : $self->{'sid'} ),
-      map {
-        ref $_ eq 'ARRAY' ? @$_ : ref $_ eq 'HASH' ? do {
-          my $h = $_;
-          map { "$_$h->{$_}" } keys %$h;
-          }
-          : $_
-        } @_
+      ( $dst eq 'C' || !length $self->{'sid'} ? () : $self->{'sid'} ), $self->adc_make_string(@_)
+        #( $dst eq 'D' || !length $self->{'sid'} ? () : $self->{'sid'} ),
     );
   };
   #sub adc_string_decode ($) {
-  $self->{'adc_string_decode'} = sub ($) {
+  $self->{'adc_string_decode'} ||= sub ($) {
     my $self = shift;
     local ($_) = @_;
     s{\\s}{ }g;
@@ -908,6 +987,13 @@ sub func {
     s{ }{\\s}g;
     s{\x0A}{\\n}g;
     $_;
+  };
+  $self->{'adc_path_encode'} = sub ($) {
+    my $self = shift;
+    local ($_) = @_;
+    s{^(\w:)}{/${1}_}g;
+    s{\\}{/}g;
+    $self->adc_string_encode($_);
   };
   #sub adc_strings_decode (\@) {
   $self->{'adc_strings_decode'} = sub (\@) {
@@ -961,7 +1047,8 @@ Net::DirectConnect - Perl Direct Connect protocol implementation
     'port' => '4111', #if not 411
     'Nick' => 'Bender', 
     'description' => 'kill all humans',
-    'M'           => 'P', #passive mode, active by default
+     #'M'           => 'P', #passive mode, autodetect by default
+     #'local_mask'       => [qw(80.240)], #mode=active if hub in this nets and your ip in gray
   );
   $dc->wait_connect();
   $dc->chatline( 'hi all' );
@@ -1013,13 +1100,6 @@ look at examples for handlers
  also useful for creating links from web:
  http://magnet-uri.sourceforge.net/
  http://en.wikipedia.org/wiki/Magnet:_URI_scheme
-
-
-=head1 Last changes
-
- writefile -> file_write
- openfile -> file_open
-
 
 =head1 TODO
  
