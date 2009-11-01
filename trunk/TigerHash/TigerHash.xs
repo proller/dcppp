@@ -20,6 +20,7 @@ extern "C" {
 #include "TigerHash.cpp"
 #include "Encoder.cpp"
 #include "MerkleTree.h"
+
 //#include "Util.cpp"
 //#include "File.cpp"
 
@@ -107,7 +108,7 @@ tthfile(s)
         return;// false;
       }
     //	madvise(buf, size_read, MADV_SEQUENTIAL | MADV_WILLNEED);
-*/		
+   */		
         if ((	n = read(fd, buf, BUF_SIZE))>=0) {
           //} else {	size_read = 0;		}
           //if (n)
