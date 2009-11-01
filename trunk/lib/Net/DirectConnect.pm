@@ -637,16 +637,23 @@ sub func {
   };
   $self->{'get'} ||= sub {
     my ( $self, $nick, $file, $as ) = @_;
+    my $sid, $cid;
+    $sid = $nick if $nick =~ /^[A-Z0-9]{4}$/;
+    $cid = $nick if $nick =~ /^[A-Z0-9]{39}$/;
+
+    $cid ||= $self->{peers}{$sid}{INF}{ID};
+    $sid ||= $self->{peers}{$cid}{SID};
+    #todo by nick
     $self->wait_clients();
-    $self->{'want'}{$self->{peers}{$nick}{'INF'}{'ID'} || $nick}{$file} = $as || $file || '';
+    $self->{'want'}{$self->{peers}{$cid}{'INF'}{'ID'} || $nick}{$file} = $as || $file || '';
     $self->log( 'dbg', "getting [$nick] $file as $as" );
     if ( $self->{'adc'} ) {
       #my $token = $self->make_token($nick);
       local @_;
       if ( $self->{'M'} eq 'A' and $self->{'myip'} and !$self->{'passive_get'} ) {
-        @_ = ( 'CTM', $nick, $self->{'connect_protocol'}, $self->{'myport'}, $self->make_token($nick) );
+        @_ = ( 'CTM', $sid, $self->{'connect_protocol'}, $self->{'myport'}, $self->make_token($nick) );
       } else {
-        @_ = ( 'RCM', $nick, $self->{'connect_protocol'}, $self->make_token($nick) );
+        @_ = ( 'RCM', $sid, $self->{'connect_protocol'}, $self->make_token($nick) );
       }
       $self->cmd( 'D', @_ );
       #$self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], )
