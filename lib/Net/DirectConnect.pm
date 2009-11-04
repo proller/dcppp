@@ -172,7 +172,7 @@ sub new {
   $self->init(@param);
   if ( $self->{'auto_listen'} ) { $self->listen(); }
   elsif ( $self->{'auto_connect'} ) {
-    $self->log( $self, 'new inited', "MT:$self->{'message_type'}", ' with' );
+#    $self->log( $self, 'new inited', "MT:$self->{'message_type'}", ' with' );
     $self->connect();
     $self->work();
   }
@@ -335,21 +335,26 @@ sub func {
       ),
       %{ $self->{'sockopts'} || {} },
     );
+    $self->log( 'dev', "connected0", );
+
+
     $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
     $self->get_my_addr();
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
     my $localmask = join '|', @{ $self->{'local_mask_rfc'}, }, @{ $self->{'local_mask'} || [] };
-    sub is_local_ip ($) { return $_[0] =~ /^(?:)\./; }
+    sub is_local_ip ($) { return $_[0] =~ /^(?:$localmask)\./; }
     $self->log( 'info', "my internal ip detected, using passive mode", $self->{'myip'}, $self->{'hostip'} ), $self->{'M'} = 'P'
       if !$self->{'M'}
         and is_local_ip $self->{'myip'}
         and !is_local_ip $self->{'hostip'};
+
     $self->{'M'} ||= 'A';
+    $self->log( 'info', "mode set [$self->{'M'}] ");
     $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}) [me=$self->{'myip'}] ok ", );
     #$self->log($self, 'connected1 inited',"MT:$self->{'message_type'}", ' with');
     $self->cmd('connect_aft');
-    #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
+    $self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
     $self->log( 'dev', "connect_aft after", );
     $self->recv();
     #$self->log( 'dev', "connect recv after", );

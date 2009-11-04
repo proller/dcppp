@@ -48,7 +48,7 @@ sub init {
   );
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->baseinit();
-  $self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
+#  $self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
   $self->{'parse'} ||= {
     'chatline' => sub {
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
@@ -202,18 +202,31 @@ sub init {
           ),
           $self->{'share_tth'}{ $s{'tth'} } =~ tr{\\}{/};
         $self->{'share_tth'}{ $s{'tth'} } =~ s{^/+}{};
+
+my $path;
+if ($self->{'adc'}) {
+$path = $self->adc_path_encode( $self->{'share_tth'}{ $s{'tth'} } );
+}else {
+$path = $self->{'share_tth'}{ $s{'tth'} };
+$path =~ s{^\w:}{};
+$path =~ s{^\W+}{};
+$path =~tr{/}{\\};
+}
         local @_ = (
           'SR', (
 #            ( $self->{'M'} eq 'P' or !$self->{'myport_tcp'} or !$self->{'myip'} )            ? 
 $self->{'Nick'}
 #            : $self->{'myip'} . ':' . $self->{'myport_tcp'}
           ),
-          $self->adc_path_encode( $self->{'share_tth'}{ $s{'tth'} } ) . "\x05" . ( -s $self->{'share_tth'}{ $s{'tth'} } or -1 ),
+$path
+           . "\x05" . ( -s $self->{'share_tth'}{ $s{'tth'} } or -1 ),
           $self->{'S'} . '/'
             . $self->{'S'} . "\x05" . "TTH:"
             . $s{'tth'}
 #            . ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})" : '' ),
-            . (  " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}"  ),
+#            . (  " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}"  ),
+            . (  " ($self->{'host'}:$self->{'port'})". (($s{'ip'} and $s{'port'}) ? '' : "\x05$s{'nick'}"  )),
+#            . ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}" : '' ),
 #{ SI => -s $self->{'share_tth'}{ $params->{TR} },SL => $self->{INF}{SL},FN => $self->adc_path_encode( $self->{'share_tth'}{ $params->{TR} } ),=> $params->{TO} || $self->make_token($peerid),TR => $params->{TR}}
         );
         if ( $s{'ip'} and $s{'port'} ) { $self->send_udp( $s{'ip'}, $s{'port'}, join ' ', @_ ); }
@@ -224,6 +237,21 @@ $self->{'Nick'}
 #Hub:	[Outgoing][80.240.208.42:4111]	 	$SR prrrrroo0 distr\s60\games\10598_paintball2.zip621237 1/2TTH:3TFVOXE2DS6W62RWL2QBEKZBQLK3WRSLG556ZCA (80.240.208.42:4111)breathe|
 #$SR prrrrroo0 distr\moscow\mom\Mo\P\Paintball.htm1506 1/2TTH:NRRZNA5MYJSZGMPQ634CPGCPX3ZBRLKHAACPAFQ (80.240.208.42:4111)breathe|
 #$SR prrrrroo0 distr\moscow\mom\Map\P\Paintball.htm3966 1/2TTH:QLRRMET6MSNJTIRKBDLQYU6RMI5QVZDZOGAXEXA (80.240.208.42:4111)breathe|
+
+
+#$SR ILICH ЕГТС_07_2007\bases\sidhouse.DBF120923801 6/8TTH:4BAKR7LLXE65I6S4HASIXWIZONBEFS7VVZ7QQ2Y (80.240.211.183:411)
+#$SR gellarion7119 MuZonnO\Mark Knopfler - Get Lucky (2009)\mark_knopfler_-_you_cant_beat_the_house.mp36599140 7/7TTH:IDPHZ4AJIIWDYOFEKCCVJUNVIPGSGTYFW5CGEQQ (80.240.211.183:411)
+#$SR 13th_day Картинки\еще девки\sacrifice_penthouse02.jpg62412 0/20TTH:GHMWHVBKRLF52V26VFO4M4RUQ65NC3YKWIW7FPI (80.240.211.183:411)
+
+#DIRECT:
+#$SR server1 server\Unsorted\Desperate.Housewives.S04.720p.HDTV.x264\desperate.housewives.s04e03.720p.hdtv.x264.Rus.Eng.mkv1194423977 2/2TTH:6YWRGDXNQJEOGSB4Q7Y3Y7XRM7EXPLUK7GBRJ3A (80.240.211.183:411)
+#$SR MikMEBX Deep purple\1980-1988\08-The House Of Blue Light.1987 10/10[ f12p.ru ][ F12P-HUB ] - день единства... вспомните хорошее и улыбнитесь друг другу.. пусть это будет днем гармонии (80.240.211.183)
+
+#PASSIVE
+#$SR ILICH ЕГТС_07_2007\bases\sidhouse.DBF120923801 6/8TTH:4BAKR7LLXE65I6S4HASIXWIZONBEFS7VVZ7QQ2Y (80.240.211.183:411)
+#$SR gellarion7119 MuZonnO\Mark Knopfler - Get Lucky (2009)\mark_knopfler_-_you_cant_beat_the_house.mp36599140 7/7TTH:IDPHZ4AJIIWDYOFEKCCVJUNVIPGSGTYFW5CGEQQ (80.240.211.183:411)
+#$SR SALAGA Видео\Фильмы\XXX\xxx Penthouse.avi732665856 0/5TTH:3OFCM6GPQZNBNAMV6SRDFHFPK2X76EO6UCIO7ZQ (80.240.211.183:411)
+
 
 
       return \%s;
@@ -583,8 +611,8 @@ $self->file_send_parse(@_);
       $self->{'search_todo'} = undef unless @{ $self->{'search_todo'} };
       if ( $self->{'adc'} ) { $self->cmd_adc( 'B', 'SCH', @{ $self->{'search_last'} } ); }
       else {
-        $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport_udp'}",
-          join '?', @{ $self->{'search_last'} } );
+#        $self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport_udp'}", join '?', @{ $self->{'search_last'} } );
+        $self->sendcmd( 'Search', ( ($self->{'myip'} && $self->{'myport_udp'}) ? "$self->{'myip'}:$self->{'myport_udp'}" : 'Hub:' . $self->{'Nick'} ) , join '?', @{ $self->{'search_last'} } );
       }
       $self->{'search_last_time'} = time();
     },
@@ -734,7 +762,8 @@ $self->file_send_parse(@_);
     },
 =cut    
 
-  if ( $self->{'M'} eq 'A' ) {
+    $self->log( 'dev', "0making listeners [$self->{'M'}]" );
+  if ( $self->{'M'} eq 'A' or !$self->{'M'}) {
     $self->log( 'dev', "making listeners: tcp" );
     $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
       %$self, $self->clear(),
