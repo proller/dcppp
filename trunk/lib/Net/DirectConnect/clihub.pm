@@ -90,7 +90,7 @@ sub init {
       }
     },
     'Lock' => sub {
-      $self->log( "lockparse", @_ );
+#      $self->log( "lockparse", @_ );
       $self->{'sendbuf'} = 1;
       $self->cmd('Supports');
       $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
@@ -204,21 +204,28 @@ sub init {
         $self->{'share_tth'}{ $s{'tth'} } =~ s{^/+}{};
         local @_ = (
           'SR', (
-            ( $self->{'M'} eq 'P' or !$self->{'myport_tcp'} or !$self->{'myip'} )
-            ? $self->{'Nick'}
-            : $self->{'myip'} . ':' . $self->{'myport_tcp'}
+#            ( $self->{'M'} eq 'P' or !$self->{'myport_tcp'} or !$self->{'myip'} )            ? 
+$self->{'Nick'}
+#            : $self->{'myip'} . ':' . $self->{'myport_tcp'}
           ),
           $self->adc_path_encode( $self->{'share_tth'}{ $s{'tth'} } ) . "\x05" . ( -s $self->{'share_tth'}{ $s{'tth'} } or -1 ),
           $self->{'S'} . '/'
             . $self->{'S'} . "\x05" . "TTH:"
             . $s{'tth'}
-            . ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})" : '' ),
+#            . ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})" : '' ),
+            . (  " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}"  ),
 #{ SI => -s $self->{'share_tth'}{ $params->{TR} },SL => $self->{INF}{SL},FN => $self->adc_path_encode( $self->{'share_tth'}{ $params->{TR} } ),=> $params->{TO} || $self->make_token($peerid),TR => $params->{TR}}
         );
         if ( $s{'ip'} and $s{'port'} ) { $self->send_udp( $s{'ip'}, $s{'port'}, join ' ', @_ ); }
         else                           { $self->cmd(@_); }
       }
       #'SR', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),        join '?',
+
+#Hub:	[Outgoing][80.240.208.42:4111]	 	$SR prrrrroo0 distr\s60\games\10598_paintball2.zip621237 1/2TTH:3TFVOXE2DS6W62RWL2QBEKZBQLK3WRSLG556ZCA (80.240.208.42:4111)breathe|
+#$SR prrrrroo0 distr\moscow\mom\Mo\P\Paintball.htm1506 1/2TTH:NRRZNA5MYJSZGMPQ634CPGCPX3ZBRLKHAACPAFQ (80.240.208.42:4111)breathe|
+#$SR prrrrroo0 distr\moscow\mom\Map\P\Paintball.htm3966 1/2TTH:QLRRMET6MSNJTIRKBDLQYU6RMI5QVZDZOGAXEXA (80.240.208.42:4111)breathe|
+
+
       return \%s;
     },
     'SR' => sub {
@@ -458,6 +465,8 @@ sub init {
     'GET' => sub {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
+$self->file_send_parse(@_);
+=z
       if ( $_[0] eq 'file' ) {
         my $file = $_[1];
         if ( $file =~ s{^TTH/}{} ) { $self->file_send_tth( $file, $_[2], $_[3] ); }
@@ -467,6 +476,7 @@ sub init {
       } else {
         $self->log( 'dcerr', 'SND', "unknown type", @_ );
       }
+=cut
     },
   };
 

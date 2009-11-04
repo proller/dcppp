@@ -32,6 +32,9 @@ sub init {
     'XmlBZList' => 1,
     'ADCGet'    => 1,
     'MiniSlots' => 1,
+
+#MiniSlots XmlBZList ADCGet TTHL TTHF
+
     @_,
     'direction' => 'Download',
     #'Direction' => 'Upload', #rand here
@@ -57,15 +60,28 @@ sub init {
         $self->cmd('Direction');
         $self->{'sendbuf'} = 0;
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-        $self->cmd( 'Key', Net::DirectConnect::lock2key($1) );
+        $self->cmd( 'Key', $self->lock2key($1) );
       } else {
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-        $self->{'key'} = Net::DirectConnect::lock2key($1);
+
+
+        $self->{'key'} = $self->lock2key($1);
+#  $self->log ( 'dev','lock2key', "[$1]=[$self->{'key'}]");
       }
     },
     'Direction' => sub {
-      if   ( $_[0] eq 'Download' ) { $self->{'direction'} = 'Upload'; }
-      else                         { $self->{'direction'} = 'Download'; }
+my $d = (split /\s/, $_[0])[0];
+      if   ( $d eq 'Download' ) { $self->{'direction'} = 'Upload'; }
+      else                         { 
+$self->{'direction'} = 'Download'; 
+#  $self->log ( 'dev', "direction UNKNOWN [$d]", $self->{'direction'}, 'from', @_, ';');
+
+}
+
+#  $self->log ( 'dev', "direction RECIEVED", $self->{'direction'}, 'from', @_, ';');
+#2009/11/04-02:08:20 dev [2] direction RECIEVED Download from Download 28048 ;
+
+
     },
     'Key' => sub {
       if ( $self->{'incoming'} ) { }
@@ -94,8 +110,14 @@ sub init {
       $self->{'IpList'}->{ $self->{'host'} }               = \%{ $self->{'NickList'}->{ $self->{'peernick'} } };
       $self->{'IpList'}->{ $self->{'host'} }->{'port'}     = $self->{'PortList'}->{ $self->{'host'} };
       $self->handler( 'user_ip', $self->{'peernick'}, $self->{'host'}, $self->{'port'} );
-      if   ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) { $self->{'direction'} = 'Download'; }
+      if   ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) { 
+
+
+$self->{'direction'} = 'Download'; }
       else                                                        { $self->{'direction'} = 'Upload'; }
+
+#  $self->log ( 'dev', "direction", $self->{'direction'}, 'from', keys %{ $self->{'want'}->{ $self->{'peernick'} } }, ';');
+
     },
     'FileLength' => sub {
       $self->{'filetotal'} = $_[0];
@@ -118,7 +140,12 @@ sub init {
     },
     'MaxedOut' => sub {
       $self->disconnect();
-      }
+      },
+
+    'ADCGET' => sub {
+$self->file_send_parse(map {split /\s/, $_}@_);
+},
+
   };
   #$self->log ( 'dev', "del empty cmd", ),
   $self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
@@ -136,7 +163,7 @@ sub init {
       $self->sendcmd( 'Lock', $self->{'lock'} );
     },
     'Supports' => sub {
-      $self->sendcmd( 'Supports', ( $self->supports() or return ) );
+      $self->sendcmd( 'Supports',  $self->supports() || 'MiniSlots XmlBZList ADCGet TTHL TTHF' );
     },
     'Direction' => sub {
       $self->sendcmd( 'Direction', $self->{'direction'}, int( rand(0x7FFF) ) );
@@ -156,9 +183,16 @@ sub init {
       $self->sendcmd( 'FileLength', $_[0] );
     },
     'ADCGET' => sub {
+      my $self = shift if ref $_[0];
       #$ADCGET file TTH/I2VAVWYGSVTBHSKN3BOA6EWTXSP4GAKJMRK2DJQ 730020132 2586332
       $self->sendcmd( 'ADCGET', $self->{'adcget'} );
     },
+    'ADCSND' => sub {
+      my $self = shift if ref $_[0];
+      $self->sendcmd( 'ADCSND', @_);
+    }, 
   };
 }
 1;
+
+
