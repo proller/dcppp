@@ -11,14 +11,14 @@ use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib '../lib';
 use Net::DirectConnect::clihub;
-use Net::DirectConnect::TigerHash qw(tthfile);
+#use Net::DirectConnect::TigerHash qw(tthfile);
 use lib '../lib';
 use lib './stat/pslib';
 use psmisc;
 psmisc::config();
 print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 my $filelist = 'C:\Program Files\ApexDC++\Settings\HashIndex.xml';
-my %tth;    # = (tthash=>'/path', ...);
+my %tth = ('files.xml.bz2'=>'C:\Program Files\ApexDC++\Settings\files.xml.bz2');    # = (tthash=>'/path', ...);
 
 if ( open my $f, '<', $filelist ) {
   print "loading filelist..";
@@ -46,7 +46,7 @@ my $dc = Net::DirectConnect::clihub->new(
   #'M'           => 'P',
   'share_tth' => \%tth,
   'log'       => sub {
-    my $dc = shift;
+    my $dc =  ref $_[0] ? shift : {};
     #psmisc::printlog shift(), $dc->{'number'}, join ' ', psmisc::human('time'), @_, "\n";
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   },
@@ -60,6 +60,10 @@ my $dc = Net::DirectConnect::clihub->new(
       } qw(welcome chatline To)
   },
 );
+
+$dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
+
+
 while ( $dc->active() ) {
   $dc->work();
   psmisc::schedule(
