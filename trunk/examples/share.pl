@@ -43,7 +43,7 @@ my $dc = Net::DirectConnect::clihub->new(
   #'client'      => '++',
   #'V'           => '0.698',
   #'description' => '',
-  #'M'           => 'P',
+#  'M'           => 'P',
   'share_tth' => \%tth,
   'log'       => sub {
     my $dc =  ref $_[0] ? shift : {};
@@ -61,7 +61,21 @@ my $dc = Net::DirectConnect::clihub->new(
   },
 );
 
-$dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
+#$dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
+
+while ( $dc->active() ) {
+  $dc->work();
+  psmisc::schedule(
+    [ 30, 10000 ],
+    our $dump_sub__ ||= sub {
+#      print "Writing dump\n";
+#      psmisc::file_rewrite( 'dump', Dumper $dc);
+
+$dc->search('house');
+
+    }
+  );
+}
 
 
 while ( $dc->active() ) {
