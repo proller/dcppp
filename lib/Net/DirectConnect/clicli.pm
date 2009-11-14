@@ -151,6 +151,7 @@ $self->file_send_parse(map {split /\s/, $_}@_);
   $self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
   $self->{'cmd'} ||= {
     'connect_aft' => sub {
+#      my $self = shift if ref $_[0];
       $self->{'sendbuf'} = 1;
       $self->cmd('MyNick');
       $self->{'sendbuf'} = 0;

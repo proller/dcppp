@@ -304,6 +304,7 @@ sub func {
   $self->{'connect'} ||= sub {
     my $self = shift;
     #$self->log($self, 'connect0 inited',"MT:$self->{'message_type'}", ' with');
+
     if ( $_[0] or $self->{'host'} =~ /:/ ) {
       $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
@@ -429,7 +430,7 @@ sub func {
     }
     $self->file_close();
     delete $self->{$_} for qw(NickList IpList PortList);
-    $self->log( 'info', "disconnected" );
+    $self->log( 'info', "disconnected", __FILE__,__LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
   };
   $self->{'destroy'} ||= sub {
@@ -437,7 +438,7 @@ sub func {
     $self->disconnect() if ref $self;
     #!?  delete $self->{$_} for keys %$self;
     $self->{'status'} = 'destroy';
-    %$self = ();
+    $self = {};
   };
   $self->{'recv'} ||= sub {
     my $self = shift;
@@ -470,10 +471,8 @@ sub func {
                 'socket'       => $_,
                 'LocalPort'    => $self->{'myport'},
                 'incoming'     => 1,
-                'want'         => \%{ $self->{'want'} },
-                'NickList'     => \%{ $self->{'NickList'} },
-                'IpList'       => \%{ $self->{'IpList'} },
-                'PortList'     => \%{ $self->{'PortList'} },
+#                'want'         => \%{ $self->{'want'} },                'NickList'     => \%{ $self->{'NickList'} },                'IpList'       => \%{ $self->{'IpList'} },                'PortList'     => \%{ $self->{'PortList'} },
+                'want'         =>  $self->{'want'} ,                'NickList'     =>  $self->{'NickList'} ,                'IpList'       =>  $self->{'IpList'} ,                'PortList'     =>  $self->{'PortList'},
                 'auto_listen'  => 0,
                 'auto_connect' => 0,
                 'parent'       => $self,
@@ -524,7 +523,7 @@ sub func {
     }
     if ( $self->{'filehandle_send'} ) { $self->file_send_part(); }
     for ( keys %{ $self->{'clients'} } ) {
-      $self->log( 'dev', "del client[$self->{'clients'}{$_}{'number'}][$_]", ), delete( $self->{'clients'}{$_} ),
+      $self->log( 'dev', "del client[$self->{'clients'}{$_}{'number'}][$_][st=$self->{'clients'}{$_}{'status'}][sk=$self->{'clients'}{$_}{'socket'}]", ), delete( $self->{'clients'}{$_} ),
         $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } keys %{ $self->{'clients'} } ), next
         if !$self->{'clients'}{$_}{'socket'}
           or !$self->{'clients'}{$_}{'status'}
@@ -662,7 +661,7 @@ sub func {
     $self->connect_check();
     #$self->{'log'}->( $self,'sendcmd0', @_);
     $_[0] .= splice @_, 1, 1 if $self->{'adc'} and length $_[0] == 1;
-    $self->{'log'}->( $self, 'sendcmd1', @_ );
+    $self->{'log'}->( $self, 'sendcmd1',$self->{number}, @_ );
     push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
     $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
     if ( ( $self->{'sendbuf'} and @_ ) or !@{ $self->{'send_buffer'} || [] } ) { }

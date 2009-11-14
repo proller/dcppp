@@ -161,11 +161,14 @@ sub init {
         %$self, $self->clear(),
         'host'         => $host,
         'port'         => $port,
-        'want'         => \%{ $self->{'want'} },
-        'NickList'     => \%{ $self->{'NickList'} },
-        'IpList'       => \%{ $self->{'IpList'} },
-        'PortList'     => \%{ $self->{'PortList'} },
-        'handler'      => \%{ $self->{'handler'} },
+#        'want'         => \%{ $self->{'want'} },        'NickList'     => \%{ $self->{'NickList'} },        'IpList'       => \%{ $self->{'IpList'} },        'PortList'     => \%{ $self->{'PortList'} },        'handler'      => \%{ $self->{'handler'} },
+
+        'want'         => $self->{'want'} ,
+        'NickList'     =>  $self->{'NickList'} ,
+        'IpList'       => $self->{'IpList'} ,
+        'PortList'     =>  $self->{'PortList'} ,
+        'handler'      =>  $self->{'handler'} ,
+        
         'auto_connect' => 1,
       );
     },
