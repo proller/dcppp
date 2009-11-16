@@ -27,8 +27,20 @@ my $dc = Net::DirectConnect->new(
     #psmisc::printlog shift(), $dc->{'number'}, join ' ', psmisc::human('time'), @_, "\n";
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   },
+  'auto_work' => sub {
+    my $dc = shift;
+    psmisc::schedule(
+      [ 20, 10 ],
+      our $dump_sub__ ||= sub {
+        print "Writing dump\n";
+        psmisc::file_rewrite( 'dump.hub', Dumper $dc);
+      }
+    );
+  }
 );
 #$dc->work(100);      #seconds
+
+=without auto_work
 while ( $dc->active() ) {
   $dc->work();    #forever
   psmisc::schedule(
@@ -41,4 +53,6 @@ while ( $dc->active() ) {
 }
 #$dc->wait_finish();
 $dc->disconnect();
+=cut
+
 #$dc = undef;

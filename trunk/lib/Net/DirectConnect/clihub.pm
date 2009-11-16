@@ -294,7 +294,6 @@ sub init {
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
-
       return $self->{'peers'}{$peerid}{'SUP'};
     },
     'SID' => sub {
@@ -445,7 +444,6 @@ sub init {
         'auto_connect' => 1,
       );
 =cut
-
     },
     'CTM' => sub {
       my $self = shift if ref $_[0];
@@ -496,7 +494,6 @@ sub init {
         $self->log( 'dcerr', 'SND', "unknown type", @_ );
       }
 =cut
-
     },
   };
 
@@ -510,7 +507,6 @@ sub init {
 
 
 =cut  
-
   $self->{'cmd'} = {
     'chatline' => sub {
       for (@_) {
@@ -758,7 +754,6 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
-
   $self->log( 'dev', "0making listeners [$self->{'M'}]" );
   if ( $self->{'M'} eq 'A' or !$self->{'M'} ) {
     $self->log( 'dev', "making listeners: tcp" );
@@ -789,7 +784,7 @@ sub init {
       'parse' => {
         'SR'  => $self->{'parse'}{'SR'},
         'PSR' => sub {                     #U
-          #$self->log( 'dev', "UPSR", @_ );
+                                           #$self->log( 'dev', "UPSR", @_ );
         },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131
@@ -822,7 +817,6 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
-
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     delete $self->{'sid'};
     $self->log( 'dev', 'disconnect int' );
