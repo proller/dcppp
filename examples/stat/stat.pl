@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#$Id: stat.pm 383 2009-01-08 03:47:59Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/examples/stat/stat.pm $
+#$Id$ $URL$
 package statpl;
 use strict;
 no warnings qw(uninitialized);

@@ -13,3 +13,15 @@ check socket->send ret
 
 libevent http://paste.org.ru/?nt15er
 
+
+
+use d::dc;
+$dc = new d::dc(protocol=>'adc', ...);
+
+
+
+inlib:
+
+collect search results [n]
+
+make connection-listener

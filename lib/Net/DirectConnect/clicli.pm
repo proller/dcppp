@@ -32,11 +32,8 @@ sub init {
     'XmlBZList' => 1,
     'ADCGet'    => 1,
     'MiniSlots' => 1,
-
-#MiniSlots XmlBZList ADCGet TTHL TTHF
-
-    @_,
-    'direction' => 'Download',
+    #MiniSlots XmlBZList ADCGet TTHL TTHF
+    @_, 'direction' => 'Download',
     #'Direction' => 'Upload', #rand here
     'reconnects' => 0,
   );
@@ -63,25 +60,19 @@ sub init {
         $self->cmd( 'Key', $self->lock2key($1) );
       } else {
         $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-
-
         $self->{'key'} = $self->lock2key($1);
-#  $self->log ( 'dev','lock2key', "[$1]=[$self->{'key'}]");
+        #$self->log ( 'dev','lock2key', "[$1]=[$self->{'key'}]");
       }
     },
     'Direction' => sub {
-my $d = (split /\s/, $_[0])[0];
-      if   ( $d eq 'Download' ) { $self->{'direction'} = 'Upload'; }
-      else                         { 
-$self->{'direction'} = 'Download'; 
-#  $self->log ( 'dev', "direction UNKNOWN [$d]", $self->{'direction'}, 'from', @_, ';');
-
-}
-
-#  $self->log ( 'dev', "direction RECIEVED", $self->{'direction'}, 'from', @_, ';');
-#2009/11/04-02:08:20 dev [2] direction RECIEVED Download from Download 28048 ;
-
-
+      my $d = ( split /\s/, $_[0] )[0];
+      if ( $d eq 'Download' ) { $self->{'direction'} = 'Upload'; }
+      else {
+        $self->{'direction'} = 'Download';
+        #$self->log ( 'dev', "direction UNKNOWN [$d]", $self->{'direction'}, 'from', @_, ';');
+      }
+      #$self->log ( 'dev', "direction RECIEVED", $self->{'direction'}, 'from', @_, ';');
+      #2009/11/04-02:08:20 dev [2] direction RECIEVED Download from Download 28048 ;
     },
     'Key' => sub {
       if ( $self->{'incoming'} ) { }
@@ -110,14 +101,9 @@ $self->{'direction'} = 'Download';
       $self->{'IpList'}->{ $self->{'host'} }               = \%{ $self->{'NickList'}->{ $self->{'peernick'} } };
       $self->{'IpList'}->{ $self->{'host'} }->{'port'}     = $self->{'PortList'}->{ $self->{'host'} };
       $self->handler( 'user_ip', $self->{'peernick'}, $self->{'host'}, $self->{'port'} );
-      if   ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) { 
-
-
-$self->{'direction'} = 'Download'; }
+      if   ( keys %{ $self->{'want'}->{ $self->{'peernick'} } } ) { $self->{'direction'} = 'Download'; }
       else                                                        { $self->{'direction'} = 'Upload'; }
-
-#  $self->log ( 'dev', "direction", $self->{'direction'}, 'from', keys %{ $self->{'want'}->{ $self->{'peernick'} } }, ';');
-
+      #$self->log ( 'dev', "direction", $self->{'direction'}, 'from', keys %{ $self->{'want'}->{ $self->{'peernick'} } }, ';');
     },
     'FileLength' => sub {
       $self->{'filetotal'} = $_[0];
@@ -140,18 +126,16 @@ $self->{'direction'} = 'Download'; }
     },
     'MaxedOut' => sub {
       $self->disconnect();
-      },
-
+    },
     'ADCGET' => sub {
-$self->file_send_parse(map {split /\s/, $_}@_);
-},
-
+      $self->file_send_parse( map { split /\s/, $_ } @_ );
+    },
   };
   #$self->log ( 'dev', "del empty cmd", ),
   $self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
   $self->{'cmd'} ||= {
     'connect_aft' => sub {
-#      my $self = shift if ref $_[0];
+      #my $self = shift if ref $_[0];
       $self->{'sendbuf'} = 1;
       $self->cmd('MyNick');
       $self->{'sendbuf'} = 0;
@@ -164,7 +148,7 @@ $self->file_send_parse(map {split /\s/, $_}@_);
       $self->sendcmd( 'Lock', $self->{'lock'} );
     },
     'Supports' => sub {
-      $self->sendcmd( 'Supports',  $self->supports() || 'MiniSlots XmlBZList ADCGet TTHL TTHF' );
+      $self->sendcmd( 'Supports', $self->supports() || 'MiniSlots XmlBZList ADCGet TTHL TTHF' );
     },
     'Direction' => sub {
       $self->sendcmd( 'Direction', $self->{'direction'}, int( rand(0x7FFF) ) );
@@ -190,10 +174,8 @@ $self->file_send_parse(map {split /\s/, $_}@_);
     },
     'ADCSND' => sub {
       my $self = shift if ref $_[0];
-      $self->sendcmd( 'ADCSND', @_);
-    }, 
+      $self->sendcmd( 'ADCSND', @_ );
+    },
   };
 }
 1;
-
-
