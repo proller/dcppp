@@ -87,7 +87,7 @@ sub init {
     $self->{'auto_listen'}  = 1;
     $self->{'status'}       = 'working';
   }
-  $self->{$_} ||= $self->{'parent'}{$_} || {} for qw(peers peers_sid peers_id want);
+  $self->{$_} ||= $self->{'parent'}{$_} || {} for qw(peers peers_sid peers_cid want);
   $self->{'parse'} ||= {
 #
 #=================
@@ -140,7 +140,9 @@ sub init {
       my ( $dst, $peerid ) = @{ shift() };
       #test $_[1] eq 'I'!
       #$self->log('adcdev', '0INF:', "[d=$dst,p=$peerid]", join ':', @_);
+      #$self->log('adcdev', 'INF1', $peerid, @_);
       my $params = $self->adc_parse_named(@_);
+      #$self->log('adcdev', 'INF2', $peerid, @_);
       #for (@_) {
       #s/^(\w\w)//;
       #my ($code)= $1;
@@ -156,17 +158,20 @@ sub init {
       my $sendbinf;
       if ( $dst eq 'B' ) {
         if ( !keys %{ $self->{'peers'}{$peerid}{'INF'} } ) {    #join
-          ++$sendbinf;
+          #++$sendbinf;
           #$self->log( 'adcdev', 'FIRSTINF:', $peerid, Dumper $params, $self->{'peers'} );
-          #$self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} };
+          $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} };
         }
       }
+      $params->{I4} = $self->{hostip} if $params->{I4};
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
-      $self->{'peers'}{ $params->{ID} }                             ||= $self->{'peers'}{$peerid};
-      $self->{'peers'}{$peerid}{'SID'}                              ||= $peersid;
-      $self->{'peers_sid'}{$peersid}                                ||= $self->{'peers'}{$peerid};
-      $self->{'peers_id'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} } ||= $self->{'peers'}{$peerid};
+      $self->{'peers'}{$peerid}{'object'} = $self;
+      $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
+      $self->{'peers'}{$peerid}{'SID'}                               ||= $peersid;
+      $self->{'peers_sid'}{$peersid}                                 ||= $self->{'peers'}{$peerid};
+      $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} } ||= $self->{'peers'}{$peerid};
       #$self->log( 'adcdev', 'INF:', $peerid, Dumper $params, $self->{'peers'} ) unless $peerid;
+      #$self->log('adcdev', 'INF7', $peerid, @_);
       if ( $dst eq 'I' ) {
         $self->cmd( 'B', 'INF' );
         $self->{'status'} = 'connected';    #clihub
@@ -178,16 +183,20 @@ sub init {
         $self->cmd('file_select');
         $self->cmd( $dst, 'GET' );
       }
-      if ($sendbinf) { $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} }; }
-      $self->cmd_all( $dst, 'INF', $peerid, @_ );
-      return $self->{'peers'}{$peerid}{'INF'};
+      #$self->log('adcdev', 'INF8', $peerid, @_);
+      #if ($sendbinf) { $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} }; }
+      #$self->log('adcdev', 'INF9', $peerid, @_);
+      my $params_send = \%$params;
+      delete $params_send->{PD};
+      $self->cmd_all( $dst, 'INF', $peerid, $self->adc_make_string($params_send) );
+      return $params;    #$self->{'peers'}{$peerid}{'INF'};
     },
     'QUI' => sub {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #$peerid
       #$self->log( 'adcdev', 'QUI', $dst, $_[0], Dumper $self->{'peers'}{ $_[0] } );
-      delete $self->{'peers_id'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
+      delete $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
       delete $self->{'peers_sid'}{$peerid};
       delete $self->{'peers'}{$peerid};    # or mark time
     },
@@ -260,11 +269,14 @@ sub init {
     },
     'RES' => sub {
       my $self = shift if ref $_[0];
-      my ( $dst, $peerid ) = @{ shift() };
+      my ( $dst, $peerid, $toid ) = @{ shift() };
       #test $_[1] eq 'I'!
-      #$self->log('adcdev', '0INF:', "[d=$dst,p=$peerid]", join ':', @_);
+      $self->log( 'adcdev', '0RES:', "[d=$dst,p=$peerid,t=$toid]", join ':', @_ );
       my $params = $self->adc_parse_named(@_);
       #$self->log('adcdev', 'RES:',"[d=$dst,p=$peerid]",Dumper $params);
+      if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
+        $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RES', $peerid, $toid, @_ );
+      }
       $params;
     },
     'MSG' => sub {
@@ -281,6 +293,9 @@ sub init {
       my ( $dst, $peerid, $toid ) = @{ shift() };
       $self->log( 'dcdev', "( $dst, RCM, $peerid, $toid )", @_ );
       $self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], ) if $toid eq $self->{'sid'};
+      if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
+        $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RCM', $peerid, $toid, @_ );
+      }
 
 =z      
        $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
@@ -304,7 +319,7 @@ sub init {
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
       $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)", );
       $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
-      $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = Net::DirectConnect::adc->new(
+      $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = __PACKAGE__->new(
         %$self, $self->clear(),
         'host' => $host,
         'port' => $port,
@@ -320,7 +335,10 @@ sub init {
         'INF'          => { %{ $self->{'INF'} }, 'TO' => $token },
         'message_type' => 'C',
         'auto_connect' => 1,
-      );
+      ) if $toid eq $self->{'sid'};
+      if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
+        $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'CTM', $peerid, $toid, @_ );
+      }
     },
     'SND' => sub {
       my $self = shift if ref $_[0];
@@ -629,5 +647,6 @@ sub init {
     delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int', psmisc::caller_trace(30) );
   };
+  $self->get_peer_addr() if $self->{'socket'};
 }
 1;
