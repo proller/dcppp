@@ -156,7 +156,7 @@ sub init {
         delete $self->{'peers'}{''};
       }
       my $sendbinf;
-      if ( $dst eq 'B' ) {
+      if ( $self->{parent}{hub} and $dst eq 'B' ) {
         if ( !keys %{ $self->{'peers'}{$peerid}{'INF'} } ) {    #join
           #++$sendbinf;
           #$self->log( 'adcdev', 'FIRSTINF:', $peerid, Dumper $params, $self->{'peers'} );
@@ -186,9 +186,11 @@ sub init {
       #$self->log('adcdev', 'INF8', $peerid, @_);
       #if ($sendbinf) { $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} }; }
       #$self->log('adcdev', 'INF9', $peerid, @_);
-      my $params_send = \%$params;
-      delete $params_send->{PD};
-      $self->cmd_all( $dst, 'INF', $peerid, $self->adc_make_string($params_send) );
+      if ( $self->{parent}{hub} ) {
+        my $params_send = \%$params;
+        delete $params_send->{PD};
+        $self->cmd_all( $dst, 'INF', $peerid, $self->adc_make_string($params_send) );
+      }
       return $params;    #$self->{'peers'}{$peerid}{'INF'};
     },
     'QUI' => sub {
@@ -291,7 +293,7 @@ sub init {
     'RCM' => sub {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
-      $self->log( 'dcdev', "( $dst, RCM, $peerid, $toid )", @_ );
+      #$self->log( 'dcdev', "( $dst, RCM, $peerid, $toid )", @_ );
       $self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], ) if $toid eq $self->{'sid'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RCM', $peerid, $toid, @_ );
@@ -451,7 +453,8 @@ sub init {
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
-      return if ( $_[0] ne 'B' and $_[0] ne 'F' ) or !$self->{'parent'}{'hub'};
+      return if    #( $_[0] ne 'B' and $_[0] ne 'F' and $_[0] ne 'I' ) or
+        !$self->{'parent'}{'hub'};
       $self->{'parent'}->sendcmd_all(@_);    #for keys %{ $self->{'peers_sid'} };
     },
     'SUP' => sub {
@@ -471,17 +474,19 @@ sub init {
       my $self = shift if ref $_[0];
       my $dst = shift;
       #$self->{'BINFS'} ||= [qw(ID PD I4 I6 U4 U6 SS SF VE US DS SL AS AM EM NI DE HN HR HO TO CT AW SU RF)];
-      if ( $dst eq 'I' ) {
-        $self->{'INF'} = { CT => 32, VE => 'perl' . $VERSION, NI => 'devhub', DE => 'hubdev', };
+      if ( $self->{parent}{hub} ) {
+        if ( $dst eq 'I' ) {
+          $self->{'INF'} = { CT => 32, VE => 'perl' . $VERSION, NI => 'devhub', DE => 'hubdev', };
 #IINF CT32 VEuHub/0.3.0-rc4\s(git:\sd2da49d...) NI"??????????\s?3\\14?" DE?????,\s??????,\s?????????.\s???\s????????\s-\s???\s????????.
-      } elsif ( $dst eq 'B' ) {
-        $self->cmd_adc                                               #sendcmd
-          (
-          $dst, 'INF',                                               #$self->{'sid'},
-          @_,
-          #map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : sort keys %{ $self->{'INF'} }
-          );
-        return;
+        } elsif ( $dst eq 'B' ) {
+          $self->cmd_adc    #sendcmd
+            (
+            $dst, 'INF',    #$self->{'sid'},
+            @_,
+            #map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : sort keys %{ $self->{'INF'} }
+            );
+          return;
+        }
       } else {
         $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
         #eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
@@ -644,8 +649,13 @@ sub init {
   }
   #=cut
   $self->{'handler_int'}{'disconnect_bef'} = sub {
+    delete $self->{'peers'}{ $self->{'peerid'} };
+    $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'};
     delete $self->{'sid'};
-    #$self->log( 'dev', 'disconnect int', psmisc::caller_trace(30) );
+    $self->log(
+      'dev',  'disconnect int',           #psmisc::caller_trace(30)
+      'hub=', $self->{'parent'}{'hub'},
+    );
   };
   $self->get_peer_addr() if $self->{'socket'};
 }

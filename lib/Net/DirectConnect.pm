@@ -457,7 +457,7 @@ sub func {
   };
   $self->{'destroy'} ||= sub {
     my $self = shift;
-    $self->disconnect() if ref $self;
+    $self->disconnect() if ref $self and !$self->{'destroying'}++;
     #!?  delete $self->{$_} for keys %$self;
     $self->{'status'} = 'destroy';
     $self = {};
@@ -517,7 +517,7 @@ sub func {
           {
             #TODO not here
             $self->log( 'dcdbg', "recv err, reconnect. r=[$r], d=[$self->{'databuf'}]" );
-            if ( $self->active() and $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
+            if ( $self->active() and !$self->{'incoming'} and $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
               #$self->log( 'dcdbg',  "recv err, reconnect," );
               $self->reconnect();
             } else {
