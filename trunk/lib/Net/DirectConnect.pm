@@ -386,6 +386,7 @@ sub func {
     my $self = shift;
     return 0
       if $self->{'Proto'} eq 'udp'
+      or $self->{'incoming'}
         or $self->{'status'} eq 'listening'
         or ( $self->{'socket'} and $self->{'socket'}->connected() )
         or !$self->active();
@@ -516,8 +517,8 @@ sub func {
             or !length( $self->{'databuf'} ) )
           {
             #TODO not here
-            $self->log( 'dcdbg', "recv err, reconnect. r=[$r], d=[$self->{'databuf'}]" );
             if ( $self->active() and !$self->{'incoming'} and $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
+            $self->log( 'dcdbg', "recv err, reconnect. r=[$r], d=[$self->{'databuf'}] i=[$self->{'incoming'}]" );
               #$self->log( 'dcdbg',  "recv err, reconnect," );
               $self->reconnect();
             } else {
@@ -708,9 +709,9 @@ sub func {
     local @_ = @_, $_[0] .= splice @_, 1, 1 if $self->{'adc'} and length $_[0] == 1;
     $self->{'log'}->( $self, 'dcdmp', 'sendcmd1', $self->{number}, @_ );
     push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
-    $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
     if ( ( $self->{'sendbuf'} and @_ ) or !@{ $self->{'send_buffer'} || [] } ) { }
     else {
+    $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
       $self->send( join( '', @{ $self->{'send_buffer'} }, ) );
       #local $_;
       #eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };
