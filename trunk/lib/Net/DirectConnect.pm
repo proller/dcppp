@@ -405,6 +405,7 @@ sub func {
         }
       }
     );
+    return 1;
   };
   $self->{'reconnect'} ||= sub {
     my $self = shift;
@@ -704,7 +705,7 @@ sub func {
   };
   $self->{'sendcmd'} ||= sub {
     my $self = shift;
-    $self->connect_check();
+return if    $self->connect_check();
     #$self->{'log'}->( $self,'sendcmd0', @_);
     local @_ = @_, $_[0] .= splice @_, 1, 1 if $self->{'adc'} and length $_[0] == 1;
     $self->{'log'}->( $self, 'dcdmp', 'sendcmd1', $self->{number}, @_ );

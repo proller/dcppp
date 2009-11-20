@@ -48,7 +48,7 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
 );
 eval "use MIME::Base32 qw( RFC ); 1;"        or print join ' ', ( 'err', 'cant use', $@ );
 eval "use Net::DirectConnect::TigerHash; 1;" or print join ' ', ( 'err', 'cant use', $@ );
-sub base32 ($) { MIME::Base32::encode( $_[0] ); }
+sub base32 ($) { eval {MIME::Base32::encode( $_[0] );}||@_ }
 
 sub tiger ($) {
   local ($_) = @_;
@@ -648,8 +648,9 @@ sub init {
     $self->log( 'err', "cant listen http" ) unless $self->{'myport_http'};
   }
   #=cut
-  $self->{'handler_int'}{'disconnect_bef'} = sub {
+  $self->{'handler_int'}{'disconnect_aft'} = sub {
     delete $self->{'peers'}{ $self->{'peerid'} };
+    delete $self->{'peers_sid'}{ $self->{'peerid'} };
     $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'};
     delete $self->{'sid'};
     $self->log(
