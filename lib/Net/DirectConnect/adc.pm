@@ -1,5 +1,6 @@
 #$Id$ $URL$
-package Net::DirectConnect::adc;
+package #hide from cpan
+Net::DirectConnect::adc;
 use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only

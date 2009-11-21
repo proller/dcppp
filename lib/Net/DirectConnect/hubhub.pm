@@ -1,6 +1,7 @@
 #$Id$ $URL$
 #reserved for future 8)
-package Net::DirectConnect::hubhub;
+package #hide from cpan
+Net::DirectConnect::hubhub;
 use Net::DirectConnect;
 use strict;
 no warnings qw(uninitialized);

@@ -1,5 +1,6 @@
 #$Id$ $URL$
-package Net::DirectConnect::clihub;
+package #hide from cpan
+Net::DirectConnect::clihub;
 use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
