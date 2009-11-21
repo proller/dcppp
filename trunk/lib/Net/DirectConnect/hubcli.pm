@@ -1,6 +1,7 @@
 #$Id$ $URL$
 #reserved for future 8), but something works
-package Net::DirectConnect::hubcli;
+package #hide from cpan
+Net::DirectConnect::hubcli;
 use strict;
 use Net::DirectConnect;
 use Data::Dumper;

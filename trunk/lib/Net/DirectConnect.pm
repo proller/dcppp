@@ -1151,10 +1151,9 @@ look at examples for handlers
 =head1 DESCRIPTION
 
  Currently NOT supported:
- sharing;
+ self filelist making 
  segmented, multisource download;
  async connect;
- full ADC;
 
 
 =head1 INSTALLATION
