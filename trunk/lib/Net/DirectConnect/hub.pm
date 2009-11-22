@@ -1,6 +1,6 @@
 #$Id$ $URL$
-package #hide from cpan
-Net::DirectConnect::hub;
+package    #hide from cpan
+  Net::DirectConnect::hub;
 use Net::DirectConnect;
 use Net::DirectConnect::hubcli;
 use strict;

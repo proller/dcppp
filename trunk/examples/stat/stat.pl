@@ -118,7 +118,8 @@ for ( grep { length $_ } @ARGV ) {
   } else {
     my $hub = $_;
     ++$work{'hubs'}{$hub};
-    my $dc = Net::DirectConnect::clihub->new(
+    my $dc = Net::DirectConnect->new(
+      'host'      => $hub,
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
       #'log'		=>	sub {},	# no logging
@@ -128,11 +129,11 @@ for ( grep { length $_ } @ARGV ) {
         psmisc::printlog( "[$dc->{'number'}]", @_ );
         #psmisc::caller_trace(5)
       },
-      'myport'       => 41111,
-      'description'  => 'http://dc.proisk.ru/dcstat/',
-      'auto_connect' => 0,
-      'reconnects'   => 500,
-      'handler'      => {
+      'myport'      => 41111,
+      'description' => 'http://dc.proisk.ru/dcstat/',
+      #'auto_connect' => 0,
+      'reconnects' => 500,
+      'handler'    => {
         'Search_parse_aft' => sub {
           my $dc     = shift;
           my $search = shift;
@@ -258,7 +259,7 @@ for ( grep { length $_ } @ARGV ) {
       },
       %config,
     );
-    $dc->connect($hub);
+    #$dc->connect($hub);
     $dc->{'clients'}{'listener_http'}{'handler'}{''} = sub {
       my $dc = shift;
       printlog "my cool cansend [$dc->{'geturl'}]";
