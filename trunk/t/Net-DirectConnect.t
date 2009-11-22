@@ -2,12 +2,13 @@
 # `make test'. After `make install' it should work as `perl Net-DirectConnect.t'
 #########################
 # change 'tests => 1' to 'tests => last_test_to_print';
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 BEGIN {
   use_ok('Net::DirectConnect');
   use_ok('Net::DirectConnect::clihub');
   use_ok('Net::DirectConnect::clicli');
+  use_ok('Net::DirectConnect::adc');
 }
 #########################
 # Insert your test code below, the Test::More module is use()ed here so read

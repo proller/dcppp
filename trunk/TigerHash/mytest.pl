@@ -7,13 +7,8 @@ use Digest::Tiger; use
 MIME::Base32 qw( RFC );
 
 
-      sub tiger1 ($) {
-              local ($_) = @_;
-MIME::Base32::encode                      Digest::Tiger::hash($_);
-                            }
-      sub tiger2 ($) {
-              local ($_) = @_;
-              MIME::Base32::encode(Digest::Tiger::hash($_));
+      sub tiger1 ($) {              local ($_) = @_;MIME::Base32::encode                      Digest::Tiger::hash($_);                            }
+      sub tiger2 ($) {              local ($_) = @_;              MIME::Base32::encode(Digest::Tiger::hash($_));
 #                      Digest::Tiger::hash($_);
                             }
                             
@@ -34,11 +29,10 @@ for '',
 "\0\0",
 #(join '', 1..1024),
 #(
-(join '',('A' x 1024)),
-(join '',('A' x 1025)),
+(join '',('A' x 1024)),(join '',('A' x 1025)),
 #),
 ;
-
+print "===file\n";
 print tthfile('README'), "\n";
 print tthfile 'pm_to_blib', "\n"; #LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
 print tthfile '0', "\n"; #VK54ZIEEVTWNAUI5D5RDFIL37LX2IQNSTAXFKSA
