@@ -150,15 +150,23 @@ sub new {
     local %_ = (@param);
     #for keys
     $self->{$_} = $_{$_} for keys %_;
-    #$self->log( 'init', $self, $self->{'host'}, 'p=', $self->{'protocol'} );
+    $self->log( 'init00', $self, "h=$self->{'host'}", 'p=', $self->{'protocol'} );
     if ( !$self->{'module'} and !$self->{'protocol'} ) {
       $self->{'host'} =~ m{^(.*?)://};
       my $p = lc $1;
       #$self->protocol_init($p);
-      $self->{'protocol'} = $p;
+      $self->{'protocol'} = $p || 'nmdc';
       #$self->{'protocol'}
+#      $self->log( 'proto ', $self->{'protocol'});
     }
     $self->{'module'} ||= $self->{'protocol'};
+
+    if ($self->{'module'} eq 'nmdc') {
+$self->{'module'} =  $self->{'hub'} ? 'hubcli' :'clihub' ;
+    
+    }
+
+      $self->log( 'module load', $self->{'module'});
     if ( $self->{'module'} ) {
       #%self
       my $module = __PACKAGE__ . '::' . $self->{'module'};
@@ -180,7 +188,7 @@ sub new {
   $self->log( $self, 'new inited', "MT:$self->{'message_type'}", );
   if ( $self->{'auto_listen'} ) { $self->listen(); }
   elsif ( $self->{'auto_connect'} ) {
-    #$self->log( $self, 'new inited', "MT:$self->{'message_type'}", ' with' );
+    $self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
     $self->connect();
     $self->work();
   }
@@ -307,7 +315,7 @@ sub func {
   $self->{'protocol_init'} ||= sub {
     my $self = shift;
     my ($p) = @_;
-    $p ||= $self->{'protocol'};
+    $p ||= $self->{'protocol'} || 'nmdc';
     if ( $p =~ /^adc/i ) {
       $self->{'cmd_bef'} = undef;
       $self->{'cmd_aft'} = "\x0A";
@@ -325,7 +333,7 @@ sub func {
   };
   $self->{'connect'} ||= sub {
     my $self = shift;
-    #$self->log($self, 'connect0 inited',"MT:$self->{'message_type'}", ' with');
+    $self->log($self, 'connect0 inited',"MT:$self->{'message_type'}", ' with');
     if ( $_[0] or $self->{'host'} =~ /:/ ) {
       $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
