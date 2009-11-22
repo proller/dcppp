@@ -16,5 +16,7 @@ BEGIN { use_ok('Net::DirectConnect::TigerHash') };
  ok(Net::DirectConnect::TigerHash::tth('A'x1024)eq'ZXYJSDC4NNVQXXOWHJ262IHC2REL6RHBL7PA35A') ;
  ok(Net::DirectConnect::TigerHash::tth('A'x1025)eq'REUSV3QPQKCCVPAIBRL3HKW5TSUE2ZV7BSXHPKQ') ;
  ok(Net::DirectConnect::TigerHash::tth('Tiger') eq '3UACGB4Z6UAJ73DN5PEDRO3KE7PSXHLPCEGHSNY');
- ok(!defined Net::DirectConnect::TigerHash::tthfile('___Not_Existen_t_ffiiiillee____') );
+ ok(!defined  Net::DirectConnect::TigerHash::tthfile('___Not_Existen_t_ffiiiillee____') );
+ 
+1;
  
