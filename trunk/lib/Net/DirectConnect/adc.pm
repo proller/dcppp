@@ -384,32 +384,22 @@ sub init {
 
   $self->{'cmd'} = {
     #move to main
-    'search_buffer' => sub {
+
+    'search_send' => sub {
       my $self = shift if ref $_[0];
-      push( @{ $self->{'search_todo'} }, [@_] ) if @_;
-      return unless @{ $self->{'search_todo'} || return };
-#$self->log($self, 'search', Dumper \@_);
-#$self->log( 'dcdev', "search too fast [$self->{'search_every'}], len=", scalar @{ $self->{'search_todo'} } )        if @_ and scalar @{ $self->{'search_todo'} } > 1;
-      return if time() - $self->{'search_last_time'} < $self->{'search_every'} + 2;
-      $self->{'search_last'} = shift( @{ $self->{'search_todo'} } );
-      $self->{'search_todo'} = undef unless @{ $self->{'search_todo'} };
-      if ( $self->{'adc'} ) { $self->cmd_adc( 'B', 'SCH', @{ $self->{'search_last'} } ); }
-      else {
-#$self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport_udp'}", join '?', @{ $self->{'search_last'} } );
-        $self->sendcmd(
-          'Search',
-          ( ( $self->{'myip'} && $self->{'myport_udp'} ) ? "$self->{'myip'}:$self->{'myport_udp'}" : 'Hub:' . $self->{'Nick'} ),
-          join '?',
-          @{ $self->{'search_last'} }
-        );
-      }
-      $self->{'search_last_time'} = time();
-    },
+$self->cmd_adc( 'B', 'SCH', @{ $_[0] || $self->{'search_last'} } ); 
+
+},
+
+
+
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
-      if ( $self->{'adc'} ) { $self->cmd( 'search_buffer', { TO => $self->make_token(), TR => $_[0], } ); }    #toauto
-      else                  { $self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] ); }
+      if ( $self->{'adc'} ) { $self->search_buffer( { TO => $self->make_token(), TR => $_[0], } ); }    #toauto
+      else                  { 
+#$self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] ); 
+}
     },
     'search_string' => sub {
       my $self = shift if ref $_[0];
@@ -418,25 +408,17 @@ sub init {
         #$self->cmd( 'search_buffer', { TO => 'auto', map AN => $_, split /\s+/, $string } );
         $self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), } );    #TOauto
       } else {
-        $self->{'search_last_string'} = $string;
-        $string =~ tr/ /$/;
-        $self->cmd( 'search_buffer', 'F', 'T', '0', '1', $string );
+#        $self->{'search_last_string'} = $string;
+#        $string =~ tr/ /$/;
+#        $self->cmd( 'search_buffer', 'F', 'T', '0', '1', $string );
       }
     },
-    'search' => sub {
-      my $self = shift if ref $_[0];
-      return $self->cmd( 'search_tth', @_ ) if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
-      return $self->cmd( 'search_string', @_ ) if length $_[0];
-    },
-    'search_retry' => sub {
-      my $self = shift if ref $_[0];
-      unshift( @{ $self->{'search_todo'} }, $self->{'search_last'} ) if ref $self->{'search_last'} eq 'ARRAY';
-      $self->{'search_last'} = undef;
-    },
-    'make_hub' => sub {
-      my $self = shift if ref $_[0];
-      $self->{'hub'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
-    },
+
+
+#    'make_hub' => sub {
+#      my $self = shift if ref $_[0];
+#      $self->{'hub'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
+#    },
     'nick_generate' => sub {
       my $self = shift if ref $_[0];
       $self->{'nick_base'} ||= $self->{'Nick'};

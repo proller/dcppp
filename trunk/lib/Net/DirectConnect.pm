@@ -150,7 +150,7 @@ sub new {
     local %_ = (@param);
     #for keys
     $self->{$_} = $_{$_} for keys %_;
-    $self->log( 'init00', $self, "h=$self->{'host'}", 'p=', $self->{'protocol'} );
+#    $self->log( 'init00', $self, "h=$self->{'host'}", 'p=', $self->{'protocol'} );
     if ( !$self->{'module'} and !$self->{'protocol'} ) {
       $self->{'host'} =~ m{^(.*?)://};
       my $p = lc $1;
@@ -166,7 +166,7 @@ $self->{'module'} =  $self->{'hub'} ? 'hubcli' :'clihub' ;
     
     }
 
-      $self->log( 'module load', $self->{'module'});
+#      $self->log( 'module load', $self->{'module'});
     if ( $self->{'module'} ) {
       #%self
       my $module = __PACKAGE__ . '::' . $self->{'module'};
@@ -185,10 +185,10 @@ $self->{'module'} =  $self->{'hub'} ? 'hubcli' :'clihub' ;
     $self->init(@param);
   }
   $self->protocol_init();
-  $self->log( $self, 'new inited', "MT:$self->{'message_type'}", );
+#  $self->log( $self, 'new inited', "MT:$self->{'message_type'}", );
   if ( $self->{'auto_listen'} ) { $self->listen(); }
   elsif ( $self->{'auto_connect'} ) {
-    $self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
+#    $self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
     $self->connect();
     $self->work();
   }
@@ -375,7 +375,7 @@ sub func {
       #$self->log( 'info', "test ip [$_[0]] in [$localmask] ");
       return $_[0] =~ /^(?:$localmask)\./;
     };
-    $self->log( 'info', "my internal ip detected, using passive mode", $self->{'myip'}, $self->{'hostip'} ), $self->{'M'} = 'P'
+    $self->log( 'info', "my internal ip detected, using passive mode", $self->{'myip'}, $self->{'hostip'}, $localmask), $self->{'M'} = 'P'
       if !$self->{'M'}
         and $is_local_ip->( $self->{'myip'} )
         and !$is_local_ip->( $self->{'hostip'} );
@@ -383,7 +383,7 @@ sub func {
     #$self->log( 'info', "mode set [$self->{'M'}] ");
     $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}) [me=$self->{'myip'}] ok ", );
     #$self->log($self, 'connected1 inited',"MT:$self->{'message_type'}", ' with');
-    $self->cmd('connect_aft');
+    $self->cmd('connect_aft') ;
     #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
     #$self->log( 'dev', "connect_aft after", );
     $self->recv();
@@ -678,7 +678,7 @@ sub func {
       #$self->log( 'dcinf', "parsing", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd});
       my @self;
       #@self = $self if $self->{'adc'};
-      @self = $self;    #if !$self->{'nmdc'};
+      @self = $self    if !$self->{'nmdc'};
       $self->handler( @self, $cmd . '_parse_bef_bef', @param );
       if ( ref $self->{'parse'}{$cmd} eq 'CODE' ) {
         if ( !exists $self->{'no_print'}{$cmd} ) {
@@ -1126,6 +1126,48 @@ return if    $self->connect_check();
     s/\D//g;
     return $token + $_ + int time;
   };
+
+local %_ = (
+    'search' => sub {
+      my $self = shift if ref $_[0];
+      return $self->cmd( 'search_tth', @_ ) if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
+      return $self->cmd( 'search_string', @_ ) if length $_[0];
+    },
+    'search_retry' => sub {
+      my $self = shift if ref $_[0];
+      unshift( @{ $self->{'search_todo'} }, $self->{'search_last'} ) if ref $self->{'search_last'} eq 'ARRAY';
+      $self->{'search_last'} = undef;
+    },
+    'search_buffer' => sub {
+      my $self = shift if ref $_[0];
+      push( @{ $self->{'search_todo'} }, [@_] ) if @_;
+      return unless @{ $self->{'search_todo'} || return };
+#$self->log($self, 'search', Dumper \@_);
+#$self->log( 'dcdev', "search too fast [$self->{'search_every'}], len=", scalar @{ $self->{'search_todo'} } )        if @_ and scalar @{ $self->{'search_todo'} } > 1;
+      return if time() - $self->{'search_last_time'} < $self->{'search_every'} + 2;
+      $self->{'search_last'} = shift( @{ $self->{'search_todo'} } );
+      $self->{'search_todo'} = undef unless @{ $self->{'search_todo'} };
+$self->cmd('search_send');
+#      if ( $self->{'adc'} ) { 
+
+#}      else {
+#$self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport_udp'}", join '?', @{ $self->{'search_last'} } );
+#      }
+      $self->{'search_last_time'} = time();
+    },
+    'nick_generate' => sub {
+      my $self = shift if ref $_[0];
+      $self->{'nick_base'} ||= $self->{'Nick'};
+      $self->{'Nick'} = $self->{'nick_base'} . int( rand( $self->{'nick_random'} || 100 ) );
+    },
+
+
+);
+
+$self->{$_} = $_{$_} for keys %_;
+
+
+
 }
 1;
 __END__
