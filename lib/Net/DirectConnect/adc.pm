@@ -1,6 +1,6 @@
 #$Id$ $URL$
-package #hide from cpan
-Net::DirectConnect::adc;
+package    #hide from cpan
+  Net::DirectConnect::adc;
 use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
@@ -49,7 +49,10 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
 );
 eval "use MIME::Base32 qw( RFC ); 1;"        or print join ' ', ( 'err', 'cant use', $@ );
 eval "use Net::DirectConnect::TigerHash; 1;" or print join ' ', ( 'err', 'cant use', $@ );
-sub base32 ($) { eval {MIME::Base32::encode( $_[0] );}||@_ }
+
+sub base32 ($) {
+  eval { MIME::Base32::encode( $_[0] ); } || @_;
+}
 
 sub tiger ($) {
   local ($_) = @_;
@@ -384,22 +387,17 @@ sub init {
 
   $self->{'cmd'} = {
     #move to main
-
     'search_send' => sub {
       my $self = shift if ref $_[0];
-$self->cmd_adc( 'B', 'SCH', @{ $_[0] || $self->{'search_last'} } ); 
-
-},
-
-
-
+      $self->cmd_adc( 'B', 'SCH', @{ $_[0] || $self->{'search_last'} } );
+    },
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
       if ( $self->{'adc'} ) { $self->search_buffer( { TO => $self->make_token(), TR => $_[0], } ); }    #toauto
-      else                  { 
-#$self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] ); 
-}
+      else {
+        #$self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] );
+      }
     },
     'search_string' => sub {
       my $self = shift if ref $_[0];
@@ -408,17 +406,15 @@ $self->cmd_adc( 'B', 'SCH', @{ $_[0] || $self->{'search_last'} } );
         #$self->cmd( 'search_buffer', { TO => 'auto', map AN => $_, split /\s+/, $string } );
         $self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), } );    #TOauto
       } else {
-#        $self->{'search_last_string'} = $string;
-#        $string =~ tr/ /$/;
-#        $self->cmd( 'search_buffer', 'F', 'T', '0', '1', $string );
+        #$self->{'search_last_string'} = $string;
+        #$string =~ tr/ /$/;
+        #$self->cmd( 'search_buffer', 'F', 'T', '0', '1', $string );
       }
     },
-
-
-#    'make_hub' => sub {
-#      my $self = shift if ref $_[0];
-#      $self->{'hub'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
-#    },
+    #'make_hub' => sub {
+    #my $self = shift if ref $_[0];
+    #$self->{'hub'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
+    #},
     'nick_generate' => sub {
       my $self = shift if ref $_[0];
       $self->{'nick_base'} ||= $self->{'Nick'};

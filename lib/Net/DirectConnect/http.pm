@@ -1,6 +1,6 @@
 #$Id$ $URL$
-package #hide from cpan
-Net::DirectConnect::http;
+package    #hide from cpan
+  Net::DirectConnect::http;
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;

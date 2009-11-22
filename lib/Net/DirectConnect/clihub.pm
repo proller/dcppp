@@ -1,6 +1,6 @@
 #$Id$ $URL$
-package #hide from cpan
-Net::DirectConnect::clihub;
+package    #hide from cpan
+  Net::DirectConnect::clihub;
 use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
@@ -41,8 +41,8 @@ sub init {
     'NoGetINFO'        => 1,                                                                                            #test
     'NoHello'          => 1, 'UserIP2' => 1, 'Version' => '1,0091', 'auto_GetNickList' => 1, 'follow_forcemove' => 1,
     #ADC
-#    'connect_protocol' => 'ADC/0.10',
-#    'message_type'     => 'H',
+    #'connect_protocol' => 'ADC/0.10',
+    #'message_type'     => 'H',
     @_,
     'incomingclass' => 'Net::DirectConnect::clicli',
     'periodic'      => sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; },
@@ -101,7 +101,7 @@ sub init {
       $self->cmd('ValidateNick');
     },
     'Hello' => sub {
-#      $self->log('info', "HELLO recieved, connected. me=[$self->{'Nick'}]", @_);
+      #$self->log('info', "HELLO recieved, connected. me=[$self->{'Nick'}]", @_);
       return unless $_[0] eq $self->{'Nick'};
       $self->{'sendbuf'} = 1;
       $self->cmd('Version');
@@ -271,7 +271,6 @@ sub init {
     },
     'UserCommand' => sub {
     },
-
   };
 
 =COMMANDS
@@ -366,48 +365,38 @@ sub init {
       $self->sendcmd( 'Search', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),
         join '?', @_ );
     },
-
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
-      if ( $self->{'adc'} ) { 
-#$self->cmd( 'search_buffer', { TO => $self->make_token(), TR => $_[0], } ); 
-}    #toauto
-      else                  { $self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] ); }
+      if ( $self->{'adc'} ) {
+        #$self->cmd( 'search_buffer', { TO => $self->make_token(), TR => $_[0], } );
+      }    #toauto
+      else { $self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] ); }
     },
     'search_string' => sub {
       my $self = shift if ref $_[0];
       my $string = $_[0];
       if ( $self->{'adc'} ) {
         #$self->cmd( 'search_buffer', { TO => 'auto', map AN => $_, split /\s+/, $string } );
-#        $self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), } );    #TOauto
+        #$self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), } );    #TOauto
       } else {
         $self->{'search_last_string'} = $string;
         $string =~ tr/ /$/;
         $self->cmd( 'search_buffer', 'F', 'T', '0', '1', $string );
       }
     },
-
     'search_send' => sub {
       my $self = shift if ref $_[0];
-        $self->sendcmd(
-          'Search',
-          ( ( $self->{'myip'} && $self->{'myport_udp'} ) ? "$self->{'myip'}:$self->{'myport_udp'}" : 'Hub:' . $self->{'Nick'} ),
-          join '?',
-          @{ $_[0] || $self->{'search_last'} }
-        );
-
-},
-
-
+      $self->sendcmd( 'Search',
+        ( ( $self->{'myip'} && $self->{'myport_udp'} ) ? "$self->{'myip'}:$self->{'myport_udp'}" : 'Hub:' . $self->{'Nick'} ),
+        join '?', @{ $_[0] || $self->{'search_last'} } );
+    },
     'make_hub' => sub {
       my $self = shift if ref $_[0];
       $self->{'hub_name'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
     },
     #
   };
-
-
   $self->log( 'dev', "0making listeners [$self->{'M'}]" );
   if ( $self->{'M'} eq 'A' or !$self->{'M'} ) {
     $self->log( 'dev', "making listeners: tcp" );
@@ -419,7 +408,7 @@ sub init {
       'PortList'    => \%{ $self->{'PortList'} },
       'handler'     => \%{ $self->{'handler'} },
       'auto_listen' => 1,
-'parent' => $self,
+      'parent'      => $self,
     );
     $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
     $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
@@ -449,7 +438,7 @@ sub init {
 #$SR [Predator]Wolf DC++\Btyan Adams - Please Forgive Me.mp314217310 18/20TTH:G7DXSTGPHTXSD2ZZFQEUBWI7PORILSKD4EENOII (81.9.63.68:4111)
       },
       'auto_listen' => 1,
-'parent' => $self,
+      'parent'      => $self,
     );
     $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
     $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};

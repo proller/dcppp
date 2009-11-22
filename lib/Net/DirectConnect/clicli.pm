@@ -1,6 +1,6 @@
 #$Id$ $URL$
-package #hide from cpan
-Net::DirectConnect::clicli;
+package    #hide from cpan
+  Net::DirectConnect::clicli;
 use strict;
 use Net::DirectConnect;
 use Data::Dumper;    #dev only
