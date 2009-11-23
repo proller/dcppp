@@ -5,6 +5,9 @@ use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
+#eval "use MIME::Base32 qw( RFC ); 1;"        or print join ' ', ( 'err', 'cant use', $@ );
+use MIME::Base32 qw( RFC );
+
 use Net::DirectConnect;
 #use Net::DirectConnect::clicli;
 use Net::DirectConnect::http;
@@ -47,11 +50,12 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
   '53' => 'Slots full',
   '54' => 'No hash support overlap in SUP between clients.',
 );
-eval "use MIME::Base32 qw( RFC ); 1;"        or print join ' ', ( 'err', 'cant use', $@ );
 eval "use Net::DirectConnect::TigerHash; 1;" or print join ' ', ( 'err', 'cant use', $@ );
 
 sub base32 ($) {
-  eval { MIME::Base32::encode( $_[0] ); } || @_;
+#  eval { 
+MIME::Base32::encode( $_[0] );
+#; } || @_;
 }
 
 sub tiger ($) {
