@@ -15,7 +15,7 @@ my $dc = Net::DirectConnect::clihub->new(
   #( $2 ? ( 'port' => $2 ) : () ),
   'host' => $ARGV[0], 'Nick' => ( $ARGV[1] or 'dcpppCnt' ), 'log' => sub { },    # no logging
 );
-$dc->connect();
+#$dc->connect();
 #$dc->cmd('GetNickList');
 my ($share) = (0);
 $dc->wait_connect();                                                             #for 1 .. 3;

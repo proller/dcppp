@@ -363,7 +363,8 @@ sub make_query {
         "SELECT * FROM slow WHERE name = "
       . $db->quote($query)
       . ( ( $config{'queries'}{$query}{'periods'} ? ' AND period=' . $db->quote($period) : '' )
-      . " LIMIT $config{'query_default'}{'LIMIT'}" );
+      . " ORDER BY n"
+        . " LIMIT $config{'query_default'}{'LIMIT'}" );
     my $res = $db->query($sql);
     #print Dumper $res if $param->{'debug'};
     my @ret;
@@ -379,5 +380,5 @@ sub make_query {
     'LEFT JOIN', 'USING', 'WHERE', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'UNION';
   return $db->query($sql);
 }
-$db ||= pssql->new( %{ $config{'sql'} or {} }, );
+$db ||= pssql->new( %{ $config{'sql'} || {} }, );
 1;
