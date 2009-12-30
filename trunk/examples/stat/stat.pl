@@ -26,7 +26,19 @@ my $n = -1;
 
 for my $arg (@ARGV) {
   ++$n;
-  if ( $arg =~ /^calc(\w)?$/i ) {
+  #print "ar[$arg]";
+  if (($a  = $arg) =~ s/^-+// ) {
+    my ( $w, $v ) = split /=/, $a;
+    #print "arvw[$v, $w]";
+    #next unless $w =~ s/^-//;
+    #my $where = ( $w =~ s/^-// ? '$config' : '$svc' );
+    #$v =~ s/^NUL$//;
+    #next unless defined($w) and defined($v);
+    $v = 1 unless defined $v;
+    local @_ = split( /__/, $w ) or next;
+    #print '$config' . join( '', map { '{$_[' . $_ . ']}' } ( 0 .. $#_ ) ) . ' = $v;';
+    eval( '$config' . join( '', map { '{$_[' . $_ . ']}' } ( 0 .. $#_ ) ) . ' = $v;' );
+  } elsif ( $arg =~ /^calc(\w)?$/i ) {
     my $tim = $1;
     $ARGV[$n] = undef;
     local $db->{'cp_in'} = 'utf-8';
@@ -301,4 +313,4 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
 printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
 #psmisc::caller_trace(20);
 $_->destroy() for @dc;
-printlog 'info', 'bye';
+printlog 'info', 'bye', times;
