@@ -87,22 +87,22 @@ $config{'sql'}            ||= {
     },
     'queries_top_string_daily' => {
       'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1 ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, ),
+      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
       cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      string => pssql::row( undef, 'type' => 'VARCHAR',  primary   => 1 ),
+      string => pssql::row( undef, 'type' => 'VARCHAR',   ),
     },
     'queries_top_tth_daily' => {
       #queries_top_tth_daily
       'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1 ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, ),
+      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
       cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      tth    => pssql::row( undef, 'type' => 'VARCHAR',  primary   => 1 ),
+      tth    => pssql::row( undef, 'type' => 'VARCHAR',   ),
     },
     'results_top_daily' => {
       'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1 ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, ),
+      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary   => 1 ),
       cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      tth    => pssql::row( undef, 'type' => 'VARCHAR',  primary   => 1 ),
+      tth    => pssql::row( undef, 'type' => 'VARCHAR',  ),
     },
   },
   'table_param' => {
