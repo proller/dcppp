@@ -89,6 +89,9 @@ for my $arg (@ARGV) {
       $purge = $config{'purge'} if $purge and $purge <= 1;
       printlog 'info', "purge $table $col $purge =", $db->do( "DELETE FROM $table WHERE $col < " . int( time - $purge ) );
     }
+  } elsif ( $arg eq 'upgrade' ) {
+  $db->do( "DROP TABLE $_")       for qw(queries_top_string_daily queries_top_tth_daily results_top_daily);
+
   }
 }
 our %work;
