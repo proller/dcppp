@@ -27,7 +27,7 @@ my $n = -1;
 for my $arg (@ARGV) {
   ++$n;
   #print "ar[$arg]";
-  if (($a  = $arg) =~ s/^-+// ) {
+  if ( ( $a = $arg ) =~ s/^-+// ) {
     my ( $w, $v ) = split /=/, $a;
     #print "arvw[$v, $w]";
     #next unless $w =~ s/^-//;
@@ -63,10 +63,18 @@ for my $arg (@ARGV) {
         for my $row (@$res) {
           ++$n;
           my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Terse(1)->Purity(1)->Dump();
-          $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => int(time) } );
+          $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => int(time) } )
+            if $config{'use_slow'};
+          if ( $time eq 'd' ) {
+            my $table = $query . '_daily';
+            $table =~ s/\s/_/g;
+            $db->insert_hash( $table, { 'n' => $n, 'date' => psmisc::human('date'), %$row, } );
+          }
         }
-        $db->do( "DELETE FROM slow WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " );
-        $db->flush_insert('slow');
+        $db->do( "DELETE FROM slow WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " )
+          if $config{'use_slow'};
+        #$db->flush_insert('slow');
+        $db->flush_insert();
         #sleep 3;
       }
     }
