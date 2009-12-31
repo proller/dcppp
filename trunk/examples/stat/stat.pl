@@ -90,6 +90,8 @@ for my $arg (@ARGV) {
       printlog 'info', "purge $table $col $purge =", $db->do( "DELETE FROM $table WHERE $col < " . int( time - $purge ) );
     }
   } elsif ( $arg eq 'upgrade' ) {
+    $ARGV[$n] = undef;
+
   $db->do( "DROP TABLE $_")       for qw(queries_top_string_daily queries_top_tth_daily results_top_daily);
 
   }
