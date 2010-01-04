@@ -86,23 +86,23 @@ $config{'sql'}            ||= {
       'info'   => pssql::row( undef,  'type'  => 'VARCHAR', ), #'dumper' => 1,
     },
     'queries_top_string_daily' => {
-      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1 ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
+      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', 'index' => 1, primary => 1 ),
+      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,  primary   => 1 ),
       cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      string => pssql::row( undef, 'type' => 'VARCHAR',   ),
+      string => pssql::row( undef, 'type' => 'VARCHAR',  'index'   => 1, ),
     },
     'queries_top_tth_daily' => {
       #queries_top_tth_daily
-      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1 ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
+      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1, 'index' => 1, ),
+      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,  primary   => 1 ),
       cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      tth    => pssql::row( undef, 'type' => 'VARCHAR',   ),
+      tth    => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
     },
     'results_top_daily' => {
-      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1 ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary   => 1 ),
+      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1, 'index' => 1, ),
+      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,  primary   => 1 ),
       cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      tth    => pssql::row( undef, 'type' => 'VARCHAR',  ),
+      tth    => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
     },
   },
   'table_param' => {
