@@ -154,7 +154,8 @@ for ( grep { length $_ } @ARGV ) {
       #'log'          => sub { my $dc = shift; psmisc::printlog( "[$dc->{'number'}]($dc)", @_);
       'log' => sub {
         my $dc = shift;
-        psmisc::printlog( "[$dc->{'number'}]", @_ );
+        local $_ = shift;
+        psmisc::printlog( $_, "[$dc->{'number'}]", @_ );
         #psmisc::caller_trace(5)
       },
       'myport'      => 41111,
