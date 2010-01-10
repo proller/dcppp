@@ -69,8 +69,12 @@ sub init {
           $self->{'search_every'} = int( rand(5) + $1 || $self->{'search_every_min'} );
           $self->search_retry();
         }
-        if ( $text =~ /(?:Пожалуйста )?подождите (\d+) секунд перед следующим поиском\./i
-          or $text eq 'Пожалуйста не используйте поиск так часто!' )
+        if ( $text =~ /(?:Пожалуйста )?подождите (\d+) секунд перед следующим поиском\./i 
+	  or $text =~ /(?:Please )?wait (\d+) seconds before next search\./i
+          or $text eq 'Пожалуйста не используйте поиск так часто!' 
+          or $text eq "Please don't flood with searches!"
+
+        )
         {
           $self->log( 'warn', "[$nick] oper: increase min interval +=", int $1 || $self->{'search_every_min'} ),
             $self->{'search_every'} += int( rand(5) + $1 || $self->{'search_every_min'} );
