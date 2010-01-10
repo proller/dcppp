@@ -90,6 +90,7 @@ $config{'queries'}{'string'}{'desc'} = psmisc::html_chars( $param->{'string'} ),
 @ask = ( $param->{'query'} ) if $param->{'query'} and $config{'queries'}{ $param->{'query'} };
 $config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
 my %makegraph;
+my %graphcolors;
 
 for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
   grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
@@ -107,12 +108,26 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
   print '<th>', $query, '</th>' for 'n', @{ $q->{'show'} };
   my $n;
+
   for my $row (@$res) {
     print '<tr><td>', ++$n, '</td>';
     $row->{$_} = psmisc::html_chars( $row->{$_} ) for @{ $q->{'show'} };
     $row->{'orig'} = {%$row};
     #$row->{'tth_orig'}    = $row->{'tth'};
     #$row->{'string_orig'} = $row->{'string'};
+my $graphcolor;
+        if ( $q->{'graph'} ) {
+      my $by = $q->{'GROUP BY'};
+      #print "m=$main ";
+      $by =~ s/.*\.//;
+      #print "M==$main ";
+      my ($v) = map { $row->{'orig'}{$_} } grep { $by eq $_ } @{ $q->{'show'} };
+      $makegraph{$query}{$v} = $by;
+      $graphcolor = $graphcolors{$v} = $colors [$n-1];
+      #my $id = $query;
+      #$id =~ tr/ /_/;
+}
+
     $row->{$_} =
       ( $param->{$_}
       ? ''
@@ -129,16 +144,9 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
     $row->{$_} = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
     $row->{$_} = psmisc::human( 'size',        $row->{$_} )        for grep { int $row->{$_} } qw(size share);
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
-    if ( $q->{'graph'} ) {
-      my $by = $q->{'GROUP BY'};
-      #print "m=$main ";
-      $by =~ s/.*\.//;
-      #print "M==$main ";
-      my ($v) = map { $row->{'orig'}{$_} } grep { $by eq $_ } @{ $q->{'show'} };
-      $makegraph{$query}{$v} = $by;
-      #my $id = $query;
-      #$id =~ tr/ /_/;
-      print qq{<td class='graph' id='$query' rowspan='0'>graph}, '</td>' if $n == 1;
+    print qq{<td style="background-color:$graphcolor">&nbsp;</td>};
+        if ( $q->{'graph'} ) {
+      print qq{<td class='graph' id='$query' rowspan='100'></td>} if $n == 1;
     }
     print '</tr>';
   }
@@ -167,7 +175,7 @@ for my $query ( sort keys %makegraph ) {
   #my $id  = $query;
   #$id =~ tr/ /_/;
   my $xl = 1000;
-  my $yl = 400;
+  my $yl = 600;
   my $xs = $xl / ( scalar keys(%dates) - 1 or 1 );
   my $ys = 10;
   print qq{<script type="text/javascript" language="JavaScript"><![CDATA[}, qq{
@@ -182,8 +190,10 @@ for my $query ( sort keys %makegraph ) {
   my $color = 0;
   for my $line ( keys %graph ) {
     my $n;
-    print qq{ <polyline fill="none" stroke="$colors[$color]" stroke-width="3" points="},
-      ( join ' ', map { ( $n++ * $xs ) . ',' . ( $yl - $graph{$line}{$_} ) } sort keys %dates ), qq{" />}, ++$color;
+    #$colors[$color]
+    print qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="},
+      ( join ' ', map { ( $n++ * $xs ) . ',' . ( $yl - $graph{$line}{$_} ) } sort keys %dates ), qq{" />};
+       ++$color;
   }
   print
     #qq{</g>},
