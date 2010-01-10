@@ -4,12 +4,14 @@ package statcgi;
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use Data::Dumper;    #dev only
-$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 our ( %config, $param, $db, );
 our $root_path;
+our @colors =
+  qw(aqua 		gray		navy		silver	 black		green		olive		teal	 blue		lime		purple		 magenta		maroon		red		yellow	  	);    #white
 
 BEGIN {
-  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;    #v0w
+  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;                                                             #v0w
   $root_path = $1 . '/' if $1;
   $root_path =~ s|\\|/|g;
   eval "use lib '$root_path'" if $root_path;
@@ -21,9 +23,8 @@ use statlib;
 print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
 print '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" 
-      xmlns:svg="http://www.w3.org/2000/svg"
-      xmlns:xlink="http://www.w3.org/1999/xlink"><head><title>RU DC stat</title>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head><title>RU DC stat</title>
 <link href="style.css" rel="stylesheet" type="text/css"/>
 <style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #print '    <svg:svg version="1.1" baseProfile="full" width="300px" height="200px">      <svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>    </svg:svg>';
@@ -135,6 +136,8 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
       #print "M==$main ";
       my ($v) = map { $row->{'orig'}{$_} } grep { $by eq $_ } @{ $q->{'show'} };
       $makegraph{$query}{$v} = $by;
+      #my $id = $query;
+      #$id =~ tr/ /_/;
       print qq{<td class='graph' id='$query' rowspan='0'>graph}, '</td>' if $n == 1;
     }
     print '</tr>';
@@ -145,20 +148,48 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
 }
 #print Dumper \%makegraph;
 my $graphtime = time;
-my %graph;
 for my $query ( sort keys %makegraph ) {
   my $q = { %{ $config{'queries'}{$query} || next } };
   my $table = $query;
+  my %graph;
+  my %dates;
   $table =~ s/\s/_/g;
   $table .= '_daily';
   for my $row ( $db->query("SELECT * FROM $table") ) {
     #print $row;
-    my $by = $makegraph{$query}{ $row->{tth} } or $makegraph{$query}{ $row->{string} };
+    my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string} };
 #print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
-    $graph{$query}{ $row->{$by} }{ $row->{date} } = $row->{n};
+    ++$dates{ $row->{date} };
+    $graph
+      #{$query}
+      { $row->{$by} }{ $row->{date} } = $row->{n};
   }
+  #my $id  = $query;
+  #$id =~ tr/ /_/;
+  my $xl = 1000;
+  my $yl = 400;
+  my $xs = $xl / ( scalar keys(%dates) - 1 or 1 );
+  my $ys = 10;
+  print qq{<script type="text/javascript" language="JavaScript"><![CDATA[}, qq{
+      
+      gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
+#qq{<svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>},
+#qq{<g fill="none" stroke="red" stroke-width="3">},
+#qq{<path d="M100,100 Q200,400,300,100"/>},
+#qq{ <rect x="1" y="1" width="1198" height="398"         fill="none" stroke="blue" stroke-width="2" />},
+#qq{ <polyline fill="none" stroke="blue" stroke-width="10"              points="50,375                     150,375 150,325 250,325 250,375                     350,375 350,250 450,250 450,375                     550,375 550,175 650,175 650,375                     750,375 750,100 850,100 850,375                     950,375 950,25 1050,25 1050,375                     1150,375" />},
+    ;
+  my $color = 0;
+  for my $line ( keys %graph ) {
+    my $n;
+    print qq{ <polyline fill="none" stroke="$colors[$color]" stroke-width="3" points="},
+      ( join ' ', map { ( $n++ * $xs ) . ',' . ( $yl - $graph{$line}{$_} ) } sort keys %dates ), qq{" />}, ++$color;
+  }
+  print
+    #qq{</g>},
+    qq{</svg:svg>';}, "]]></script>";
+  printlog 'dev', Dumper \%graph, \%dates;
 }
-printlog 'dev', Dumper \%graph;
 printlog 'dev', '<div>graph per ', psmisc::human( 'time_period', time - $graphtime ), '</div>';
 print
 qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/trunk/examples/stat">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}
