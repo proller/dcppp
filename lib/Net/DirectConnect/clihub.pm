@@ -466,7 +466,7 @@ sub init {
 
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     delete $self->{'sid'};
-    $self->log( 'dev', 'disconnect int' ) if $self;
+    $self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
   };
 }
 1;
