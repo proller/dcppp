@@ -293,13 +293,17 @@ for ( grep { length $_ } @ARGV ) {
       %config,
     );
     #$dc->connect($hub);
-    $dc->{'clients'}{'listener_http'}{'handler'}{''} = sub {
+
+=no    
+	$dc->{'clients'}{'listener_http'}{'handler'}{''} = sub {
       my $dc = shift;
       printlog "my cool cansend [$dc->{'geturl'}]";
       $dc->{'socket'}->send( "Content-type: text/html\n\n" . "hi" );
       #$dc->{'socket'}->close();
       $dc->destroy();
     };
+=cut	
+
     push @dc, $dc;
     $_->work() for @dc;
   }
@@ -329,7 +333,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
   psmisc::schedule( [ 300, 60 * 40 ], our $hubrunhour_ ||= sub { psmisc::startme('calch'); } ),
     psmisc::schedule( [ 600, 60 * 60 * 6 ], our $hubrunrare_ ||= sub { psmisc::startme('calcr'); } )
     if $config{'use_slow'};
-#  psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
+#psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
 }
 printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
