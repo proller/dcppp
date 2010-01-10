@@ -144,7 +144,7 @@ my $graphcolor;
     $row->{$_} = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
     $row->{$_} = psmisc::human( 'size',        $row->{$_} )        for grep { int $row->{$_} } qw(size share);
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
-    print qq{<td style="background-color:$graphcolor">&nbsp;</td>};
+    print qq{<td style="background-color:$graphcolor;">&nbsp;</td>};
         if ( $q->{'graph'} ) {
       print qq{<td class='graph' id='$query' rowspan='100'></td>} if $n == 1;
     }
@@ -175,9 +175,9 @@ for my $query ( sort keys %makegraph ) {
   #my $id  = $query;
   #$id =~ tr/ /_/;
   my $xl = 1000;
-  my $yl = 600;
+  my $yl = 400;
   my $xs = $xl / ( scalar keys(%dates) - 1 or 1 );
-  my $ys = 10;
+  my $ys = $yl / 10;
   print qq{<script type="text/javascript" language="JavaScript"><![CDATA[}, qq{
       
       gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
