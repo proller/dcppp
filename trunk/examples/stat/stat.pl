@@ -97,6 +97,9 @@ for my $arg (@ARGV) {
   } elsif ( $arg eq 'upgrade' ) {
     $ARGV[$n] = undef;
     #$db->do( "DROP TABLE $_")       for qw(queries_top_string_daily queries_top_tth_daily results_top_daily);
+  } elsif ( $arg eq 'stat' ) {
+    $ARGV[$n] = undef;
+    $db->table_stat();
   }
 }
 our %work;
