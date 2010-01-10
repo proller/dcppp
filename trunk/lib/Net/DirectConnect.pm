@@ -457,7 +457,7 @@ sub func {
       }
     }
     $self->file_close();
-    delete $self->{$_} for qw(NickList IpList PortList);
+    delete $self->{$_} for qw(NickList IpList PortList peers);
     $self->log( 'info', "disconnected", __FILE__, __LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
   };
