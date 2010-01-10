@@ -65,8 +65,8 @@ sub init {
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
           )
         {
-          $self->log( 'warn', "[$nick] oper: set min interval = $1" );
           $self->{'search_every'} = int( rand(5) + $1 || $self->{'search_every_min'} );
+          $self->log( 'warn', "[$nick] oper: set min interval = $self->{'search_every'}" );
           $self->search_retry();
         }
         if ( $text =~ /(?:Пожалуйста )?подождите (\d+) секунд перед следующим поиском\./i
@@ -74,8 +74,8 @@ sub init {
           or $text eq 'Пожалуйста не используйте поиск так часто!'
           or $text eq "Please don't flood with searches!" )
         {
-          $self->log( 'warn', "[$nick] oper: increase min interval +=", int $1 || $self->{'search_every_min'} ),
-            $self->{'search_every'} += int( rand(5) + $1 || $self->{'search_every_min'} );
+          $self->{'search_every'} += int( rand(5) + $1 || $self->{'search_every_min'} );
+          $self->log( 'warn', "[$nick] oper: increase min interval => $self->{'search_every'}" );
           $self->search_retry();
         }
       }
