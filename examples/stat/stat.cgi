@@ -179,7 +179,8 @@ for my $query ( sort keys %makegraph ) {
   my $xl = 1000;
   my $yl = 700;
   my $xs = $xl / ( scalar keys(%dates) - 1 or 1 );
-  my $ys = $yl / 10;
+  my $yn =  10;
+  my $ys = $yl / $yn;
   print qq{<script type="text/javascript" language="JavaScript"><![CDATA[}, 
 qq{gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
 #qq{<svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>},
@@ -195,7 +196,7 @@ qq{gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="h
     print qq{ <!-- $line : --><polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="},
       ( join ' ', map { ( $n++ * $xs ) . ',' . ( 
 #$yl - 
-($graph{$line}{$_} > 10 ? 0 : $graph{$line}{$_})*$ys ) } sort keys %dates ), qq{" />};
+($graph{$line}{$_} > 10 ? $yl : ($graph{$line}{$_}||$yn)*$ys) ) } sort keys %dates ), qq{" />};
 #       ++$color;
 
   }
