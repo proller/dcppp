@@ -122,6 +122,7 @@ my $order;
 $config{'queries'}{'queries top string'} ||= {
   'main'    => 1,
   'periods' => 1,
+  'graph'   => 1,
   'class'   => 'half',
   'show'    => [qw(cnt string)],
   'desc'    => { 'ru' => 'Чаще всего ищут', 'en' => 'Most searched' },
@@ -148,6 +149,7 @@ $config{'queries'}{'queries string last'} ||= {
 $config{'queries'}{'results top'} ||= {
   'main'     => 1,
   'periods'  => 1,
+  'graph'    => 1,
   'show'     => [qw(cnt string filename size tth)],                                                 #time
   'desc'     => { 'ru' => 'Распространенные файлы', 'en' => 'Most stored' },
   'SELECT'   => '*, COUNT(*) as cnt',
@@ -160,6 +162,7 @@ $config{'queries'}{'results top'} ||= {
 $config{'queries'}{'queries top tth'} ||= {
   'main'      => 1,
   'periods'   => 1,
+  'graph'     => 1,
   'class'     => 'half',
   'desc'      => { 'ru' => 'Чаще всего скачивают', 'en' => 'Most downloaded' },
   'show'      => [qw(cnt string filename size tth )],

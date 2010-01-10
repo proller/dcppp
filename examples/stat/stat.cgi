@@ -88,20 +88,23 @@ $config{'queries'}{'string'}{'desc'} = psmisc::html_chars( $param->{'string'} ),
 @ask = ('filename') if $param->{'filename'};
 @ask = ( $param->{'query'} ) if $param->{'query'} and $config{'queries'}{ $param->{'query'} };
 $config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
+my %makegraph;
 
-for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
+for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
   grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
 {
-  my $q = { %{ $config{'queries'}{$_} || next } };
+  my $q = { %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
   $q->{'desc'} = $q->{'desc'}->{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
   print '<div class="onetable ' . $q->{'class'} . '">',
-    $q->{'no_query_link'} ? $_ : '<a href="?query=' . ( psmisc::encode_url($_) ) . '">' . ( $q->{'desc'} || $_ ) . '</a>';
+    $q->{'no_query_link'}
+    ? $query
+    : '<a href="?query=' . ( psmisc::encode_url($query) ) . '">' . ( $q->{'desc'} || $query ) . '</a>';
   #print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
-  my $res = statlib::make_query( $q, $_, $param->{'period'} );
+  my $res = statlib::make_query( $q, $query, $param->{'period'} );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
-  print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
+  print '<th>', $query, '</th>' for 'n', @{ $q->{'show'} };
   my $n;
   for my $row (@$res) {
     print '<tr><td>', ++$n, '</td>';
@@ -125,12 +128,38 @@ for ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'
     $row->{$_} = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
     $row->{$_} = psmisc::human( 'size',        $row->{$_} )        for grep { int $row->{$_} } qw(size share);
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
+    if ( $q->{'graph'} ) {
+      my $by = $q->{'GROUP BY'};
+      #print "m=$main ";
+      $by =~ s/.*\.//;
+      #print "M==$main ";
+      my ($v) = map { $row->{'orig'}{$_} } grep { $by eq $_ } @{ $q->{'show'} };
+      $makegraph{$query}{$v} = $by;
+      print qq{<td class='graph' id='$query' rowspan='0'>graph}, '</td>' if $n == 1;
+    }
     print '</tr>';
   }
   print '</table></div>';
   print '<br/>' if $q->{'group_end'};
   psmisc::flush();
 }
+#print Dumper \%makegraph;
+my $graphtime = time;
+my %graph;
+for my $query ( sort keys %makegraph ) {
+  my $q = { %{ $config{'queries'}{$query} || next } };
+  my $table = $query;
+  $table =~ s/\s/_/g;
+  $table .= '_daily';
+  for my $row ( $db->query("SELECT * FROM $table") ) {
+    #print $row;
+    my $by = $makegraph{$query}{ $row->{tth} } or $makegraph{$query}{ $row->{string} };
+#print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
+    $graph{$query}{ $row->{$by} }{ $row->{date} } = $row->{n};
+  }
+}
+printlog 'dev', Dumper \%graph;
+printlog 'dev', '<div>graph per ', psmisc::human( 'time_period', time - $graphtime ), '</div>';
 print
 qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/trunk/examples/stat">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}
   . ( split( ' ', '$Revision$' ) )[1]
