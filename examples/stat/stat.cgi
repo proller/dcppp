@@ -148,6 +148,8 @@ my $graphcolor;
         if ( $q->{'graph'} ) {
       print qq{<td class='graph' id='$query' rowspan='100'></td>} if $n == 1;
     }
+    print qq{<td style="background-color:$graphcolor;">&nbsp;</td>};
+
     print '</tr>';
   }
   print '</table></div>';
@@ -175,26 +177,31 @@ for my $query ( sort keys %makegraph ) {
   #my $id  = $query;
   #$id =~ tr/ /_/;
   my $xl = 1000;
-  my $yl = 400;
+  my $yl = 700;
   my $xs = $xl / ( scalar keys(%dates) - 1 or 1 );
   my $ys = $yl / 10;
-  print qq{<script type="text/javascript" language="JavaScript"><![CDATA[}, qq{
-      
-      gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
+  print qq{<script type="text/javascript" language="JavaScript"><![CDATA[}, 
+qq{gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
 #qq{<svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>},
 #qq{<g fill="none" stroke="red" stroke-width="3">},
 #qq{<path d="M100,100 Q200,400,300,100"/>},
 #qq{ <rect x="1" y="1" width="1198" height="398"         fill="none" stroke="blue" stroke-width="2" />},
 #qq{ <polyline fill="none" stroke="blue" stroke-width="10"              points="50,375                     150,375 150,325 250,325 250,375                     350,375 350,250 450,250 450,375                     550,375 550,175 650,175 650,375                     750,375 750,100 850,100 850,375                     950,375 950,25 1050,25 1050,375                     1150,375" />},
     ;
-  my $color = 0;
-  for my $line ( keys %graph ) {
+#  my $color = 0;
+  for my $line ( sort keys %graph ) {
     my $n;
     #$colors[$color]
-    print qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="},
-      ( join ' ', map { ( $n++ * $xs ) . ',' . ( $yl - $graph{$line}{$_} ) } sort keys %dates ), qq{" />};
-       ++$color;
+    print qq{ <!-- $line : --><polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="},
+      ( join ' ', map { ( $n++ * $xs ) . ',' . ( 
+#$yl - 
+($graph{$line}{$_} > 10 ? 0 : $graph{$line}{$_})*$ys ) } sort keys %dates ), qq{" />};
+#       ++$color;
+
   }
+    my $n;
+print qq{<text x="},( $n++ * $xs ),qq{" y="},$yl-20, qq{" font-size="30">$_</text>} for sort keys %dates;
+
   print
     #qq{</g>},
     qq{</svg:svg>';}, "]]></script>";
