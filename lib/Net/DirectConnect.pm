@@ -50,6 +50,7 @@ sub send_udp ($$;@) {
   {
     #$self->log('dcdev', "sending UDP to [$host]:[$port] RES=" ,$s->send($_[0]));
     $s->send( $_[0] );
+    $self->{bytes_send} += length $_[0];
     $s->close();
   } else {
     $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
@@ -125,8 +126,8 @@ sub new {
     'work_sleep'         => 0.01,
     'cmd_recurse_sleep'  => 0,
     ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
-    'informative'          => [qw(number peernick status host port filebytes filetotal proxy)],    # sharesize
-    'informative_hash'     => [qw(clients)],                                                       #NickList IpList PortList
+    'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
+    'informative_hash'     => [qw(clients)],                   #NickList IpList PortList
     'disconnect_recursive' => 1,
     'reconnects'           => 5,
     'reconnect_sleep'      => 5,
@@ -328,7 +329,7 @@ sub func {
   };
   $self->{'connect'} ||= sub {
     my $self = shift;
-    $self->log( $self, 'connect0 inited', "MT:$self->{'message_type'}", ' with' );
+    #$self->log( $self, 'connect0 inited', "MT:$self->{'message_type'}", ' with' );
     if ( $_[0] or $self->{'host'} =~ /:/ ) {
       $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
@@ -450,10 +451,12 @@ sub func {
     delete $self->{'select'};
 #$self->log('dev',"delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n") for grep {$_} keys %{ $self->{'clients'} };
     if ( $self->{'disconnect_recursive'} ) {
-      for ( grep { $self->{'clients'}{$_} and !$self->{'clients'}{$_}{'auto_listen'} } keys %{ $self->{'clients'} } ) {
+      for my $client ( grep { $self->{'clients'}{$_} and !$self->{'clients'}{$_}{'auto_listen'} } keys %{ $self->{'clients'} } )
+      {
         #$self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
-        $self->{'clients'}{$_}->destroy() if ref $self->{'clients'}{$_};
-        delete( $self->{'clients'}{$_} );
+        $self->{'clients'}{$client}->destroy() if ref $self->{'clients'}{$client};
+        $self->{$_} += $self->{'clients'}{$client}{$_} for qw(bytes_recv bytes_send);
+        delete( $self->{'clients'}{$client} );
       }
     }
     $self->file_close();
@@ -465,6 +468,7 @@ sub func {
     my $self = shift;
     $self->disconnect() if ref $self and !$self->{'destroying'}++;
     #!?  delete $self->{$_} for keys %$self;
+    $self->info();
     $self->{'status'} = 'destroy';
     $self = {};
   };
@@ -533,6 +537,7 @@ sub func {
           } else {
             ++$readed;
             ++$ret;
+            $self->{bytes_recv} += length $self->{'databuf'};
             #$self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
           }
           if ( $self->{'filehandle'} ) { $self->file_write( \$self->{'databuf'} ); }
@@ -691,6 +696,7 @@ sub func {
         @ret = $self->{'parse'}{$cmd}->( @self, @param );
         $ret = scalar @ret > 1 ? \@ret : $ret[0];
         $self->handler( @self, $cmd . '_parse_aft', @param, $ret );
+        ++$self->{count_parse}{$cmd};
       } else {
 #$self->log( 'dcinf', "unknown", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd}, 'run=', @self, 'unknown', $cmd,@param,);
         $self->handler( @self, 'unknown', $cmd, @param, );
@@ -702,8 +708,9 @@ sub func {
   };
   $self->{'send'} ||= sub {
     my $self = shift;
-    local $_;
-    eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); };
+    local $_ = join( '', @_ );
+    $self->{bytes_send} += length $_;
+    eval { $_ = $self->{'socket'}->send($_); };
     $self->log( 'err', 'send error', $@ ) if $@;
     return $_;
   };
@@ -714,6 +721,7 @@ sub func {
     local @_ = @_, $_[0] .= splice @_, 1, 1 if $self->{'adc'} and length $_[0] == 1;
     $self->{'log'}->( $self, 'dcdmp', 'sendcmd1', $self->{number}, @_ );
     push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
+    ++$self->{count_sendcmd}{ $_[0] };
     if ( ( $self->{'sendbuf'} and @_ ) or !@{ $self->{'send_buffer'} || [] } ) { }
     else {
       $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
@@ -902,7 +910,10 @@ sub func {
     $self->log( 'dev', "sending bytes", length $buf, "readed [$readed] by [$self->{'file_send_by'}]" );
     #send $self->{'socket'},
     #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-    eval { $_ = $self->{'socket'}->send($buf); };
+    eval {
+      $_ = $self->{'socket'}->send($buf);
+      $self->{bytes_send} += length $buf;
+    };
     $self->log( 'err', 'send error', $@ ) if $@;
     $self->{'file_send_left'} -= $readed;
     if ( $readed < $self->{'file_send_by'} or $self->{'file_send_left'} <= 0 ) {
@@ -1016,9 +1027,10 @@ sub func {
     $self->log(
       'info',
       map( {"$_=$self->{$_}"} grep { $self->{$_} } @{ $self->{'informative'} } ),
-      map( { $_ . '(' . scalar( keys %{ $self->{$_} } ) . ')=' . join( ',', keys %{ $self->{$_} } ) }
+      map( { $_ . '(' . scalar( keys %{ $self->{$_} } ) . ')=' . join( ',', sort keys %{ $self->{$_} } ) }
         grep { keys %{ $self->{$_} } } @{ $self->{'informative_hash'} } )
     );
+    $self->log( 'info', "protocol stat", Dumper( { map { $_ => $self->{$_} } qw(count_sendcmd count_parse) } ), );
     $self->{'clients'}{$_}->info() for keys %{ $self->{'clients'} };
   };
   $self->{'active'} ||= sub {

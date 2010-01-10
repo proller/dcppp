@@ -57,9 +57,9 @@ sub init {
       #$self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
       $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->cmd('nick_generate'),
         $self->reconnect(),
-        if ( ( !keys %{ $self->{'NickList'} } or $self->{'NickList'}->{$nick}{'oper'} )
+        if ( ( !keys %{ $self->{'NickList'} } or $self->{'NickList'}{$nick}{'oper'} )
         and $text eq 'You are already in the hub.' );
-      if ( $self->{'NickList'}->{$nick}{'oper'} or $nick eq 'Hub-Security' ) {
+      if ( $self->{'NickList'}{$nick}{'oper'} or $self->{'NickList'}{$nick}{'hubbot'} or $nick eq 'Hub-Security' ) {
         if (
              $text =~ /^(?:Minimum search interval is|Минимальный интервал поиска):(\d+)s/
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
@@ -69,17 +69,19 @@ sub init {
           $self->{'search_every'} = int( rand(5) + $1 || $self->{'search_every_min'} );
           $self->search_retry();
         }
-        if ( $text =~ /(?:Пожалуйста )?подождите (\d+) секунд перед следующим поиском\./i 
-	  or $text =~ /(?:Please )?wait (\d+) seconds before next search\./i
-          or $text eq 'Пожалуйста не используйте поиск так часто!' 
-          or $text eq "Please don't flood with searches!"
-
-        )
+        if ( $text =~ /(?:Пожалуйста )?подождите (\d+) секунд перед следующим поиском\./i
+          or $text =~ /(?:Please )?wait (\d+) seconds before next search\./i
+          or $text eq 'Пожалуйста не используйте поиск так часто!'
+          or $text eq "Please don't flood with searches!" )
         {
           $self->log( 'warn', "[$nick] oper: increase min interval +=", int $1 || $self->{'search_every_min'} ),
             $self->{'search_every'} += int( rand(5) + $1 || $self->{'search_every_min'} );
           $self->search_retry();
         }
+      }
+      if ( !$self->{count_parse}{chatline} and $text =~ /PtokaX/i ) {
+        #$self->log( 'dev', "[$nick] - probably hub bot" );
+        $self->{'NickList'}{$nick}{'hubbot'} = 1;
       }
       $self->search_retry(),
         if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no search, try later..';
@@ -121,7 +123,7 @@ sub init {
       $self->supports_parse( $_[0], $self );
     },
     'ValidateDenide' => sub {
-      $self->log( 'warn', "ValidateDenide" , $self->{'Nick'}, @_);
+      $self->log( 'warn', "ValidateDenide", $self->{'Nick'}, @_ );
       $self->cmd('nick_generate');
       $self->cmd('ValidateNick');
     },
@@ -472,7 +474,7 @@ sub init {
 
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     delete $self->{'sid'};
-    $self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
+    #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
   };
 }
 1;
