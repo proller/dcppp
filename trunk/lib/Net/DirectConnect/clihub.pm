@@ -50,6 +50,7 @@ sub init {
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->baseinit();
   #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
+  #You are already in the hub.
   $self->{'parse'} ||= {
     'chatline' => sub {
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
@@ -65,15 +66,14 @@ sub init {
           )
         {
           $self->log( 'warn', "[$nick] oper: set min interval = $1" );
-          $self->{'search_every'} = int $1 || $self->{'search_every_min'};
+          $self->{'search_every'} = int( rand(5) + $1 || $self->{'search_every_min'} );
           $self->search_retry();
         }
         if ( $text =~ /(?:Пожалуйста )?подождите (\d+) секунд перед следующим поиском\./i
-                                     
           or $text eq 'Пожалуйста не используйте поиск так часто!' )
-        {              
+        {
           $self->log( 'warn', "[$nick] oper: increase min interval +=", int $1 || $self->{'search_every_min'} ),
-            $self->{'search_every'} += int $1 || $self->{'search_every_min'};
+            $self->{'search_every'} += int( rand(5) + $1 || $self->{'search_every_min'} );
           $self->search_retry();
         }
       }
@@ -84,6 +84,7 @@ sub init {
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
       if ( ( !keys %{ $self->{'NickList'} } or !exists $self->{'NickList'}->{$nick} or $self->{'NickList'}->{$nick}{'oper'} )
         and $text =~ /^Bad nickname: unallowed characters, use these (\S+)/ )
+        #
       {
         my $try = $self->{'Nick'};
         $try =~ s/[^\Q$1\E]//g;
@@ -116,6 +117,7 @@ sub init {
       $self->supports_parse( $_[0], $self );
     },
     'ValidateDenide' => sub {
+      $self->log( 'warn', "ValidateDenide" , $self->{'Nick'}, @_);
       $self->cmd('nick_generate');
       $self->cmd('ValidateNick');
     },
