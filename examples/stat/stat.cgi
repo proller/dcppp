@@ -108,26 +108,24 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
   print '<th>', $query, '</th>' for 'n', @{ $q->{'show'} };
   my $n;
-
   for my $row (@$res) {
     print '<tr><td>', ++$n, '</td>';
     $row->{$_} = psmisc::html_chars( $row->{$_} ) for @{ $q->{'show'} };
     $row->{'orig'} = {%$row};
     #$row->{'tth_orig'}    = $row->{'tth'};
     #$row->{'string_orig'} = $row->{'string'};
-my $graphcolor;
-        if ( $q->{'graph'} ) {
+    my $graphcolor;
+    if ( $q->{'graph'} ) {
       my $by = $q->{'GROUP BY'};
       #print "m=$main ";
       $by =~ s/.*\.//;
       #print "M==$main ";
       my ($v) = map { $row->{'orig'}{$_} } grep { $by eq $_ } @{ $q->{'show'} };
       $makegraph{$query}{$v} = $by;
-      $graphcolor = $graphcolors{$v} = $colors [$n-1];
+      $graphcolor = $graphcolors{$v} = $colors[ $n - 1 ];    #if length $query;
       #my $id = $query;
       #$id =~ tr/ /_/;
-}
-
+    }
     $row->{$_} =
       ( $param->{$_}
       ? ''
@@ -144,12 +142,11 @@ my $graphcolor;
     $row->{$_} = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
     $row->{$_} = psmisc::human( 'size',        $row->{$_} )        for grep { int $row->{$_} } qw(size share);
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
-    print qq{<td style="background-color:$graphcolor;">&nbsp;</td>};
-        if ( $q->{'graph'} ) {
-      print qq{<td class='graph' id='$query' rowspan='100'></td>} if $n == 1;
+    if ( $q->{'graph'} ) {
+      print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
+      print qq{<td class='graph' id='$query' rowspan='100'></td>}     if $n == 1;
+      print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
     }
-    print qq{<td style="background-color:$graphcolor;">&nbsp;</td>};
-
     print '</tr>';
   }
   print '</table></div>';
@@ -165,23 +162,27 @@ for my $query ( sort keys %makegraph ) {
   my %dates;
   $table =~ s/\s/_/g;
   $table .= '_daily';
-  for my $row ( $db->query("SELECT * FROM $table") ) {
+  my ($by) = values %{ $makegraph{$query} };
+  for my $row (
+    $db->query( "SELECT * FROM $table WHERE " . join ' OR ', map { "$by=" . $db->quote($_) } keys %{ $makegraph{$query} } ) )
+  {
+    #for my $row ( $db->query("SELECT * FROM $table  " ) ) {
     #print $row;
     my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string} };
 #print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
     ++$dates{ $row->{date} };
     $graph
       #{$query}
-      { $row->{$by} }{ $row->{date} } = $row->{n};
+      { $row->{$by} }{ $row->{date} } = $row->{n} if length $row->{$by};
   }
   #my $id  = $query;
   #$id =~ tr/ /_/;
   my $xl = 1000;
   my $yl = 700;
   my $xs = $xl / ( scalar keys(%dates) - 1 or 1 );
-  my $yn =  10;
+  my $yn = 10;
   my $ys = $yl / $yn;
-  print qq{<script type="text/javascript" language="JavaScript"><![CDATA[}, 
+  print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},
 qq{gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
 #qq{<svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>},
 #qq{<g fill="none" stroke="red" stroke-width="3">},
@@ -189,26 +190,32 @@ qq{gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="h
 #qq{ <rect x="1" y="1" width="1198" height="398"         fill="none" stroke="blue" stroke-width="2" />},
 #qq{ <polyline fill="none" stroke="blue" stroke-width="10"              points="50,375                     150,375 150,325 250,325 250,375                     350,375 350,250 450,250 450,375                     550,375 550,175 650,175 650,375                     750,375 750,100 850,100 850,375                     950,375 950,25 1050,25 1050,375                     1150,375" />},
     ;
-#  my $color = 0;
+  #my $color = 0;
   for my $line ( sort keys %graph ) {
     my $n;
     #$colors[$color]
-    print qq{ <!-- $line : --><polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="},
-      ( join ' ', map { ( $n++ * $xs ) . ',' . ( 
-#$yl - 
-($graph{$line}{$_} > 10 ? $yl : ($graph{$line}{$_}||$yn)*$ys) ) } sort keys %dates ), qq{" />};
-#       ++$color;
-
+    print qq{ <!-- $line : --><polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="}, (
+      join ' ',
+      map {
+        ( $n++ * $xs ) . ',' . (
+          #$yl -
+          ( $graph{$line}{$_} > 10 ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
+          )
+        } sort keys %dates
+      ),
+      qq{" />};
+    #++$color;
   }
-    my $n;
-print qq{<text x="},( $n++ * $xs ),qq{" y="},$yl-20, qq{" font-size="30">$_</text>} for sort keys %dates;
-
+  my $n;
+  print qq{<text x="}, ( $n++ * $xs ), qq{" y="}, $yl - 20, qq{" font-size="30">$_</text>} for sort keys %dates;
   print
     #qq{</g>},
     qq{</svg:svg>';}, "]]></script>";
   printlog 'dev', Dumper \%graph, \%dates;
 }
-printlog 'dev', '<div>graph per ', psmisc::human( 'time_period', time - $graphtime ), '</div>';
+print
+  #log'dev',
+  '<div>graph per ', psmisc::human( 'time_period', time - $graphtime ), '</div>' if $config{'use_graph'};
 print
 qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/trunk/examples/stat">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}
   . ( split( ' ', '$Revision$' ) )[1]

@@ -175,6 +175,7 @@ for ( grep { length $_ } @ARGV ) {
           $db->insert_hash( 'queries', \%s );
           my $q = $s{'tth'} || $s{'string'} || return;
           ++$work{'ask'}{$q};
+          ++$work{'stat'}{'Search'};
           psmisc::schedule(
             $config{'queue_recalc_every'},
             our $queuerecalc_ ||= sub {

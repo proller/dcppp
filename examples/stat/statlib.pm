@@ -26,9 +26,16 @@ $config{'periods'}    ||= {
   'd' => 86400,
   'w' => 7 * 86400,    #'m'=>31*86400, 'y'=>366*86400
 };
-$config{'purge'}          ||= 31 * 86400;    #366*86400;
+$config{'purge'}          ||= 31 * 86400;                          #366*86400;
 $config{'default_period'} ||= 'd';
-$config{'sql'}            ||= {
+$config{'browsers'}       ||= [qw(opera firefox chrome safari)];
+my $browsers = join '|', @{ $config{'browsers'} };
+#$config{'client'} = 'ie',
+$config{'browser_ie'} = 1 if $ENV{'HTTP_USER_AGENT'} =~ /MSIE/ and $ENV{'HTTP_USER_AGENT'} !~ /$browsers/i;
+#$config{'client'} = $_,
+$config{ 'browser_' . $_ } = 1 for grep { $ENV{'HTTP_USER_AGENT'} =~ /$_/i } @{ $config{'browsers'} };
+$config{'use_graph'} ||= 1 if $config{browser_firefox} or $config{browser_safari} or $config{browser_chrome};
+$config{'sql'} ||= {
   'driver'              => 'mysql',
   'dbname'              => 'dcstat',
   'auto_connect'        => 1,
@@ -122,13 +129,12 @@ my $order;
 $config{'queries'}{'queries top string'} ||= {
   'main'    => 1,
   'periods' => 1,
-  'graph'   => 1,
-#  'class'   => 'half',
-  'show'    => [qw(cnt string)],
-  'desc'    => { 'ru' => 'Чаще всего ищут', 'en' => 'Most searched' },
-  'SELECT'  => 'string, COUNT(*) as cnt',
-  'FROM'    => 'queries',
-  'WHERE'   => ['string != ""'],
+  ( !$config{'use_graph'} ? ( 'class' => 'half' ) : ( 'graph' => 1 ) ),
+  'show'   => [qw(cnt string)],
+  'desc'   => { 'ru' => 'Чаще всего ищут', 'en' => 'Most searched' },
+  'SELECT' => 'string, COUNT(*) as cnt',
+  'FROM'   => 'queries',
+  'WHERE'  => ['string != ""'],
   #todo: show time last
   'GROUP BY' => 'string',
   'ORDER BY' => 'cnt DESC',
@@ -147,9 +153,9 @@ $config{'queries'}{'queries string last'} ||= {
   'order'     => ++$order,
 };
 $config{'queries'}{'results top'} ||= {
-  'main'     => 1,
-  'periods'  => 1,
-  'graph'    => 1,
+  'main'    => 1,
+  'periods' => 1,
+  ( !$config{'use_graph'} ? () : ( 'graph' => 1 ) ),
   'show'     => [qw(cnt string filename size tth)],                                                 #time
   'desc'     => { 'ru' => 'Распространенные файлы', 'en' => 'Most stored' },
   'SELECT'   => '*, COUNT(*) as cnt',
@@ -160,10 +166,9 @@ $config{'queries'}{'results top'} ||= {
   'order'    => ++$order,
 };
 $config{'queries'}{'queries top tth'} ||= {
-  'main'      => 1,
-  'periods'   => 1,
-  'graph'     => 1,
-#  'class'     => 'half',
+  'main'    => 1,
+  'periods' => 1,
+  ( !$config{'use_graph'} ? ( 'class' => 'half' ) : ( 'graph' => 1 ) ),
   'desc'      => { 'ru' => 'Чаще всего скачивают', 'en' => 'Most downloaded' },
   'show'      => [qw(cnt string filename size tth )],
   'SELECT'    => '*, COUNT(*) as cnt',
