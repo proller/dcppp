@@ -12,10 +12,10 @@ use psmisc;
 use Exporter 'import';
 our @EXPORT = qw(%config  $param   $db );
 our ( %config, $param, $db, );
-$config{'log_trace'} ||= 0;
+$config{'log_trace'}  ||= 0;
 $config{'log_dmpbef'} ||= 0;
-$config{'log_dmp'}   ||= 0;
-$config{'log_dcdmp'} ||= 0;
+$config{'log_dmp'}    ||= 0;
+$config{'log_dcdmp'}  ||= 0;
 $config{'hit_to_ask'} ||= 2;
 $config{'ask_retry'}  ||= 3600;
 $config{'limit_max'}  ||= 100;
@@ -29,14 +29,16 @@ $config{'periods'}    ||= {
 $config{'purge'}          ||= 31 * 86400;    #366*86400;
 $config{'default_period'} ||= 'd';
 $config{'sql'}            ||= {
-  'driver'            => 'mysql',
-  'dbname'            => 'dcstat',
-  'auto_connect'      => 1,
-  'log'               => sub { shift; psmisc::printlog(@_) },
-  'cp_in'             => 'cp1251',
-  'error_tries'       => 0,
-  'error_chain_tries' => 0,
-  'table'             => {
+  'driver'              => 'mysql',
+  'dbname'              => 'dcstat',
+  'auto_connect'        => 1,
+  'log'                 => sub { shift; psmisc::printlog(@_) },
+  'cp_in'               => 'cp1251',
+  'connect_tries'       => 0,
+  'connect_chain_tries' => 0,
+  'error_tries'         => 0,
+  'error_chain_tries'   => 0,
+  'table'               => {
     'queries' => {
       'time' => pssql::row( 'time', 'index' => 1,         'purge'  => 1, ),
       'hub'  => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),

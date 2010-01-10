@@ -89,6 +89,7 @@ for my $arg (@ARGV) {
       $purge = $config{'purge'} if $purge and $purge <= 1;
       printlog 'info', "purge $table $col $purge =", $db->do( "DELETE FROM $table WHERE $col < " . int( time - $purge ) );
     }
+    $db->optimize() unless $config{'no_auto_optimize'};
   } elsif ( $arg eq 'install' ) {
     $ARGV[$n] = undef;
     local $db->{error_sleep} = 0;
@@ -328,6 +329,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
   psmisc::schedule( [ 300, 60 * 40 ], our $hubrunhour_ ||= sub { psmisc::startme('calch'); } ),
     psmisc::schedule( [ 600, 60 * 60 * 6 ], our $hubrunrare_ ||= sub { psmisc::startme('calcr'); } )
     if $config{'use_slow'};
+#  psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
 }
 printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
