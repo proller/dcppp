@@ -6,7 +6,7 @@ no warnings qw(uninitialized);
 our ( %config, $param, $db, );
 use statlib;
 use Data::Dumper;
-$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 use psmisc;
 our $root_path;
 use lib $root_path. '../../lib';
