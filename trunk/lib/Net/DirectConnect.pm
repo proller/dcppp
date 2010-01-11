@@ -1185,10 +1185,9 @@ Net::DirectConnect - Perl Direct Connect protocol implementation
 
 =head1 SYNOPSIS
 
-  use Net::DirectConnect::clihub;
-  my $dc = Net::DirectConnect::clihub->new(
-    'host' => 'dc.mynet.com',
-    'port' => '4111', #if not 411
+  use Net::DirectConnect;
+  my $dc = Net::DirectConnect->new(
+    'host' => 'dc.mynet.com:4111', #if not 411
     'Nick' => 'Bender', 
     'description' => 'kill all humans',
      #'M'           => 'P', #passive mode, autodetect by default
