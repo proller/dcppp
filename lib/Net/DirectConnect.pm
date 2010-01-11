@@ -156,7 +156,8 @@ sub new {
       $self->{'host'} =~ m{^(.*?)://};
       my $p = lc $1;
       #$self->protocol_init($p);
-      $self->{'protocol'} = $p || 'nmdc';
+      $self->{'protocol'} = $p;
+ $self->{'protocol'} = 'nmdc' if !$self->{'protocol'} or $self->{'protocol'} eq 'dchub';
       #$self->{'protocol'}
       #$self->log( 'proto ', $self->{'protocol'});
     }
@@ -483,10 +484,10 @@ sub func {
     $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
     my ( $readed, $reads );
     $self->{'databuf'} = '';
-    #$self->log( 'trace', 'DC::recv', 'bef loop' );
+#$self->log( 'trace', 'DC::recv', 'bef loop' );
     {
       do {
-        #$self->log( 'trace', 'DC::recv', 'in loop', $reads );
+#$self->log( 'trace', 'DC::recv', 'in loop', $reads );
         $readed = 0;
         $ret = '0E0', last unless $self->{'select'} and $self->{'socket'};
         $self->log( 'err', "SOCKET UNEXISTS must delete select" ) unless $self->{'select'}->exists( $self->{'socket'} );
@@ -708,9 +709,10 @@ sub func {
   };
   $self->{'send'} ||= sub {
     my $self = shift;
-    local $_ = join( '', @_ );
-    $self->{bytes_send} += length $_;
-    eval { $_ = $self->{'socket'}->send($_); };
+    local $_;# = join( '', @_ );
+    #$self->{bytes_send} += length $_;
+    eval { $_ = $self->{'socket'}->send(join( '', @_ )); };
+$self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
     return $_;
   };
@@ -729,7 +731,7 @@ sub func {
       #local $_;
       #eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };
       #$self->log( 'err', 'send error', $@ ) if $@;
-      #$self->{'log'}->( $self, 'dcdmp', "we send [" . join( '', @{ $self->{'send_buffer'} } ) . "]:", $! );
+      $self->{'log'}->( $self, 'dcdmp', "we send [" . join( '', @{ $self->{'send_buffer'} } ) . "]:", $! );
       $self->{'send_buffer'} = [];
       $self->{'sendbuf'}     = 0;
     }
@@ -778,10 +780,10 @@ sub func {
     my $self = shift;
     return if length $self->{'filename'};
     my $peerid = $self->{'peerid'} || $self->{'peernick'};
-    #$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
+#$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
     for ( keys %{ $self->{'want'}{$peerid} } ) {
       ( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}{$peerid}{$_} );
-      #$self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
+#$self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
       $self->{'filecurrent'} = $self->{'filename'};
       next unless defined $self->{'filename'};
       #delete  $self->{'want'}{ $peerid }{$_} ;   $self->{'filecurrent'}

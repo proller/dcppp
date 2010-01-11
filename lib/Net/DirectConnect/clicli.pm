@@ -143,7 +143,7 @@ sub init {
       $self->cmd('Lock');
     },
     'MyNick' => sub {
-      $self->sendcmd( 'MyNick', $self->{'Nick'} );
+      $self->sendcmd( 'MyNick', $self->{'Nick'} || $self->{'parent'}{'Nick'} );
     },
     'Lock' => sub {
       $self->sendcmd( 'Lock', $self->{'lock'} );
