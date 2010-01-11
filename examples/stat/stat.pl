@@ -169,7 +169,7 @@ for ( grep { length $_ } @ARGV ) {
       'handler'    => {
         'Search_parse_aft' => sub {
           my $dc = shift;
-          printlog 'sch', Dumper @_;
+          printlog 'sch', Dumper @_ if $dc->{adc};
           my $who    = shift if $dc->{adc};
           my $search = shift if $dc->{nmdc};
           my $s = $_[0] || {};
