@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use lib ( 'blib/lib', 'blib/arch' );
 #use lib ('blib/lib');
 use Net::DirectConnect::TigerHash qw(tth tthbin tthfile);
