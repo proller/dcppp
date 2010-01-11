@@ -408,6 +408,8 @@ sub func {
             $self->{'reconnect_sleep'}
           );
           $self->connect();
+        } else {
+          $self->{'status'} = 'disconnected';
         }
       }
     );
@@ -712,7 +714,7 @@ sub func {
     my $self = shift;
     local $_;    # = join( '', @_ );
     #$self->{bytes_send} += length $_;
-    eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); };
+    eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
     return $_;
