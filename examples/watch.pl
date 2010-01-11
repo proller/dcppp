@@ -10,11 +10,11 @@ chat watch
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib '../lib';
-use Net::DirectConnect::clihub;
-print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
+use Net::DirectConnect;#::clihub;
+print("usage: $0 [adc|dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 #print "Arg=",$ARGV[0],"\n";
 #$ARGV[0] =~ m|^(?:\w+\://)?(.+?)(?:\:(\d+))?$|;
-my $dc = Net::DirectConnect::clihub->new(
+my $dc = Net::DirectConnect->new(
   #'host' => $1,
   'host' => $ARGV[0],
   #( $2 ? ( 'port' => $2 ) : () ),

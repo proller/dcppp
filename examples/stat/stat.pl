@@ -11,13 +11,13 @@ use psmisc;
 our $root_path;
 use lib $root_path. '../../lib';
 use lib $root_path. './';
-use Net::DirectConnect::clihub;
+use Net::DirectConnect;
 $config{'queue_recalc_every'} ||= 60;
 $static{'no_sig_log'} = 1;    #test
 print(
   "usage:
- stat.pl [--configParam=configValue] [dchub://]host[:port] [more params and hubs]\n
- stat.pl calc[h|d|w|m]|[r]	-- calculate slow stats for all times or hour..day... r=d+w+m\n
+ $0 [--configParam=configValue] [adc|dchub://]host[:port] [more params and hubs]\n
+ $0 calc[h|d|w|m]|[r]	-- calculate slow stats for all times or hour..day... r=d+w+m\n
 "
   ),
   exit
@@ -168,12 +168,28 @@ for ( grep { length $_ } @ARGV ) {
       'reconnects' => 500,
       'handler'    => {
         'Search_parse_aft' => sub {
-          my $dc     = shift;
-          my $search = shift;
-          my %s      = ( %{ $_[0] || {} }, );
-          return if $s{'nick'} eq $dc->{'Nick'};
-          $db->insert_hash( 'queries', \%s );
-          my $q = $s{'tth'} || $s{'string'} || return;
+          my $dc = shift;
+          printlog 'sch', Dumper @_;
+          my $who    = shift if $dc->{adc};
+          my $search = shift if $dc->{nmdc};
+          my $s = $_[0] || {};
+          $s = pop if $dc->{adc};
+          return if $dc->{nmdc} and $s->{'nick'} eq $dc->{'Nick'};
+          $db->insert_hash(
+            'queries', { (
+                $dc->{nmdc} ? () : (
+                  'time'   => int time,
+                  'hub'    => $dc->{'hub_name'},
+                  'nick'   => $dc->{peers_sid}{ $who->[1] }{INF}{NI},
+                  'ip'     => $dc->{peers_sid}{ $who->[1] }{INF}{I4},
+                  'port'   => $dc->{peers_sid}{ $who->[1] }{INF}{U4},
+                  'tth'    => $s->{TR},
+                  'string' => $s->{AN},                                 #!!!
+                )
+                ) % $s
+            }
+          );
+          my $q = $s->{'tth'} || $s->{'string'} || $s->{'TR'} || $s->{'AN'} || return;
           ++$work{'ask'}{$q};
           ++$work{'stat'}{'Search'};
           psmisc::schedule(
@@ -248,8 +264,11 @@ for ( grep { length $_ } @ARGV ) {
           ( $s{nick}, $s{string} ) = $_[0] =~
             #/^<([^>]+)> (.+)$/s;
             /^(?:<|\* )(.+?)>? (.+)$/s;
-          if ( $s{nick} and $s{string} ) { $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub'}, } ); }
-          else                           { printlog( 'err', 'wtf chat', @_ ); }
+          if ( $s{nick} and $s{string} ) {
+            $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub_name'}, } );
+          } else {
+            printlog( 'err', 'wtf chat', @_ );
+          }
         },
         'welcome' => sub {
           my $dc = shift;
@@ -261,7 +280,7 @@ for ( grep { length $_ } @ARGV ) {
           $db->insert_hash(
             'users', {
               'time'   => int(time),
-              'hub'    => $dc->{'hub'},
+              'hub'    => $dc->{'hub_name'},
               'nick'   => $_,
               'size'   => $dc->{'NickList'}{$_}{'sharesize'},
               'ip'     => $dc->{'NickList'}{$_}{'ip'},
@@ -278,7 +297,7 @@ for ( grep { length $_ } @ARGV ) {
           $db->insert_hash(
             'users', {
               'time'   => int(time),
-              'hub'    => $dc->{'hub'},
+              'hub'    => $dc->{'hub_name'},
               'nick'   => $_,
               'size'   => $dc->{'NickList'}{$_}{'sharesize'},
               'ip'     => $dc->{'NickList'}{$_}{'ip'},
@@ -290,10 +309,59 @@ for ( grep { length $_ } @ARGV ) {
           ++$work{'stat'}{'Quit'};
         },
         #'To' => sub {        my $dc = shift;printlog('to', @_);},
+        'INF' => sub {
+          my $dc = shift;
+          #printlog 'inf', Dumper @_;
+          my $params = pop;
+          #local ($_) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
+          #=c
+          $db->insert_hash(
+            'users', {
+              'time' => int(time),
+              'hub'  => $dc->{'hub_name'},
+              'nick' => $params->{NI},
+              'size' => $params->{SS},
+              'ip'   => $params->{I4},
+              'port' => $params->{U4},
+              'info' => Data::Dumper->new( [$params] )->Indent(0)->Terse(1)->Purity(1)->Dump(),
+              #maybe full from peers ?
+              'online' => int time
+            }
+          );
+          #=cut
+          ++$work{'stat'}{'INF'};
+        },
+        'QUI' => sub {
+          my $dc = shift;
+          local $_ = $_[0];
+          printlog 'qui', Dumper @_;
+
+=c
+          $db->insert_hash(
+            'users', {
+              'time'   => int(time),
+              'hub'    => $dc->{'hub_name'},
+              'nick'   => $_,
+              'size'   => $dc->{'NickList'}{$_}{'sharesize'},
+              'ip'     => $dc->{'NickList'}{$_}{'ip'},
+              'port'   => $dc->{'NickList'}{$_}{'port'},
+              'info'   => Data::Dumper->new( [ $dc->{'NickList'}{$_} ] )->Indent(0)->Terse(1)->Purity(1)->Dump,
+              'online' => 0
+            }
+          );
+=cut
+
+          ++$work{'stat'}{'QUI'};
+        },
+        'RES' => sub {
+          #$db->insert_hash( 'results', \%s );
+          ++$work{'stat'}{'RES'};
+        },
       },
       %config,
     );
     #$dc->connect($hub);
+    $dc->{'handler'}{'SCH_parse_aft'} = $dc->{'handler'}{'Search_parse_aft'};
 
 =no    
 	$dc->{'clients'}{'listener_http'}{'handler'}{''} = sub {
@@ -316,14 +384,20 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     our $hubstats_ ||= sub {
       my $time = int time;
       for my $dc (@_) {
-        my @users = grep { $dc->{'NickList'}{$_}{'online'} } keys %{ $dc->{'NickList'} };
+        my @users =
+          $dc->{nmdc}
+          ? ( grep { $dc->{'NickList'}{$_}{'online'} } keys %{ $dc->{'NickList'} } )
+          : ( keys %{ $dc->{'peers_sid'} } );
         my $share;
-        $dc->cmd('GetINFO');
-        for ( 1, 0 .. scalar(@users) / 1000 ) { $_->work(1) for @dca; }
+        if ( $dc->{'nmdc'} ) {
+          $dc->cmd('GetINFO');
+          for ( 1, 0 .. scalar(@users) / 1000 ) { $_->work(1) for @dca; }
+        }
         $dc->work(1);
-        $share += $dc->{'NickList'}{$_}{'sharesize'} for @users;
-        printlog 'info', "hubsize $dc->{'hub'}: bytes = $share users=", scalar @users;
-        $db->insert_hash( 'hubs', { 'time' => $time, 'hub' => $dc->{'hub'}, 'size' => $share, 'users' => scalar @users } )
+        if   ( $dc->{nmdc} ) { $share += $dc->{'NickList'}{$_}{'sharesize'} for @users; }
+        else                 { $share += $dc->{'peers_sid'}{$_}{INF}{'SS'}  for @users; }
+        printlog 'info', "hubsize $dc->{'hub_name'}: bytes = $share users=", scalar @users;
+        $db->insert_hash( 'hubs', { 'time' => $time, 'hub' => $dc->{'hub_name'}, 'size' => $share, 'users' => scalar @users } )
           if $share;
       }
       $db->flush_insert('hubs');
@@ -336,6 +410,17 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     if $config{'use_slow'};
 #psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
+
+=z
+   psmisc::schedule(
+    [ 10, 100 ],
+    our $dump_sub__ ||= sub {
+      print "Writing dump\n";
+      psmisc::file_rewrite( 'dump', Dumper @dc);
+    }
+  );
+=cut
+
 }
 printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
 #psmisc::caller_trace(20);
