@@ -78,7 +78,7 @@ sub handler {
 }
 require 'flooddef.pl';
 do 'floodmy.pl';
-print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
+print("usage: $1 [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 handler( 'mail_loop_bef', @ARGV );
 
 sub createbot {

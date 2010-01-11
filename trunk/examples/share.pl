@@ -18,7 +18,7 @@ use lib '../lib';
 use lib './stat/pslib';
 use psmisc;
 psmisc::config();
-print("usage: flood.pl [dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
+print("usage: $1 [adc|dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 my $filelist = 'C:\Program Files\ApexDC++\Settings\HashIndex.xml';
 my %tth = ( 'files.xml.bz2' => 'C:\Program Files\ApexDC++\Settings\files.xml.bz2' );    # = (tthash=>'/path', ...);
 
@@ -79,7 +79,7 @@ while ( $dc->active() ) {
     our $search_sub__ ||= sub {
       #print "Writing dump\n";
       #psmisc::file_rewrite( 'dump', Dumper $dc);
-      $dc->search('house');
+      #$dc->search('house');
     }
   );
   #}while ( $dc->active() ) {

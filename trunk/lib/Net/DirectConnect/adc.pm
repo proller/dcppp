@@ -208,6 +208,7 @@ sub init {
       delete $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
       delete $self->{'peers_sid'}{$peerid};
       delete $self->{'peers'}{$peerid};    # or mark time
+      undef;
     },
     'STA' => sub {
       my $self = shift if ref $_[0];
@@ -638,7 +639,8 @@ sub init {
     $self->log(
       'dev',  'disconnect int',           #psmisc::caller_trace(30)
       'hub=', $self->{'parent'}{'hub'},
-    );
+      ) if $self
+        and $self->{'log'};
   };
   $self->get_peer_addr() if $self->{'socket'};
 }

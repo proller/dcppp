@@ -5,8 +5,9 @@ no warnings qw(uninitialized);
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use lib '../lib';
-use Net::DirectConnect::clihub;
-my $dc = Net::DirectConnect::clihub->new(
+use Net::DirectConnect;
+my $dc = Net::DirectConnect->new(
+'host' => $ARGV[0],
   'M'            => 'P',               #passive mode
   'sharesize'    => 10_000_000_000,    # 10G
   'auto_connect' => 0,                 # dont connect in ->new
@@ -26,7 +27,7 @@ $dc->{'handler'}{'chatline'} = sub {
     $dc->To( $nick, 'woof!' );          # private msg, can be written as $dc->cmd('To', $nick, ...
   }
 };
-$dc->connect( $ARGV[0] );               # connect can parse dchub://hub:port/
+#$dc->connect( $ARGV[0] );               # connect can parse dchub://hub:port/
 $dc->wait_connect();
 $dc->work(10);                          # seconds
 $dc->chatline('hello world');

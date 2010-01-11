@@ -361,7 +361,7 @@ sub func {
       ),
       %{ $self->{'sockopts'} || {} },
     );
-    $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected());
+    $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
     $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
     $self->get_my_addr();
     $self->get_peer_addr();
@@ -1030,9 +1030,12 @@ sub func {
       map( { $_ . '(' . scalar( keys %{ $self->{$_} } ) . ')=' . join( ',', sort keys %{ $self->{$_} } ) }
         grep { keys %{ $self->{$_} } } @{ $self->{'informative_hash'} } )
     );
-    $self->log( 'info', "protocol stat", Dumper( { map { $_ => $self->{$_} } grep {$self->{$_}} qw(count_sendcmd count_parse) } ), );
-(    ref $self->{'clients'}{$_}{info} ? 
-    $self->{'clients'}{$_}->info():()) for sort keys %{ $self->{'clients'} };
+    $self->log(
+      'info',
+      "protocol stat",
+      Dumper( { map { $_ => $self->{$_} } grep { $self->{$_} } qw(count_sendcmd count_parse) } ),
+    );
+    ( ref $self->{'clients'}{$_}{info} ? $self->{'clients'}{$_}->info() : () ) for sort keys %{ $self->{'clients'} };
   };
   $self->{'active'} ||= sub {
     my $self = shift;
