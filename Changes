@@ -9,4 +9,8 @@ passive mode autodetect by ips
 writefile -> file_write
  openfile -> file_open
 
+adc
 
+adc hub
+
+new new
