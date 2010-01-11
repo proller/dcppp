@@ -119,7 +119,7 @@ sub new {
     'waits'              => 100,
     'wait_finish_tries'  => 600,
     'wait_finish_by'     => 1,
-    'wait_connect'       => 600,
+    'wait_connect_tries' => 600,
     'clients_max'        => 50,
     'wait_clients_tries' => 200,
     'wait_clients_by'    => 0.01,
@@ -157,7 +157,7 @@ sub new {
       my $p = lc $1;
       #$self->protocol_init($p);
       $self->{'protocol'} = $p;
- $self->{'protocol'} = 'nmdc' if !$self->{'protocol'} or $self->{'protocol'} eq 'dchub';
+      $self->{'protocol'} = 'nmdc' if !$self->{'protocol'} or $self->{'protocol'} eq 'dchub';
       #$self->{'protocol'}
       #$self->log( 'proto ', $self->{'protocol'});
     }
@@ -455,7 +455,7 @@ sub func {
       for my $client ( grep { $self->{'clients'}{$_} and !$self->{'clients'}{$_}{'auto_listen'} } keys %{ $self->{'clients'} } )
       {
         #$self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
-        $self->{'clients'}{$client}->destroy() if ref $self->{'clients'}{$client};
+        $self->{'clients'}{$client}->destroy() if ref $self->{'clients'}{$client} and $self->{'clients'}{$client}{'destroy'};
         $self->{$_} += $self->{'clients'}{$client}{$_} for qw(bytes_recv bytes_send);
         delete( $self->{'clients'}{$client} );
       }
@@ -484,10 +484,10 @@ sub func {
     $self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
     my ( $readed, $reads );
     $self->{'databuf'} = '';
-#$self->log( 'trace', 'DC::recv', 'bef loop' );
+    #$self->log( 'trace', 'DC::recv', 'bef loop' );
     {
       do {
-#$self->log( 'trace', 'DC::recv', 'in loop', $reads );
+        #$self->log( 'trace', 'DC::recv', 'in loop', $reads );
         $readed = 0;
         $ret = '0E0', last unless $self->{'select'} and $self->{'socket'};
         $self->log( 'err', "SOCKET UNEXISTS must delete select" ) unless $self->{'select'}->exists( $self->{'socket'} );
@@ -569,7 +569,8 @@ sub func {
 "del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}]",
         ),
         delete( $self->{'clients'}{$_} ),
-        $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } sort keys %{ $self->{'clients'} } ), next
+        $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } sort keys %{ $self->{'clients'} } ),
+        next
         if !$self->{'clients'}{$_}{'socket'}
           or !$self->{'clients'}{$_}{'status'}
           or $self->{'clients'}{$_}{'status'} eq 'destroy';
@@ -599,7 +600,7 @@ sub func {
   };
   $self->{'wait_connect'} ||= sub {
     my $self = shift;
-    for ( 0 .. ( $_[0] || $self->{'wait_connect'} ) ) {
+    for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
       last if $self->{'status'} eq 'connected';
       $self->wait(1);
     }
@@ -709,10 +710,10 @@ sub func {
   };
   $self->{'send'} ||= sub {
     my $self = shift;
-    local $_;# = join( '', @_ );
+    local $_;    # = join( '', @_ );
     #$self->{bytes_send} += length $_;
-    eval { $_ = $self->{'socket'}->send(join( '', @_ )); };
-$self->{bytes_send} += $_;
+    eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); };
+    $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
     return $_;
   };
@@ -780,10 +781,10 @@ $self->{bytes_send} += $_;
     my $self = shift;
     return if length $self->{'filename'};
     my $peerid = $self->{'peerid'} || $self->{'peernick'};
-#$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
+    #$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
     for ( keys %{ $self->{'want'}{$peerid} } ) {
       ( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}{$peerid}{$_} );
-#$self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
+      #$self->log( 'dcdev', 'file_select1', $self->{'filename'}, $self->{'fileas'} );
       $self->{'filecurrent'} = $self->{'filename'};
       next unless defined $self->{'filename'};
       #delete  $self->{'want'}{ $peerid }{$_} ;   $self->{'filecurrent'}
