@@ -81,8 +81,7 @@ $config{'human'}{'dchub-dl'} = sub {
     . '">[&dArr;]</a>'
     if length $row->{'hub'};
 };
-print '<a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>'
-  if $param->{'tth'};
+#print '<a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>'  if $param->{'tth'};
 my @ask;
 $config{'queries'}{'string'}{'desc'} = psmisc::html_chars( $param->{'string'} ), @ask = ('string') if $param->{'string'};
 @ask = ('tth')      if $param->{'tth'};
@@ -97,16 +96,19 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
 {
   my $q = { %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
-  $q->{'desc'} = $q->{'desc'}->{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
-  print '<div class="onetable ' . $q->{'class'} . '">',
-    $q->{'no_query_link'}
+  $q->{'desc'} = $q->{'desc'}{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
+  print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
     ? $query
+    . join( '',
+     !( $query eq 'tth' and $param->{'tth'} )
+    ? ( !( $param->{$query} ) ? () : "=" . psmisc::html_chars( $param->{$query} ) )
+    : ( '=<a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
     : '<a href="?query=' . ( psmisc::encode_url($query) ) . '">' . ( $q->{'desc'} || $query ) . '</a>';
   #print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
   my $res = statlib::make_query( $q, $query, $param->{'period'} );
   print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
-  print '<th>', $query, '</th>' for 'n', @{ $q->{'show'} };
+  print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
   my $n;
   for my $row (@$res) {
     print '<tr><td>', ++$n, '</td>';
