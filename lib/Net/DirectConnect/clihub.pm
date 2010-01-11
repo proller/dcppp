@@ -88,21 +88,18 @@ sub init {
     },
     'welcome' => sub {
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
-      if  ( !keys %{ $self->{'NickList'} } or !exists $self->{'NickList'}->{$nick} or $self->{'NickList'}->{$nick}{'oper'} ) {
+      if ( !keys %{ $self->{'NickList'} } or !exists $self->{'NickList'}->{$nick} or $self->{'NickList'}->{$nick}{'oper'} ) {
         if ( $text =~ /^Bad nickname: unallowed characters, use these (\S+)/ )
-        #
-      {
-        my $try = $self->{'Nick'};
-        $try =~ s/[^\Q$1\E]//g;
-        $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
-        $self->{'Nick'} = $try if length $try;
-      } elsif ($text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i) {
-sleep $1+1;
-}
-}
-
-
-
+          #
+        {
+          my $try = $self->{'Nick'};
+          $try =~ s/[^\Q$1\E]//g;
+          $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
+          $self->{'Nick'} = $try if length $try;
+        } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i ) {
+          sleep $1 + 1;
+        }
+      }
     },
     'Lock' => sub {
       #$self->log( "lockparse", @_ );
