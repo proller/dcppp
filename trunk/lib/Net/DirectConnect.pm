@@ -568,7 +568,7 @@ sub func {
 "del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}]",
         ),
         delete( $self->{'clients'}{$_} ),
-        $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } keys %{ $self->{'clients'} } ), next
+        $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } sort keys %{ $self->{'clients'} } ), next
         if !$self->{'clients'}{$_}{'socket'}
           or !$self->{'clients'}{$_}{'status'}
           or $self->{'clients'}{$_}{'status'} eq 'destroy';
