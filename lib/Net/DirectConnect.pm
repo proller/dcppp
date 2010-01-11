@@ -9,7 +9,7 @@ use POSIX;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
-our $VERSION = '0.03' . '_' . ( split( ' ', '$Revision$' ) )[1];
+our $VERSION = '0.04';# . '_' . ( split( ' ', '$Revision$' ) )[1];
 our $AUTOLOAD;
 our %global;
 
@@ -145,7 +145,7 @@ sub new {
   $self->{'recv_flags'} ||= 0;
   #print (  'init ', 'class ', $class, __LINE__,,"[  ]\n\n");
   bless( $self, $class );
-  $self->log( 'dev', 'prefunc', $self, $class );
+  #$self->log( 'dev', 'prefunc', $self, $class );
   $self->func(@param);
   if ( $class eq __PACKAGE__ ) {
     local %_ = (@param);
@@ -362,8 +362,8 @@ sub func {
       ),
       %{ $self->{'sockopts'} || {} },
     );
-    $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
     $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
+    #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
     $self->get_my_addr();
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};

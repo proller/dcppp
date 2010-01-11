@@ -7,7 +7,7 @@ $Data::Dumper::Sortkeys = 1;
 use lib '../lib';
 use Net::DirectConnect;
 my $dc = Net::DirectConnect->new(
-'host' => $ARGV[0],
+  'host'         => $ARGV[0],
   'M'            => 'P',               #passive mode
   'sharesize'    => 10_000_000_000,    # 10G
   'auto_connect' => 0,                 # dont connect in ->new
