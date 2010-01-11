@@ -298,6 +298,7 @@ sub init {
 
   $self->{'cmd'} = {
     'chatline' => sub {
+      my $self = shift if ref $_[0];
       for (@_) {
         if ( $self->{'min_chat_delay'} and ( time - $self->{'last_chat_time'} < $self->{'min_chat_delay'} ) ) {
           $self->log( 'dbg', 'sleep', $self->{'min_chat_delay'} - time + $self->{'last_chat_time'} );
@@ -308,7 +309,7 @@ sub init {
           'dcdmp',
           "($self->{'number'}) we send [",
           "<$self->{'Nick'}> $_|",
-          "]:", $self->{'socket'}->send("<$self->{'Nick'}> $_|"), $!
+          "]:", $self->send("<$self->{'Nick'}> $_|"), $!
         );
       }
     },
