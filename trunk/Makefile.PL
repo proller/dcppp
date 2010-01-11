@@ -3,8 +3,11 @@ use ExtUtils::MakeMaker;
 #the contents of the Makefile that is written.
 %_ = (
   NAME         => 'Net::DirectConnect',
-  VERSION_FROM => 'lib/Net/DirectConnect.pm',                       # finds $VERSION
-  INSTALLDIRS  => 'site', PREREQ_PM => { 'Time::HiRes' => 0, 'MIME::Base32'=>0, #for adc only
+  VERSION_FROM => 'lib/Net/DirectConnect.pm',    # finds $VERSION
+  INSTALLDIRS  => 'site',
+  PREREQ_PM    => {
+    'Time::HiRes'  => 0,
+    'MIME::Base32' => 0,                         #for adc only
   },
   #($] >= 5.005 ?     ## Add these new keywords supported since 5.005
   #(ABSTRACT_FROM  => 'lib/Net/DirectConnect.pm', # retrieve abstract from module

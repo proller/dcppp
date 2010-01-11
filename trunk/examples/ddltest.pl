@@ -20,5 +20,5 @@ my $dc = Net::DirectConnect->new(
   #( $2 ? ( 'port' => $2 ) : () ),
   'host' => $ARGV[0], 'Nick' => ( $ARGV[1] or 'dcpppDl' . int( rand(100) ) ), 'log' => sub { },    # no logging
 );
-$dc->get( $user_nick, $file,  $ARGV[2] || $file  );                                              #.get
+$dc->get( $user_nick, $file, $ARGV[2] || $file );                                                  #.get
 #$dc->recv(); sleep(5); $dc->recv();
