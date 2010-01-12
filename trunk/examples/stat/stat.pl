@@ -102,9 +102,12 @@ for my $arg (@ARGV) {
     local $db->{'auto_install'} = 0;
     local $db->{'error_sleep'}  = 0;
     my ( $tq, $rq, $vq ) = $db->quotes();
+$db->do( "DROP TABLE ${_}_d")
+    for qw(queries_top_string_ queries_top_tth_ results_top_);
     $db->do("ALTER TABLE queries_top_string_daily RENAME TO queries_top_string_d");
     $db->do("ALTER TABLE queries_top_tth_daily RENAME TO queries_top_tth_d");
     $db->do("ALTER TABLE results_top_daily RENAME TO results_top_d");
+
     for my $p ( sort keys %{ $config{'periods'} } ) {
       0,
         #$db->do("ALTER TABLE $_$p CHANGE COLUMN ${rq}date${rq} ${rq}time${rq} VARCHAR(10) DEFAULT $vq$vq")
