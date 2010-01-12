@@ -57,7 +57,7 @@ print ' days ', (
   ) or ( $param->{'query'} and !$config{'queries'}{ $param->{'query'} }{'periods'} );
 print '<br/>';
 print
-qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим dc клиент, например <a href="http://www.apexdc.net/download/">apexdc</a>.</div>};
+qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим dc клиент, например <a href="http://www.apexdc.net/download/">apexdc</a> <a href="http://wikipedia.org/wiki/Direct_Connect_(file_sharing)#Client_software">или</a></div>};
 $config{'human'}{'magnet-dl'} = sub {
   my ($row) = @_;
   $row = { 'tth' => $row } unless ref $row eq 'HASH';
@@ -101,13 +101,13 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
     ? $query
     . join( '',
      !( $query eq 'tth' and $param->{'tth'} )
-    ? ( !( $param->{$query} ) ? () : "=" . psmisc::html_chars( $param->{$query} ) )
-    : ( '=<a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
+    ? ( !( $param->{$query} ) ? () : "= " . psmisc::html_chars( $param->{$query} ) )
+    : ( '= <a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
     : '<a href="?query=' . ( psmisc::encode_url($query) ) . '">' . ( $q->{'desc'} || $query ) . '</a>';
   #print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
   my $res = statlib::make_query( $q, $query, $param->{'period'} );
-  print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table>";
+  print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table".(!$config{'use_graph'} ?(): ' class="graph"').">";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
   my $n;
   for my $row (@$res) {
@@ -146,7 +146,7 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     if ( $q->{'graph'} ) {
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
-      print qq{<td class='graph' id='$query' rowspan='100'></td>}     if $n == 1;
+      print qq{<td class='graph' id='$query' rowspan='100'> </td>}     if $n == 1;
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
     }
     print '</tr>';
@@ -185,7 +185,7 @@ for my $query ( sort keys %makegraph ) {
   my $yn = 10;
   my $ys = $yl / $yn;
   print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},
-qq{gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
+qq{gid('$query').innerHTML='<svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
 #qq{<svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>},
 #qq{<g fill="none" stroke="red" stroke-width="3">},
 #qq{<path d="M100,100 Q200,400,300,100"/>},
@@ -195,8 +195,8 @@ qq{gid('$query').innerHTML='  <svg:svg version="1.1" baseProfile="full" xmlns="h
   #my $color = 0;
   for my $line ( sort keys %graph ) {
     my $n;
-    #$colors[$color]
-    print qq{ <!-- $line : --><polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="}, (
+    #$colors[$color] <!-- $line : -->
+    print qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="}, (
       join ' ',
       map {
         ( $n++ * $xs ) . ',' . (
