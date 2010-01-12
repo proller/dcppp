@@ -19,6 +19,7 @@ BEGIN {
   print( "Content-type: text/html\n\n", " lib load error rp=$root_path o=$0 sf=$ENV{'SCRIPT_FILENAME'}; ", $@ ), exit if $@;
 }
 $param = get_params();
+delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
 use statlib;
 print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
 print '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -165,7 +166,7 @@ for my $query ( sort keys %makegraph ) {
   my %graph;
   my %dates;
   $table =~ s/\s/_/g;
-  $table .= '_d';
+  $table .= '_' . $param->{'period'};
   my ($by) = values %{ $makegraph{$query} };
   for my $row (
     $db->query( "SELECT * FROM $table WHERE " . join ' OR ', map { "$by=" . $db->quote($_) } keys %{ $makegraph{$query} } ) )

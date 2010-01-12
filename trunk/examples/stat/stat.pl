@@ -102,8 +102,9 @@ for my $arg (@ARGV) {
     local $db->{'auto_install'} = 0;
     local $db->{'error_sleep'}  = 0;
     my ( $tq, $rq, $vq ) = $db->quotes();
-$db->do( "DROP TABLE ${_}d")
-    for qw(queries_top_string_ queries_top_tth_ results_top_);
+
+=old 
+    $db->do( "DROP TABLE ${_}d")    for qw(queries_top_string_ queries_top_tth_ results_top_);
     $db->do("ALTER TABLE queries_top_string_daily RENAME TO queries_top_string_d");
     $db->do("ALTER TABLE queries_top_tth_daily RENAME TO queries_top_tth_d");
     $db->do("ALTER TABLE results_top_daily RENAME TO results_top_d");
@@ -116,6 +117,8 @@ $db->do( "DROP TABLE ${_}d")
         $db->do("ALTER TABLE $_$p ADD COLUMN  `time` INT  UNSIGNED NOT NULL  DEFAULT '0'")
         for qw(queries_top_string_ queries_top_tth_ results_top_);
     }
+=cut
+
   } elsif ( $arg eq 'stat' ) {
     $ARGV[$n] = undef;
     $db->table_stat();

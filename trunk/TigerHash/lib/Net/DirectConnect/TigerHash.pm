@@ -1,4 +1,6 @@
+#$Id$ $URL$
 package Net::DirectConnect::TigerHash;
+our $VERSION = '0.01' . '_' . ( split( ' ', '$Revision$' ) )[1];
 use 5.006001;
 use strict;
 use warnings;
@@ -22,7 +24,6 @@ our %EXPORT_TAGS = (
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT    = qw(
 );
-our $VERSION = '0.01';
 require XSLoader;
 XSLoader::load( 'Net::DirectConnect::TigerHash', $VERSION );
 #Preloaded methods go here.
@@ -32,7 +33,7 @@ __END__
 
 =head1 NAME
 
-tiger - Perl extension for blah blah blah
+Net::DirectConnect::TigerHash - Perl extension for calculating tiger hashes from files or strings
 
 =head1 SYNOPSIS
 

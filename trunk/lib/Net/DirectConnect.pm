@@ -1,6 +1,7 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
+our $VERSION = '0.04'     . '_' . ( split( ' ', '$Revision$' ) )[1];
 no warnings qw(uninitialized);
 use Socket;
 use IO::Socket;
@@ -9,11 +10,10 @@ use POSIX;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
-our $VERSION = '0.04';# . '_' . ( split( ' ', '$Revision$' ) )[1];
 our $AUTOLOAD;
 our %global;
 
-sub float {    #v1
+sub float {               #v1
   my $self = shift if ref $_[0];
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
