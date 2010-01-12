@@ -175,6 +175,7 @@ for ( grep { length $_ } @ARGV ) {
           my $s = $_[0] || {};
           $s = pop if $dc->{adc};
           return if $dc->{nmdc} and $s->{'nick'} eq $dc->{'Nick'};
+
           $db->insert_hash(
             'queries', { (
                 $dc->{nmdc} ? () : (
@@ -186,7 +187,7 @@ for ( grep { length $_ } @ARGV ) {
                   'tth'    => $s->{TR},
                   'string' => $s->{AN},                                 #!!!
                 )
-                ) % $s
+                ), %$s
             }
           );
           my $q = $s->{'tth'} || $s->{'string'} || $s->{'TR'} || $s->{'AN'} || return;
