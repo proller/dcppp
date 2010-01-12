@@ -947,7 +947,7 @@ sub func {
   $self->{'get_peer_addr'} ||= sub {
     my ($self) = @_;
     return unless $self->{'socket'};
-    eval { @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) ) };
+    eval { @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) || return ) };
     return unless $_[1];
     return unless $_[1] = inet_ntoa( $_[1] );
     $self->{'port'} = $_[0] if $_[0] and !$self->{'incoming'};
@@ -957,7 +957,7 @@ sub func {
   $self->{'get_my_addr'} ||= sub {
     my ($self) = @_;
     return unless $self->{'socket'};
-    eval { @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) ) };
+    eval { @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) || return ) };
     return unless $_[1];
     return unless $_[1] = inet_ntoa( $_[1] );
     #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
