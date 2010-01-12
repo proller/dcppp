@@ -107,7 +107,9 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
   #print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
   my $res = statlib::make_query( $q, $query, $param->{'period'} );
-  print psmisc::human( 'time_period', time - $param->{'time'} ) . "<table".(!$config{'use_graph'} ?(): ' class="graph"').">";
+  print psmisc::human( 'time_period', time - $param->{'time'} ) 
+    . "<table"
+    . ( !$config{'use_graph'} ? () : ' class="graph"' ) . ">";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
   my $n;
   for my $row (@$res) {
@@ -146,7 +148,7 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     if ( $q->{'graph'} ) {
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
-      print qq{<td class='graph' id='$query' rowspan='100'> </td>}     if $n == 1;
+      print qq{<td class='graph' id='$query' rowspan='100'> </td>}    if $n == 1;
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
     }
     print '</tr>';
@@ -163,7 +165,7 @@ for my $query ( sort keys %makegraph ) {
   my %graph;
   my %dates;
   $table =~ s/\s/_/g;
-  $table .= '_daily';
+  $table .= '_d';
   my ($by) = values %{ $makegraph{$query} };
   for my $row (
     $db->query( "SELECT * FROM $table WHERE " . join ' OR ', map { "$by=" . $db->quote($_) } keys %{ $makegraph{$query} } ) )
