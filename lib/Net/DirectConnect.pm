@@ -325,7 +325,7 @@ sub func {
       $self->{'cmd_aft'} = '|';
     }
     $self->{'protocol'} = $p, $self->{$p} = 1, if $p;
-    $self->log( 'protocol inited', $self->{'protocol'}, $self->{'cmd_bef'}, $self->{'cmd_aft'} );
+    #$self->log( 'protocol inited', $self->{'protocol'}, $self->{'cmd_bef'}, $self->{'cmd_aft'} );
     return $self->{'protocol'};
   };
   $self->{'connect'} ||= sub {
