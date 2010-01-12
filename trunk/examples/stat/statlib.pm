@@ -97,25 +97,6 @@ $config{'sql'} ||= {
       'online' => pssql::row( 'time', 'index' => 1,        'default'      => 0, ),
       'info'   => pssql::row( undef,  'type'  => 'VARCHAR', ), #'dumper' => 1,
     },
-    'queries_top_string_daily' => {
-      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', 'index' => 1, primary => 1 ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,  primary   => 1 ),
-      cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      string => pssql::row( undef, 'type' => 'VARCHAR',  'index'   => 1, ),
-    },
-    'queries_top_tth_daily' => {
-      #queries_top_tth_daily
-      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1, 'index' => 1, ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,  primary   => 1 ),
-      cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      tth    => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
-    },
-    'results_top_daily' => {
-      'date' => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 10, 'default' => '', primary => 1, 'index' => 1, ),
-      n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,  primary   => 1 ),
-      cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-      tth    => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
-    },
   },
   'table_param' => {
     'queries' => { 'big'       => 1, },
@@ -124,6 +105,29 @@ $config{'sql'} ||= {
     'hubs'    => { 'no_counts' => 1, },
   },
 };
+$config{'sql'}{'table'}{ 'queries_top_string_' . $_ } = {
+  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 10, 'default' => '', 'index' => 1, primary => 1 ),
+  'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
+  n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
+  cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
+  string => pssql::row( undef, 'type' => 'VARCHAR',  'index'   => 1, ),
+  },
+  $config{'sql'}{'table'}{ 'queries_top_tth_' . $_ } = {
+  #queries_top_tth_daily
+  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 10, 'default' => '', primary => 1, 'index' => 1, ),
+  'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
+  n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
+  cnt => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
+  tth => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
+  },
+  $config{'sql'}{'table'}{ 'results_top_' . $_ } = {
+  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 10, 'default' => '', primary => 1, 'index' => 1, ),
+  'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
+  n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
+  cnt => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
+  tth => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
+  },
+  for sort keys %{ $config{'periods'} };
 $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
 $config{'queries'}{'queries top string'} ||= {
