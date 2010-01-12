@@ -118,7 +118,7 @@ sub flush_all { $db->flush_insert(); }
 
 sub print_info {
   printlog( 'info', "queue len=", scalar @{ $work{'toask'} || [] }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
-  local @_ = grep { $_->active() } @dc;
+  local @_ = grep { $_ and $_->active() } @dc;
   printlog 'info', 'active hubs:', map { $_->{'host'} . ':' . $_->{'status'} } @_;
   printlog 'info', 'hashes:',      map { $_ . '=' . scalar %{ $work{$_} || {} } } qw(ask asked ask_db);
   printlog 'info', 'stat:',        map { $_ . '=' . $work{'stat'}{$_} } keys %{ $work{'stat'} || {} };

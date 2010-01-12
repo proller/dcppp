@@ -146,7 +146,7 @@ $config{'queries'}{'queries string last'} ||= {
   'group_end' => 1,
   'desc'      => { 'ru' => 'Сейчас ищут', 'en' => 'last searches' },
   'FROM'      => 'queries',
-  'show'      => [qw(time hub nick string )],
+  'show'      => [qw(time hub nick ip string )],
   'SELECT'    => '*',
   'WHERE'     => ['queries.string != ""'],
   'ORDER BY'  => 'queries.time DESC',
@@ -185,7 +185,7 @@ $config{'queries'}{'queries tth last'} ||= {
   'desc'      => { 'ru' => 'Сейчас скачивают', 'en' => 'last downloads' },
   'class'     => 'half',
   'group_end' => 1,
-  'show'      => [qw(time hub nick filename size tth)],
+  'show'      => [qw(time hub nick ip filename size tth)],
   'SELECT' =>
 '*, (SELECT string FROM results WHERE queries.tth=results.tth LIMIT 1) AS string, (SELECT filename FROM results WHERE queries.tth=results.tth LIMIT 1) AS filename, (SELECT size FROM results WHERE queries.tth=results.tth LIMIT 1) AS size',
   'WHERE'    => ['tth != ""'],

@@ -11,4 +11,5 @@ tr:hover {background-color:Gainsboro;}
 /*.graph:hover {background-color:WhiteSmoke;}*/
 table {border:solid 1px Gainsboro; background-color:Gainsboro; margin:auto;}
 .main-top-info {text-align:center; background-color:LightSalmon;}
-td.graph {width:50%;}
+table.graph {width:90%;}
+td.graph {width:40%; max-width:90%;}
