@@ -86,6 +86,11 @@ tthfile(s)
       struct stat buffer;
       int         status;
       status = fstat(fd, &buffer);
+
+      if (!(S_ISREG(buffer.st_mode) || S_ISLNK(buffer.st_mode))) {
+        close(fd);
+        XSRETURN_UNDEF;
+      }
       int64_t size = buffer.st_size; //File::getSize(file);
       //printf("file[%s] size[%d]\n",file, size);
       int64_t size_left = size;

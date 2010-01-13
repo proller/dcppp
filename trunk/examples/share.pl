@@ -3,7 +3,15 @@
 
 =readme
 
-chat watch 
+todo:
+
+scan 
+ hash
+make filelist
+
+
+enable sharing : 
+echo '$config{'share'} = [qw(C:\distr C:\pub\ )];' >> config.pl
 
 =cut
 
@@ -13,15 +21,43 @@ use lib '../lib';
 #use Net::DirectConnect::clihub;
 #use Net::DirectConnect::adc;
 use Net::DirectConnect;
-#use Net::DirectConnect::TigerHash qw(tthfile);
 use lib '../lib';
 use lib './stat/pslib';
+our %config;
 use psmisc;
 psmisc::config();
-print("usage: $1 [adc|dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 my $filelist = 'C:\Program Files\ApexDC++\Settings\HashIndex.xml';
 my %tth = ( 'files.xml.bz2' => 'C:\Program Files\ApexDC++\Settings\files.xml.bz2' );    # = (tthash=>'/path', ...);
-
+my $cantth;
+eval q{ use Net::DirectConnect::TigerHash qw(tthfile); ++$cantth; };
+print $@ if $@;
+#if ($cantth) {
+for my $dir ( @{ $config{'share'} || [] } ) {
+  print("sorry, cant load Net::DirectConnect::TigerHash for hashing\n"), last, unless ($cantth);
+  print "scanning [$dir]\n";
+  opendir( my $dh, $dir ) or print("can't opendir $dir: $!"), next;
+  #@dots =
+  for my $file ( readdir($dh) ) {
+    next if $file =~ /^\.\.?/;
+    my $full = "$dir/$file";
+    print 'd: ' if -d $full;
+    #'res=',
+    #join "\n",     grep { !/^\.\.?/ and
+    #/^\./ &&     -f "$dir/$_"     }
+    print " ", $full;
+    #print "\n";
+    #my $tth;
+    my $tth = tthfile($full);    #if -f $full;
+    $tth{$tth} = $file if $tth;
+    #print ' ', tthfile($full) if -f $full ; #and -s $full < 1_000_000;
+    print ' ', $tth;
+    print ' ', -s $full if -f $full;
+    print "\n";
+  }
+  closedir $dh;
+  #}
+}
+print("usage: $1 [adc|dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
 if ( open my $f, '<', $filelist ) {
   print "loading filelist..";
   local $/ = '<';
