@@ -105,6 +105,8 @@ sub sharescan {
         s{.*/}{};
       psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n};
       ++$level;
+    psmisc::schedule(10, our $my_every_10sec_sub__ ||= sub { printinfo()});
+
       for my $file ( readdir($dh) ) {
         last if $stopscan;
         next if $file =~ /^\.\.?$/;
@@ -248,6 +250,7 @@ my $dc = Net::DirectConnect
         },
       } qw(welcome chatline To)
   },
+%{$config{dc}||{}},
   );
 $dc->work(10);
 #$dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
