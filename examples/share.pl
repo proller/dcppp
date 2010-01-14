@@ -105,7 +105,7 @@ sub sharescan {
         s{.*/}{};
       psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n};
       ++$level;
-    psmisc::schedule(10, our $my_every_10sec_sub__ ||= sub { printinfo()});
+    psmisc::schedule([10, 10], our $my_every_10sec_sub__ ||= sub { printinfo()});
 
       for my $file ( readdir($dh) ) {
         last if $stopscan;
@@ -190,7 +190,19 @@ sub sharescan {
   undef $SIG{INFO};
   psmisc::file_append $config{files}, qq{</FileListing>};
   psmisc::file_append $config{files};
-  `bzip2 -f "$config{files}"` ;#unless $interrupted;
+if (psmisc::use_try 'IO::Compress::Bzip2', 
+) {
+
+    my $status = IO::Compress::Bzip2::bzip2 ($config{files} => $config{files}.'.bz2')         or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error";
+
+}
+else {
+
+#printlog  'sys', 
+`bzip2 -f "$config{files}"` ;
+  }  
+  exit;
+  #unless $interrupted;
   $config{filetth}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
   #}
   printinfo();

@@ -33,6 +33,8 @@ sub init {
     'XmlBZList' => 1,
     'ADCGet'    => 1,
     'MiniSlots' => 1,
+            'TTHF' => 1,
+
     #MiniSlots XmlBZList ADCGet TTHL TTHF
     @_, 'direction' => 'Download',
     #'Direction' => 'Upload', #rand here
