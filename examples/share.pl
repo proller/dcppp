@@ -9,6 +9,8 @@ scan
  hash
 make filelist
 
+filelist xml escape chars
+
 
 enable sharing : 
 echo '$config{'share'} = [qw(C:\distr C:\pub\ )];' >> config.pl
@@ -28,6 +30,7 @@ use lib './stat/pslib';
 our ( %config, $db );
 use psmisc;
 use pssql;
+$config{files} ||= 'files.xml';
 $config{'sql'} ||= {
   'driver' => 'sqlite',
   'dbname' => 'files.sqlite',
@@ -48,8 +51,8 @@ $config{'sql'} ||= {
     },
   }
 };
-$config{filelist} ||= 'C:\Program Files\ApexDC++\Settings\HashIndex.xml';
-$config{filetth} ||= { 'files.xml.bz2' => 'C:\Program Files\ApexDC++\Settings\files.xml.bz2' };    # = (tthash=>'/path', ...);
+#$config{filelist} ||= 'C:\Program Files\ApexDC++\Settings\HashIndex.xml';
+#$config{filetth} ||= { 'files.xml.bz2' => 'C:\Program Files\ApexDC++\Settings\files.xml.bz2' };    # = (tthash=>'/path', ...);
 psmisc::config();
 psmisc::lib_init();
 $db ||= pssql->new( %{ $config{'sql'} || {} }, );
@@ -60,105 +63,134 @@ print $@ if $@;
 #if ($cantth) {
 #print 'DUMp==',Dumper \%config;
 #print Dumper  \%INC;
-my $stopscan;
-my $level = 0;
-my $sharesize;
+#for my $dir ( @{ $config{'share'} || [] } ) {
+sub sharescan {
+  print("sorry, cant load Net::DirectConnect::TigerHash for hashing\n"), return
+    unless ( $INC{"Net/DirectConnect/TigerHash.pm"} );
+  my $stopscan;
+  my $level = 0;
+  my ( $sharesize, $sharefiles );
+  psmisc::file_rewrite $config{files}, qq{<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<FileListing Version="1" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
+};
+#<FileListing Version="1" CID="KIWZDBLTOFWIQOT6NWP7UOPJVDE2ABYPZJGN5TZ" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
+#};
+  sub filelist_line ($) {
+    for my $f (@_) {
+      $sharesize += $f->{size};
+      ++$sharefiles if $f->{size};
+      psmisc::file_append $config{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}"/>\n};
+      #$config{filetth}{ $f->{tth} } = $f->{full} if $f->{tth};    $config{filetth}{ $f->{file} } ||= $f->{full};
+      $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
+      $config{'filetth'}{ $f->{'tth'} } = $f->{'full'} if $f->{'tth'};
+      $config{'filetth'}{ $f->{'file'} } ||= $f->{'full'};
+      #printlog 'set share', "[$f->{file}], [$f->{tth}] = [$config{filetth}{ $f->{tth} }],[$config{filetth}{ $f->{file} }]";
+      #printlog Dumper $config{filetth};
+    }
+  }
 
-sub filelist_line ($) {
-  my ($f) = @_;
-  $sharesize += $f->{size};
-}
-
-sub scandir (@) {
-  for my $dir (@_) {
-    last if $stopscan;
-    $dir =~ tr{\\}{/};
-    $dir =~ s{/+$}{};
-    opendir( my $dh, $dir ) or print("can't opendir $dir: $!"), next;
-    #@dots =
-    ++$level;
-    for my $file ( readdir($dh) ) {
+  sub scandir (@) {
+    for my $dir (@_) {
       last if $stopscan;
-      next if $file =~ /^\.\.?/;
-      my $f = { path => $dir, file => $file, };
-      $f->{full} = "$dir/$file";
-      print("d $f->{full}:\n"), $f->{dir} = -d $f->{full};
-      filelist_line($f), scandir( $f->{full} ), next if $f->{dir};
-      $f->{size} = -s $f->{full} if -f $f->{full};
-      $f->{time} = int( $^T + 86400 * -M $f->{full} );    #time() -
-      #'res=',
-      #join "\n",     grep { !/^\.\.?/ and
-      #/^\./ &&     -f "$dir/$_"     }
-      print " ", $file;
-      #todo - select not all cols
-      my $indb =
-        $db->line( "SELECT * FROM ${tq}filelist${tq} WHERE ${rq}size${rq}="
-          . $db->quote( $f->{size} )
-          . " AND ${rq}path${rq}="
-          . $db->quote( $f->{path} )
-          . " AND ${rq}file${rq}="
-          . $db->quote( $f->{file} )
-          . " LIMIT 1" );
-      #printlog ('already scaned', $indb->{size}),
-      filelist_line($f), next, if $indb->{size} == $f->{size};
-      #$db->select('filelist', {path=>$f->{path},file=>$f->{file}, });
-      #printlog Dumper ;
-      #print "\n";
-      #my $tth;
-      if ( $f->{size} > 100_000 ) {
+      $dir =~ tr{\\}{/};
+      $dir =~ s{/+$}{};
+      opendir( my $dh, $dir ) or print("can't opendir $dir: $!"), next;
+      #@dots =
+      ( my $dirname = $dir ) =~
+        #W s/^\w://;
+        #$dirname =~
+        s{.*/}{};
+      psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n};
+      ++$level;
+      for my $file ( readdir($dh) ) {
+        last if $stopscan;
+        next if $file =~ /^\.\.?$/;
+        my $f = { path => $dir, file => $file, };
+        $f->{full} = "$dir/$file";
+        #print("d $f->{full}:\n"),
+        $f->{dir} = -d $f->{full};
+        #filelist_line($f),
+        scandir( $f->{full} ), next if $f->{dir};
+        $f->{size} = -s $f->{full} if -f $f->{full};
+        $f->{time} = int( $^T + 86400 * -M $f->{full} );    #time() -
+        #'res=',
+        #join "\n",     grep { !/^\.\.?/ and
+        #/^\./ &&     -f "$dir/$_"     }
+        print " ", $file;
+        #todo - select not all cols
         my $indb =
           $db->line( "SELECT * FROM ${tq}filelist${tq} WHERE ${rq}size${rq}="
             . $db->quote( $f->{size} )
+            . " AND ${rq}path${rq}="
+            . $db->quote( $f->{path} )
             . " AND ${rq}file${rq}="
             . $db->quote( $f->{file} )
             . " LIMIT 1" );
-        #printlog 'sel', Dumper $indb;
-        if ( $indb->{tth} ) {
-          $f->{$_} ||= $indb->{$_} for keys %$indb;
-          #printlog "already summed", %$f;
-          filelist_line($f);
-          next;
+        #printlog ('already scaned', $indb->{size}),
+        filelist_line($indb), next, if $indb->{size} == $f->{size};
+        #$db->select('filelist', {path=>$f->{path},file=>$f->{file}, });
+        #printlog Dumper ;
+        #print "\n";
+        #my $tth;
+        if ( $f->{size} > 100_000 ) {
+          my $indb =
+            $db->line( "SELECT * FROM ${tq}filelist${tq} WHERE ${rq}size${rq}="
+              . $db->quote( $f->{size} )
+              . " AND ${rq}file${rq}="
+              . $db->quote( $f->{file} )
+              . " LIMIT 1" );
+          #printlog 'sel', Dumper $indb;
+          if ( $indb->{tth} ) {
+            $f->{$_} ||= $indb->{$_} for keys %$indb;
+            #printlog "already summed", %$f;
+            filelist_line($f);
+            next;
+          }
         }
+        if ( !$f->{tth} ) {
+          printlog 'calc', $f->{full};
+          my $time = time();
+          $f->{tth} = tthfile( $f->{full} );
+          printlog 'time', psmisc::human( 'size', $f->{size} ), 'per', psmisc::human( 'time_period', time - $time ), 'speed ps',
+            psmisc::human( 'size', $f->{size} / ( time - $time or 1 ) )
+            if $f->{size};
+        }
+        #$f->{tth} = $f->{size} > 1_000_000 ? 'bigtth' : tthfile( $f->{full} );    #if -f $full;
+        #print Dumper $config{filetth};
+        #next;
+        #print ' ', tthfile($full) if -f $full ; #and -s $full < 1_000_000;
+        #print ' ', $f->{tth};
+        #print ' ', $f->{size};    #if -f $f->{full};
+        #print join ':',-M $f->{full}, $^T + 86400 * -M $f->{full},$f->{time};
+        #print "\n";
+        filelist_line($f);
+        $db->insert_hash( 'filelist', $f );
       }
-      if ( !$f->{tth} ) {
-        printlog 'calc', $f->{full};
-        my $time = time();
-        $f->{tth} = tthfile( $f->{full} );
-        printlog 'time', psmisc::human( 'size', $f->{size} ), 'per', psmisc::human( 'time_period', time - $time ), 'speed ps',
-          psmisc::human( 'size', $f->{size} / ( time - $time or 1 ) )
-          if $f->{size};
-      }
-      #$f->{tth} = $f->{size} > 1_000_000 ? 'bigtth' : tthfile( $f->{full} );    #if -f $full;
-      #print Dumper $config{filetth};
-      #next;
-      $config{filetth}{ $f->{tth} } = $f->{full} if $f->{tth};
-      $config{filetth}{$file} ||= $f->{full};
-      #print ' ', tthfile($full) if -f $full ; #and -s $full < 1_000_000;
-      print ' ', $f->{tth};
-      print ' ', $f->{size};    #if -f $f->{full};
-      #print join ':',-M $f->{full}, $^T + 86400 * -M $f->{full},$f->{time};
-      print "\n";
-      filelist_line($f);
-      $db->insert_hash( 'filelist', $f );
+      --$level;
+      psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n};
+      closedir $dh;
     }
-    --$level;
-    closedir $dh;
   }
-}
-#for my $dir ( @{ $config{'share'} || [] } ) {
-unless ( $INC{"Net/DirectConnect/TigerHash.pm"} ) { print("sorry, cant load Net::DirectConnect::TigerHash for hashing\n"),; }
-else {
+  #else {
   #print "scanning [$dir]\n";
-  $SIG{INT} = sub { ++$stopscan; print "INT rec, stopscan\n" };
+  my $interrupted;
+  $SIG{INT} = sub { ++$stopscan; ++$interrupted; print "INT rec, stopscan\n" };
   scandir( @{ $config{'share'} || [] } );
   undef $SIG{INT};
-  printlog 'sharesize', $sharesize;
+  psmisc::file_append $config{files}, qq{</FileListing>};
+  psmisc::file_append $config{files};
+  `bzip2 -f "$config{files}"` unless $interrupted;
+  $config{filetth}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
+  printlog 'sharesize', $sharesize, $sharefiles, scalar keys %{ $config{filetth} };
+  #}
+  return ( $sharesize, $sharefiles );
 }
+my ( $sharesize, $sharefiles ) = sharescan();
 #print Dumper \%config;
 #}
 #}
 print("usage: $1 [adc|dchub://]host[:port] [bot_nick]\n"), exit if !$ARGV[0];
-if ( open my $f, '<', $config{filelist} ) {
+if ( $config{filelist} and open my $f, '<', $config{filelist} ) {
   print "loading filelist..";
   local $/ = '<';
   while (<$f>) {
@@ -184,14 +216,16 @@ my $dc = Net::DirectConnect
   #'Nick' => ( $ARGV[1] or int( rand(100000000) ) ),
   #'Nick'		=>	'xxxx',
   'sharesize' => $sharesize || int( rand 10000000000 ) + int( rand 10000000000 ) * int( rand 100 ),
+  INF => { SS => $sharesize, SF => $sharefiles, },
   #'log'		=>	sub {},	# no logging
   #'client'      => '++',
   #'V'           => '0.698',
   #'description' => '',
   #'M'           => 'P',
-  'share_tth' => $config{filetth},
-  dev_http    => 1,
-  'log'       => sub {
+  'file_send_by' => 1024 * 1024 * 1,
+  'share_tth'    => $config{filetth},
+  dev_http       => 1,
+  'log'          => sub {
     my $dc = ref $_[0] ? shift : {};
     #psmisc::printlog shift(), $dc->{'number'}, join ' ', psmisc::human('time'), @_, "\n";
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
@@ -224,7 +258,7 @@ while ( $dc->active() ) {
     [ 20, 100 ],
     our $dump_sub__ ||= sub {
       print "Writing dump\n";
-      psmisc::file_rewrite( 'dump', Dumper $dc);
+      psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
     }
   );
 }

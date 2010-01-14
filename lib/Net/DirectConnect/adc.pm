@@ -111,7 +111,10 @@ sub init {
       if ( $dst eq 'H' ) {
         $self->cmd( 'I', 'SUP' );
         #$peerid ||= join '', map {} 1..4
-        $peerid ||= base32( $self->{'number'} + int rand 100 );
+        $peerid ||= base32(
+          $self->{'number'}
+            #+ int rand 100
+        );
         $peerid = ( 'A' x ( 4 - length $peerid ) ) . $peerid;
         $self->{'peerid'} ||= $peerid;
         $self->cmd( 'I', 'SID', $peerid );
@@ -170,7 +173,8 @@ sub init {
           $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} };
         }
       }
-      $params->{I4} = $self->{hostip} if $params->{I4};
+      $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{hostip}] " ), $params->{I4} = $self->{hostip}
+        if $dst eq 'I' and $params->{I4};                       #!$self->{parent}{hub}
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
       $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
@@ -181,9 +185,9 @@ sub init {
       #$self->log('adcdev', 'INF7', $peerid, @_);
       if ( $dst eq 'I' ) {
         $self->cmd( 'B', 'INF' );
-        $self->{'status'} = 'connected';    #clihub
+        $self->{'status'} = 'connected';                        #clihub
       } elsif ( $dst eq 'C' ) {
-        $self->{'status'} = 'connected';    #clicli
+        $self->{'status'} = 'connected';                        #clicli
         $self->cmd( $dst, 'INF' );
         if   ( $params->{TO} ) { }
         else                   { }
@@ -345,6 +349,7 @@ sub init {
         'INF'          => { %{ $self->{'INF'} }, 'TO' => $token },
         'message_type' => 'C',
         'auto_connect' => 1,
+        no_listen      =>,
       ) if $toid eq $self->{'sid'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'CTM', $peerid, $toid, @_ );
@@ -507,7 +512,9 @@ sub init {
         $self->{'INF'}{'HR'} ||= $self->{'R'} || 0;
         $self->{'INF'}{'HO'} ||= $self->{'O'} || 0;
         $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
-          || 'perl' . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
+          || 'perl'
+          . $Net::DirectConnect::VERSION . '_'
+          . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
         $self->{'INF'}{'US'} ||= 10000;
         $self->{'INF'}{'U4'} ||= $self->{'myport_udp'};
         $self->{'INF'}{'I4'} ||= $self->{'myip'};
@@ -515,9 +522,9 @@ sub init {
      #$self->{''} ||= $self->{''} || '';
      #$self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       }
-      $self->cmd_adc               #sendcmd
+      $self->cmd_adc     #sendcmd
         (
-        $dst, 'INF',               #$self->{'sid'},
+        $dst, 'INF',     #$self->{'sid'},
         map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : sort keys %{ $self->{'INF'} }
         );
       #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
@@ -560,75 +567,77 @@ sub init {
 =cut    
 
   #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
-  if ( ( $self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'} ) {
-    $self->log( 'dev', "making listeners: tcp" );
-    $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
-      #%$self, $self->clear(),
-      #'want' => $self->{'want'},
-      #'NickList'    => \%{ $self->{'NickList'} },
-      #'IpList'      => \%{ $self->{'IpList'} },
-      #'PortList'    => \%{ $self->{'PortList'} },
-      #'handler'     => \%{ $self->{'handler'} },
-      'parent' => $self, 'auto_listen' => 1,
-      #'myport'        => $self->{'myport'},
-      ( map { $_ => $self->{$_} } qw(myport want peers ) ),
-    );
-    $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
-    $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
-    $self->log( 'dev', "making listeners: udp" );
-    $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
-      #%$self, $self->clear(),
-      'parent' => $self, 'Proto' => 'udp',
-      #?    'want'     => \%{ $self->{'want'} },
-      #?    'NickList' => \%{ $self->{'NickList'} },
-      #?    'IpList'   => \%{ $self->{'IpList'} },
-      #?    'PortList' => \%{ $self->{'PortList'} },
-      #'handler' => \%{ $self->{'handler'} },
-      #$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
-      #'LocalPort'=>$self->{'myport'},
-      #'debug'=>1,
-      #'nonblocking' => 0,
-      'NONONOparse' => {
-        'SR'  => $self->{'parse'}{'SR'},
-        'PSR' => sub {                     #U
-          #$self->log( 'dev', "UPSR", @_ );
-        },
+  unless ( $self->{'no_listen'} ) {
+    if ( ( $self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'} ) {
+      $self->log( 'dev', "making listeners: tcp" );
+      $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
+        #%$self, $self->clear(),
+        #'want' => $self->{'want'},
+        #'NickList'    => \%{ $self->{'NickList'} },
+        #'IpList'      => \%{ $self->{'IpList'} },
+        #'PortList'    => \%{ $self->{'PortList'} },
+        #'handler'     => \%{ $self->{'handler'} },
+        'parent' => $self, 'auto_listen' => 1,
+        #'myport'        => $self->{'myport'},
+        ( map { $_ => $self->{$_} } qw(myport want peers ) ),
+      );
+      $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
+      $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
+      $self->log( 'dev', "making listeners: udp" );
+      $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
+        #%$self, $self->clear(),
+        'parent' => $self, 'Proto' => 'udp',
+        #?    'want'     => \%{ $self->{'want'} },
+        #?    'NickList' => \%{ $self->{'NickList'} },
+        #?    'IpList'   => \%{ $self->{'IpList'} },
+        #?    'PortList' => \%{ $self->{'PortList'} },
+        #'handler' => \%{ $self->{'handler'} },
+        #$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
+        #'LocalPort'=>$self->{'myport'},
+        #'debug'=>1,
+        #'nonblocking' => 0,
+        'NONONOparse' => {
+          'SR'  => $self->{'parse'}{'SR'},
+          'PSR' => sub {                     #U
+            #$self->log( 'dev', "UPSR", @_ );
+          },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131
 #$SR [Predator]Wolf DC++\Btyan Adams - Please Forgive Me.mp314217310 18/20TTH:G7DXSTGPHTXSD2ZZFQEUBWI7PORILSKD4EENOII (81.9.63.68:4111)
 #2008/12/14-13:30:50 welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131
 #$SR [Predator]Wolf DC++\Btyan Adams - Please Forgive Me.mp314217310 18/20TTH:G7DXSTGPHTXSD2ZZFQEUBWI7PORILSKD4EENOII (81.9.63.68:4111)
-      },
-      'auto_listen' => 1,
-    );
-    $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
-    $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
-  }
-  #DEV=z
-  if ( $self->{'dev_http'} ) {
-    $self->log( 'dev', "making listeners: http" );
-    #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
-    $self->{'clients'}{'listener_http'} = Net::DirectConnect->new(
-      #%$self, $self->clear(),
-      #'want'     => \%{ $self->{'want'} },
-      #'NickList' => \%{ $self->{'NickList'} },
-      #'IpList'   => \%{ $self->{'IpList'} },
+        },
+        'auto_listen' => 1,
+      );
+      $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
+      $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
+    }
+    #DEV=z
+    if ( $self->{'dev_http'} ) {
+      $self->log( 'dev', "making listeners: http" );
+      #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
+      $self->{'clients'}{'listener_http'} = Net::DirectConnect->new(
+        #%$self, $self->clear(),
+        #'want'     => \%{ $self->{'want'} },
+        #'NickList' => \%{ $self->{'NickList'} },
+        #'IpList'   => \%{ $self->{'IpList'} },
 ##      'PortList' => \%{ $self->{'PortList'} },
-      #'handler'  => \%{ $self->{'handler'} },
-      #$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
-      #'LocalPort'=>$self->{'myport'},
-      #'debug'=>1,
-      #@_,
-      'incomingclass' => 'Net::DirectConnect::http', 'auto_connect' => 0, 'auto_listen' => 1,
-      #'auto_listen' => 1,
-      #'HubName'       => 'Net::DirectConnect test hub',
-      #'myport'        => 80,
-      'myport' => 8000, 'myport_base' => 8000, 'myport_random' => 99, 'myport_tries' => 5, 'parent' => $self,
-      #'auto_listen' => 0,
-    );
-    $self->{'myport_http'} = $self->{'clients'}{'listener_http'}{'myport'};
-    $self->log( 'err', "cant listen http" ) unless $self->{'myport_http'};
+        #'handler'  => \%{ $self->{'handler'} },
+        #$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
+        #'LocalPort'=>$self->{'myport'},
+        #'debug'=>1,
+        #@_,
+        'incomingclass' => 'Net::DirectConnect::http', 'auto_connect' => 0, 'auto_listen' => 1,
+        #'auto_listen' => 1,
+        #'HubName'       => 'Net::DirectConnect test hub',
+        #'myport'        => 80,
+        'myport' => 8000, 'myport_base' => 8000, 'myport_random' => 99, 'myport_tries' => 5, 'parent' => $self,
+        #'auto_listen' => 0,
+      );
+      $self->{'myport_http'} = $self->{'clients'}{'listener_http'}{'myport'};
+      $self->log( 'err', "cant listen http" ) unless $self->{'myport_http'};
+    }
   }
   #=cut
   $self->{'handler_int'}{'disconnect_aft'} = sub {

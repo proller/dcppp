@@ -1,7 +1,7 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
-our $VERSION = '0.04'     . '_' . ( split( ' ', '$Revision$' ) )[1];
+our $VERSION = '0.04' . '_' . ( split( ' ', '$Revision$' ) )[1];
 no warnings qw(uninitialized);
 use Socket;
 use IO::Socket;
@@ -13,7 +13,7 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 our $AUTOLOAD;
 our %global;
 
-sub float {               #v1
+sub float {    #v1
   my $self = shift if ref $_[0];
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
@@ -875,20 +875,22 @@ sub func {
       }
     }
     close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'} if $self->{'filehandle_send'};
+    delete $self->{'file_send_left'};
+    delete $self->{'file_send_total'};
   };
   $self->{'file_send_tth'} ||= sub {
     my $self = shift;
-    my ( $file, $start, $size ) = @_;
+    my ( $file, $start, $size, $as ) = @_;
     if ( $self->{'share_tth'}{$file} ) {
       $self->{'share_tth'}{$file} =~ tr{\\}{/};
-      $self->file_send( $self->{'share_tth'}{$file}, $start, $size );
+      $self->file_send( $self->{'share_tth'}{$file}, $start, $size, $as );
     } else {
       $self->log( 'dcerr', 'send', 'cant find file', $file );
     }
   };
   $self->{'file_send'} ||= sub {
     my $self = shift;
-    my ( $file, $start, $size ) = @_;
+    my ( $file, $start, $size, $as ) = @_;
     $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return unless -e $file;
     $size = -s $file if $size < 0;
     $self->log( 'dev', "size=$size from", $size, 'e', -e $file, $file );
@@ -897,9 +899,10 @@ sub func {
       seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
       my $name = $file;
       $name =~ s{^.*[\\/]}{}g;
-      $self->{'file_send_left'} = $size;
-      if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', 'file', $name, $start, $size ); }
-      else                  { $self->cmd( 'ADCSND', 'file', $name, $start, $size ); }
+      $self->{'file_send_left'}  = $size;
+      $self->{'file_send_total'} = -s $file;
+      if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', 'file', $as || $name, $start, $size ); }
+      else                  { $self->cmd( 'ADCSND', 'file', $as || $name, $start, $size ); }
       $self->{'status'} = 'transfer';
       $self->file_send_part();
     }
@@ -907,24 +910,39 @@ sub func {
   $self->{'file_send_part'} ||= sub {
     my $self = shift;
     #my ($file, $start, $size) = @_;
+    return unless $self->{'file_send_left'};
     my $buf;
     $self->disconnect(), return unless $self->{'socket'} and $self->{'filehandle_send'};
     my $read = $self->{'file_send_left'};
     $read = $self->{'file_send_by'} if $self->{'file_send_by'} < $self->{'file_send_left'};
-    my $readed = read $self->{'filehandle_send'}, $buf, $self->{'file_send_by'};
-    $self->log( 'dev', "sending bytes", length $buf, "readed [$readed] by [$self->{'file_send_by'}]" );
+    my $readed = read $self->{'filehandle_send'}, $buf, $read;    #$self->{'file_send_by'};
+    $self->log(
+      'dev', "sending bytes",
+      length $buf,
+      "readed [$readed] by [$self->{'file_send_by'}] left $self->{'file_send_left'},",
+      tell $self->{'filehandle_send'},
+      'of', $self->{'file_send_total'}
+    );
     #send $self->{'socket'},
     #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
     eval {
-      $_ = $self->{'socket'}->send($buf);
-      $self->{bytes_send} += length $buf;
+      $self->{bytes_send} += $_ = $self->{'socket'}->send($buf);
+      #length $buf;
     };
     $self->log( 'err', 'send error', $@ ) if $@;
     $self->{'file_send_left'} -= $readed;
+    if ( $self->{'file_send_left'} < 0 ) {
+      $self->{'log'}->( 'err', "oversend [$self->{'file_send_left'}]" );
+      $self->{'file_send_left'} = 0;
+    }
     if ( $readed < $self->{'file_send_by'} or $self->{'file_send_left'} <= 0 ) {
-      $self->{'log'}->( 'dev', 'file completed', "r:$readed by:$self->{'file_send_by'} left:$self->{'file_send_left'}" );
-      #$self->file_close();
-      $self->disconnect();
+      $self->{'log'}->(
+        'dev',
+        'file completed',
+        "r:$readed by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}"
+      );
+      $self->file_close();
+      #?      $self->disconnect();
     }
   };
   $self->{'file_send_parse'} =
@@ -935,10 +953,10 @@ sub func {
     #my ( $dst, $peerid, $toid ) = @{ shift() };
     if ( $_[0] eq 'file' ) {
       my $file = $_[1];
-      if ( $file =~ s{^TTH/}{} ) { $self->file_send_tth( $file, $_[2], $_[3] ); }
+      if ( $file =~ s{^TTH/}{} ) { $self->file_send_tth( $file, $_[2], $_[3], $_[1] ); }
       else {
         #$self->file_send($file, $_[2], $_[3]);
-        $self->file_send_tth( $file, $_[2], $_[3] );
+        $self->file_send_tth( $file, $_[2], $_[3], $_[1] );
       }
     } else {
       $self->log( 'dcerr', 'SND', "unknown type", @_ );
