@@ -30,7 +30,7 @@ my $dc = Net::DirectConnect->new(
   'auto_work' => sub {
     my $dc = shift;
     psmisc::schedule(
-      [ 20, 10 ],
+      [ 20, 300 ],
       our $dump_sub__ ||= sub {
         print "Writing dump\n";
         psmisc::file_rewrite( 'dump.hub', Dumper $dc);
