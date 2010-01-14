@@ -146,8 +146,8 @@ sub sharescan {
           if ( $indb->{tth} ) {
             printlog 'dev', "already summed", %$f, '     as    ', %$indb;
             $f->{$_} ||= $indb->{$_} for keys %$indb;
-            filelist_line($f);
-            next;
+#            filelist_line($f);
+#            next;
           }
         }
         if ( !$f->{tth} ) {
@@ -188,7 +188,7 @@ sub sharescan {
   undef $SIG{INFO};
   psmisc::file_append $config{files}, qq{</FileListing>};
   psmisc::file_append $config{files};
-  `bzip2 -f "$config{files}"` unless $interrupted;
+  `bzip2 -f "$config{files}"` ;#unless $interrupted;
   $config{filetth}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
   #}
   printinfo();
