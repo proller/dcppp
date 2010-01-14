@@ -125,7 +125,7 @@ sub new {
     'wait_clients_by'    => 0.01,
     'work_sleep'         => 0.01,
     'cmd_recurse_sleep'  => 0,
-#    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
+    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
     'informative_hash'     => [qw(clients)],                   #NickList IpList PortList
     'disconnect_recursive' => 1,
@@ -714,6 +714,7 @@ sub func {
     my $self = shift;
     local $_;    # = join( '', @_ );
     #$self->{bytes_send} += length $_;
+
     eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
@@ -911,49 +912,66 @@ sub func {
     my $self = shift;
     #my ($file, $start, $size) = @_;
     return unless $self->{'file_send_left'};
-    my $buf;
+    #my $buf;
     $self->disconnect(), return unless $self->{'socket'} and $self->{'filehandle_send'};
     my $read = $self->{'file_send_left'};
     $read = $self->{'file_send_by'} if $self->{'file_send_by'} < $self->{'file_send_left'};
-    my $readed = read $self->{'filehandle_send'}, $buf, $read;    #$self->{'file_send_by'};
+    #my $readed =
+    read $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read
+      unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
     $self->log(
-      'dev', "sending bytes",
-      length $buf,
-      "readed [$readed] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'},",
+      'dev',
+      "sending bytes",
+      length $self->{'file_send_buf'},
+      "readed [",
+      length $self->{'file_send_buf'},
+      "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'},",
       tell $self->{'filehandle_send'},
-      'of', $self->{'file_send_total'}
+      'of',
+      $self->{'file_send_total'}
     );
     #send $self->{'socket'},
     #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
     my $sended;
     $self->log(
       'snd',
-      length $buf,
+      length $self->{'file_send_buf'},
       eval {
-        $self->{bytes_send} += $sended = $self->{'socket'}->send($buf);
-#        $_;
+        $self->{bytes_send} += $sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
+        #$_;
         #length $buf;
+        $sended;
       },
       $!
     );
     $self->log( 'err', 'send error', $@ ) if $@;
-    $self->{'file_send_left'} -= 
-#    $sended; 
-    $readed;
+    $self->{'file_send_left'} -= $sended;
+
+    substr( $self->{'file_send_buf'}, 0, $sended ) = undef;
+    if (length $self->{'file_send_buf'}) {
+    
+     $self->log( 'info', 'sended small', $sended, 'todo', length $self->{'file_send_buf'});
+    }
+    #$readed;
     if ( $self->{'file_send_left'} < 0 ) {
       $self->{'log'}->( 'err', "oversend [$self->{'file_send_left'}]" );
       $self->{'file_send_left'} = 0;
     }
-    if ( $readed < $self->{'file_send_by'} or $self->{'file_send_left'} <= 0 ) {
+    if (
+      #$readed < $self->{'file_send_by'} or
+      $self->{'file_send_left'} <= 0
+      )
+    {
       $self->{'log'}->(
-        'dev',
-        'file completed',
-        "r:$readed by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}"
+        'dev', 'file completed',
+        "r:",
+        length $self->{'file_send_buf'},
+        " by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}"
       );
       $self->file_close();
       $self->{'status'} = 'connected';
       #?
-      $self->disconnect();
+      #$self->disconnect();
     }
   };
   $self->{'file_send_parse'} =
@@ -969,6 +987,15 @@ sub func {
         #$self->file_send($file, $_[2], $_[3]);
         $self->file_send_tth( $file, $_[2], $_[3], $_[1] );
       }
+    } elsif ( $_[0] eq 'tthl' ) {
+      #TODO!! now fake
+      
+      (my $tth = $_[1]) =~ s{^TTH/}{};
+      $tth = MIME::Base32::decode $tth;
+      if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', $_[0], $_[1], $_[2], length $tth ); }
+      else                  { $self->cmd( 'ADCSND', $_[0], $_[1], $_[2], length $tth ); }
+      $self->send($tth);
+
     } else {
       $self->log( 'dcerr', 'SND', "unknown type", @_ );
     }
