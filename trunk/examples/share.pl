@@ -26,6 +26,7 @@ use lib '../lib';
 #use Net::DirectConnect::adc;
 use Net::DirectConnect;
 use lib '../lib';
+use lib '../TigerHash/lib';
 use lib './stat/pslib';
 our ( %config, $db );
 use psmisc;

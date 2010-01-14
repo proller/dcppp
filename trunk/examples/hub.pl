@@ -13,6 +13,7 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 use lib '../lib';
 use Net::DirectConnect::hub;
 use lib '../lib';
+use lib '../TigerHash/lib';
 use lib './stat/pslib';
 use psmisc;
 psmisc::config();
