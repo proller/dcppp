@@ -893,9 +893,10 @@ sub func {
     my ( $file, $start, $size, $as ) = @_;
     $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return unless -e $file;
     $size = -s $file if $size < 0;
-    $self->log( 'dev', "size=$size from", $size, 'e', -e $file, $file );
+    $self->log( 'dev', "size=$size from", $start, 'e', -e $file, $file );
     if ( open $self->{'filehandle_send'}, '<', $file ) {
       binmode( $self->{'filehandle_send'} );
+      
       seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
       my $name = $file;
       $name =~ s{^.*[\\/]}{}g;
@@ -919,16 +920,18 @@ sub func {
     $self->log(
       'dev', "sending bytes",
       length $buf,
-      "readed [$readed] by [$self->{'file_send_by'}] left $self->{'file_send_left'},",
+      "readed [$readed] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'},",
       tell $self->{'filehandle_send'},
       'of', $self->{'file_send_total'}
     );
     #send $self->{'socket'},
     #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+$self->log( 'snd', length $buf,
     eval {
       $self->{bytes_send} += $_ = $self->{'socket'}->send($buf);
+      $_;
       #length $buf;
-    };
+    }, $!);
     $self->log( 'err', 'send error', $@ ) if $@;
     $self->{'file_send_left'} -= $readed;
     if ( $self->{'file_send_left'} < 0 ) {
@@ -942,7 +945,9 @@ sub func {
         "r:$readed by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}"
       );
       $self->file_close();
-      #?      $self->disconnect();
+      $self->{'status'} = 'connected';
+      #?      
+      $self->disconnect();
     }
   };
   $self->{'file_send_parse'} =

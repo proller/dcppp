@@ -31,6 +31,8 @@ our ( %config, $db );
 use psmisc;
 use pssql;
 $config{files} ||= 'files.xml';
+$config{log_dmp} = 0;
+
 $config{'sql'} ||= {
   'driver' => 'sqlite',
   'dbname' => 'files.sqlite',
@@ -59,13 +61,13 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
 my ( $tq, $rq, $vq ) = $db->quotes();
 #my $cantth;
 eval q{ use Net::DirectConnect::TigerHash qw(tthfile);  };
-print $@ if $@;
+printlog 'err', $@ if $@;
 #if ($cantth) {
 #print 'DUMp==',Dumper \%config;
 #print Dumper  \%INC;
 #for my $dir ( @{ $config{'share'} || [] } ) {
 sub sharescan {
-  print("sorry, cant load Net::DirectConnect::TigerHash for hashing\n"), return
+  printlog('err',"sorry, cant load Net::DirectConnect::TigerHash for hashing"), return
     unless ( $INC{"Net/DirectConnect/TigerHash.pm"} );
   my $stopscan;
   my $level = 0;
@@ -94,7 +96,7 @@ sub sharescan {
       last if $stopscan;
       $dir =~ tr{\\}{/};
       $dir =~ s{/+$}{};
-      opendir( my $dh, $dir ) or print("can't opendir $dir: $!"), next;
+      opendir( my $dh, $dir ) or print("can't opendir $dir: $!\n"), next;
       #@dots =
       ( my $dirname = $dir ) =~
         #W s/^\w://;
@@ -116,7 +118,7 @@ sub sharescan {
         #'res=',
         #join "\n",     grep { !/^\.\.?/ and
         #/^\./ &&     -f "$dir/$_"     }
-        print " ", $file;
+#        print " ", $file;
         #todo - select not all cols
         my $indb =
           $db->line( "SELECT * FROM ${tq}filelist${tq} WHERE ${rq}size${rq}="
@@ -142,18 +144,21 @@ sub sharescan {
           #printlog 'sel', Dumper $indb;
           if ( $indb->{tth} ) {
             $f->{$_} ||= $indb->{$_} for keys %$indb;
-            #printlog "already summed", %$f;
+            printlog 'dev', "already summed", %$f;
             filelist_line($f);
             next;
           }
         }
         if ( !$f->{tth} ) {
-          printlog 'calc', $f->{full};
+    #      printlog 'calc', $f->{full};
           my $time = time();
           $f->{tth} = tthfile( $f->{full} );
-          printlog 'time', psmisc::human( 'size', $f->{size} ), 'per', psmisc::human( 'time_period', time - $time ), 'speed ps',
-            psmisc::human( 'size', $f->{size} / ( time - $time or 1 ) )
-            if $f->{size};
+          my $per = time - $time;
+          printlog 'time', $f->{full},psmisc::human( 'size', $f->{size} ), 'per', psmisc::human( 'time_period', $per ), 'speed ps',
+            psmisc::human( 'size', $f->{size} / ( $per or 1 ) )
+            if 
+#            $f->{size} > 100_000 or 
+             $per > 1;
         }
         #$f->{tth} = $f->{size} > 1_000_000 ? 'bigtth' : tthfile( $f->{full} );    #if -f $full;
         #print Dumper $config{filetth};
@@ -174,15 +179,23 @@ sub sharescan {
   #else {
   #print "scanning [$dir]\n";
   my $interrupted;
+sub printinfo() {
+  printlog 'sharesize', psmisc::human( 'size',$sharesize), $sharefiles, scalar keys %{ $config{filetth} };
+
+}
+
   $SIG{INT} = sub { ++$stopscan; ++$interrupted; print "INT rec, stopscan\n" };
+  $SIG{INFO} = sub { printinfo();
+};
   scandir( @{ $config{'share'} || [] } );
   undef $SIG{INT};
+  undef $SIG{INFO};
   psmisc::file_append $config{files}, qq{</FileListing>};
   psmisc::file_append $config{files};
   `bzip2 -f "$config{files}"` unless $interrupted;
   $config{filetth}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
-  printlog 'sharesize', $sharesize, $sharefiles, scalar keys %{ $config{filetth} };
   #}
+printinfo();
   return ( $sharesize, $sharefiles );
 }
 my ( $sharesize, $sharefiles ) = sharescan();
