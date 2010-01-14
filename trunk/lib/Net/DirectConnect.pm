@@ -896,7 +896,6 @@ sub func {
     $self->log( 'dev', "size=$size from", $start, 'e', -e $file, $file );
     if ( open $self->{'filehandle_send'}, '<', $file ) {
       binmode( $self->{'filehandle_send'} );
-      
       seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
       my $name = $file;
       $name =~ s{^.*[\\/]}{}g;
@@ -926,12 +925,16 @@ sub func {
     );
     #send $self->{'socket'},
     #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-$self->log( 'snd', length $buf,
-    eval {
-      $self->{bytes_send} += $_ = $self->{'socket'}->send($buf);
-      $_;
-      #length $buf;
-    }, $!);
+    $self->log(
+      'snd',
+      length $buf,
+      eval {
+        $self->{bytes_send} += $_ = $self->{'socket'}->send($buf);
+        $_;
+        #length $buf;
+      },
+      $!
+    );
     $self->log( 'err', 'send error', $@ ) if $@;
     $self->{'file_send_left'} -= $readed;
     if ( $self->{'file_send_left'} < 0 ) {
@@ -946,7 +949,7 @@ $self->log( 'snd', length $buf,
       );
       $self->file_close();
       $self->{'status'} = 'connected';
-      #?      
+      #?
       $self->disconnect();
     }
   };
