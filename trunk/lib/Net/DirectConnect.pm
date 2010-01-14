@@ -125,7 +125,7 @@ sub new {
     'wait_clients_by'    => 0.01,
     'work_sleep'         => 0.01,
     'cmd_recurse_sleep'  => 0,
-    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
+#    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
     'informative_hash'     => [qw(clients)],                   #NickList IpList PortList
     'disconnect_recursive' => 1,
@@ -925,18 +925,21 @@ sub func {
     );
     #send $self->{'socket'},
     #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+    my $sended;
     $self->log(
       'snd',
       length $buf,
       eval {
-        $self->{bytes_send} += $_ = $self->{'socket'}->send($buf);
-        $_;
+        $self->{bytes_send} += $sended = $self->{'socket'}->send($buf);
+#        $_;
         #length $buf;
       },
       $!
     );
     $self->log( 'err', 'send error', $@ ) if $@;
-    $self->{'file_send_left'} -= $readed;
+    $self->{'file_send_left'} -= 
+#    $sended; 
+    $readed;
     if ( $self->{'file_send_left'} < 0 ) {
       $self->{'log'}->( 'err', "oversend [$self->{'file_send_left'}]" );
       $self->{'file_send_left'} = 0;
