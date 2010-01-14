@@ -367,7 +367,8 @@ sub func {
     $self->get_my_addr();
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
-    my $localmask ||= join '|', @{ $self->{'local_mask_rfc'}, }, @{ $self->{'local_mask'} || [] };
+#    my $localmask ||= join '|', @{ $self->{'local_mask_rfc'} || [] }, @{ $self->{'local_mask'} || [] };
+    my $localmask ||= join '|', map {ref $_ eq 'ARRAY' ? @$_ : $_} grep {$_} $self->{'local_mask_rfc'}, $self->{'local_mask'};
     my $is_local_ip = sub ($) {
       #$self->log( 'info', "test ip [$_[0]] in [$localmask] ");
       return $_[0] =~ /^(?:$localmask)\./;
