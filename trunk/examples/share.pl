@@ -54,7 +54,7 @@ $config{'sql'} ||= {
   }
 };
 #$config{filelist} ||= 'C:\Program Files\ApexDC++\Settings\HashIndex.xml';
-#$config{filetth} ||= { 'files.xml.bz2' => 'C:\Program Files\ApexDC++\Settings\files.xml.bz2' };    # = (tthash=>'/path', ...);
+#$config{share_full} ||= { 'files.xml.bz2' => 'C:\Program Files\ApexDC++\Settings\files.xml.bz2' };    # = (tthash=>'/path', ...);
 psmisc::config();
 psmisc::lib_init();
 $db ||= pssql->new( %{ $config{'sql'} || {} }, );
@@ -83,12 +83,16 @@ sub sharescan {
       $sharesize += $f->{size};
       ++$sharefiles if $f->{size};
       psmisc::file_append $config{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}"/>\n};
-      #$config{filetth}{ $f->{tth} } = $f->{full} if $f->{tth};    $config{filetth}{ $f->{file} } ||= $f->{full};
+      #$config{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $config{share_full}{ $f->{file} } ||= $f->{full};
       $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
-      $config{'filetth'}{ $f->{'tth'} } = $f->{'full'} if $f->{'tth'};
-      $config{'filetth'}{ $f->{'file'} } ||= $f->{'full'};
-      #printlog 'set share', "[$f->{file}], [$f->{tth}] = [$config{filetth}{ $f->{tth} }],[$config{filetth}{ $f->{file} }]";
-      #printlog Dumper $config{filetth};
+      $config{share_full}{ $f->{'tth'} } = $f->{'full'} , 
+      $config{share_tth}{ $f->{'full'} } = $f->{'tth'},
+      $config{share_tth}{ $f->{'file'} } = $f->{'tth'},
+
+if $f->{'tth'};
+      $config{share_full}{ $f->{'file'} } ||= $f->{'full'};
+      #printlog 'set share', "[$f->{file}], [$f->{tth}] = [$config{share_full}{ $f->{tth} }],[$config{share_full}{ $f->{file} }]";
+      #printlog Dumper $config{share_full};
     }
   }
 
@@ -164,7 +168,7 @@ sub sharescan {
             $per > 1;
         }
         #$f->{tth} = $f->{size} > 1_000_000 ? 'bigtth' : tthfile( $f->{full} );    #if -f $full;
-        #print Dumper $config{filetth};
+        #print Dumper $config{share_full};
         #next;
         #print ' ', tthfile($full) if -f $full ; #and -s $full < 1_000_000;
         #print ' ', $f->{tth};
@@ -182,7 +186,7 @@ sub sharescan {
   #else {
   #print "scanning [$dir]\n";
   my $interrupted;
-  sub printinfo() { printlog 'sharesize', psmisc::human( 'size', $sharesize ), $sharefiles, scalar keys %{ $config{filetth} }; }
+  sub printinfo() { printlog 'sharesize', psmisc::human( 'size', $sharesize ), $sharefiles, scalar keys %{ $config{share_full} }; }
   $SIG{INT} = sub { ++$stopscan; ++$interrupted; print "INT rec, stopscan\n" };
   $SIG{INFO} = sub { printinfo(); };
   scandir( @{ $config{'share'} || [] }, grep { -d } @ARGV );
@@ -193,7 +197,8 @@ sub sharescan {
 if (psmisc::use_try 'IO::Compress::Bzip2', 
 ) {
 
-    my $status = IO::Compress::Bzip2::bzip2 ($config{files} => $config{files}.'.bz2')         or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error";
+#    my $status = 
+IO::Compress::Bzip2::bzip2 ($config{files} => $config{files}.'.bz2')         or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error";
 
 }
 else {
@@ -201,9 +206,10 @@ else {
 #printlog  'sys', 
 `bzip2 -f "$config{files}"` ;
   }  
-  exit;
+
   #unless $interrupted;
-  $config{filetth}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
+  $config{share_full}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
+  $config{share_full}{ $config{files}  } = $config{files} ;
   #}
   printinfo();
   return ( $sharesize, $sharefiles );
@@ -220,12 +226,13 @@ if ( $config{filelist} and open my $f, '<', $config{filelist} ) {
     if ( my ( $file, $time, $tiger ) = /^File Name="([^"]+)" TimeStamp="(\d+)" Root="([^"]+)"/i ) {
       #$self->{'share_tth'}{ $params->{TR} }
       $file =~ tr{\\}{/};
-      $config{filetth}{$tiger} = $file;
+      $config{share_full}{$tiger} = $file;
+      $config{share_tth}{$file} = $tiger;
     }
     #<File Name="c:\distr\neo\tmp" TimeStamp="1242907656" Root="3OPSFH2JD2UPBV4KIZAPLMP65DSTMNZRTJCYR4A"/>
   }
   close $f;
-  print ".done:", ( scalar keys %{ $config{filetth} } ), "\n";
+  print ".done:", ( scalar keys %{ $config{share_full} } ), "\n";
 }
 #print "Arg=",$ARGV[0],"\n";
 #$ARGV[0] =~ m|^(?:\w+\://)?(.+?)(?:\:(\d+))?$|;
@@ -246,7 +253,8 @@ my $dc = Net::DirectConnect
   #'description' => '',
   #'M'           => 'P',
   'file_send_by' => 1024 * 1024 * 1,
-  'share_tth'    => $config{filetth},
+  'share_full'    => $config{share_full},
+  'share_tth'    => $config{share_tth},
   dev_http       => 1,
   'log'          => sub {
     my $dc = ref $_[0] ? shift : {};

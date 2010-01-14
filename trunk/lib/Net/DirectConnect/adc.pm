@@ -237,23 +237,23 @@ sub init {
       $self->cmd_all( $dst, 'SCH', $peerid, @feature, @_ );
       my $params = $self->adc_parse_named(@_);
       #DRES J3F4 KULX SI0 SL57 FN/Joculete/logs/stderr.txt TRLWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ TOauto
-      if (  $self->{'share_tth'}
+      if (  $self->{'share_full'}
         and $params->{TR}
-        and exists $self->{'share_tth'}{ $params->{TR} }
-        and -s $self->{'share_tth'}{ $params->{TR} } )
+        and exists $self->{'share_full'}{ $params->{TR} }
+        and -s $self->{'share_full'}{ $params->{TR} } )
       {
         $self->log(
           'adcdev', 'SCH',
           ( $dst, $peerid, 'F=>', @feature ),
-          $self->{'share_tth'}{ $params->{TR} },
-          -s $self->{'share_tth'}{ $params->{TR} },
-          -e $self->{'share_tth'}{ $params->{TR} }
+          $self->{'share_full'}{ $params->{TR} },
+          -s $self->{'share_full'}{ $params->{TR} },
+          -e $self->{'share_full'}{ $params->{TR} }
         );
         local @_ = (
           $peerid, {
-            SI => ( -s $self->{'share_tth'}{ $params->{TR} } ) || -1,
+            SI => ( -s $self->{'share_full'}{ $params->{TR} } ) || -1,
             SL => $self->{INF}{SL},
-            FN => $self->adc_path_encode( $self->{'share_tth'}{ $params->{TR} } ),
+            FN => $self->adc_path_encode( $self->{'share_full'}{ $params->{TR} } ),
             TO => $params->{TO}                                || $self->make_token($peerid),
             TR => $params->{TR}
           }
@@ -350,7 +350,7 @@ sub init {
         'message_type' => 'C',
         'auto_connect' => 1,
         'reconnects' => 0,
-        no_listen      =>,
+        no_listen      =>1,
       ) if $toid eq $self->{'sid'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'CTM', $peerid, $toid, @_ );
