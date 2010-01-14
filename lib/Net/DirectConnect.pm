@@ -57,6 +57,33 @@ sub send_udp ($$;@) {
   }
 }
 
+{ #$Id$ $URL$
+
+  my %schedule;
+
+  sub schedule($$;@) {
+    #for (1..100000000) { psmisc::schedule(10, our $my_every_10sec_sub__ ||= sub { print "every 10 sec"})};
+    my ( $every, $func ) = ( shift, shift );
+    #printlog 'everyS1', Dumper([ $every, $func,  $schedule{$func} ]);
+    my $p;
+    ( $p->{'wait'}, $p->{'every'}, $p->{'runs'}, $p->{'cond'}, $p->{'id'} ) = @$every if ref $every eq 'ARRAY';
+    $p = $every if ref $every eq 'HASH';
+    $p->{'every'} ||= $every if !ref $every;
+    $p->{'id'} ||= $func;
+    $schedule{ $p->{'id'} }{'last'} = time - $p->{'every'} + $p->{'wait'} if $p->{'wait'} and !$schedule{ $p->{'id'} }{'last'};
+    #printlog 'everyS4', Dumper([ $every, $func, $p, $schedule{$func} ]), $func;
+    #printlog('dev','everyR', Dumper($p, $schedule{$p->{'id'}} ), time, $func ),
+    $func->(@_), $schedule{ $p->{'id'} }{'last'} = time
+      if ( $schedule{ $p->{'id'} }{'last'} + $p->{'every'} < time )
+      and ( !$p->{'runs'} or $schedule{ $p->{'id'} }{'runs'}++ < $p->{'runs'} )
+      and ( !( ref $p->{'cond'} eq 'CODE' ) or $p->{'cond'}->( $p, $schedule{ $p->{'id'} }, @_ ) )
+      and ref $func eq 'CODE';
+  }
+}
+
+
+
+
 sub clear {
   return map { $_ => undef } qw(
     clients
@@ -110,7 +137,7 @@ sub new {
     'no_print' => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
     'log'      => sub {
       my $self = ref $_[0] ? shift() : {};
-      if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
+#      if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
       print( join( ' ', "($self)[$self->{'number'}]", @_ ), "\n" );
     },
     'auto_recv'          => 1,
@@ -181,6 +208,11 @@ sub new {
   } else {
     $self->init(@param);
   }
+$self->{$_} = $self->{'parent'}{$_} for grep {exists $self->{'parent'}{$_}} qw(log);
+
+  $self->{'want'}     ||= {};
+
+
   $self->protocol_init();
   #$self->log( $self, 'new inited', "MT:$self->{'message_type'}", );
   if ( $self->{'auto_listen'} ) { $self->listen(); }
@@ -246,7 +278,7 @@ sub cmd {
     $self->log(
       'info',
       "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
-      Dumper $self->{'cmd'},
+#      Dumper $self->{'cmd'},
       $self->{'parse'}
     );
     $self->{'cmd'}{$cmd} = sub { };
@@ -291,10 +323,10 @@ sub baseinit {
   #$self->{'number'} = ++$global{'total'};
   #$self->myport_generate();
   #$self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
-  $self->{'want'}     ||= {};
-  $self->{'NickList'} ||= {};
-  $self->{'IpList'}   ||= {};
-  $self->{'PortList'} ||= {};
+#  $self->{'want'}     ||= {};
+#  $self->{'NickList'} ||= {};
+#  $self->{'IpList'}   ||= {};
+#  $self->{'PortList'} ||= {};
   #++$global{'count'};
   #$self->{'status'} = 'disconnected';
   #$self->protocol_init( $self->{'protocol'} );
@@ -506,13 +538,15 @@ sub func {
                 #%$self,                                clear(),
                 'socket' => $_, 'LocalPort' => $self->{'myport'}, 'incoming' => 1,
 #'want'         => \%{ $self->{'want'} },                'NickList'     => \%{ $self->{'NickList'} },                'IpList'       => \%{ $self->{'IpList'} },                'PortList'     => \%{ $self->{'PortList'} },
-                'want'         => $self->{'want'},
-                'NickList'     => $self->{'NickList'},
-                'IpList'       => $self->{'IpList'},
-                'PortList'     => $self->{'PortList'},
+#                'want'         => $self->{'want'},
+#                'NickList'     => $self->{'NickList'},
+#                'IpList'       => $self->{'IpList'},
+#                'PortList'     => $self->{'PortList'},
                 'auto_listen'  => 0,
                 'auto_connect' => 0,
                 'parent'       => $self,
+#        'share_tth'      => $self->{'share_tth'},
+
                 'status'       => 'connected',
                 #$self->incomingopt(),
                 %{ $self->{'incomingopt'} || {} },
@@ -883,17 +917,20 @@ sub func {
   $self->{'file_send_tth'} ||= sub {
     my $self = shift;
     my ( $file, $start, $size, $as ) = @_;
-    if ( $self->{'share_tth'}{$file} ) {
-      $self->{'share_tth'}{$file} =~ tr{\\}{/};
-      $self->file_send( $self->{'share_tth'}{$file}, $start, $size, $as );
+      $self->log( 'dcdev', 'my share', $self->{'share_full'}, scalar keys %{$self->{'share_full'} }, 
+'p share', $self->{'parent'}{'share_full'}, scalar keys %{$self->{'parent'}{'share_full'} }, );
+#$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
+    if ( $self->{'share_full'}{$file} ) {
+      $self->{'share_full'}{$file} =~ tr{\\}{/};
+      $self->file_send( $self->{'share_full'}{$file}, $start, $size, $as );
     } else {
-      $self->log( 'dcerr', 'send', 'cant find file', $file );
+      $self->log( 'dcerr', 'send', 'cant find file', $file ,  $self->{'share_full'}{$file} , 'from', scalar keys %{$self->{'share_full'}});
     }
   };
   $self->{'file_send'} ||= sub {
     my $self = shift;
     my ( $file, $start, $size, $as ) = @_;
-    $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return unless -e $file;
+    $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return if !-e $file or -d $file;
     $size = -s $file if $size < 0;
     $self->log( 'dev', "size=$size from", $start, 'e', -e $file, $file );
     if ( open $self->{'filehandle_send'}, '<', $file ) {
@@ -920,31 +957,36 @@ sub func {
     #my $readed =
     read $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read
       unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
+
+schedule 10, our $printsending__ ||= sub {
+our($lastmark,$lasttime );
     $self->log(
       'dev',
-      "sending bytes",
-      length $self->{'file_send_buf'},
+      "sending bytes",      #length $self->{'file_send_buf'},
       "readed [",
       length $self->{'file_send_buf'},
       "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'},",
       tell $self->{'filehandle_send'},
       'of',
-      $self->{'file_send_total'}
+      $self->{'file_send_total'},  's=',
+(tell($self->{'filehandle_send'}) - $lastmark)  / (time -  $lasttime or 1 ),
+
+
     );
+$lastmark = tell $self->{'filehandle_send'};
+$lasttime = time;
+};
     #send $self->{'socket'},
     #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
     my $sended;
-    $self->log(
-      'snd',
-      length $self->{'file_send_buf'},
+#    $self->log(      'snd',      length $self->{'file_send_buf'},
       eval {
         $self->{bytes_send} += $sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
         #$_;
         #length $buf;
         $sended;
-      },
-      $!
-    );
+      }; # if $self->{'socket'};
+#      $!    );
     $self->log( 'err', 'send error', $@ ) if $@;
     $self->{'file_send_left'} -= $sended;
 
@@ -992,7 +1034,10 @@ sub func {
       #TODO!! now fake
       
       (my $tth = $_[1]) =~ s{^TTH/}{};
-      $tth = MIME::Base32::decode $tth;
+      eval q{
+        use MIME::Base32 qw( RFC );
+        $tth = MIME::Base32::decode $tth;
+      };
       if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', $_[0], $_[1], $_[2], length $tth ); }
       else                  { $self->cmd( 'ADCSND', $_[0], $_[1], $_[2], length $tth ); }
       $self->send($tth);
