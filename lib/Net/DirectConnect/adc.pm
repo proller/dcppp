@@ -349,6 +349,7 @@ sub init {
         'INF'          => { %{ $self->{'INF'} }, 'TO' => $token },
         'message_type' => 'C',
         'auto_connect' => 1,
+        'reconnects' => 0,
         no_listen      =>,
       ) if $toid eq $self->{'sid'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
