@@ -401,7 +401,7 @@ sub func {
     $self->every(
       $self->{'reconnect_sleep'},
       $self->{'reconnect_func'} ||= sub {
-        if ( $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
+        if ( $self->{'reconnect_tries'}++ <= $self->{'reconnects'} ) {
           $self->log(
             'warn',
             "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
@@ -530,7 +530,7 @@ sub func {
           {
             #TODO not here
             if ( $self->active() and !$self->{'incoming'} and $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
-              $self->log( 'dcdbg', "recv err, reconnect. r=[$r], d=[$self->{'databuf'}] i=[$self->{'incoming'}]" );
+              $self->log( 'dcdbg', "recv err, reconnect. d=[$self->{'databuf'}] i=[$self->{'incoming'}]" );
               #$self->log( 'dcdbg',  "recv err, reconnect," );
               $self->reconnect();
             } else {
