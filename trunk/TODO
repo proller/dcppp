@@ -27,3 +27,8 @@ make connection-listener
 examples/stat : finish adc
 
 send on can_send 
+
+
+lang:
+founded -> found
+sended -> sent

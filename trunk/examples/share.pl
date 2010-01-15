@@ -27,7 +27,6 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 eval { use Time::HiRes qw(time sleep); };
 #use utf8;
 use Encode;
-
 use lib '../lib';
 #use Net::DirectConnect::clihub;
 #use Net::DirectConnect::adc;
@@ -42,11 +41,10 @@ psmisc::use_try 'Sys::Sendfile';    #ok!
 #sux psmisc::use_try 'Sys::Sendfile::FreeBSD';# or
 #psmisc::use_try 'IO::AIO';
 $config{files} ||= 'files.xml';
-$config{'log_'.$_} ||= 0 for qw (dmp dcdmp);
+$config{ 'log_' . $_ } ||= 0 for qw (dmp dcdmp);
 $config{chrarset_fs} ||= 'cp1251' if $^O eq 'MSWin32';
-$config{chrarset_fs} ||= 'koi8r' if $^O eq 'freebsd';
-
-$config{'sql'} ||= {
+$config{chrarset_fs} ||= 'koi8r'  if $^O eq 'freebsd';
+$config{'sql'}       ||= {
   'driver' => 'sqlite',
   'dbname' => 'files.sqlite',
   #'auto_connect'        => 1,
@@ -96,13 +94,11 @@ sub sharescan {
       next if !length $f->{file} or !length $f->{'tth'};
       $sharesize += $f->{size};
       ++$sharefiles if $f->{size};
-#      $f->{file} = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $f->{file} ) ) if $config{chrarset_fs};
-
+      #$f->{file} = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $f->{file} ) ) if $config{chrarset_fs};
       psmisc::file_append $config{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}"/>\n};
       #$config{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $config{share_full}{ $f->{file} } ||= $f->{full};
       $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
-      $config{share_full}{ $f->{'tth'} } = $f->{'full_local'}, 
-      $config{share_tth}{ $f->{'full_local'} } = $f->{'tth'},
+      $config{share_full}{ $f->{'tth'} } = $f->{'full_local'}, $config{share_tth}{ $f->{'full_local'} } = $f->{'tth'},
         $config{share_tth}{ $f->{'file'} } = $f->{'tth'},
         if $f->{'tth'};
       $config{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
@@ -122,20 +118,17 @@ sub sharescan {
         #W s/^\w://;
         #$dirname =~
         s{.*/}{};
-            $dirname = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $dirname  if $config{chrarset_fs};
-
+      $dirname = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $dirname if $config{chrarset_fs};
       psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n};
       ++$level;
       psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { printinfo() } );
       for my $file ( readdir($dh) ) {
         last if $stopscan;
         next if $file =~ /^\.\.?$/;
-
-#        $file = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $file ) ) if $config{chrarset_fs};
-        my $f = { path => $dir, path_local => $dir,file => $file,  file_local => $file,};
-$f->{file} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{file}  if $config{chrarset_fs};
-$f->{path} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{path}  if $config{chrarset_fs};
-
+        #$file = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $file ) ) if $config{chrarset_fs};
+        my $f = { path => $dir, path_local => $dir, file => $file, file_local => $file, };
+        $f->{file} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{file} if $config{chrarset_fs};
+        $f->{path} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{path} if $config{chrarset_fs};
         $f->{full} = "$f->{path}/$f->{file}";
         $f->{full_local} = "$f->{path_local}/$f->{file_local}";
         #print("d $f->{full}:\n"),
@@ -158,7 +151,7 @@ $f->{path} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{pa
             . $db->quote( $f->{file} )
             . " LIMIT 1" );
         #printlog ('already scaned', $indb->{size}),
-        filelist_line({%$f,%$indb}), next, if $indb->{size} == $f->{size};
+        filelist_line( { %$f, %$indb } ), next, if $indb->{size} == $f->{size};
         #$db->select('filelist', {path=>$f->{path},file=>$f->{file}, });
         #printlog Dumper ;
         #print "\n";
@@ -213,7 +206,7 @@ $f->{path} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{pa
   }
   $SIG{INT} = sub { ++$stopscan; ++$interrupted; print "INT rec, stopscan\n" };
   $SIG{INFO} = sub { printinfo(); };
-  scandir(  grep { -d } @ARGV , @{ $config{'share'} || [] },);
+  scandir( grep { -d } @ARGV, @{ $config{'share'} || [] }, );
   undef $SIG{INT};
   undef $SIG{INFO};
   psmisc::file_append $config{files}, qq{</FileListing>};
@@ -276,7 +269,7 @@ my $dc = Net::DirectConnect
   'file_send_by' => 1024 * 1024 * 1,
   'share_full'   => $config{share_full},
   'share_tth'    => $config{share_tth},
-chrarset_fs=>  $config{chrarset_fs},
+  chrarset_fs    => $config{chrarset_fs},
   dev_http       => 1,
   'log'          => sub {
     my $dc = ref $_[0] ? shift : {};
@@ -294,7 +287,8 @@ chrarset_fs=>  $config{chrarset_fs},
   },
   auto_connect => 1,
   auto_work    => sub {
-my $dc = shift;
+    my $dc = shift;
+=dev
   psmisc::schedule(
     [ 30, 10000 ],
     our $search_sub__ ||= sub {
@@ -303,16 +297,16 @@ my $dc = shift;
       $dc->search('house');
     }
   );
+=cut
   #}while ( $dc->active() ) {
   #$dc->work();
-   psmisc::schedule(
-    [ 20, 100 ],
-    our $dump_sub__ ||= sub {
-      print "Writing dump\n";
-      psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
-    }
-  );
-
+    psmisc::schedule(
+      [ 20, 100 ],
+      our $dump_sub__ ||= sub {
+        print "Writing dump\n";
+        psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
+      }
+    ) if $config{debug};
   },
   %{ $config{dc} || {} },
   );

@@ -113,19 +113,19 @@ sub new {
     'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
-    'flag' => '1',    # User status as ascii char (byte)
-                      #1 normal
-                      #2, 3 away
-                      #4, 5 server               The server icon is used when the client has
-                      #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
-                      #8, 9 fireball             The fireball icon is used when the client
-                      #10, 11 fireball away      has had an upload > 100 kB/s.
+    'flag' => '1',                                                          # User status as ascii char (byte)
+    #1 normal
+    #2, 3 away
+    #4, 5 server               The server icon is used when the client has
+    #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
+    #8, 9 fireball             The fireball icon is used when the client
+    #10, 11 fireball away      has had an upload > 100 kB/s.
     'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
-    'client' => 'perl',      #'dcp++',                                                              #++: indicates the client
-                             #'protocol' => 'nmdc',    # or 'adc'
-    'V'      => $VERSION,    #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
-                             #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
-    'H'      => '0/1/0'
+    'client' => 'perl',    #'dcp++',                                                              #++: indicates the client
+    #'protocol' => 'nmdc',    # or 'adc'
+    'V' => $VERSION,       #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
+    #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
@@ -742,7 +742,7 @@ sub func {
   $self->{'send'} ||= sub {
     my $self = shift;
     local $_;    # = join( '', @_ );
-                 #$self->{bytes_send} += length $_;
+    #$self->{bytes_send} += length $_;
     eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
@@ -900,7 +900,7 @@ sub func {
       if ( length $self->{'partial_ext'} ) {
         $self->log( 'dcerr', 'cant move finished file' )
           if !rename $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'},
-          ( $self->{'fileas'} || $self->{'filename'} );
+            ( $self->{'fileas'} || $self->{'filename'} );
       }
     }
     close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'} if $self->{'filehandle_send'};
@@ -926,8 +926,8 @@ sub func {
   $self->{'file_send'} ||= sub {
     my $self = shift;
     my ( $file, $start, $size, $as ) = @_;
-$start //= 0;
-$size //= -s $file;
+    $start //= 0;
+    $size  //= -s $file;
     $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return if !-e $file or -d $file;
     $size = -s $file if $size < 0;
     $self->log( 'dev', "size=$size from", $start, 'e', -e $file, $file );
@@ -957,7 +957,7 @@ $size //= -s $file;
     #my $readed =
     my $sended;
     if ( $INC{'Sys/Sendfile.pm'} ) {    #works
-          #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
+      #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
       $sended = Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
       #);
       #$self->log(      'dev','ssendfile0', $read, $self->{'file_send_left'}, ' = ', $sended );
@@ -995,21 +995,22 @@ $self->{'file_send_offset'} += $sended;
 #$self->{'file_send_offset'} += $read, $sended = $read,if $sended == 12;
 } 
 =cut
+
     else {
       read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
         $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
         unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
-                                                   #send $self->{'socket'},
-                                                   #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-                                                   #my $sended;
-                                                   #$self->log(      'snd',      length $self->{'file_send_buf'},
+      #send $self->{'socket'},
+      #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+      #my $sended;
+      #$self->log(      'snd',      length $self->{'file_send_buf'},
       eval {
         $self->{bytes_send} += $sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
         #$_;
         #length $buf;
         $sended;
       };                                           # if $self->{'socket'};
-                                                   #$!    );
+      #$!    );
       $self->log( 'err', 'send error', $@ ) if $@;
     }
     schedule 10, our $printsending__ ||= sub {
@@ -1061,10 +1062,8 @@ $self->{'file_send_offset'} += $sended;
         #$self->file_send($file, $_[2], $_[3]);
         $self->file_send_tth( $file, $_[2], $_[3], $_[1] );
       }
-}    elsif ( $_[0] eq 'list' ) {
-
-$self->file_send_tth( 'files.xml.bz2',);
-
+    } elsif ( $_[0] eq 'list' ) {
+      $self->file_send_tth( 'files.xml.bz2', );
     } elsif ( $_[0] eq 'tthl' ) {
       #TODO!! now fake
       ( my $tth = $_[1] ) =~ s{^TTH/}{};
