@@ -49,13 +49,10 @@ sub init {
   );
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->baseinit();
-$self->{$_} ||=$self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList );
-
+  $self->{$_} ||= $self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList );
   $self->{'NickList'} ||= {};
   $self->{'IpList'}   ||= {};
   $self->{'PortList'} ||= {};
-
-
   #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
   #You are already in the hub.
   $self->{'parse'} ||= {
@@ -182,13 +179,12 @@ $self->{$_} ||=$self->{'parent'}{$_} for qw(share_full share_tth want handler Ni
         'host' => $host,
         'port' => $port,
 #'want'         => \%{ $self->{'want'} },        'NickList'     => \%{ $self->{'NickList'} },        'IpList'       => \%{ $self->{'IpList'} },        'PortList'     => \%{ $self->{'PortList'} },        'handler'      => \%{ $self->{'handler'} },
-#        'want'         => $self->{'want'},
-#        'NickList'     => $self->{'NickList'},
-#        'IpList'       => $self->{'IpList'},
-#        'PortList'     => $self->{'PortList'},
-#        'handler'      => $self->{'handler'},
-#        'share_tth'      => $self->{'share_tth'},
-
+#'want'         => $self->{'want'},
+#'NickList'     => $self->{'NickList'},
+#'IpList'       => $self->{'IpList'},
+#'PortList'     => $self->{'PortList'},
+#'handler'      => $self->{'handler'},
+#'share_tth'      => $self->{'share_tth'},
         'auto_connect' => 1,
       );
     },
@@ -205,7 +201,6 @@ $self->{$_} ||=$self->{'parent'}{$_} for qw(share_full share_tth want handler Ni
     },
     'Search' => sub {
       my $search = $_[0];
-
       $self->cmd('make_hub');
       my %s = ( 'time' => int( time() ), 'hub' => $self->{'hub_name'}, );
       ( $s{'who'}, $s{'cmds'} ) = split /\s+/, $search;
@@ -215,29 +210,30 @@ $self->{$_} ||=$self->{'parent'}{$_} for qw(share_full share_tth want handler Ni
       if   ( $s{'cmd'}[4] =~ /^TTH:([0-9A-Z]{39})$/ ) { $s{'tth'}    = $1; }
       else                                            { $s{'string'} = $s{'cmd'}[4]; }
       $s{'string'} =~ tr/$/ /;
-#      $self->cmd('make_hub');
-# r$self->{'share_tth'}
-
-my $founded = $self->{'share_full'}{ $s{'tth'} } || $self->{'share_full'}{ $s{'string'}  };
-my $tth = $self->{'share_tth'}{$founded};
-      if ( $founded
-# $s{'tth'} and $self->{'share_tth'}{ $s{'tth'} } 
-) {
+      #$self->cmd('make_hub');
+      #r$self->{'share_tth'}
+      my $founded = $self->{'share_full'}{ $s{'tth'} } || $self->{'share_full'}{ $s{'string'} };
+      my $tth = $self->{'share_tth'}{$founded};
+      if (
+        $founded
+        #$s{'tth'} and $self->{'share_tth'}{ $s{'tth'} }
+        )
+      {
         $self->log(
           'adcdev', 'Search', $s{'who'},
-#          $self->{'share_tth'}{ $s{'tth'} },
-$founded,
-          -s $founded ,
-          -e $founded ,
+          #$self->{'share_tth'}{ $s{'tth'} },
+          $founded, -s $founded, -e $founded,
           ),
-#          $self->{'share_tth'}{ $s{'tth'} } =~ tr{\\}{/};
-#        $self->{'share_tth'}{ $s{'tth'} } =~ s{^/+}{};
-        my $path;
-        if ( $self->{'adc'} ) { $path = $self->adc_path_encode( $founded 
-#$self->{'share_tth'}{ $s{'tth'} } 
-); }
-        else {
-          $path = $founded ;#$self->{'share_tth'}{ $s{'tth'} };
+          #$self->{'share_tth'}{ $s{'tth'} } =~ tr{\\}{/};
+          #$self->{'share_tth'}{ $s{'tth'} } =~ s{^/+}{};
+          my $path;
+        if ( $self->{'adc'} ) {
+          $path = $self->adc_path_encode(
+            $founded
+              #$self->{'share_tth'}{ $s{'tth'} }
+          );
+        } else {
+          $path = $founded;    #$self->{'share_tth'}{ $s{'tth'} };
           $path =~ s{^\w:}{};
           $path =~ s{^\W+}{};
           $path =~ tr{/}{\\};
@@ -248,11 +244,12 @@ $founded,
             $self->{'Nick'}
               #: $self->{'myip'} . ':' . $self->{'myport_tcp'}
           ),
-          $path . "\x05" . ( -s $founded  or -1 ),
+          $path . "\x05" . ( -s $founded or -1 ),
           $self->{'S'} . '/'
-            . $self->{'S'} . "\x05" . 
-#"TTH:"            . $s{'tth'}
-($s{'tth'} ? $s{'cmd'}[4] : "TTH:".$tth)
+            . $self->{'S'} . "\x05"
+            .
+            #"TTH:"            . $s{'tth'}
+            ( $s{'tth'} ? $s{'cmd'}[4] : "TTH:" . $tth )
             #. ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})" : '' ),
             #. (  " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}"  ),
             . ( " ($self->{'host'}:$self->{'port'})" . ( ( $s{'ip'} and $s{'port'} ) ? '' : "\x05$s{'nick'}" ) ),
@@ -429,17 +426,17 @@ $founded,
     },
     #
   };
-#  $self->log( 'dev', "0making listeners [$self->{'M'}]" );
+  #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
   if ( $self->{'M'} eq 'A' or !$self->{'M'} ) {
     $self->log( 'dev', "making listeners: tcp" );
     $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
       %$self, $self->clear(),
-#      'want'        => \%{ $self->{'want'} },
-#      'NickList'    => \%{ $self->{'NickList'} },
-#      'IpList'      => \%{ $self->{'IpList'} },
-#      'PortList'    => \%{ $self->{'PortList'} },
-#      'handler'     => \%{ $self->{'handler'} },
-#        'share_tth'      => $self->{'share_tth'},
+      #'want'        => \%{ $self->{'want'} },
+      #'NickList'    => \%{ $self->{'NickList'} },
+      #'IpList'      => \%{ $self->{'IpList'} },
+      #'PortList'    => \%{ $self->{'PortList'} },
+      #'handler'     => \%{ $self->{'handler'} },
+      #'share_tth'      => $self->{'share_tth'},
       'auto_listen' => 1,
       'parent'      => $self,
     );

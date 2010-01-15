@@ -254,7 +254,7 @@ sub init {
             SI => ( -s $self->{'share_full'}{ $params->{TR} } ) || -1,
             SL => $self->{INF}{SL},
             FN => $self->adc_path_encode( $self->{'share_full'}{ $params->{TR} } ),
-            TO => $params->{TO}                                || $self->make_token($peerid),
+            TO => $params->{TO}                                 || $self->make_token($peerid),
             TR => $params->{TR}
           }
         );
@@ -349,8 +349,8 @@ sub init {
         'INF'          => { %{ $self->{'INF'} }, 'TO' => $token },
         'message_type' => 'C',
         'auto_connect' => 1,
-        'reconnects' => 0,
-        no_listen      =>1,
+        'reconnects'   => 0,
+        no_listen      => 1,
       ) if $toid eq $self->{'sid'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'CTM', $peerid, $toid, @_ );

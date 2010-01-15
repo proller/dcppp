@@ -33,8 +33,7 @@ sub init {
     'XmlBZList' => 1,
     'ADCGet'    => 1,
     'MiniSlots' => 1,
-            'TTHF' => 1,
-
+    'TTHF'      => 1,
     #MiniSlots XmlBZList ADCGet TTHL TTHF
     @_, 'direction' => 'Download',
     #'Direction' => 'Upload', #rand here
@@ -46,20 +45,17 @@ sub init {
   #$self->log($self, 'inited2',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->get_peer_addr();
   #$self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
-
-#$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
-#$self->{'share_full'} ||=$self->{'parent'}{'share_tth'};
-$self->{$_} ||=$self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList );
+  #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
+  #$self->{'share_full'} ||=$self->{'parent'}{'share_tth'};
+  $self->{$_} ||= $self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList );
   $self->{'NickList'} ||= {};
   $self->{'IpList'}   ||= {};
   $self->{'PortList'} ||= {};
-
-
   $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
-
   $self->{'parse'} = undef if $self->{'parse'} and !keys %{ $self->{'parse'} };
   $self->{'parse'} ||= {
     'Lock' => sub {
+
       if ( $self->{'incoming'} ) {
         $self->{'sendbuf'} = 1;
         $self->cmd('MyNick');

@@ -56,9 +56,7 @@ sub send_udp ($$;@) {
     $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
   }
 }
-
-{ #$Id$ $URL$
-
+{    #$Id$ $URL$
   my %schedule;
 
   sub schedule($$;@) {
@@ -81,9 +79,6 @@ sub send_udp ($$;@) {
   }
 }
 
-
-
-
 sub clear {
   return map { $_ => undef } qw(
     clients
@@ -99,6 +94,8 @@ sub clear {
     buf
     peers
     supports_avail
+    auto_connect
+    auto_work
   );
 }
 
@@ -116,19 +113,19 @@ sub new {
     'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
-    'flag' => '1',                                                          # User status as ascii char (byte)
-    #1 normal
-    #2, 3 away
-    #4, 5 server               The server icon is used when the client has
-    #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
-    #8, 9 fireball             The fireball icon is used when the client
-    #10, 11 fireball away      has had an upload > 100 kB/s.
+    'flag' => '1',    # User status as ascii char (byte)
+                      #1 normal
+                      #2, 3 away
+                      #4, 5 server               The server icon is used when the client has
+                      #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
+                      #8, 9 fireball             The fireball icon is used when the client
+                      #10, 11 fireball away      has had an upload > 100 kB/s.
     'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
-    'client' => 'perl',    #'dcp++',                                                              #++: indicates the client
-    #'protocol' => 'nmdc',    # or 'adc'
-    'V' => $VERSION,       #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
-    #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
-    'H' => '0/1/0'
+    'client' => 'perl',      #'dcp++',                                                              #++: indicates the client
+                             #'protocol' => 'nmdc',    # or 'adc'
+    'V'      => $VERSION,    #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
+                             #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    'H'      => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
@@ -137,7 +134,7 @@ sub new {
     'no_print' => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
     'log'      => sub {
       my $self = ref $_[0] ? shift() : {};
-#      if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
+      #if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
       print( join( ' ', "($self)[$self->{'number'}]", @_ ), "\n" );
     },
     'auto_recv'          => 1,
@@ -152,8 +149,8 @@ sub new {
     'wait_clients_by'    => 0.01,
     'work_sleep'         => 0.01,
     'cmd_recurse_sleep'  => 0,
-#    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
-'nonblocking' => 1,
+    #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
+    'nonblocking' => 1,
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
     'informative_hash'     => [qw(clients)],                   #NickList IpList PortList
     'disconnect_recursive' => 1,
@@ -209,20 +206,19 @@ sub new {
   } else {
     $self->init(@param);
   }
-$self->{$_} = $self->{'parent'}{$_} for grep {exists $self->{'parent'}{$_}} qw(log);
-
-  $self->{'want'}     ||= {};
-
-
+  $self->{$_} = $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log);
+  $self->{'want'} ||= {};
   $self->protocol_init();
   #$self->log( $self, 'new inited', "MT:$self->{'message_type'}", );
   if ( $self->{'auto_listen'} ) { $self->listen(); }
   elsif ( $self->{'auto_connect'} ) {
-    #$self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
+    $self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
     $self->connect();
-    $self->work();
+    #$self->work();
+    $self->wait_connect();
   }
   if ( $self->{'auto_work'} ) {
+    $self->log( $self, '', "auto_work ", $self->active() );
     while ( $self->active() ) {
       $self->work();    #forever
       $self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
@@ -277,9 +273,8 @@ sub cmd {
     @ret = $self->cmd_adc( $dst, $cmd, @_ );
   } else {
     $self->log(
-      'info',
-      "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
-#      Dumper $self->{'cmd'},
+      'info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
+      #Dumper $self->{'cmd'},
       $self->{'parse'}
     );
     $self->{'cmd'}{$cmd} = sub { };
@@ -324,10 +319,10 @@ sub baseinit {
   #$self->{'number'} = ++$global{'total'};
   #$self->myport_generate();
   #$self->{'port'} = $1 if $self->{'host'} =~ s/:(\d+)//;
-#  $self->{'want'}     ||= {};
-#  $self->{'NickList'} ||= {};
-#  $self->{'IpList'}   ||= {};
-#  $self->{'PortList'} ||= {};
+  #$self->{'want'}     ||= {};
+  #$self->{'NickList'} ||= {};
+  #$self->{'IpList'}   ||= {};
+  #$self->{'PortList'} ||= {};
   #++$global{'count'};
   #$self->{'status'} = 'disconnected';
   #$self->protocol_init( $self->{'protocol'} );
@@ -400,8 +395,9 @@ sub func {
     $self->get_my_addr();
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
-#    my $localmask ||= join '|', @{ $self->{'local_mask_rfc'} || [] }, @{ $self->{'local_mask'} || [] };
-    my $localmask ||= join '|', map {ref $_ eq 'ARRAY' ? @$_ : $_} grep {$_} $self->{'local_mask_rfc'}, $self->{'local_mask'};
+    #my $localmask ||= join '|', @{ $self->{'local_mask_rfc'} || [] }, @{ $self->{'local_mask'} || [] };
+    my $localmask ||= join '|', map { ref $_ eq 'ARRAY' ? @$_ : $_ } grep { $_ } $self->{'local_mask_rfc'},
+      $self->{'local_mask'};
     my $is_local_ip = sub ($) {
       #$self->log( 'info', "test ip [$_[0]] in [$localmask] ");
       return $_[0] =~ /^(?:$localmask)\./;
@@ -539,16 +535,13 @@ sub func {
                 #%$self,                                clear(),
                 'socket' => $_, 'LocalPort' => $self->{'myport'}, 'incoming' => 1,
 #'want'         => \%{ $self->{'want'} },                'NickList'     => \%{ $self->{'NickList'} },                'IpList'       => \%{ $self->{'IpList'} },                'PortList'     => \%{ $self->{'PortList'} },
-#                'want'         => $self->{'want'},
-#                'NickList'     => $self->{'NickList'},
-#                'IpList'       => $self->{'IpList'},
-#                'PortList'     => $self->{'PortList'},
-                'auto_listen'  => 0,
-                'auto_connect' => 0,
-                'parent'       => $self,
-#        'share_tth'      => $self->{'share_tth'},
-
-                'status'       => 'connected',
+#'want'         => $self->{'want'},
+#'NickList'     => $self->{'NickList'},
+#'IpList'       => $self->{'IpList'},
+#'PortList'     => $self->{'PortList'},
+                'auto_listen' => 0, 'auto_connect' => 0, 'parent' => $self,
+                #'share_tth'      => $self->{'share_tth'},
+                'status' => 'connected',
                 #$self->incomingopt(),
                 %{ $self->{'incomingopt'} || {} },
               );
@@ -749,8 +742,7 @@ sub func {
   $self->{'send'} ||= sub {
     my $self = shift;
     local $_;    # = join( '', @_ );
-    #$self->{bytes_send} += length $_;
-
+                 #$self->{bytes_send} += length $_;
     eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
@@ -908,7 +900,7 @@ sub func {
       if ( length $self->{'partial_ext'} ) {
         $self->log( 'dcerr', 'cant move finished file' )
           if !rename $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'},
-            ( $self->{'fileas'} || $self->{'filename'} );
+          ( $self->{'fileas'} || $self->{'filename'} );
       }
     }
     close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'} if $self->{'filehandle_send'};
@@ -918,14 +910,17 @@ sub func {
   $self->{'file_send_tth'} ||= sub {
     my $self = shift;
     my ( $file, $start, $size, $as ) = @_;
-      $self->log( 'dcdev', 'my share', $self->{'share_full'}, scalar keys %{$self->{'share_full'} }, 
-'p share', $self->{'parent'}{'share_full'}, scalar keys %{$self->{'parent'}{'share_full'} }, );
+#$self->log( 'dcdev', 'my share', $self->{'share_full'}, scalar keys %{$self->{'share_full'} }, 'p share', $self->{'parent'}{'share_full'}, scalar keys %{$self->{'parent'}{'share_full'} }, );
 #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
     if ( $self->{'share_full'}{$file} ) {
       $self->{'share_full'}{$file} =~ tr{\\}{/};
       $self->file_send( $self->{'share_full'}{$file}, $start, $size, $as );
     } else {
-      $self->log( 'dcerr', 'send', 'cant find file', $file ,  $self->{'share_full'}{$file} , 'from', scalar keys %{$self->{'share_full'}});
+      $self->log(
+        'dcerr', 'send', 'cant find file',
+        $file, $self->{'share_full'}{$file},
+        'from', scalar keys %{ $self->{'share_full'} }
+      );
     }
   };
   $self->{'file_send'} ||= sub {
@@ -939,8 +934,8 @@ sub func {
       seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
       my $name = $file;
       $name =~ s{^.*[\\/]}{}g;
-      $self->{'file_send_left'}  = $size;
-      $self->{'file_send_total'} = -s $file;
+      $self->{'file_send_left'}   = $size;
+      $self->{'file_send_total'}  = -s $file;
       $self->{'file_send_offset'} = $start || 0;
       if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', 'file', $as || $name, $start, $size ); }
       else                  { $self->cmd( 'ADCSND', 'file', $as || $name, $start, $size ); }
@@ -951,49 +946,45 @@ sub func {
   $self->{'file_send_part'} ||= sub {
     my $self = shift;
     #my ($file, $start, $size) = @_;
-    return unless $self->{'file_send_left'};
+    #return unless $self->{'file_send_left'};
     #my $buf;
-    $self->disconnect(), return unless $self->{'socket'} and $self->{'filehandle_send'};
+    #$self->disconnect(),
+    return unless $self->{'socket'} and $self->{'filehandle_send'} and $self->{'file_send_left'};
     my $read = $self->{'file_send_left'};
     $read = $self->{'file_send_by'} if $self->{'file_send_by'} < $self->{'file_send_left'};
     #my $readed =
     my $sended;
-    
-    if ($INC{'Sys/Sendfile.pm'}) { #works
-    
-    
-	    
-	#    Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
-	    $sended = Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, 
-	    $self->{'file_send_offset'}
-	    );
-#	    );
-#	$self->log(      'dev','ssendfile0', $read, $self->{'file_send_left'}, ' = ', $sended );
-	    $self->{'file_send_offset'} += $sended;
-	    
-	    }
+    if ( $INC{'Sys/Sendfile.pm'} ) {    #works
+          #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
+      $sended = Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
+      #);
+      #$self->log(      'dev','ssendfile0', $read, $self->{'file_send_left'}, ' = ', $sended );
+      $self->{'file_send_offset'} += $sended;
+    }
+
 =sux	    
     elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
-#    use Sys::Sendfile::FreeBSD qw(sendfile);
-# use Errno qw(EINTR EIO :POSIX);
+#use Sys::Sendfile::FreeBSD qw(sendfile);
+#use Errno qw(EINTR EIO :POSIX);
     $self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended, 'ff=', fileno($self->{'filehandle_send'}), fileno($self->{'socket'}));
 #my $result = sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sended);
 my $result = sendfile( fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read, $sended);
     $self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, 's=', $sended, 'r=',  $result, $!, 
     #Dumper \%!
-#    grep {$!{$_}} keys %!
+#grep {$!{$_}} keys %!
     );
 
 }
 =cut
+
 =sux
     elsif ($INC{'IO/AIO.pm'}) {
 
     $self->log(      'dev','sendfile0',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended);
 #use IO::AIO;
-# $sended = IO::AIO::sendfile(  fileno($self->{'filehandle_send'}), $self->{'socket'}->fileno(),$self->{'file_send_offset'}, $read );
-# $sended = IO::AIO::sendfile(   $self->{'socket'}->fileno(), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
-# $sended = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
+#$sended = IO::AIO::sendfile(  fileno($self->{'filehandle_send'}), $self->{'socket'}->fileno(),$self->{'file_send_offset'}, $read );
+#$sended = IO::AIO::sendfile(   $self->{'socket'}->fileno(), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
+#$sended = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
  $sended = IO::AIO::sendfile(   $self->{'socket'}, $self->{'filehandle_send'},$self->{'file_send_offset'}, $read );
  #$self->{'file_send_left'}
 
@@ -1002,54 +993,38 @@ $self->{'file_send_offset'} += $sended;
 #$self->{'file_send_offset'} += $read, $sended = $read,if $sended == 12;
 } 
 =cut
-else {
-    read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read),
-    $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
-      unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
-
-    #send $self->{'socket'},
-    #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-#    my $sended;
-#    $self->log(      'snd',      length $self->{'file_send_buf'},
+    else {
+      read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
+        $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
+        unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
+                                                   #send $self->{'socket'},
+                                                   #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+                                                   #my $sended;
+                                                   #$self->log(      'snd',      length $self->{'file_send_buf'},
       eval {
         $self->{bytes_send} += $sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
         #$_;
         #length $buf;
         $sended;
-      }; # if $self->{'socket'};
-#      $!    );
-    $self->log( 'err', 'send error', $@ ) if $@;
-}
-
-
-schedule 10, our $printsending__ ||= sub {
-our($lastmark,$lasttime );
-    $self->log(
-      'dev',
-      "sending bytes",      #length $self->{'file_send_buf'},
-      "buf [",
-      length $self->{'file_send_buf'},
-      "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now",
-      $self->{'file_send_offset'},
-      'of',
-      $self->{'file_send_total'},  's=',
-($self->{'file_send_offset'} - $lastmark)  / (time -  $lasttime or 1 ),
-    );
-$lastmark = $self->{'file_send_offset'};
-$lasttime = time;
-};
-
-
-
-    $self->{'file_send_left'} -= $sended;
-
-    substr( $self->{'file_send_buf'}, 0, $sended ) = undef;
-    if (length $self->{'file_send_buf'}) {
-    
-     $self->log( 'info', 'sended small', $sended, 'todo', length $self->{'file_send_buf'});
+      };                                           # if $self->{'socket'};
+                                                   #$!    );
+      $self->log( 'err', 'send error', $@ ) if $@;
     }
-
-    #$readed;
+    schedule 10, our $printsending__ ||= sub {
+      our ( $lastmark, $lasttime );
+      $self->log(
+        'dev', "sending bytes",                    #length $self->{'file_send_buf'},
+        "buf [", length $self->{'file_send_buf'}, "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now",
+        $self->{'file_send_offset'}, 'of', $self->{'file_send_total'}, 's=',
+        ( $self->{'file_send_offset'} - $lastmark ) / ( time - $lasttime or 1 ),
+      );
+      $lastmark = $self->{'file_send_offset'};
+      $lasttime = time;
+    };
+    $self->{'file_send_left'} -= $sended;
+    substr( $self->{'file_send_buf'}, 0, $sended ) = undef;
+#if (length $self->{'file_send_buf'}) {         $self->log( 'info', 'sended small', $sended, 'todo', length $self->{'file_send_buf'});    }
+#$readed;
     if ( $self->{'file_send_left'} < 0 ) {
       $self->{'log'}->( 'err', "oversend [$self->{'file_send_left'}]" );
       $self->{'file_send_left'} = 0;
@@ -1086,8 +1061,7 @@ $lasttime = time;
       }
     } elsif ( $_[0] eq 'tthl' ) {
       #TODO!! now fake
-      
-      (my $tth = $_[1]) =~ s{^TTH/}{};
+      ( my $tth = $_[1] ) =~ s{^TTH/}{};
       eval q{
         use MIME::Base32 qw( RFC );
         $tth = MIME::Base32::decode $tth;
@@ -1095,7 +1069,6 @@ $lasttime = time;
       if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', $_[0], $_[1], $_[2], length $tth ); }
       else                  { $self->cmd( 'ADCSND', $_[0], $_[1], $_[2], length $tth ); }
       $self->send($tth);
-
     } else {
       $self->log( 'dcerr', 'SND', "unknown type", @_ );
     }
