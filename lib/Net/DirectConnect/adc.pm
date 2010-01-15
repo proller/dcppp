@@ -105,7 +105,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #for my $feature (split /\s+/, $_[0])
-      $self->log( 'adcdev', $dst, 'SUP:', @_ );
+#      $self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid");
       #=z
       #if $self->{''}
       if ( $dst eq 'H' ) {
@@ -116,7 +116,9 @@ sub init {
             #+ int rand 100
         );
         $peerid = ( 'A' x ( 4 - length $peerid ) ) . $peerid;
+
         $self->{'peerid'} ||= $peerid;
+              $self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}");
         $self->cmd( 'I', 'SID', $peerid );
         $self->cmd( 'I', 'INF', );    #$self->{'peers'}{$_}{'INF'}
         #for keys %{$self->{'peers'}};
@@ -173,8 +175,9 @@ sub init {
           $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} };
         }
       }
+#      $dst eq 'I' ? 
       $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{hostip}] " ), $params->{I4} = $self->{hostip}
-        if $dst eq 'I' and $params->{I4};                       #!$self->{parent}{hub}
+        if $dst eq 'B' and $params->{I4} and $params->{I4} ne $self->{hostip};                       #!$self->{parent}{hub}
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
       $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
