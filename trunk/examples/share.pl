@@ -23,6 +23,9 @@ use strict;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 eval { use Time::HiRes qw(time sleep); };
+use utf8;
+use Encode;
+
 use lib '../lib';
 #use Net::DirectConnect::clihub;
 #use Net::DirectConnect::adc;
@@ -37,7 +40,9 @@ psmisc::use_try 'Sys::Sendfile';    #ok!
 #sux psmisc::use_try 'Sys::Sendfile::FreeBSD';# or
 #psmisc::use_try 'IO::AIO';
 $config{files} ||= 'files.xml';
-$config{log_dmp} = 0;
+$config{'log_'.$_} ||= 0 for qw (dmp dcdmp);
+$config{chrarset_fs} ||= 'cp1251' if $^O eq 'MSWin32';
+
 $config{'sql'} ||= {
   'driver' => 'sqlite',
   'dbname' => 'files.sqlite',
@@ -88,6 +93,8 @@ sub sharescan {
       next if !length $f->{file} or !length $f->{'tth'};
       $sharesize += $f->{size};
       ++$sharefiles if $f->{size};
+#      $f->{file} = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $f->{file} ) ) if $config{chrarset_fs};
+
       psmisc::file_append $config{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}"/>\n};
       #$config{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $config{share_full}{ $f->{file} } ||= $f->{full};
       $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
@@ -111,20 +118,28 @@ sub sharescan {
         #W s/^\w://;
         #$dirname =~
         s{.*/}{};
+            $dirname = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $dirname ) ) if $config{chrarset_fs};
+
       psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n};
       ++$level;
       psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { printinfo() } );
       for my $file ( readdir($dh) ) {
         last if $stopscan;
         next if $file =~ /^\.\.?$/;
-        my $f = { path => $dir, file => $file, };
-        $f->{full} = "$dir/$file";
+
+#        $file = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $file ) ) if $config{chrarset_fs};
+        my $f = { path => $dir, path_local => $dir,file => $file,  file_local => $file,};
+$f->{file} = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $f->{file} ) ) if $config{chrarset_fs};
+$f->{path} = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $f->{path} ) ) if $config{chrarset_fs};
+
+        $f->{full} = "$f->{path}/$f->{file}";
+        $f->{full_local} = "$f->{path_local}/$f->{file_local}";
         #print("d $f->{full}:\n"),
-        $f->{dir} = -d $f->{full};
+        $f->{dir} = -d $f->{full_local};
         #filelist_line($f),
-        scandir( $f->{full} ), next if $f->{dir};
-        $f->{size} = -s $f->{full} if -f $f->{full};
-        $f->{time} = int( $^T + 86400 * -M $f->{full} );    #time() -
+        scandir( $f->{full_local} ), next if $f->{dir};
+        $f->{size} = -s $f->{full_local} if -f $f->{full_local};
+        $f->{time} = int( $^T + 86400 * -M $f->{full_local} );    #time() -
         #'res=',
         #join "\n",     grep { !/^\.\.?/ and
         #/^\./ &&     -f "$dir/$_"     }
