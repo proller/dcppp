@@ -13,6 +13,19 @@ no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 
+
+sub name_to_ip($) {
+  my ($name) = @_;
+  unless ( $name =~ /^\d+\.\d+\.\d+\.\d+$/ ) {
+    local $_ = ( gethostbyname($name) )[4];
+    return ( $name, 1 ) unless length($_) == 4;
+    $name = inet_ntoa($_);
+
+  }
+  return $name;
+}
+
+
 sub init {
   my $self = shift;
   %$self = (
@@ -252,11 +265,20 @@ sub init {
             ( $s{'tth'} ? $s{'cmd'}[4] : "TTH:" . $tth )
             #. ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})" : '' ),
             #. (  " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}"  ),
-            . ( " ($self->{'host'}:$self->{'port'})" . ( ( $s{'ip'} and $s{'port'} ) ? '' : "\x05$s{'nick'}" ) ),
+            . ( 
+#" ($self->{'host'}:$self->{'port'})" 
+#" (".name_to_ip($self->{'host'}).":$self->{'port'})" 
+#" (".inet_ntoa(gethostbyname ($self->{'host'})).":$self->{'port'})" 
+" ($self->{'hostip'}:$self->{'port'})" 
+
+
+
+. ( ( $s{'ip'} and $s{'port'} ) ? '' : "\x05$s{'nick'}" ) 
+),
 #. ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}" : '' ),
 #{ SI => -s $self->{'share_tth'}{ $params->{TR} },SL => $self->{INF}{SL},FN => $self->adc_path_encode( $self->{'share_tth'}{ $params->{TR} } ),=> $params->{TO} || $self->make_token($peerid),TR => $params->{TR}}
         );
-        if ( $s{'ip'} and $s{'port'} ) { $self->send_udp( $s{'ip'}, $s{'port'}, join ' ', @_ ); }
+        if ( $s{'ip'} and $s{'port'} ) { $self->send_udp( $s{'ip'}, $s{'port'}, $self->{'cmd_bef'}.join ' ', @_ ); }
         else                           { $self->cmd(@_); }
       }
 #'SR', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),        join '?',

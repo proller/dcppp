@@ -295,18 +295,16 @@ chrarset_fs=>  $config{chrarset_fs},
   auto_connect => 1,
   auto_work    => sub {
 my $dc = shift;
-=cu
   psmisc::schedule(
     [ 30, 10000 ],
     our $search_sub__ ||= sub {
       #print "Writing dump\n";
       #psmisc::file_rewrite( 'dump', Dumper $dc);
-      #$dc->search('house');
+      $dc->search('house');
     }
   );
   #}while ( $dc->active() ) {
   #$dc->work();
-=cut
    psmisc::schedule(
     [ 20, 100 ],
     our $dump_sub__ ||= sub {
