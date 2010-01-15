@@ -177,7 +177,7 @@ sub init {
       }
 #      $dst eq 'I' ? 
       $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{hostip}] " ), $params->{I4} = $self->{hostip}
-        if $dst eq 'B' and $params->{I4} and $params->{I4} ne $self->{hostip};                       #!$self->{parent}{hub}
+        if $dst eq 'B' and $self->{parent}{hub} and $params->{I4} and $params->{I4} ne $self->{hostip};                       #!$self->{parent}{hub}
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
       $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
@@ -240,25 +240,37 @@ sub init {
       $self->cmd_all( $dst, 'SCH', $peerid, @feature, @_ );
       my $params = $self->adc_parse_named(@_);
       #DRES J3F4 KULX SI0 SL57 FN/Joculete/logs/stderr.txt TRLWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ TOauto
-      if (  $self->{'share_full'}
-        and $params->{TR}
-        and exists $self->{'share_full'}{ $params->{TR} }
-        and -s $self->{'share_full'}{ $params->{TR} } )
+      my $founded = $self->{'share_full'}{ $params->{TR} } || $self->{'share_full'}{ $params->{AN} };
+            my $tth = $self->{'share_tth'}{$founded};
+            
+      if (  
+#        $self->{'share_full'}        and $params->{TR}        and exists $self->{'share_full'}{ $params->{TR} }        and -s $self->{'share_full'}{ $params->{TR} } 
+$founded
+        )
       {
+      my $foundedshow = ( $founded =~ m{^/} ? () : '/').(
+            $self->{chrarset_fs} ?   
+            #Encode::from_to( $founded, $self->{chrarset_fs},  'utf8',)
+            Encode::encode( $self->{chrarset_fs}, Encode::decode( 'utf8', $founded ) )
+             :$founded);
+      
         $self->log(
           'adcdev', 'SCH',
           ( $dst, $peerid, 'F=>', @feature ),
-          $self->{'share_full'}{ $params->{TR} },
-          -s $self->{'share_full'}{ $params->{TR} },
-          -e $self->{'share_full'}{ $params->{TR} }
+          $founded,
+          -s $founded,
+          -e $founded,
+'c=',          $self->{chrarset_fs},
         );
         local @_ = (
           $peerid, {
-            SI => ( -s $self->{'share_full'}{ $params->{TR} } ) || -1,
+            SI => ( -s $founded ) || -1,
             SL => $self->{INF}{SL},
-            FN => $self->adc_path_encode( $self->{'share_full'}{ $params->{TR} } ),
+
+            FN => $self->adc_path_encode($foundedshow
+              ),
             TO => $params->{TO}                                 || $self->make_token($peerid),
-            TR => $params->{TR}
+            TR => $params->{TR} || $tth,
           }
         );
         if ( $self->{'peers'}{$peerid}{INF}{I4} and $self->{'peers'}{$peerid}{INF}{U4} ) {

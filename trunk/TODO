@@ -25,3 +25,5 @@ collect search results [n]
 make connection-listener
 
 examples/stat : finish adc
+
+send on can_send 

@@ -926,6 +926,8 @@ sub func {
   $self->{'file_send'} ||= sub {
     my $self = shift;
     my ( $file, $start, $size, $as ) = @_;
+$start //= 0;
+$size //= -s $file;
     $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return if !-e $file or -d $file;
     $size = -s $file if $size < 0;
     $self->log( 'dev', "size=$size from", $start, 'e', -e $file, $file );
@@ -1059,6 +1061,10 @@ $self->{'file_send_offset'} += $sended;
         #$self->file_send($file, $_[2], $_[3]);
         $self->file_send_tth( $file, $_[2], $_[3], $_[1] );
       }
+}    elsif ( $_[0] eq 'list' ) {
+
+$self->file_send_tth( 'files.xml.bz2',);
+
     } elsif ( $_[0] eq 'tthl' ) {
       #TODO!! now fake
       ( my $tth = $_[1] ) =~ s{^TTH/}{};
