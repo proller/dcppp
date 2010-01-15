@@ -105,7 +105,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #for my $feature (split /\s+/, $_[0])
-#      $self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid");
+      #$self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid");
       #=z
       #if $self->{''}
       if ( $dst eq 'H' ) {
@@ -116,9 +116,8 @@ sub init {
             #+ int rand 100
         );
         $peerid = ( 'A' x ( 4 - length $peerid ) ) . $peerid;
-
         $self->{'peerid'} ||= $peerid;
-              $self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}");
+        $self->log( 'adcdev', $dst, 'SUP:', @_, "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}" );
         $self->cmd( 'I', 'SID', $peerid );
         $self->cmd( 'I', 'INF', );    #$self->{'peers'}{$_}{'INF'}
         #for keys %{$self->{'peers'}};
@@ -175,9 +174,9 @@ sub init {
           $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} };
         }
       }
-#      $dst eq 'I' ? 
+      #$dst eq 'I' ?
       $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{hostip}] " ), $params->{I4} = $self->{hostip}
-        if $dst eq 'B' and $self->{parent}{hub} and $params->{I4} and $params->{I4} ne $self->{hostip};                       #!$self->{parent}{hub}
+        if $dst eq 'B' and $self->{parent}{hub} and $params->{I4} and $params->{I4} ne $self->{hostip};   #!$self->{parent}{hub}
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
       $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
@@ -188,9 +187,9 @@ sub init {
       #$self->log('adcdev', 'INF7', $peerid, @_);
       if ( $dst eq 'I' ) {
         $self->cmd( 'B', 'INF' );
-        $self->{'status'} = 'connected';                        #clihub
+        $self->{'status'} = 'connected';                                                                  #clihub
       } elsif ( $dst eq 'C' ) {
-        $self->{'status'} = 'connected';                        #clicli
+        $self->{'status'} = 'connected';                                                                  #clicli
         $self->cmd( $dst, 'INF' );
         if   ( $params->{TO} ) { }
         else                   { }
@@ -241,36 +240,28 @@ sub init {
       my $params = $self->adc_parse_named(@_);
       #DRES J3F4 KULX SI0 SL57 FN/Joculete/logs/stderr.txt TRLWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ TOauto
       my $founded = $self->{'share_full'}{ $params->{TR} } || $self->{'share_full'}{ $params->{AN} };
-            my $tth = $self->{'share_tth'}{$founded};
-            
-      if (  
-#        $self->{'share_full'}        and $params->{TR}        and exists $self->{'share_full'}{ $params->{TR} }        and -s $self->{'share_full'}{ $params->{TR} } 
-$founded
+      my $tth = $self->{'share_tth'}{$founded};
+      if (
+#$self->{'share_full'}        and $params->{TR}        and exists $self->{'share_full'}{ $params->{TR} }        and -s $self->{'share_full'}{ $params->{TR} }
+        $founded
         )
       {
-      my $foundedshow = ( $founded =~ m{^/} ? () : '/').(
-            $self->{chrarset_fs} ?   
+        my $foundedshow = ( $founded =~ m{^/} ? () : '/' ) . (
+          $self->{chrarset_fs}
+          ?
             #Encode::from_to( $founded, $self->{chrarset_fs},  'utf8',)
             Encode::encode( $self->{chrarset_fs}, Encode::decode( 'utf8', $founded ) )
-             :$founded);
-      
-        $self->log(
-          'adcdev', 'SCH',
-          ( $dst, $peerid, 'F=>', @feature ),
-          $founded,
-          -s $founded,
-          -e $founded,
-'c=',          $self->{chrarset_fs},
+          : $founded
         );
+        $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),
+          $founded, -s $founded, -e $founded, 'c=', $self->{chrarset_fs}, );
         local @_ = (
           $peerid, {
             SI => ( -s $founded ) || -1,
             SL => $self->{INF}{SL},
-
-            FN => $self->adc_path_encode($foundedshow
-              ),
-            TO => $params->{TO}                                 || $self->make_token($peerid),
-            TR => $params->{TR} || $tth,
+            FN => $self->adc_path_encode($foundedshow),
+            TO => $params->{TO}   || $self->make_token($peerid),
+            TR => $params->{TR}   || $tth,
           }
         );
         if ( $self->{'peers'}{$peerid}{INF}{I4} and $self->{'peers'}{$peerid}{INF}{U4} ) {
