@@ -238,6 +238,8 @@ if ( $config{filelist} and open my $f, '<', $config{filelist} ) {
   close $f;
   print ".done:", ( scalar keys %{ $config{share_full} } ), "\n";
 }
+
+$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit;};
 #print "Arg=",$ARGV[0],"\n";
 #$ARGV[0] =~ m|^(?:\w+\://)?(.+?)(?:\:(\d+))?$|;
 #my $dc = Net::DirectConnect::clihub->new(
