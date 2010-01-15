@@ -31,6 +31,10 @@ use lib './stat/pslib';
 our ( %config, $db );
 use psmisc;
 use pssql;
+
+psmisc::use_try 'Sys::Sendfile'; #ok! 
+#sux psmisc::use_try 'Sys::Sendfile::FreeBSD';# or
+#psmisc::use_try 'IO::AIO';
 $config{files} ||= 'files.xml';
 $config{log_dmp} = 0;
 $config{'sql'} ||= {
