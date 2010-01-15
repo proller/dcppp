@@ -38,8 +38,8 @@ MODULE = Net::DirectConnect::TigerHash		PACKAGE = Net::DirectConnect::TigerHash
 
 SV * 
 tthbin(s)
-    PROTOTYPE: $
     SV *s
+    PROTOTYPE: $
     CODE:
         STRLEN len;
         char *  ptr = SvPV(s, len);
@@ -52,8 +52,8 @@ tthbin(s)
 
 SV *
 tth(s)
-    PROTOTYPE: $
     SV *s
+    PROTOTYPE: $
     CODE:
         STRLEN len;
         char *  ptr = SvPV(s, len);
@@ -69,8 +69,8 @@ tth(s)
   
 SV *
 tthfile(s)
-    PROTOTYPE: $
     SV *s
+    PROTOTYPE: $
     CODE:
     STRLEN len;
     char *  file = SvPV(s, len);

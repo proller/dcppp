@@ -24,3 +24,15 @@ WriteMakefile(
   'CC' => 'g++',
   'LD' => '$(CC)',
 );
+
+sub MY::postamble {
+  qq{
+docs: README
+
+README: $_{VERSION_FROM}
+	pod2text $_{VERSION_FROM} > README
+
+fullclean: distclean clean
+	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old MANIFEST README
+}
+}
