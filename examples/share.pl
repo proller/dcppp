@@ -3,6 +3,8 @@
 
 =readme
 
+recommended: Sys::Sendfile
+
 todo:
 
 scan 
@@ -31,8 +33,7 @@ use lib './stat/pslib';
 our ( %config, $db );
 use psmisc;
 use pssql;
-
-psmisc::use_try 'Sys::Sendfile'; #ok! 
+psmisc::use_try 'Sys::Sendfile';    #ok!
 #sux psmisc::use_try 'Sys::Sendfile::FreeBSD';# or
 #psmisc::use_try 'IO::AIO';
 $config{files} ||= 'files.xml';
@@ -53,7 +54,7 @@ $config{'sql'} ||= {
       'size' => pssql::row( undef, 'type'        => 'BIGINT',  'index'  => 1, ),
       'time' => pssql::row( 'time', ), #'index' => 1,
       #'added'  => pssql::row( 'added', ),
-      'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
+      #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
     },
   }
 };
@@ -71,8 +72,9 @@ printlog 'err', $@ if $@;
 #print Dumper  \%INC;
 #for my $dir ( @{ $config{'share'} || [] } ) {
 sub sharescan {
-  printlog( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), return
-    unless ( $INC{"Net/DirectConnect/TigerHash.pm"} );
+  my $notth;
+  printlog( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
+    unless psmisc::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
   my $stopscan;
   my $level = 0;
   my ( $sharesize, $sharefiles );
@@ -83,20 +85,18 @@ sub sharescan {
 #};
   sub filelist_line ($) {
     for my $f (@_) {
-      next unless $f->{file};
+      next if !length $f->{file} or !length $f->{'tth'};
       $sharesize += $f->{size};
       ++$sharefiles if $f->{size};
       psmisc::file_append $config{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}"/>\n};
       #$config{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $config{share_full}{ $f->{file} } ||= $f->{full};
       $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
-      $config{share_full}{ $f->{'tth'} } = $f->{'full'} , 
-      $config{share_tth}{ $f->{'full'} } = $f->{'tth'},
-      $config{share_tth}{ $f->{'file'} } = $f->{'tth'},
-
-if $f->{'tth'};
+      $config{share_full}{ $f->{'tth'} } = $f->{'full'}, $config{share_tth}{ $f->{'full'} } = $f->{'tth'},
+        $config{share_tth}{ $f->{'file'} } = $f->{'tth'},
+        if $f->{'tth'};
       $config{share_full}{ $f->{'file'} } ||= $f->{'full'};
-      #printlog 'set share', "[$f->{file}], [$f->{tth}] = [$config{share_full}{ $f->{tth} }],[$config{share_full}{ $f->{file} }]";
-      #printlog Dumper $config{share_full};
+    #printlog 'set share', "[$f->{file}], [$f->{tth}] = [$config{share_full}{ $f->{tth} }],[$config{share_full}{ $f->{file} }]";
+    #printlog Dumper $config{share_full};
     }
   }
 
@@ -113,8 +113,7 @@ if $f->{'tth'};
         s{.*/}{};
       psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n};
       ++$level;
-    psmisc::schedule([10, 10], our $my_every_10sec_sub__ ||= sub { printinfo()});
-
+      psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { printinfo() } );
       for my $file ( readdir($dh) ) {
         last if $stopscan;
         next if $file =~ /^\.\.?$/;
@@ -156,11 +155,11 @@ if $f->{'tth'};
           if ( $indb->{tth} ) {
             printlog 'dev', "already summed", %$f, '     as    ', %$indb;
             $f->{$_} ||= $indb->{$_} for keys %$indb;
-#            filelist_line($f);
-#            next;
+            #filelist_line($f);
+            #next;
           }
         }
-        if ( !$f->{tth} ) {
+        if ( !$notth and !$f->{tth} ) {
           #printlog 'calc', $f->{full};
           my $time = time();
           $f->{tth} = tthfile( $f->{full} );
@@ -180,7 +179,7 @@ if $f->{'tth'};
         #print join ':',-M $f->{full}, $^T + 86400 * -M $f->{full},$f->{time};
         #print "\n";
         filelist_line($f);
-        $db->insert_hash( 'filelist', $f );
+        $db->insert_hash( 'filelist', $f ) if $f->{tth};
       }
       --$level;
       psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n};
@@ -190,7 +189,9 @@ if $f->{'tth'};
   #else {
   #print "scanning [$dir]\n";
   my $interrupted;
-  sub printinfo() { printlog 'sharesize', psmisc::human( 'size', $sharesize ), $sharefiles, scalar keys %{ $config{share_full} }; }
+  sub printinfo() {
+    printlog 'sharesize', psmisc::human( 'size', $sharesize ), $sharefiles, scalar keys %{ $config{share_full} };
+  }
   $SIG{INT} = sub { ++$stopscan; ++$interrupted; print "INT rec, stopscan\n" };
   $SIG{INFO} = sub { printinfo(); };
   scandir( @{ $config{'share'} || [] }, grep { -d } @ARGV );
@@ -198,22 +199,18 @@ if $f->{'tth'};
   undef $SIG{INFO};
   psmisc::file_append $config{files}, qq{</FileListing>};
   psmisc::file_append $config{files};
-if (psmisc::use_try 'IO::Compress::Bzip2', 
-) {
 
-#    my $status = 
-IO::Compress::Bzip2::bzip2 ($config{files} => $config{files}.'.bz2')         or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error";
-
-}
-else {
-
-#printlog  'sys', 
-`bzip2 -f "$config{files}"` ;
-  }  
-
+  if ( psmisc::use_try 'IO::Compress::Bzip2', ) {
+    #my $status =
+    IO::Compress::Bzip2::bzip2( $config{files} => $config{files} . '.bz2' )
+      or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error";
+  } else {
+    #printlog  'sys',
+    `bzip2 -f "$config{files}"`;
+  }
   #unless $interrupted;
   $config{share_full}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
-  $config{share_full}{ $config{files}  } = $config{files} ;
+  $config{share_full}{ $config{files} } = $config{files};
   #}
   printinfo();
   return ( $sharesize, $sharefiles );
@@ -231,15 +228,14 @@ if ( $config{filelist} and open my $f, '<', $config{filelist} ) {
       #$self->{'share_tth'}{ $params->{TR} }
       $file =~ tr{\\}{/};
       $config{share_full}{$tiger} = $file;
-      $config{share_tth}{$file} = $tiger;
+      $config{share_tth}{$file}   = $tiger;
     }
     #<File Name="c:\distr\neo\tmp" TimeStamp="1242907656" Root="3OPSFH2JD2UPBV4KIZAPLMP65DSTMNZRTJCYR4A"/>
   }
   close $f;
   print ".done:", ( scalar keys %{ $config{share_full} } ), "\n";
 }
-
-$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit;};
+$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
 #print "Arg=",$ARGV[0],"\n";
 #$ARGV[0] =~ m|^(?:\w+\://)?(.+?)(?:\:(\d+))?$|;
 #my $dc = Net::DirectConnect::clihub->new(
@@ -259,7 +255,7 @@ my $dc = Net::DirectConnect
   #'description' => '',
   #'M'           => 'P',
   'file_send_by' => 1024 * 1024 * 1,
-  'share_full'    => $config{share_full},
+  'share_full'   => $config{share_full},
   'share_tth'    => $config{share_tth},
   dev_http       => 1,
   'log'          => sub {
@@ -276,12 +272,10 @@ my $dc = Net::DirectConnect
         },
       } qw(welcome chatline To)
   },
-%{$config{dc}||{}},
-  );
-$dc->work(10);
-#$dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
-while ( $dc->active() ) {
-  $dc->work();
+  auto_connect => 1,
+  auto_work    => sub {
+
+=cu
   psmisc::schedule(
     [ 30, 10000 ],
     our $search_sub__ ||= sub {
@@ -292,13 +286,20 @@ while ( $dc->active() ) {
   );
   #}while ( $dc->active() ) {
   #$dc->work();
-  psmisc::schedule(
+  0 and psmisc::schedule(
     [ 20, 100 ],
     our $dump_sub__ ||= sub {
       print "Writing dump\n";
       psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
     }
   );
-}
+=cut
+
+  },
+  %{ $config{dc} || {} },
+  );
+#$dc->work(10);
+#$dc->get( $_, 'files.xml.bz2', $_ . '.xml.bz2' ), $dc->work() for grep $_ ne $dc->{'Nick'}, keys %{ $dc->{'NickList'} };
+#while ( $dc->active() ) {  $dc->work(); }
 $dc->destroy();
 sleep(1);
