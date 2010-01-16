@@ -112,6 +112,7 @@ sub init {
         $self->cmd( 'I', 'SUP' );
         #$peerid ||= join '', map {} 1..4
         $peerid ||= base32(
+        pack'S',
           $self->{'number'}
             #+ int rand 100
         );
@@ -250,7 +251,9 @@ sub init {
           $self->{chrarset_fs}
           ?
             #Encode::from_to( $founded, $self->{chrarset_fs},  'utf8',)
-            Encode::encode( $self->{chrarset_fs}, Encode::decode( 'utf8', $founded ) )
+            Encode::encode $self->{chrarset_fs},
+          #Encode::decode 'utf8',
+          $founded
           : $founded
         );
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),

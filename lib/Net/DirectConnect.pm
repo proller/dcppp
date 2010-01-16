@@ -207,18 +207,18 @@ sub new {
     $self->init(@param);
   }
   $self->{$_} = $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log);
-  $self->{'want'} ||= {};
+  $self->{$_} ||= {} for qw(want share_full share_tth);
   $self->protocol_init();
   #$self->log( $self, 'new inited', "MT:$self->{'message_type'}", );
   if ( $self->{'auto_listen'} ) { $self->listen(); }
   elsif ( $self->{'auto_connect'} ) {
-    $self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
+    #$self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
     $self->connect();
     #$self->work();
     $self->wait_connect();
   }
   if ( $self->{'auto_work'} ) {
-    $self->log( $self, '', "auto_work ", $self->active() );
+    #$self->log( $self, '', "auto_work ", $self->active() );
     while ( $self->active() ) {
       $self->work();    #forever
       $self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
@@ -958,10 +958,11 @@ sub func {
     my $sended;
     if ( $INC{'Sys/Sendfile.pm'} ) {    #works
       #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
-      $sended = Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
+      $self->{'file_send_offset'} += $sended =
+        Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
       #);
       #$self->log(      'dev','ssendfile0', $read, $self->{'file_send_left'}, ' = ', $sended );
-      $self->{'file_send_offset'} += $sended;
+      #$self->{'file_send_offset'} += $sended;
     }
 
 =sux	    
@@ -1008,7 +1009,7 @@ $self->{'file_send_offset'} += $sended;
         $self->{bytes_send} += $sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
         #$_;
         #length $buf;
-        $sended;
+        #        $sended;
       };                                           # if $self->{'socket'};
       #$!    );
       $self->log( 'err', 'send error', $@ ) if $@;
