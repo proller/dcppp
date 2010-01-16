@@ -22,6 +22,7 @@ echo '$config{'share'} = [qw(C:\distr C:\pub\ )];' >> config.pl
 =cut
 
 use strict;
+use 5.10.0;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 eval { use Time::HiRes qw(time sleep); };
@@ -40,17 +41,26 @@ use pssql;
 psmisc::use_try 'Sys::Sendfile';    #ok!
 #sux psmisc::use_try 'Sys::Sendfile::FreeBSD';# or
 #psmisc::use_try 'IO::AIO';
-$config{files} ||= 'files.xml';
-$config{ 'log_' . $_ } ||= 0 for qw (dmp dcdmp);
-$config{chrarset_fs} ||= 'cp1251' if $^O eq 'MSWin32';
-$config{chrarset_fs} ||= 'koi8r'  if $^O eq 'freebsd';
-$config{'sql'}       ||= {
+$config{files} //= 'files.xml';
+$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp);
+$config{'log_pid'} //= 1;
+$config{chrarset_fs} //= 'cp1251' if $^O ~~ 'MSWin32';
+$config{chrarset_fs} //= 'koi8r'  if $^O ~~ 'freebsd';
+$config{tth_cheat}         //= 1_000_000;    #try find file with same name-size-date
+$config{tth_cheat_no_date} //= 0;            #--//-- only name-size
+$config{file_min}          //= 0;            #skip files  smaller
+##$config{share_root} //= '';
+$config{filelist_scan} //= 3600;             #every seconds, 0 to disable
+$config{share_full} ||= {};
+$config{share_tth}  ||= {};
+$config{'sql'} //= {
   'driver' => 'sqlite',
   'dbname' => 'files.sqlite',
   #'auto_connect'        => 1,
   'log' => sub { shift; psmisc::printlog(@_) },
   #'cp_in'               => 'cp1251',
   'connect_tries' => 0, 'connect_chain_tries' => 0, 'error_tries' => 0, 'error_chain_tries' => 0,
+  #insert_by => 1000,
   #nav_all => 1,
   'table' => {
     'filelist' => {
@@ -71,18 +81,21 @@ psmisc::lib_init();
 $db ||= pssql->new( %{ $config{'sql'} || {} }, );
 my ( $tq, $rq, $vq ) = $db->quotes();
 #my $cantth;
-eval q{ use Net::DirectConnect::TigerHash qw(tthfile);  };
-printlog 'err', $@ if $@;
+#eval q{ use Net::DirectConnect::TigerHash qw(tthfile);  };
+#printlog 'err', $@ if $@;
+#psmisc::use_try 'Net::DirectConnect::TigerHash' ,qw(tthfile);
 #if ($cantth) {
 #print 'DUMp==',Dumper \%config;
 #print Dumper  \%INC;
 #for my $dir ( @{ $config{'share'} || [] } ) {
 sub sharescan {
   my $notth;
+  return unless psmisc::lock( 'sharescan', timeout => 0, old => 86400 );
   printlog( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
     unless psmisc::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
   my $stopscan;
-  my $level = 0;
+  my $level     = 0;
+  my $levelreal = 0;
   my ( $sharesize, $sharefiles );
   psmisc::file_rewrite $config{files}, qq{<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <FileListing Version="1" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
@@ -98,10 +111,14 @@ sub sharescan {
       psmisc::file_append $config{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}"/>\n};
       #$config{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $config{share_full}{ $f->{file} } ||= $f->{full};
       $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
+
+=cu
       $config{share_full}{ $f->{'tth'} } = $f->{'full_local'}, $config{share_tth}{ $f->{'full_local'} } = $f->{'tth'},
         $config{share_tth}{ $f->{'file'} } = $f->{'tth'},
         if $f->{'tth'};
       $config{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
+=cut
+
     #printlog 'set share', "[$f->{file}], [$f->{tth}] = [$config{share_full}{ $f->{tth} }],[$config{share_full}{ $f->{file} }]";
     #printlog Dumper $config{share_full};
     }
@@ -114,41 +131,59 @@ sub sharescan {
       $dir =~ s{/+$}{};
       opendir( my $dh, $dir ) or print("can't opendir $dir: $!\n"), next;
       #@dots =
-      ( my $dirname = $dir ) =~
-        #W s/^\w://;
-        #$dirname =~
-        s{.*/}{};
-      $dirname = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $dirname if $config{chrarset_fs};
-      psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n};
-      ++$level;
+      ( my $dirname = $dir );
+      $dirname =
+        #Encode::encode 'utf8',
+        Encode::decode $config{chrarset_fs}, $dirname if $config{chrarset_fs};
+      unless ($level) {
+        for ( split '/', $dirname ) {
+          psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$_">\n};
+          ++$level;
+        }
+      } else {
+        $dirname =~
+          #W s/^\w://;
+          #$dirname =~
+          s{.*/}{};
+        psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n};
+        ++$level;
+        ++$levelreal;
+      }
       psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { printinfo() } );
       for my $file ( readdir($dh) ) {
         last if $stopscan;
         next if $file =~ /^\.\.?$/;
         #$file = Encode::encode( 'utf8', Encode::decode( $config{chrarset_fs}, $file ) ) if $config{chrarset_fs};
-        my $f = { path => $dir, path_local => $dir, file => $file, file_local => $file, };
-        $f->{file} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{file} if $config{chrarset_fs};
-        $f->{path} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{path} if $config{chrarset_fs};
-        $f->{full} = "$f->{path}/$f->{file}";
-        $f->{full_local} = "$f->{path_local}/$f->{file_local}";
+        my $f = { path => $dir, path_local => $dir, file => $file, file_local => $file, full_local => "$dir/$file", };
+        #$f->{full_local} = "$f->{path_local}/$f->{file_local}";
         #print("d $f->{full}:\n"),
         $f->{dir} = -d $f->{full_local};
         #filelist_line($f),
         scandir( $f->{full_local} ), next if $f->{dir};
         $f->{size} = -s $f->{full_local} if -f $f->{full_local};
-        $f->{time} = int( $^T + 86400 * -M $f->{full_local} );    #time() -
-        #'res=',
-        #join "\n",     grep { !/^\.\.?/ and
-        #/^\./ &&     -f "$dir/$_"     }
-        #print " ", $file;
-        #todo - select not all cols
+        next if $f->{size} < $config{file_min};
+        $f->{file} =    #Encode::encode 'utf8',
+          Encode::decode $config{chrarset_fs}, $f->{file} if $config{chrarset_fs};
+        $f->{path} =    #Encode::encode 'utf8',
+          Encode::decode $config{chrarset_fs}, $f->{path} if $config{chrarset_fs};
+        $f->{full} = "$f->{path}/$f->{file}";
+        $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
+#printlog 'timed', $f->{time}, psmisc::human('date_time', $f->{time}), -M $f->{full_local}, int (86400 * -M $f->{full_local}), $^T;
+#'res=',
+#join "\n",     grep { !/^\.\.?/ and
+#/^\./ &&     -f "$dir/$_"     }
+#print " ", $file;
+#todo - select not all cols
         my $indb =
-          $db->line( "SELECT * FROM ${tq}filelist${tq} WHERE ${rq}size${rq}="
-            . $db->quote( $f->{size} )
-            . " AND ${rq}path${rq}="
+          $db->line( "SELECT * FROM ${tq}filelist${tq} WHERE"
+            . " ${rq}path${rq}="
             . $db->quote( $f->{path} )
             . " AND ${rq}file${rq}="
             . $db->quote( $f->{file} )
+            . " AND ${rq}size${rq}="
+            . $db->quote( $f->{size} )
+            . " AND ${rq}time${rq}="
+            . $db->quote( $f->{time} )
             . " LIMIT 1" );
         #printlog ('already scaned', $indb->{size}),
         filelist_line( { %$f, %$indb } ), next, if $indb->{size} == $f->{size};
@@ -156,12 +191,14 @@ sub sharescan {
         #printlog Dumper ;
         #print "\n";
         #my $tth;
-        if ( $f->{size} > 100_000 ) {
+        if ( $f->{size} > $config{tth_cheat} ) {
           my $indb =
-            $db->line( "SELECT * FROM ${tq}filelist${tq} WHERE ${rq}size${rq}="
-              . $db->quote( $f->{size} )
-              . " AND ${rq}file${rq}="
+            $db->line( "SELECT * FROM ${tq}filelist${tq} WHERE "
+              . "${rq}file${rq}="
               . $db->quote( $f->{file} )
+              . " AND ${rq}size${rq}="
+              . $db->quote( $f->{size} )
+              . ( $config{tth_cheat_no_date} ? () : " AND ${rq}time${rq}=" . $db->quote( $f->{time} ) )
               . " LIMIT 1" );
           #printlog 'sel', Dumper $indb;
           if ( $indb->{tth} ) {
@@ -174,7 +211,7 @@ sub sharescan {
         if ( !$notth and !$f->{tth} ) {
           #printlog 'calc', $f->{full};
           my $time = time();
-          $f->{tth} = tthfile( $f->{full_local} );
+          $f->{tth} = Net::DirectConnect::TigerHash::tthfile( $f->{full_local} );
           my $per = time - $time;
           printlog 'time', $f->{full}, psmisc::human( 'size', $f->{size} ), 'per', psmisc::human( 'time_period', $per ),
             'speed ps', psmisc::human( 'size', $f->{size} / ( $per or 1 ) )
@@ -194,12 +231,16 @@ sub sharescan {
         $db->insert_hash( 'filelist', $f ) if $f->{tth};
       }
       --$level;
+      --$levelreal;
       psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n};
       closedir $dh;
     }
+    if ( $levelreal < 0 ) { psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n} while --$level >= 0; }
+    #$level
   }
   #else {
-  #print "scanning [$dir]\n";
+  printlog "making filelist $config{files} from", grep { -d } @ARGV, @{ $config{'share'} || [] },;
+  $db->do('ANALYZE');
   my $interrupted;
   sub printinfo() {
     printlog 'sharesize', psmisc::human( 'size', $sharesize ), $sharefiles, scalar keys %{ $config{share_full} };
@@ -211,43 +252,99 @@ sub sharescan {
   undef $SIG{INFO};
   psmisc::file_append $config{files}, qq{</FileListing>};
   psmisc::file_append $config{files};
+  $db->flush_insert();
 
-  if ( psmisc::use_try 'IO::Compress::Bzip2', ) {
-    #my $status =
-    IO::Compress::Bzip2::bzip2( $config{files} => $config{files} . '.bz2' )
-      or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error";
+  if ( psmisc::use_try 'IO::Compress::Bzip2'
+    and local $_ = IO::Compress::Bzip2::bzip2( $config{files} => $config{files} . '.bz2' )
+    or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error" and 0 )
+  {
   } else {
-    #printlog  'sys',
+    printlog 'dev', 'using system bzip2', $_, $!;
     `bzip2 -f "$config{files}"`;
   }
-  #unless $interrupted;
-  $config{share_full}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
-  $config{share_full}{ $config{files} } = $config{files};
-  #}
+#unless $interrupted;
+#$config{share_full}{ $config{files} . '.bz2' } = $config{files} . '.bz2';  $config{share_full}{ $config{files} } = $config{files};
+#}
+  psmisc::unlock('sharescan');
   printinfo();
   return ( $sharesize, $sharefiles );
 }
-my ( $sharesize, $sharefiles ) = sharescan();
 #print Dumper \%config;
 #}
 #}
-print("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0];
-if ( $config{filelist} and open my $f, '<', $config{filelist} ) {
-  print "loading filelist..";
-  local $/ = '<';
-  while (<$f>) {
-    if ( my ( $file, $time, $tiger ) = /^File Name="([^"]+)" TimeStamp="(\d+)" Root="([^"]+)"/i ) {
-      #$self->{'share_tth'}{ $params->{TR} }
-      $file =~ tr{\\}{/};
-      $config{share_full}{$tiger} = $file;
-      $config{share_tth}{$file}   = $tiger;
+printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0];
+printlog( 'info', 'started:', $^X, $work{'$0'}, join ' ', @ARGV );
+sharescan(), exit if $ARGV[0] eq 'filelist' and !caller;
+#my ( $sharesize, $sharefiles, $shareloaded );
+my ($shareloaded);
+
+sub filelist_load {
+
+=old
+  if ( $config{filelist} and open my $f, '<', $config{filelist} ) {
+    printlog "loading filelist..";
+    local $/ = '<';
+    while (<$f>) {
+      if ( my ( $file, $time, $tiger ) = /^File Name="([^"]+)" TimeStamp="(\d+)" Root="([^"]+)"/i ) {
+        #$self->{'share_tth'}{ $params->{TR} }
+        $file =~ tr{\\}{/};
+        $config{share_full}{$tiger} = $file;
+        $config{share_tth}{$file}   = $tiger;
+      }
+      #<File Name="c:\distr\neo\tmp" TimeStamp="1242907656" Root="3OPSFH2JD2UPBV4KIZAPLMP65DSTMNZRTJCYR4A"/>
     }
-    #<File Name="c:\distr\neo\tmp" TimeStamp="1242907656" Root="3OPSFH2JD2UPBV4KIZAPLMP65DSTMNZRTJCYR4A"/>
+    close $f;
+    printlog ".done:", ( scalar keys %{ $config{share_full} } ), "\n";
   }
-  close $f;
-  print ".done:", ( scalar keys %{ $config{share_full} } ), "\n";
+=cut
+
+  #printlog "filelist_load try", $shareloaded , -s $config{files};
+  return
+    unless (
+        $config{files}
+    and $shareloaded != -s $config{files}
+    and psmisc::lock( 'sharescan', timeout => 0, old => 86400 )
+    and open my $f,
+    '<', $config{files}
+    );
+  my ( $sharesize, $sharefiles );
+  printlog "loading filelist", -s $f;
+  $shareloaded = -s $f;
+  local $/ = '<';
+  %{ $config{share_full} } = %{ $config{share_tth} } = ();
+  my $dir;
+
+  while (<$f>) {
+    #<Directory Name="distr">
+    #<File Name="3470_2.x.rar" Size="18824575" TTH="CL3SVS5UWWSAFGKCQZTMGDD355WUV2QVLNNADIA"/>
+    if ( my ( $file, $size, $tth ) = m{^File Name="([^"]+)" Size="(\d+)" TTH="([^"]+)"}i ) {
+      my $full_local = ( my $full = "$dir/$file" );
+      $full_local = Encode::encode $config{chrarset_fs}, $full if $config{chrarset_fs};
+      $config{share_full}{$tth} = $full_local, $config{share_tth}{$full_local} = $tth, $config{share_tth}{$file} = $tth,
+        if $tth;
+      $config{share_full}{$file} ||= $full_local;
+      ++$sharefiles;
+      $sharesize += $size;
+      #$self->{'share_tth'}{ $params->{TR} }
+      #$file =~ tr{\\}{/};
+    } elsif ( my ($curdir) = m{^Directory Name="([^"]+)">}i ) {
+      $dir .= ( ( !length $dir and $^O ~~ [ 'MSWin32', 'cygwin' ] ) ? () : '/' ) . $curdir;
+      #printlog 'now', $dir;
+      #$config{files}
+    } elsif (m{^/Directory>}i) {
+      $dir =~ s{/[^/]+$}{};
+    }
+  }
+  $config{share_full}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
+  $config{share_full}{ $config{files} } = $config{files};
+  printlog "loaded filelist size", $shareloaded, ' : files=', $sharefiles, 'bytes=', psmisc::human( 'size', $sharesize ),
+    scalar keys %{ $config{share_full} };
+  psmisc::unlock('sharescan');
+  $_[0]->( $sharesize, $sharefiles ) if ref $_[0] eq 'CODE';
+  return ( $sharesize, $sharefiles );
 }
 $SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
+my ( $sharesize, $sharefiles ) = filelist_load();
 #print "Arg=",$ARGV[0],"\n";
 #$ARGV[0] =~ m|^(?:\w+\://)?(.+?)(?:\:(\d+))?$|;
 #my $dc = Net::DirectConnect::clihub->new(
@@ -288,6 +385,7 @@ my $dc = Net::DirectConnect
   auto_connect => 1,
   auto_work    => sub {
     my $dc = shift;
+
 =dev
   psmisc::schedule(
     [ 30, 10000 ],
@@ -298,15 +396,40 @@ my $dc = Net::DirectConnect
     }
   );
 =cut
-  #}while ( $dc->active() ) {
-  #$dc->work();
+
+    #}while ( $dc->active() ) {
+    #$dc->work();
     psmisc::schedule(
       [ 20, 100 ],
       our $dump_sub__ ||= sub {
-        print "Writing dump\n";
+        printlog "Writing dump";
         psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
       }
     ) if $config{debug};
+    psmisc::schedule(
+      $config{filelist_scan},
+      our $sharescan_sub__ ||= sub {
+        #printlog ('filelist actual', -M $config{files},(time - $^T + 86400 * -M $config{files}) , $config{filelist_scan}),
+        return if -e $config{files} and $config{filelist_scan} > time - $^T + 86400 * -M $config{files};
+        psmisc::startme( 'filelist', grep { -d } @ARGV );
+      }
+    ) if $config{filelist_scan};
+    psmisc::schedule(
+      60,
+      our $filelist_load_sub__ ||= sub {
+        #psmisc::startme( 'filelist', grep { -d } @ARGV );
+        #my($sharesize,$sharefiles) =
+        filelist_load(
+          sub {
+            my ( $sharesize, $sharefiles ) = @_;
+            $dc->{INF}{SS} = $sharesize, $dc->{INF}{SF} = $sharefiles, $dc->{sharesize} = $sharesize, if $sharesize;
+            #todo! change INF cmd or myinfo
+          }
+        );
+      }
+    ) if $config{filelist_scan};
+    #$config{filelist_scan}
+    #or !-e $config{files} or !-e $config{files}.'.bz2';
   },
   %{ $config{dc} || {} },
   );

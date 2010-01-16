@@ -34,7 +34,7 @@ my $dc = Net::DirectConnect->new(
       [ 20, 300 ],
       our $dump_sub__ ||= sub {
         print "Writing dump\n";
-        psmisc::file_rewrite( 'dump.hub', Dumper $dc);
+        psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
       }
     );
   }
