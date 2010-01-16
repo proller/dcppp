@@ -232,10 +232,15 @@ sub sharescan {
       }
       --$level;
       --$levelreal;
-      psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n};
+      psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n}; #<!-- $levelreal $level -->
       closedir $dh;
     }
-    if ( $levelreal < 0 ) { psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n} while --$level >= 0; }
+    if ( $levelreal < 0 ) { 
+#      psmisc::file_append $config{files}, "<!-- backing to root $levelreal $level -->\n";
+psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n} while --$level >= 0; 
+$levelreal = $level = 0;
+}
+
     #$level
   }
   #else {
@@ -247,7 +252,7 @@ sub sharescan {
   }
   $SIG{INT} = sub { ++$stopscan; ++$interrupted; print "INT rec, stopscan\n" };
   $SIG{INFO} = sub { printinfo(); };
-  scandir( grep { -d } @ARGV, @{ $config{'share'} || [] }, );
+  scandir $_ for ( grep { -d } @ARGV, @{ $config{'share'} || [] }, );
   undef $SIG{INT};
   undef $SIG{INFO};
   psmisc::file_append $config{files}, qq{</FileListing>};
@@ -319,7 +324,9 @@ sub filelist_load {
     #<File Name="3470_2.x.rar" Size="18824575" TTH="CL3SVS5UWWSAFGKCQZTMGDD355WUV2QVLNNADIA"/>
     if ( my ( $file, $size, $tth ) = m{^File Name="([^"]+)" Size="(\d+)" TTH="([^"]+)"}i ) {
       my $full_local = ( my $full = "$dir/$file" );
+#printlog 'loaded', $dir, $file  , $full;
       $full_local = Encode::encode $config{chrarset_fs}, $full if $config{chrarset_fs};
+
       $config{share_full}{$tth} = $full_local, $config{share_tth}{$full_local} = $tth, $config{share_tth}{$file} = $tth,
         if $tth;
       $config{share_full}{$file} ||= $full_local;
@@ -329,10 +336,11 @@ sub filelist_load {
       #$file =~ tr{\\}{/};
     } elsif ( my ($curdir) = m{^Directory Name="([^"]+)">}i ) {
       $dir .= ( ( !length $dir and $^O ~~ [ 'MSWin32', 'cygwin' ] ) ? () : '/' ) . $curdir;
-      #printlog 'now', $dir;
+#      printlog 'now in', $dir;
       #$config{files}
     } elsif (m{^/Directory>}i) {
-      $dir =~ s{/[^/]+$}{};
+      $dir =~ s{(?:^|/)[^/]+$}{};
+ #     printlog 'now ba', $dir;
     }
   }
   $config{share_full}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
