@@ -1170,11 +1170,7 @@ $self->{'file_send_offset'} += $sended;
       map( { $_ . '(' . scalar( keys %{ $self->{$_} } ) . ')=' . join( ',', sort keys %{ $self->{$_} } ) }
         grep { keys %{ $self->{$_} } } @{ $self->{'informative_hash'} } )
     );
-    $self->log(
-      'info',
-      "protocol stat",
-      Dumper( { map { $_ => $self->{$_} } grep { $self->{$_} } qw(count_sendcmd count_parse) } ),
-    );
+    $self->log(      'dbg',      "protocol stat",      Dumper( { map { $_ => $self->{$_} } grep { $self->{$_} } qw(count_sendcmd count_parse) } ),    );
     ( ref $self->{'clients'}{$_}{info} ? $self->{'clients'}{$_}->info() : () ) for sort keys %{ $self->{'clients'} };
   };
   $self->{'active'} ||= sub {
