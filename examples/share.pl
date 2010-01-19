@@ -186,7 +186,7 @@ sub sharescan {
             . $db->quote( $f->{time} )
             . " LIMIT 1" );
         #printlog ('already scaned', $indb->{size}),
-        filelist_line( { %$f, %$indb } ), next, if $indb->{size} == $f->{size};
+        filelist_line( { %$f, %$indb } ), next, if $indb->{size} ~~ $f->{size};
         #$db->select('filelist', {path=>$f->{path},file=>$f->{file}, });
         #printlog Dumper ;
         #print "\n";
@@ -214,7 +214,7 @@ sub sharescan {
           $f->{tth} = Net::DirectConnect::TigerHash::tthfile( $f->{full_local} );
           my $per = time - $time;
           printlog 'time', $f->{full}, psmisc::human( 'size', $f->{size} ), 'per', psmisc::human( 'time_period', $per ),
-            'speed ps', psmisc::human( 'size', $f->{size} / ( $per or 1 ) )
+            'speed ps', psmisc::human( 'size', $f->{size} / ( $per or 1 ) ), 'total', psmisc::human( 'size', $sharesize )
             if
             #$f->{size} > 100_000 or
             $per > 1;
@@ -264,7 +264,7 @@ $levelreal = $level = 0;
     or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error" and 0 )
   {
   } else {
-    printlog 'dev', 'using system bzip2', $_, $!;
+    printlog 'dev', 'using system bzip2', $_, $!,':',
     `bzip2 -f "$config{files}"`;
   }
 #unless $interrupted;
@@ -279,7 +279,7 @@ $levelreal = $level = 0;
 #}
 printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0];
 printlog( 'info', 'started:', $^X, $work{'$0'}, join ' ', @ARGV );
-sharescan(), exit if $ARGV[0] eq 'filelist' and !caller;
+sharescan(), exit if $ARGV[0] ~~ 'filelist' and !caller;
 #my ( $sharesize, $sharefiles, $shareloaded );
 my ($shareloaded);
 
@@ -305,10 +305,10 @@ sub filelist_load {
 
   #printlog "filelist_load try", $shareloaded , -s $config{files};
   return
-    unless (
+    if !(
         $config{files}
     and $shareloaded != -s $config{files}
-    and psmisc::lock( 'sharescan', timeout => 0, old => 86400 )
+    and (!$shareloaded or psmisc::lock( 'sharescan', timeout => 0, old => 86400 )) 
     and open my $f,
     '<', $config{files}
     );
@@ -348,7 +348,7 @@ sub filelist_load {
   printlog "loaded filelist size", $shareloaded, ' : files=', $sharefiles, 'bytes=', psmisc::human( 'size', $sharesize ),
     scalar keys %{ $config{share_full} };
   psmisc::unlock('sharescan');
-  $_[0]->( $sharesize, $sharefiles ) if ref $_[0] eq 'CODE';
+  $_[0]->( $sharesize, $sharefiles ) if ref $_[0] ~~ 'CODE';
   return ( $sharesize, $sharefiles );
 }
 $SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
