@@ -159,7 +159,7 @@ $config{'queries'}{'queries string last'} ||= {
 $config{'queries'}{'results top'} ||= {
   'main'    => 1,
   'periods' => 1,
-  ( !$config{'use_graph'} ? () : ( 'graph' => 1 ) ),
+#  ( !$config{'use_graph'} ? () : ( 'graph' => 1 ) ),
   'show'     => [qw(cnt string filename size tth)],                                                 #time
   'desc'     => { 'ru' => 'Распространенные файлы', 'en' => 'Most stored' },
   'SELECT'   => '*, COUNT(*) as cnt',
