@@ -42,7 +42,7 @@ psmisc::use_try 'Sys::Sendfile';    #ok!
 #sux psmisc::use_try 'Sys::Sendfile::FreeBSD';# or
 #psmisc::use_try 'IO::AIO';
 $config{files} //= 'files.xml';
-$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp);
+$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 $config{'log_pid'} //= 1;
 $config{chrarset_fs} //= 'cp1251' if $^O ~~ 'MSWin32';
 $config{chrarset_fs} //= 'koi8r'  if $^O ~~ 'freebsd';

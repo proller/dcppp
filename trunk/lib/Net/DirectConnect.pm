@@ -951,7 +951,7 @@ sub func {
     #return unless $self->{'file_send_left'};
     #my $buf;
     #$self->disconnect(),
-    return unless $self->{'socket'} and $self->{'filehandle_send'} and $self->{'file_send_left'};
+    return unless $self->{'socket'} and $self->{'socket'}->connected() and $self->{'filehandle_send'} and $self->{'file_send_left'};
     my $read = $self->{'file_send_left'};
     $read = $self->{'file_send_by'} if $self->{'file_send_by'} < $self->{'file_send_left'};
     #my $readed =
@@ -1170,7 +1170,7 @@ $self->{'file_send_offset'} += $sended;
       map( { $_ . '(' . scalar( keys %{ $self->{$_} } ) . ')=' . join( ',', sort keys %{ $self->{$_} } ) }
         grep { keys %{ $self->{$_} } } @{ $self->{'informative_hash'} } )
     );
-    $self->log(      'dbg',      "protocol stat",      Dumper( { map { $_ => $self->{$_} } grep { $self->{$_} } qw(count_sendcmd count_parse) } ),    );
+    $self->log(      'dcdbg',      "protocol stat",      Dumper( { map { $_ => $self->{$_} } grep { $self->{$_} } qw(count_sendcmd count_parse) } ),    );
     ( ref $self->{'clients'}{$_}{info} ? $self->{'clients'}{$_}->info() : () ) for sort keys %{ $self->{'clients'} };
   };
   $self->{'active'} ||= sub {
