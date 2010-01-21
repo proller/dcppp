@@ -170,6 +170,7 @@ sub new {
   $self->{'recv_flags'} ||= 0;
   #print (  'init ', 'class ', $class, __LINE__,,"[  ]\n\n");
   bless( $self, $class );
+      $self->log( 'dev',"my number=$self->{'number'} total=$global{'total'} count=$global{'count'}");
   #$self->log( 'dev', 'prefunc', $self, $class );
   $self->func(@param);
   if ( $class eq __PACKAGE__ ) {
@@ -189,23 +190,20 @@ sub new {
     $self->{'module'} ||= $self->{'protocol'};
     if ( $self->{'module'} eq 'nmdc' ) { $self->{'module'} = $self->{'hub'} ? 'hubcli' : 'clihub'; }
     #$self->log( 'module load', $self->{'module'});
-    if ( $self->{'module'} ) {
+#    if ( $self->{'module'} ) {
+}
+for  ( $self->{'module'}, @{$self->{'modules'} || []} ) {
+next unless length $_;
       #%self
-      my $module = __PACKAGE__ . '::' . $self->{'module'};
+#      my $module = __PACKAGE__ . '::' . $self->{'module'};
+      my $module = __PACKAGE__ . '::' . $_;
       #eval "use $module; $module\->init(\$self);";
       eval "use $module; $module\::init(\$self, \@param);";
-      #eval "use $module;";
       $self->log( 'err', 'cant load', $module, $@ ) if $@;
-      #&${}::
-      #&{${*$module}::init}($self);
-      #no strict qw(refs);
-      #*{$module}->init($self);
-      #*{$module}::init($self);
-      #$module->init($self);
-    }
-  } else {
+  #  }
+  } #else {
     $self->init(@param);
-  }
+#  }
   $self->{$_} = $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log);
   $self->{$_} ||= {} for qw(want share_full share_tth);
   $self->protocol_init();
@@ -301,6 +299,7 @@ sub AUTOLOAD {
 
 sub DESTROY {
   my $self = shift;
+  print "DESTROYing $self->{number}\n";
   $self->destroy();
   --$global{'count'};
 }
@@ -502,8 +501,9 @@ sub func {
     $self->disconnect() if ref $self and !$self->{'destroying'}++;
     #!?  delete $self->{$_} for keys %$self;
     $self->info();
-    $self->{'status'} = 'destroy';
-    $self = {};
+#    $self->{'status'} = 'destroy';
+#    $self = {};
+    %$self = ();
   };
   $self->{'recv'} ||= sub {
     my $self = shift;
@@ -563,7 +563,7 @@ sub func {
               #$self->log( 'dcdbg',  "recv err, reconnect," );
               $self->reconnect();
             } else {
-              #$self->log( 'dcdbg',  "recv err, disconnect," );
+              $self->log( 'dcdbg',  "recv err, destroy," );
               $self->destroy();
             }
           } else {
@@ -603,7 +603,7 @@ sub func {
         $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } sort keys %{ $self->{'clients'} } ),
         next
         if !$self->{'clients'}{$_}{'socket'}
-          or !$self->{'clients'}{$_}{'status'}
+          or ! length $self->{'clients'}{$_}{'status'}
           or $self->{'clients'}{$_}{'status'} eq 'destroy';
       $ret += $self->{'clients'}{$_}->recv();
     }
@@ -906,6 +906,8 @@ sub func {
     close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'} if $self->{'filehandle_send'};
     delete $self->{'file_send_left'};
     delete $self->{'file_send_total'};
+          $self->{'status'} = 'connected';
+
   };
   $self->{'file_send_tth'} ||= sub {
     my $self = shift;
@@ -930,7 +932,6 @@ sub func {
     $size  //= -s $file;
     $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return if !-e $file or -d $file;
     $size = -s $file if $size < 0;
-    $self->log( 'dev', "size=$size from", $start, 'e', -e $file, $file );
     if ( open $self->{'filehandle_send'}, '<', $file ) {
       binmode( $self->{'filehandle_send'} );
       seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
@@ -939,10 +940,13 @@ sub func {
       $self->{'file_send_left'}   = $size;
       $self->{'file_send_total'}  = -s $file;
       $self->{'file_send_offset'} = $start || 0;
+    $self->log( 'dev', "sendsize=$size from", $start, 'e', -e $file, , $file, $self->{'file_send_total'} );
       if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', 'file', $as || $name, $start, $size ); }
       else                  { $self->cmd( 'ADCSND', 'file', $as || $name, $start, $size ); }
       $self->{'status'} = 'transfer';
       $self->file_send_part();
+    } else {
+      $self->file_close();
     }
   };
   $self->{'file_send_part'} ||= sub {
@@ -951,7 +955,7 @@ sub func {
     #return unless $self->{'file_send_left'};
     #my $buf;
     #$self->disconnect(),
-    return unless $self->{'socket'} and $self->{'socket'}->connected() and $self->{'filehandle_send'} and $self->{'file_send_left'};
+    return unless( $self->{'socket'} and $self->{'socket'}->connected() and $self->{'filehandle_send'} and $self->{'file_send_left'});
     my $read = $self->{'file_send_left'};
     $read = $self->{'file_send_by'} if $self->{'file_send_by'} < $self->{'file_send_left'};
     #my $readed =
@@ -1021,6 +1025,7 @@ $self->{'file_send_offset'} += $sended;
         "buf [", length $self->{'file_send_buf'}, "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now",
         $self->{'file_send_offset'}, 'of', $self->{'file_send_total'}, 's=',
         ( $self->{'file_send_offset'} - $lastmark ) / ( time - $lasttime or 1 ),
+        "status=[$self->{'status'}]",
       );
       $lastmark = $self->{'file_send_offset'};
       $lasttime = time;
@@ -1045,7 +1050,7 @@ $self->{'file_send_offset'} += $sended;
         " by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}"
       );
       $self->file_close();
-      $self->{'status'} = 'connected';
+#      $self->{'status'} = 'connected';
       #?
       #$self->disconnect();
     }
