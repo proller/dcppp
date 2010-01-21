@@ -4,8 +4,7 @@ package    #hide from cpan
 use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
-$Data::Dumper::Sortkeys = 1;
-$Data::Dumper::Indent   = 1;
+$Data::Dumper::Sortkeys = $Data::Dumper::Indent   = 1;
 use Net::DirectConnect;
 use Net::DirectConnect::clicli;
 #use Net::DirectConnect::http;
