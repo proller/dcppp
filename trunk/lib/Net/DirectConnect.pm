@@ -599,6 +599,7 @@ sub func {
         'dev',
 "del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}]",
         ),
+        $self->{'clients'}{$_}->destroy(),
         delete( $self->{'clients'}{$_} ),
         $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } sort keys %{ $self->{'clients'} } ),
         next

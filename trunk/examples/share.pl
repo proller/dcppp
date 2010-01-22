@@ -133,7 +133,7 @@ sub sharescan {
       #@dots =
       ( my $dirname = $dir );
       $dirname =
-        #Encode::encode 'utf8',
+        Encode::encode 'utf8',
         Encode::decode $config{chrarset_fs}, $dirname if $config{chrarset_fs};
       unless ($level) {
         for ( split '/', $dirname ) {
@@ -162,9 +162,9 @@ sub sharescan {
         scandir( $f->{full_local} ), next if $f->{dir};
         $f->{size} = -s $f->{full_local} if -f $f->{full_local};
         next if $f->{size} < $config{file_min};
-        $f->{file} =    #Encode::encode 'utf8',
+        $f->{file} =    Encode::encode 'utf8',
           Encode::decode $config{chrarset_fs}, $f->{file} if $config{chrarset_fs};
-        $f->{path} =    #Encode::encode 'utf8',
+        $f->{path} =    Encode::encode 'utf8',
           Encode::decode $config{chrarset_fs}, $f->{path} if $config{chrarset_fs};
         $f->{full} = "$f->{path}/$f->{file}";
         $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
@@ -325,7 +325,9 @@ sub filelist_load {
     if ( my ( $file, $size, $tth ) = m{^File Name="([^"]+)" Size="(\d+)" TTH="([^"]+)"}i ) {
       my $full_local = ( my $full = "$dir/$file" );
 #printlog 'loaded', $dir, $file  , $full;
-      $full_local = Encode::encode $config{chrarset_fs}, $full if $config{chrarset_fs};
+#      $full_local = Encode::encode $config{chrarset_fs}, $full if $config{chrarset_fs};
+      $full_local =  Encode::encode $config{chrarset_fs}, Encode::decode 'utf8' , $full  if $config{chrarset_fs};
+
 
       $config{share_full}{$tth} = $full_local, $config{share_tth}{$full_local} = $tth, $config{share_tth}{$file} = $tth,
         if $tth;
