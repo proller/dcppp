@@ -137,7 +137,7 @@ sub sharescan {
         Encode::decode $config{chrarset_fs}, $dirname if $config{chrarset_fs};
       unless ($level) {
         for ( split '/', $dirname ) {
-          psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$_">\n},
+          psmisc::file_append ($config{files}, "\t" x $level, qq{<Directory Name="$_">\n}),
           ++$level, if length $_;
         }
       } else {
@@ -145,7 +145,7 @@ sub sharescan {
           #W s/^\w://;
           #$dirname =~
           s{.*/}{};
-        psmisc::file_append $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n},
+        psmisc::file_append ($config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n}),
         ++$level,
         ++$levelreal,
         if length $dirname;
