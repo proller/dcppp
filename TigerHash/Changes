@@ -1,5 +1,9 @@
 Revision history for Perl extension TigerHash.
 
+0.02 2009 01 26
+	cleaned
+	now standalone
+
 0.01  Sun Oct 25 02:01:10 2009
 	- original version; created by h2xs 1.23 with options
 		-A -n TigerHash -a -x -O '-F-I./linuxdcpp/ -I../linuxdcpp/' --skip-ppport TigerHash.h
