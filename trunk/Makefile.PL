@@ -8,7 +8,9 @@ use ExtUtils::MakeMaker;
   PREREQ_PM    => {
     'Time::HiRes'  => 0,
     'MIME::Base32' => 0,                         #for adc only
+    'Net::DirectConnect::TigerHash' => 0,
   },
+  NORECURS => 1,
   #($] >= 5.005 ?     ## Add these new keywords supported since 5.005
   #(ABSTRACT_FROM  => 'lib/Net/DirectConnect.pm', # retrieve abstract from module
   #AUTHOR         => 'A. U. Thor <a.u.thor@a.galaxy.far.far.away>') : ()    ),
