@@ -41,7 +41,7 @@ sub MY::postamble {
 fullclean: distclean veryclean
 	rm -f \$(DISTNAME)-*.tar.gz MANIFEST README
 
-release: fullclean manifest metafile dist
+release: test fullclean manifest metafile dist
 
 }
 }
