@@ -25,21 +25,24 @@ use ExtUtils::MakeMaker;
   'LD' => '$(CC)',
 );
 $_{dist}= {
-	            PREOP	=> 'pod2text $_{VERSION_FROM} | tee README >$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;',
+	            PREOP	=> "pod2text $_{VERSION_FROM} | tee README >\$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;",
 	            COMPRESS	=> 'gzip -9v',
 	            SUFFIX	=> '.gz',
 	           };
 WriteMakefile(%_);
 
 
-sub NONONO_MY::postamble {
+sub MY::postamble {
   qq{
-docs: README
+#docs: README
 
-README: $_{VERSION_FROM}
-	pod2text $_{VERSION_FROM} > README
+#README: $_{VERSION_FROM}
+#	pod2text $_{VERSION_FROM} > README
 
-fullclean: distclean clean
-	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old MANIFEST README
+fullclean: distclean veryclean
+	rm -f \$(DISTNAME)-*.tar.gz MANIFEST README
+
+release: fullclean manifest metafile dist
+
 }
 }

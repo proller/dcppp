@@ -16,7 +16,7 @@ use ExtUtils::MakeMaker;
 );
 
 $_{dist}= {
-	            PREOP	=> 'pod2text $_{VERSION_FROM} | tee README >$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;',
+	            PREOP	=> "pod2text $_{VERSION_FROM} | tee README >\$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;",
 	            COMPRESS	=> 'gzip -9v',
 	            SUFFIX	=> '.gz',
 	           };
@@ -31,9 +31,9 @@ sub NONONO_MY::postamble {
 #README: $_{VERSION_FROM}
 #	pod2text $_{VERSION_FROM} > README
 
-fullclean: distclean clean
+fullclean: distclean veryclean
 	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old MANIFEST README
 
-release: fullclean docs manifest metafile dist
+release: fullclean manifest metafile dist
 }
 }
