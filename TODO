@@ -32,3 +32,5 @@ send on can_send
 lang:
 founded -> found
 sended -> sent
+
+tigerhash: mmap
