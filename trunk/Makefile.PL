@@ -6,21 +6,17 @@ use ExtUtils::MakeMaker;
   VERSION_FROM => 'lib/Net/DirectConnect.pm',    # finds $VERSION
   INSTALLDIRS  => 'site',
   PREREQ_PM    => {
-    'Time::HiRes'  => 0,
-    'MIME::Base32' => 0,                         #for adc only
+    'Time::HiRes'                   => 0,
+    'MIME::Base32'                  => 0,        #for adc only
     'Net::DirectConnect::TigerHash' => 0,
   },
   NORECURS => 1,
-
-
 );
-
-$_{dist}= {
-	            PREOP	=> "pod2text $_{VERSION_FROM} | tee README >\$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;",
-	            COMPRESS	=> 'gzip -9v',
-	            SUFFIX	=> '.gz',
-	           };
-
+$_{dist} = {
+  PREOP    => "pod2text $_{VERSION_FROM} | tee README >\$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;",
+  COMPRESS => 'gzip -9v',
+  SUFFIX   => '.gz',
+};
 WriteMakefile(%_);
 
 sub NONONO_MY::postamble {
@@ -29,7 +25,7 @@ sub NONONO_MY::postamble {
 #docs: README
 
 #README: $_{VERSION_FROM}
-#	pod2text $_{VERSION_FROM} > README
+#pod2text $_{VERSION_FROM} > README
 
 fullclean: distclean veryclean
 	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old MANIFEST README
