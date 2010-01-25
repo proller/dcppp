@@ -11,33 +11,25 @@ use ExtUtils::MakeMaker;
     'Net::DirectConnect::TigerHash' => 0,
   },
   NORECURS => 1,
-  #($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-  #(ABSTRACT_FROM  => 'lib/Net/DirectConnect.pm', # retrieve abstract from module
-  #AUTHOR         => 'A. U. Thor <a.u.thor@a.galaxy.far.far.away>') : ()    ),
-  #MYEXTLIB => 'lib/Net/DirectConnect/TigerHash/TigerHash$(LIB_EXT)',
-  #MYEXTLIB => 'lib/Net/DirectConnect/TigerHash/Makefile',
-  #PL_FILES => {'lib/Net/DirectConnect/TigerHash/Makefile.PL' => ''},
+
+
 );
+
+$_{dist}= {
+	            PREOP	=> 'pod2text $_{VERSION_FROM} | tee README >$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;',
+	            COMPRESS	=> 'gzip -9v',
+	            SUFFIX	=> '.gz',
+	           };
+
 WriteMakefile(%_);
 
-sub MY::postamble {
+sub NONONO_MY::postamble {
   qq{
-#lib/Net/DirectConnect/TigerHash/makefile:
-#cd lib/Net/DirectConnect/TigerHash && perl Makefile.PL 
 
+#docs: README
 
-#lib/Net/DirectConnect/TigerHash/TigerHash.o: lib/Net/DirectConnect/TigerHash/makefile
-	
-
-#\$(MYEXTLIB): lib/Net/DirectConnect/TigerHash/makefile
-#pwd
-#cd lib/Net/DirectConnect/TigerHash && perl Makefile.PL && \$(MAKE) \$(PASSTHRU)
-#cd lib/Net/DirectConnect/TigerHash && \$(MAKE) \$(PASSTHRU)
-
-docs: README
-
-README: $_{VERSION_FROM}
-	pod2text $_{VERSION_FROM} > README
+#README: $_{VERSION_FROM}
+#	pod2text $_{VERSION_FROM} > README
 
 fullclean: distclean clean
 	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old MANIFEST README
