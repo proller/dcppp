@@ -299,7 +299,7 @@ sub filelist_load {
   return
     if !$config{files}
       or $shareloaded == -s $config{files}
-      or ( $shareloaded and psmisc::lock( 'sharescan', timeout => 0, old => 86400 ) )
+      or ( $shareloaded and !psmisc::lock( 'sharescan', timeout => 0, old => 86400 ) )
       or !open my $f, '<', $config{files};
   my ( $sharesize, $sharefiles );
   printlog "loading filelist", -s $f;
