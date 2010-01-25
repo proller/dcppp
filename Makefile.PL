@@ -3,12 +3,12 @@ use ExtUtils::MakeMaker;
 #the contents of the Makefile that is written.
 %_ = (
   NAME         => 'Net::DirectConnect',
-  VERSION_FROM => 'lib/Net/DirectConnect.pm',    # finds $VERSION
+  VERSION_FROM => 'lib/Net/DirectConnect.pm',
   INSTALLDIRS  => 'site',
   PREREQ_PM    => {
     'Time::HiRes'                   => 0,
-    'MIME::Base32'                  => 0,        #for adc only
-    'Net::DirectConnect::TigerHash' => 0,
+    'MIME::Base32'                  => 0,    #for adc only
+    'Net::DirectConnect::TigerHash' => 0,    #for sharing and adc
   },
   NORECURS => 1,
 );
