@@ -132,23 +132,18 @@ sub sharescan {
       opendir( my $dh, $dir ) or print("can't opendir $dir: $!\n"), next;
       #@dots =
       ( my $dirname = $dir );
-      $dirname =
-        Encode::encode 'utf8',
-        Encode::decode $config{chrarset_fs}, $dirname if $config{chrarset_fs};
+      $dirname = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $dirname if $config{chrarset_fs};
       unless ($level) {
         for ( split '/', $dirname ) {
-          psmisc::file_append ($config{files}, "\t" x $level, qq{<Directory Name="$_">\n}),
-          ++$level, if length $_;
+          psmisc::file_append( $config{files}, "\t" x $level, qq{<Directory Name="$_">\n} ), ++$level, if length $_;
         }
       } else {
         $dirname =~
           #W s/^\w://;
           #$dirname =~
           s{.*/}{};
-        psmisc::file_append ($config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n}),
-        ++$level,
-        ++$levelreal,
-        if length $dirname;
+        psmisc::file_append( $config{files}, "\t" x $level, qq{<Directory Name="$dirname">\n} ), ++$level, ++$levelreal,
+          if length $dirname;
       }
       psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { printinfo() } );
       for my $file ( readdir($dh) ) {
@@ -163,10 +158,8 @@ sub sharescan {
         scandir( $f->{full_local} ), next if $f->{dir};
         $f->{size} = -s $f->{full_local} if -f $f->{full_local};
         next if $f->{size} < $config{file_min};
-        $f->{file} =    Encode::encode 'utf8',
-          Encode::decode $config{chrarset_fs}, $f->{file} if $config{chrarset_fs};
-        $f->{path} =    Encode::encode 'utf8',
-          Encode::decode $config{chrarset_fs}, $f->{path} if $config{chrarset_fs};
+        $f->{file} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{file} if $config{chrarset_fs};
+        $f->{path} = Encode::encode 'utf8', Encode::decode $config{chrarset_fs}, $f->{path} if $config{chrarset_fs};
         $f->{full} = "$f->{path}/$f->{file}";
         $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
 #printlog 'timed', $f->{time}, psmisc::human('date_time', $f->{time}), -M $f->{full_local}, int (86400 * -M $f->{full_local}), $^T;
@@ -233,15 +226,14 @@ sub sharescan {
       }
       --$level;
       --$levelreal;
-      psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n}; #<!-- $levelreal $level -->
+      psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n};    #<!-- $levelreal $level -->
       closedir $dh;
     }
-    if ( $levelreal < 0 ) { 
-#      psmisc::file_append $config{files}, "<!-- backing to root $levelreal $level -->\n";
-psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n} while --$level >= 0; 
-$levelreal = $level = 0;
-}
-
+    if ( $levelreal < 0 ) {
+      #psmisc::file_append $config{files}, "<!-- backing to root $levelreal $level -->\n";
+      psmisc::file_append $config{files}, "\t" x $level, qq{</Directory>\n} while --$level >= 0;
+      $levelreal = $level = 0;
+    }
     #$level
   }
   #else {
@@ -265,8 +257,7 @@ $levelreal = $level = 0;
     or printlog "bzip2 failed: $IO::Compress::Bzip2::Bzip2Error" and 0 )
   {
   } else {
-    printlog 'dev', 'using system bzip2', $_, $!,':',
-    `bzip2 -f "$config{files}"`;
+    printlog 'dev', 'using system bzip2', $_, $!, ':', `bzip2 -f "$config{files}"`;
   }
 #unless $interrupted;
 #$config{share_full}{ $config{files} . '.bz2' } = $config{files} . '.bz2';  $config{share_full}{ $config{files} } = $config{files};
@@ -306,13 +297,10 @@ sub filelist_load {
 
   #printlog "filelist_load try", $shareloaded , -s $config{files};
   return
-    if !(
-        $config{files}
-    and $shareloaded != -s $config{files}
-    and (!$shareloaded or psmisc::lock( 'sharescan', timeout => 0, old => 86400 )) 
-    and open my $f,
-    '<', $config{files}
-    );
+    if !$config{files}
+      or $shareloaded == -s $config{files}
+      or ( $shareloaded and psmisc::lock( 'sharescan', timeout => 0, old => 86400 ) )
+      or !open my $f, '<', $config{files};
   my ( $sharesize, $sharefiles );
   printlog "loading filelist", -s $f;
   $shareloaded = -s $f;
@@ -325,11 +313,9 @@ sub filelist_load {
     #<File Name="3470_2.x.rar" Size="18824575" TTH="CL3SVS5UWWSAFGKCQZTMGDD355WUV2QVLNNADIA"/>
     if ( my ( $file, $size, $tth ) = m{^File Name="([^"]+)" Size="(\d+)" TTH="([^"]+)"}i ) {
       my $full_local = ( my $full = "$dir/$file" );
-#printlog 'loaded', $dir, $file  , $full;
-#      $full_local = Encode::encode $config{chrarset_fs}, $full if $config{chrarset_fs};
-      $full_local =  Encode::encode $config{chrarset_fs}, Encode::decode 'utf8' , $full  if $config{chrarset_fs};
-
-
+      #printlog 'loaded', $dir, $file  , $full;
+      #$full_local = Encode::encode $config{chrarset_fs}, $full if $config{chrarset_fs};
+      $full_local = Encode::encode $config{chrarset_fs}, Encode::decode 'utf8', $full if $config{chrarset_fs};
       $config{share_full}{$tth} = $full_local, $config{share_tth}{$full_local} = $tth, $config{share_tth}{$file} = $tth,
         if $tth;
       $config{share_full}{$file} ||= $full_local;
@@ -339,11 +325,11 @@ sub filelist_load {
       #$file =~ tr{\\}{/};
     } elsif ( my ($curdir) = m{^Directory Name="([^"]+)">}i ) {
       $dir .= ( ( !length $dir and $^O ~~ [ 'MSWin32', 'cygwin' ] ) ? () : '/' ) . $curdir;
-#      printlog 'now in', $dir;
+      #printlog 'now in', $dir;
       #$config{files}
     } elsif (m{^/Directory>}i) {
       $dir =~ s{(?:^|/)[^/]+$}{};
- #     printlog 'now ba', $dir;
+      #printlog 'now ba', $dir;
     }
   }
   $config{share_full}{ $config{files} . '.bz2' } = $config{files} . '.bz2';
