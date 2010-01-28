@@ -83,9 +83,9 @@ sub init {
     'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
     'connect_protocol' => 'ADC/0.10', 'message_type' => 'H', @_, 'incomingclass' => __PACKAGE__,    #'Net::DirectConnect::adc',
-    'periodic' => sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; },
     no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
   );
+  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
   $self->baseinit();    #if ref $self eq __PACKAGE__;
   #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
@@ -112,8 +112,7 @@ sub init {
         $self->cmd( 'I', 'SUP' );
         #$peerid ||= join '', map {} 1..4
         $peerid ||= base32(
-        pack'S',
-          $self->{'number'}
+          pack 'S', $self->{'number'}
             #+ int rand 100
         );
         $peerid = ( 'A' x ( 4 - length $peerid ) ) . $peerid;

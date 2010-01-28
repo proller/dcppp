@@ -45,6 +45,10 @@ None by default.
  https://launchpad.net/linuxdcpp
  http://www.open-content.net/specs/draft-jchapweske-thex-02.html  
 
+=head1 BUGS
+
+ under windows builds only in cygwin
+
 =head1 AUTHOR
 
 Oleg Alexeenkov, E<lt>pro@cpan.orgE<gt>

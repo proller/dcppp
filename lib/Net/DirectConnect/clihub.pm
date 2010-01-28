@@ -4,7 +4,7 @@ package    #hide from cpan
 use strict;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
-$Data::Dumper::Sortkeys = $Data::Dumper::Indent   = 1;
+$Data::Dumper::Sortkeys = $Data::Dumper::Indent = 1;
 use Net::DirectConnect;
 use Net::DirectConnect::clicli;
 #use Net::DirectConnect::http;
@@ -47,15 +47,16 @@ sub init {
     'search_every'     => 10,
     'search_every_min' => 10,
     'auto_connect'     => 1,
-    'NoGetINFO'        => 1,                                                                                            #test
-    'NoHello'          => 1, 'UserIP2' => 1, 'Version' => '1,0091', 'auto_GetNickList' => 1, 'follow_forcemove' => 1,
+    'auto_bug'         => 1,
+    'NoGetINFO'        => 1,    #test
+    'NoHello' => 1, 'UserIP2' => 1, 'TTHSearch' => 1, 'Version' => '1,0091', 'auto_GetNickList' => 1, 'follow_forcemove' => 1,
     #ADC
     #'connect_protocol' => 'ADC/0.10',
     #'message_type'     => 'H',
-    @_,
-    'incomingclass' => 'Net::DirectConnect::clicli',
-    'periodic'      => sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; },
+    @_, 'incomingclass' => 'Net::DirectConnect::clicli',
+    #'periodic'      =>
   );
+  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->baseinit();
   $self->{$_} ||= $self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList );
@@ -111,6 +112,9 @@ sub init {
           $self->{'Nick'} = $try if length $try;
         } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i ) {
           sleep $1 + 1;
+        } elsif ( $self->{'auto_bug'} and $nick eq 'VerliHub' and $text =~ /^This Hub Is Running Version 0.9.8d/i ) {    #_RC1
+          ++$self->{'bug_MyINFO_last'};
+          $self->log( 'dev', "possible bug fixed [$self->{'bug_MyINFO_last'}]" );
         }
       }
     },
@@ -118,9 +122,10 @@ sub init {
       #$self->log( "lockparse", @_ );
       $self->{'sendbuf'} = 1;
       $self->cmd('Supports');
-      $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+      my ($lock) = $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
       #print "lock[$1]\n";
-      $self->cmd( 'Key', $self->lock2key($1) );
+      #$self->log( 'dev', "lock from [$_[0]] = [$lock]");
+      $self->cmd( 'Key', $self->lock2key($lock) );
       $self->{'sendbuf'} = 0;
       $self->cmd('ValidateNick');
     },
@@ -130,9 +135,10 @@ sub init {
       $self->{'sendbuf'} = 1;
       $self->cmd('Version');
       $self->{'sendbuf'} = 0 unless $self->{'auto_GetNickList'};
-      $self->cmd('MyINFO');
+      $self->cmd('MyINFO') unless $self->{'bug_MyINFO_last'};
       $self->{'sendbuf'} = 0, $self->cmd('GetNickList') if $self->{'auto_GetNickList'};
-      $self->{'status'} = 'connected';
+      $self->{'sendbuf'} = 0, $self->cmd('MyINFO')      if $self->{'bug_MyINFO_last'};
+      $self->{'status'}  = 'connected';
       $self->cmd('make_hub');
     },
     'Supports' => sub {
