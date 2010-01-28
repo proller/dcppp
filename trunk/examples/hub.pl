@@ -36,7 +36,7 @@ my $dc = Net::DirectConnect->new(
         print "Writing dump\n";
         psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
       }
-    );
+    ) if $config{debug};
   }
 );
 #$dc->work(100);      #seconds

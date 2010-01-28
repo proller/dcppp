@@ -65,13 +65,18 @@ sub init {
         $self->cmd('Supports');
         $self->cmd('Direction');
         $self->{'sendbuf'} = 0;
-        $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-        $self->cmd( 'Key', $self->lock2key($1) );
+        #}
+        #my ($lock) = $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+        #$_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+        #$self->cmd( 'Key', $self->lock2key($lock) );
       } else {
-        $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-        $self->{'key'} = $self->lock2key($1);
+        #$_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+        #$self->{'key'} = $self->lock2key($1);
         #$self->log ( 'dev','lock2key', "[$1]=[$self->{'key'}]");
       }
+      my ($lock) = $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+      #$_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+      $self->cmd( 'Key', $self->lock2key($lock) );
     },
     'Direction' => sub {
       my $d = ( split /\s/, $_[0] )[0];

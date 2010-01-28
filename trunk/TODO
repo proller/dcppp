@@ -33,4 +33,8 @@ lang:
 founded -> found
 sended -> sent
 
-tigerhash: mmap
+tigerhash: mmap, speed limit, win32 build
+
+filelist.pm: 
+ standalone @ARGV -> config parse
+

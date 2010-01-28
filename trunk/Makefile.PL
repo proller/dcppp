@@ -6,17 +6,21 @@ use ExtUtils::MakeMaker;
   VERSION_FROM => 'lib/Net/DirectConnect.pm',
   INSTALLDIRS  => 'site',
   PREREQ_PM    => {
-    'Time::HiRes'                   => 0,
-    'MIME::Base32'                  => 0,    #for adc only
-    'Net::DirectConnect::TigerHash' => 0,    #for sharing and adc
+    'Time::HiRes'         => 0,
+    'MIME::Base32'        => 0,    #for adc only
+    'Sys::Sendfile'       => 0,    #faster file sending
+    'IO::Compress::Bzip2' => 0,    #preparing filelists
+    'DBI'                 => 0,
+    'DBD::SQLite'         => 0,
   },
-  NORECURS => 1,
 );
 $_{dist} = {
   PREOP    => "pod2text $_{VERSION_FROM} | tee README >\$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;",
   COMPRESS => 'gzip -9v',
   SUFFIX   => '.gz',
 };
+$_{PREREQ_PM}{'Net::DirectConnect::TigerHash'} = 0,    #for sharing and adc
+  $_{NORECURS} = 1, if $^O =~ /win32/i or $^O =~ /mswin/;
 WriteMakefile(%_);
 
 sub NONONO_MY::postamble {

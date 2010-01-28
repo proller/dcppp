@@ -99,6 +99,25 @@ sub clear {
   );
 }
 
+sub module_load {
+  my $self = shift if ref $_[0];
+  local $_ = shift;
+  #for (@_) {
+  return unless length $_;
+  #%self
+  #my $module = __PACKAGE__ . '::' . $self->{'module'};
+  my $module = __PACKAGE__ . '::' . $_;
+  $self->log( 'dev', 'try load module', $_, $module, );
+  #eval "use $module; $module\->init(\$self);";
+  eval "use $module;";
+  $self->log( 'err', 'cant load', $module, $@ ) if $@;
+  eval "$module\::new(\$self, \@_);";    #, \@param
+  $self->log( 'err', 'cant new', $module, $@ ) if $@;
+  eval "$module\::init(\$self, \@_);";    #, \@param
+  $self->log( 'err', 'cant init', $module, $@ ) if $@;
+  #}
+}
+
 sub new {
   my $class = shift;
   my @param = @_;
@@ -113,29 +132,29 @@ sub new {
     'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
-    'flag' => '1',                                                          # User status as ascii char (byte)
-    #1 normal
-    #2, 3 away
-    #4, 5 server               The server icon is used when the client has
-    #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
-    #8, 9 fireball             The fireball icon is used when the client
-    #10, 11 fireball away      has had an upload > 100 kB/s.
-    'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024,    #10GB
-    'client' => 'perl',    #'dcp++',                                                              #++: indicates the client
-    #'protocol' => 'nmdc',    # or 'adc'
-    'V' => $VERSION,       #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
-    #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
-    'H' => '0/1/0'
+    'flag' => '1',    # User status as ascii char (byte)
+                      #1 normal
+                      #2, 3 away
+                      #4, 5 server               The server icon is used when the client has
+                      #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
+                      #8, 9 fireball             The fireball icon is used when the client
+                      #10, 11 fireball away      has had an upload > 100 kB/s.
+    'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024 + int rand( 1024 * 1024 ),    #10GB
+    'client' => 'perl',      #'dcp++',                                                              #++: indicates the client
+                             #'protocol' => 'nmdc',    # or 'adc'
+    'V'      => $VERSION,    #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
+                             #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    'H'      => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
     'lock'     => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
     'cmd_sep'  => ' ',
     'no_print' => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
-    'log'      => sub {
+    'log'      => sub (@) {
       my $self = ref $_[0] ? shift() : {};
       #if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
-      print( join( ' ', "($self)[$self->{'number'}]", @_ ), "\n" );
+      print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
     },
     'auto_recv'          => 1,
     'max_reads'          => 20,
@@ -170,7 +189,7 @@ sub new {
   $self->{'recv_flags'} ||= 0;
   #print (  'init ', 'class ', $class, __LINE__,,"[  ]\n\n");
   bless( $self, $class );
-      $self->log( 'dev',"my number=$self->{'number'} total=$global{'total'} count=$global{'count'}");
+  $self->log( 'dev', "my number=$self->{'number'} total=$global{'total'} count=$global{'count'}" );
   #$self->log( 'dev', 'prefunc', $self, $class );
   $self->func(@param);
   if ( $class eq __PACKAGE__ ) {
@@ -190,20 +209,26 @@ sub new {
     $self->{'module'} ||= $self->{'protocol'};
     if ( $self->{'module'} eq 'nmdc' ) { $self->{'module'} = $self->{'hub'} ? 'hubcli' : 'clihub'; }
     #$self->log( 'module load', $self->{'module'});
-#    if ( $self->{'module'} ) {
-}
+    #if ( $self->{'module'} ) {
+  }
+  $self->module_load( $_, @param ) for ( $self->{'module'}, @{ $self->{'modules'} || [] } );
+
+=del
+
 for  ( $self->{'module'}, @{$self->{'modules'} || []} ) {
 next unless length $_;
       #%self
-#      my $module = __PACKAGE__ . '::' . $self->{'module'};
+#my $module = __PACKAGE__ . '::' . $self->{'module'};
       my $module = __PACKAGE__ . '::' . $_;
       #eval "use $module; $module\->init(\$self);";
       eval "use $module; $module\::init(\$self, \@param);";
       $self->log( 'err', 'cant load', $module, $@ ) if $@;
-  #  }
+#}
   } #else {
-    $self->init(@param);
-#  }
+=cut
+
+  $self->init(@param);
+  #}
   $self->{$_} = $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log);
   $self->{$_} ||= {} for qw(want share_full share_tth);
   $self->protocol_init();
@@ -501,8 +526,8 @@ sub func {
     $self->disconnect() if ref $self and !$self->{'destroying'}++;
     #!?  delete $self->{$_} for keys %$self;
     $self->info();
-#    $self->{'status'} = 'destroy';
-#    $self = {};
+    #$self->{'status'} = 'destroy';
+    #$self = {};
     %$self = ();
   };
   $self->{'recv'} ||= sub {
@@ -563,7 +588,7 @@ sub func {
               #$self->log( 'dcdbg',  "recv err, reconnect," );
               $self->reconnect();
             } else {
-              $self->log( 'dcdbg',  "recv err, destroy," );
+              $self->log( 'dcdbg', "recv err, destroy," );
               $self->destroy();
             }
           } else {
@@ -604,7 +629,7 @@ sub func {
         $self->log( 'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" } sort keys %{ $self->{'clients'} } ),
         next
         if !$self->{'clients'}{$_}{'socket'}
-          or ! length $self->{'clients'}{$_}{'status'}
+          or !length $self->{'clients'}{$_}{'status'}
           or $self->{'clients'}{$_}{'status'} eq 'destroy';
       $ret += $self->{'clients'}{$_}->recv();
     }
@@ -673,7 +698,12 @@ sub func {
   $self->{'work'} ||= sub {
     my $self   = shift;
     my @params = @_;
-    $self->periodic();
+    #$self->periodic();
+    schedule(1, our $___work_every ||= sub {
+    $_->() for grep {ref$_ eq 'CODE'}values %{$self->{periodic} || {}};
+#print ("P:$_\n"),
+#$self->{periodic}{$_}->() for grep {ref$self->{periodic}{$_} eq 'CODE'}keys %{$self->{periodic} || {}};
+    });
     return $self->wait_sleep(@params) if @params;
     return $self->recv( $self->{'work_sleep'} );
   };
@@ -743,7 +773,7 @@ sub func {
   $self->{'send'} ||= sub {
     my $self = shift;
     local $_;    # = join( '', @_ );
-    #$self->{bytes_send} += length $_;
+                 #$self->{bytes_send} += length $_;
     eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
@@ -898,17 +928,18 @@ sub func {
     my $self = shift;
     if ( $self->{'filehandle'} ) {
       close( $self->{'filehandle'} ), delete $self->{'filehandle'};
+      my $dest = ( $self->{'fileas'} || $self->{'filename'} );
       if ( length $self->{'partial_ext'} ) {
         $self->log( 'dcerr', 'cant move finished file' )
           if !rename $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'},
-            ( $self->{'fileas'} || $self->{'filename'} );
+          $dest;
       }
+      ( $self->{parent} || $self )->handler( 'file_recieved', $dest );
     }
     close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'} if $self->{'filehandle_send'};
     delete $self->{'file_send_left'};
     delete $self->{'file_send_total'};
-          $self->{'status'} = 'connected';
-
+    $self->{'status'} = 'connected';
   };
   $self->{'file_send_tth'} ||= sub {
     my $self = shift;
@@ -941,7 +972,7 @@ sub func {
       $self->{'file_send_left'}   = $size;
       $self->{'file_send_total'}  = -s $file;
       $self->{'file_send_offset'} = $start || 0;
-    $self->log( 'dev', "sendsize=$size from", $start, 'e', -e $file, , $file, $self->{'file_send_total'} );
+      $self->log( 'dev', "sendsize=$size from", $start, 'e', -e $file,, $file, $self->{'file_send_total'} );
       if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', 'file', $as || $name, $start, $size ); }
       else                  { $self->cmd( 'ADCSND', 'file', $as || $name, $start, $size ); }
       $self->{'status'} = 'transfer';
@@ -956,13 +987,17 @@ sub func {
     #return unless $self->{'file_send_left'};
     #my $buf;
     #$self->disconnect(),
-    return unless( $self->{'socket'} and $self->{'socket'}->connected() and $self->{'filehandle_send'} and $self->{'file_send_left'});
+    return
+      unless ( $self->{'socket'}
+      and $self->{'socket'}->connected()
+      and $self->{'filehandle_send'}
+      and $self->{'file_send_left'} );
     my $read = $self->{'file_send_left'};
     $read = $self->{'file_send_by'} if $self->{'file_send_by'} < $self->{'file_send_left'};
     #my $readed =
     my $sended;
     if ( $INC{'Sys/Sendfile.pm'} ) {    #works
-      #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
+          #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
       $self->{'file_send_offset'} += $sended =
         Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
       #);
@@ -1001,22 +1036,21 @@ $self->{'file_send_offset'} += $sended;
 #$self->{'file_send_offset'} += $read, $sended = $read,if $sended == 12;
 } 
 =cut
-
     else {
       read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
         $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
         unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
-      #send $self->{'socket'},
-      #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-      #my $sended;
-      #$self->log(      'snd',      length $self->{'file_send_buf'},
+                                                   #send $self->{'socket'},
+                                                   #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+                                                   #my $sended;
+                                                   #$self->log(      'snd',      length $self->{'file_send_buf'},
       eval {
         $self->{bytes_send} += $sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
         #$_;
         #length $buf;
-        #        $sended;
+        #$sended;
       };                                           # if $self->{'socket'};
-      #$!    );
+                                                   #$!    );
       $self->log( 'err', 'send error', $@ ) if $@;
     }
     schedule 10, our $printsending__ ||= sub {
@@ -1051,7 +1085,7 @@ $self->{'file_send_offset'} += $sended;
         " by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}"
       );
       $self->file_close();
-#      $self->{'status'} = 'connected';
+      #$self->{'status'} = 'connected';
       #?
       #$self->disconnect();
     }
@@ -1106,8 +1140,10 @@ $self->{'file_send_offset'} += $sended;
   };
   #http://www.dcpp.net/wiki/index.php/LockToKey :
   $self->{'lock2key'} ||= sub {
-    my $self = shift;
-    my @lock = split( //, shift );
+    my $self = shift if ref $_[0];
+    my ($lock) = @_;
+    $self->{'log'}->( 'dev', 'making lock from', $lock );
+    my @lock = split( //, $lock );
     my $i;
     my @key = ();
     foreach (@lock) { $_ = ord; }
@@ -1176,7 +1212,11 @@ $self->{'file_send_offset'} += $sended;
       map( { $_ . '(' . scalar( keys %{ $self->{$_} } ) . ')=' . join( ',', sort keys %{ $self->{$_} } ) }
         grep { keys %{ $self->{$_} } } @{ $self->{'informative_hash'} } )
     );
-    $self->log(      'dcdbg',      "protocol stat",      Dumper( { map { $_ => $self->{$_} } grep { $self->{$_} } qw(count_sendcmd count_parse) } ),    );
+    $self->log(
+      'dcdbg',
+      "protocol stat",
+      Dumper( { map { $_ => $self->{$_} } grep { $self->{$_} } qw(count_sendcmd count_parse) } ),
+    );
     ( ref $self->{'clients'}{$_}{info} ? $self->{'clients'}{$_}->info() : () ) for sort keys %{ $self->{'clients'} };
   };
   $self->{'active'} ||= sub {
@@ -1315,6 +1355,11 @@ $self->{'file_send_offset'} += $sended;
   );
   $self->{$_} = $_{$_} for keys %_;
 }
+#print "N:DC:CALLER=", caller, "\n";
+do {
+  use lib '../';
+  __PACKAGE__->new( auto_work => 1, @ARGV ),;
+} unless caller;
 1;
 __END__
 
