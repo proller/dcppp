@@ -178,7 +178,7 @@ for ( grep { length $_ } @ARGV ) {
       #'log'		=>	sub {},	# no logging
       #'log'          => sub { my $dc = shift; psmisc::printlog( "[$dc->{'number'}]($dc)", @_);
       'log' => sub {
-        my $dc = shift;
+        my $dc = shift if ref $_[0];
         local $_ = shift;
         psmisc::printlog( $_, "[$dc->{'number'}]", @_ );
         #psmisc::caller_trace(5)
