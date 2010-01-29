@@ -56,28 +56,28 @@ sub send_udp ($$;@) {
     $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
   }
 }
-{    #$Id$ $URL$
-  my %schedule;
 
-  sub schedule($$;@) {
+  sub schedule($$;@) { #$Id$ $URL$
+    our %schedule;
     #for (1..100000000) { psmisc::schedule(10, our $my_every_10sec_sub__ ||= sub { print "every 10 sec"})};
     my ( $every, $func ) = ( shift, shift );
-    #printlog 'everyS1', Dumper([ $every, $func,  $schedule{$func} ]);
     my $p;
     ( $p->{'wait'}, $p->{'every'}, $p->{'runs'}, $p->{'cond'}, $p->{'id'} ) = @$every if ref $every eq 'ARRAY';
     $p = $every if ref $every eq 'HASH';
     $p->{'every'} ||= $every if !ref $every;
-    $p->{'id'} ||= $func;
+    $p->{'id'} ||= join ';', caller;
+    #$p->{'id'} ||= $func;
+    $schedule{ $p->{'id'} }{'func'} = $func if !$schedule{ $p->{'id'} }{'func'} or $p->{'update'};
     $schedule{ $p->{'id'} }{'last'} = time - $p->{'every'} + $p->{'wait'} if $p->{'wait'} and !$schedule{ $p->{'id'} }{'last'};
+    #printlog 'everyS1', $schedule{ $p->{'id'} }{'func'}, $func,Dumper([ $every,  $schedule{ $p->{'id'} } ], $p), caller;
     #printlog 'everyS4', Dumper([ $every, $func, $p, $schedule{$func} ]), $func;
     #printlog('dev','everyR', Dumper($p, $schedule{$p->{'id'}} ), time, $func ),
-    $func->(@_), $schedule{ $p->{'id'} }{'last'} = time
+    $schedule{ $p->{'id'} }{'func'}->(@_), $schedule{ $p->{'id'} }{'last'} = time
       if ( $schedule{ $p->{'id'} }{'last'} + $p->{'every'} < time )
       and ( !$p->{'runs'} or $schedule{ $p->{'id'} }{'runs'}++ < $p->{'runs'} )
       and ( !( ref $p->{'cond'} eq 'CODE' ) or $p->{'cond'}->( $p, $schedule{ $p->{'id'} }, @_ ) )
-      and ref $func eq 'CODE';
+      and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
   }
-}
 
 sub clear {
   return map { $_ => undef } qw(
@@ -1142,7 +1142,7 @@ $self->{'file_send_offset'} += $sended;
   $self->{'lock2key'} ||= sub {
     my $self = shift if ref $_[0];
     my ($lock) = @_;
-    $self->{'log'}->( 'dev', 'making lock from', $lock );
+#    $self->{'log'}->( 'dev', 'making lock from', $lock );
     my @lock = split( //, $lock );
     my $i;
     my @key = ();

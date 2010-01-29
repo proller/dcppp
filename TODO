@@ -33,8 +33,17 @@ lang:
 founded -> found
 sended -> sent
 
-tigerhash: mmap, speed limit, win32 build
+tigerhash: mmap, speed limit, win32 build, ttfile raw,
 
 filelist.pm: 
  standalone @ARGV -> config parse
+
+
+can_recv
+ recv ..
+can_send 
+ send ..
+every 1 
+ work
+
 

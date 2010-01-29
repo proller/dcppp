@@ -37,7 +37,9 @@ sub                                        #init
   $self->{tth_cheat_no_date} //= 0;                              #--//-- only name-size
   $self->{file_min}          //= 0;                              #skip files  smaller
   $self->{filelist_scan}     //= 3600;                           #every seconds, 0 to disable
-  $self->{'file_send_by'}    //= 1024 * 1024 * 1;
+  $self->{filelist_reload} //= 300; #check and load filelist if new, every seconds
+  $self->{file_send_by}    //= 1024 * 1024 * 1;
+##$config{share_root} //= '';
   $self->{'sql'}             //= {
     'driver' => 'sqlite',
     'dbname' => 'files.sqlite',
@@ -329,10 +331,12 @@ sub                                        #init
         psmisc::startme( 'filelist', grep { -d } @ARGV );
       }
     ) if $self->{filelist_scan};
-    Net::DirectConnect::schedule(
+#    Net::DirectConnect::
+    psmisc::schedule(
       #10,    #dev! 300!
-      300,
-      our $filelist_load_sub__ ||= sub {
+      $self->{filelist_reload},
+      #our $filelist_load_sub__ ||= 
+      sub {
         #psmisc::startme( 'filelist', grep { -d } @ARGV );
         #my($sharesize,$sharefiles) =
         $self->filelist_load(
