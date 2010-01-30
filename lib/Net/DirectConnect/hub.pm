@@ -22,7 +22,7 @@ sub init {
     'HubName'       => 'Net::DirectConnect test hub',
     , @_
   );
-  $self->baseinit();
+  #$self->baseinit();
   $self->{'parse'} ||= {};
   $self->{'cmd'}   ||= {};
 }

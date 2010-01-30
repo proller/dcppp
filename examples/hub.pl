@@ -32,7 +32,8 @@ my $dc = Net::DirectConnect->new(
     my $dc = shift;
     psmisc::schedule(
       [ 20, 300 ],
-      our $dump_sub__ ||= sub {
+      #our $dump_sub__ ||=
+      sub {
         print "Writing dump\n";
         psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
       }

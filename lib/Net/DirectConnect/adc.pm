@@ -87,14 +87,14 @@ sub init {
   );
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
-  $self->baseinit();    #if ref $self eq __PACKAGE__;
+  #$self->baseinit();    #if ref $self eq __PACKAGE__;
   #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
   if ( $self->{'hub'} ) {
     $self->{'auto_connect'} = 0;
     $self->{'auto_listen'}  = 1;
     $self->{'status'}       = 'working';
   }
-  $self->{$_} ||= $self->{'parent'}{$_} || {} for qw(peers peers_sid peers_cid want);
+  $self->{$_} ||= $self->{'parent'}{$_} || {} for qw(peers peers_sid peers_cid want myport);
   $self->{'parse'} ||= {
 #
 #=================
@@ -443,7 +443,7 @@ sub init {
     #ADC dev
     #
     'connect_aft' => sub {
-      #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
+      print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
       #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
       $self->cmd( $self->{'message_type'}, 'SUP' ) if $self->{'adc'};
@@ -588,7 +588,7 @@ sub init {
         #'handler'     => \%{ $self->{'handler'} },
         'parent' => $self, 'auto_listen' => 1,
         #'myport'        => $self->{'myport'},
-        ( map { $_ => $self->{$_} } qw(myport want peers ) ),
+        #( map { $_ => $self->{$_} } qw(myport want peers ) ),
       );
       $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
       $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};

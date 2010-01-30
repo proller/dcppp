@@ -12,7 +12,7 @@ use base 'Net::DirectConnect';
 sub init {
   my $self = shift;
   #$self->log($self, 'inited0',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
-  %$self = (
+  %$self = (         #too bad! rewrite
     %$self,
     #http://www.dcpp.net/wiki/index.php/%24Supports
     'supports_avail' => [ qw(
@@ -37,11 +37,12 @@ sub init {
     #MiniSlots XmlBZList ADCGet TTHL TTHF
     @_, 'direction' => 'Download',
     #'Direction' => 'Upload', #rand here
-    'reconnects' => 0,
+    'reconnects'     => 0,
+    inactive_timeout => 60,
   );
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
   #$self->log($self, 'inited1',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
-  $self->baseinit();
+  #$self->baseinit();
   #$self->log($self, 'inited2',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   $self->get_peer_addr();
   #$self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
@@ -162,7 +163,7 @@ sub init {
       $self->sendcmd( 'Lock', $self->{'lock'} );
     },
     'Supports' => sub {
-      $self->sendcmd( 'Supports', $self->supports() || 'MiniSlots XmlBZList ADCGet TTHL TTHF' );
+      $self->sendcmd( 'Supports', $self->supports() || 'MiniSlots XmlBZList ADCGet TTHF' );    #TTHL
     },
     'Direction' => sub {
       $self->sendcmd( 'Direction', $self->{'direction'}, int( rand(0x7FFF) ) );

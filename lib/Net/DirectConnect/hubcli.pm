@@ -13,7 +13,7 @@ use base 'Net::DirectConnect';
 sub init {
   my $self = shift;
   %$self = ( %$self,, @_ );
-  $self->baseinit();
+  #$self->baseinit();
   $self->get_peer_addr();
   $self->log( 'info', "[$self->{'number'}] Incoming client $self->{'host'}:$self->{'port'}" ) if $self->{'incoming'};
   $self->{'parse'} ||= {
