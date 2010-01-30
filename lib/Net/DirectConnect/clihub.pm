@@ -139,6 +139,7 @@ sub init {
       $self->{'sendbuf'} = 0, $self->cmd('GetNickList') if $self->{'auto_GetNickList'};
       $self->{'sendbuf'} = 0, $self->cmd('MyINFO')      if $self->{'bug_MyINFO_last'};
       $self->{'status'}  = 'connected';
+      $self->cmd('BotINFO') if $self->{botinfo};
       $self->cmd('make_hub');
     },
     'Supports' => sub {
@@ -171,6 +172,7 @@ sub init {
     },
     'NickList' => sub {
       $self->{'NickList'}->{$_}{'online'} = 1 for grep $_, split /\$\$/, $_[0];
+      $self->GetINFO() if $self->{auto_GetINFO};
     },
     'OpList' => sub {
       $self->{'NickList'}->{$_}{'oper'} = 1 for grep $_, split /\$\$/, $_[0];
@@ -190,9 +192,8 @@ sub init {
       #$self->log('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
       return if $self->{'clients'}{ $host . ':' . $port }->{'socket'};
       $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
-        %$self, $self->clear(),
-        'host' => $host,
-        'port' => $port,
+        #!        %$self, $self->clear(),
+        parent => $self, 'host' => $host, 'port' => $port,
 #'want'         => \%{ $self->{'want'} },        'NickList'     => \%{ $self->{'NickList'} },        'IpList'       => \%{ $self->{'IpList'} },        'PortList'     => \%{ $self->{'PortList'} },        'handler'      => \%{ $self->{'handler'} },
 #'want'         => $self->{'want'},
 #'NickList'     => $self->{'NickList'},
@@ -381,6 +382,10 @@ sub init {
       $self->sendcmd( 'GetINFO', $_, $self->{'Nick'} ) for @_;
       $self->sendcmd();
     },
+    'BotINFO' => sub {
+      my $self = shift if ref $_[0];
+      $self->sendcmd( 'BotINFO', $self->{botinfo} );
+    },
     'ConnectToMe' => sub {
       my $self = shift if ref $_[0];
       return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
@@ -445,12 +450,23 @@ sub init {
       $self->{'hub_name'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
     },
     #
+    'stat_hub' => sub {
+      my $self = shift if ref $_[0];
+      local %_;
+      #for my $w qw(SS) {
+      #++$_{UC},
+      local @_ = grep { length $_ and $_ ne $self->{'Nick'} } keys %{ $self->{'NickList'} };
+      $_{SS} += $self->{'NickList'}{$_}{'sharesize'} for @_;
+      #}
+      $_{UC} = @_;
+      return \%_;
+    },
   };
   #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
   if ( $self->{'M'} eq 'A' or !$self->{'M'} ) {
     $self->log( 'dev', "making listeners: tcp" );
     $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
-      %$self, $self->clear(),
+      #%$self, $self->clear(),
       #'want'        => \%{ $self->{'want'} },
       #'NickList'    => \%{ $self->{'NickList'} },
       #'IpList'      => \%{ $self->{'IpList'} },
@@ -464,8 +480,8 @@ sub init {
     $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
     $self->log( 'dev', "making listeners: udp" );
     $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
-      %$self, $self->clear(),
-      'Proto' => 'udp',
+      #%$self, $self->clear(),
+      'parent' => $self, 'Proto' => 'udp',
       #?    'want'     => \%{ $self->{'want'} },
       #?    'NickList' => \%{ $self->{'NickList'} },
       #?    'IpList'   => \%{ $self->{'IpList'} },

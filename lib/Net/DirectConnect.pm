@@ -80,6 +80,7 @@ sub schedule($$;@)
     and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
 }
 
+=del
 sub clear {
   return map { $_ => undef } qw(
     clients
@@ -100,6 +101,7 @@ sub clear {
   );
   #
 }
+=cut
 
 sub module_load {
   my $self = shift if ref $_[0];
@@ -113,18 +115,31 @@ sub module_load {
   #eval "use $module; $module\->init(\$self);";
   eval "use $module;";
   $self->log( 'err', 'cant load', $module, $@ ) if $@;
+  $self->log( 'dev', 'try new', $module );
   eval "$module\::new(\$self, \@_);";    #, \@param
   $self->log( 'err', 'cant new', $module, $@ ) if $@;
+  $self->log( 'dev', 'try init', $module );
   eval "$module\::init(\$self, \@_);";    #, \@param
   $self->log( 'err', 'cant init', $module, $@ ) if $@;
+  $self->log( 'dev', 'loaded  module', $_, $module, );
   #}
 }
 
 sub new {
   my $class = shift;
-  psmisc::printlog( 'dev', __PACKAGE__, 'new', $class, scalar @_ );
+  #psmisc::printlog( 'dev', __PACKAGE__, 'new', $class, 'refc=',ref $class, 'next=', $_[0], 'refnext=', ref$_[0], scalar @_ );
+  print 'NEW', __PACKAGE__, "\n";
   my @param = @_;
-  my $self  = {
+  my $self  = {};
+  if ( ref $class eq __PACKAGE__ ) { $self = $class; }
+  else {
+    #$self  =   {
+    bless( $self, $class ) unless ref $class;
+    #psmisc::printlog('dev', 'blessed', "self=$self, class=$class package=", __PACKAGE__);
+    #print (  'init ', 'class ', $class, __LINE__,,"[  ]\n\n");
+    #$self->log( 'dev', 'prefunc', $self, $class );
+  }
+  local %_ = (
     'Listen'      => 10,
     'Timeout'     => 5,
     'myport'      => 412,                                                   #first try
@@ -159,7 +174,7 @@ sub new {
       #if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
       print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
     },
-    'auto_recv'          => 1,
+    #'auto_recv'          => 1,
     'max_reads'          => 20,
     'wait_once'          => 0.1,
     'waits'              => 100,
@@ -175,46 +190,43 @@ sub new {
     #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'nonblocking' => 1,
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
-    'informative_hash'     => [qw(clients)],                   #NickList IpList PortList
+    'informative_hash'     => [qw(clients)],    #NickList IpList PortList
     'disconnect_recursive' => 1,
     'reconnects'           => 5,
     'reconnect_sleep'      => 5,
     'partial_ext'          => '.partial',
-    'file_send_by'         => 1024 * 64,
-    'local_mask_rfc'       => [qw(10 172.[123]\d 192\.168)],
-    'status'               => 'disconnected',
+    'file_send_by'         => 1024 * 1024,      #1024 * 64,
+    'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', time_start => time,
     #'peers' => {},
     #'partial_prefix' => './partial/',
     #ADC
     #number => ++$global{'total'},
-  };
-  bless( $self, $class );
-  #psmisc::printlog('dev', 'number', $self->{'number'});
-  eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
-  $self->{'recv_flags'} ||= 0;
-  #print (  'init ', 'class ', $class, __LINE__,,"[  ]\n\n");
-  #$self->log( 'dev', 'prefunc', $self, $class );
-  $self->func(@param);
+    #};
+  );
+  $self->{$_} ||= $_{$_} for keys %_;
+  #psmisc::printlog('dev', 'init0', Dumper $self);
   if ( $class eq __PACKAGE__ ) {
     local %_ = (@param);
     #for keys
     $self->{$_} = $_{$_} for keys %_;
     #$self->log( 'init00', $self, "h=$self->{'host'}", 'p=', $self->{'protocol'} );
-    if ( !$self->{'module'} and !$self->{'protocol'} ) {
-      $self->{'host'} =~ m{^(.*?)://};
-      my $p = lc $1;
+    if ( !$self->{'module'} and !$self->{'protocol'} and $self->{'host'} ) {
+      #$self->log( 'proto0 ', $1);
+      my $p = lc $1 if $self->{'host'} =~ m{^(.+?)://};
       #$self->protocol_init($p);
       $self->{'protocol'} = $p;
       $self->{'protocol'} = 'nmdc' if !$self->{'protocol'} or $self->{'protocol'} eq 'dchub';
       #$self->{'protocol'}
-      #$self->log( 'proto ', $self->{'protocol'});
+      $self->log( 'proto ', $self->{'protocol'} );
     }
     $self->{'module'} ||= $self->{'protocol'};
     if ( $self->{'module'} eq 'nmdc' ) { $self->{'module'} = $self->{'hub'} ? 'hubcli' : 'clihub'; }
     #$self->log( 'module load', $self->{'module'});
     #if ( $self->{'module'} ) {
   }
+  #psmisc::printlog('dev', 'modules load', ( $self->{'module'}, @{ $self->{'modules'} || [] } ));
   $self->module_load( $_, @param ) for ( $self->{'module'}, @{ $self->{'modules'} || [] } );
+  #}
 
 =del
 
@@ -230,6 +242,11 @@ next unless length $_;
   } #else {
 =cut
 
+  #psmisc::printlog('dev', 'func');
+  $self->func(@param);
+  eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
+  $self->{'recv_flags'} ||= 0;
+  #psmisc::printlog('dev', 'init');
   $self->init(@param);
   #}
   $self->{'number'} ||= ++$global{'total'};
@@ -251,7 +268,7 @@ next unless length $_;
     #$self->log( $self, '', "auto_work ", $self->active() );
     while ( $self->active() ) {
       $self->work();    #forever
-      $self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
+      #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
     }
     $self->disconnect();
   }
@@ -320,6 +337,7 @@ sub cmd {
 }
 
 sub AUTOLOAD {
+  #psmisc::printlog('autoload', $AUTOLOAD,@_);
   my $self = shift      || return;
   my $type = ref($self) || return;
   #my @p    = @_;
@@ -429,6 +447,7 @@ sub func {
       %{ $self->{'sockopts'} || {} },
     );
     $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
+    $self->{time_start} = time;
     $self->select_add();
     #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
     $self->get_my_addr();
@@ -638,11 +657,12 @@ sub func {
     #$self->log( 'traceD', 'DC::select', 'bef' );
     my ( $recv, $send, $exeption ) =
       IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $self->{'select_timeout'} );
-    #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
+#$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
+#schedule(5, sub {        $self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     for (@$exeption) { $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ); }
     for (@$recv) { $self->{sockets}{$_}->recv($_); }
     for (@$send) {
-      $self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number} );
+      #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number} );
       if ( $self->{sockets}{$_}{'filehandle_send'} ) { $self->{sockets}{$_}->file_send_part(); }
     }
 
@@ -755,6 +775,7 @@ sub func {
                 and time - $self->{'clients'}{$_}{activity} > $self->{'clients'}{$_}{inactive_timeout} );
           #$ret += $self->{'clients'}{$_}->recv();
         }
+        $self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
       }
     );
     return $self->wait_sleep(@params) if @params;
