@@ -49,7 +49,8 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
   '53' => 'Slots full',
   '54' => 'No hash support overlap in SUP between clients.',
 );
-eval "use Net::DirectConnect::TigerHash; 1;" or print join ' ', ( 'err', 'cant use', $@ );
+#eval "use Net::DirectConnect::TigerHash; 1;" or print join ' ', ( 'err', 'cant use', $@ );
+eval q{use Net::DirectConnect::TigerHash;};
 
 sub base32 ($) {
   #eval {
@@ -67,12 +68,31 @@ sub tiger ($) {
     #mhash(Mhash::MHASH_TIGER, $_);
 }
 sub hash ($) { base32( tiger( $_[0] ) ); }
+#sub init {  my $self = shift;
+
+=cu
+sub new {
+#psmisc::printlog('adc::new', @_);
+##  my $self = ref $_[0] ? shift() : bless {}, $_[0];
+  my $self = ref $_[0] ? shift() : Net::DirectConnect->new(
+  #@_
+  adcinit(bless({},shift),@_)
+  ); #
+
+#shift if $_[0] eq __PACKAGE__;
+return $self;
+
+}
+=cut
 
 sub init {
   my $self = shift;
-  #print "SELF=", $self, "REF=", ref $self, "P=", @_, "\n\n";
-  %$self = (
-    %$self,
+  #shift if $_[0] eq __PACKAGE__;
+  #print "adcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
+  #$self->SUPER::new();
+  #%$self = (
+  #%$self,
+  local %_ = (
     'Nick'     => 'NetDCBot',
     'port'     => 412,
     'host'     => 'localhost',
@@ -85,16 +105,22 @@ sub init {
     'connect_protocol' => 'ADC/0.10', 'message_type' => 'H', @_, 'incomingclass' => __PACKAGE__,    #'Net::DirectConnect::adc',
     no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
   );
+  $self->{$_} = $_{$_} for keys %_;
+  #print 'adc init now=',Dumper $self;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
   #$self->baseinit();    #if ref $self eq __PACKAGE__;
   #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
+  $self->{SUPAD}{H}{$_} = $_ for qw(BAS0 BASE TIGR UCM0 BLO0 BZIP );
+  $self->{SUPAD}{I}{$_} = $_ for qw(BASE TIGR BZIP);
+  $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
   if ( $self->{'hub'} ) {
     $self->{'auto_connect'} = 0;
     $self->{'auto_listen'}  = 1;
     $self->{'status'}       = 'working';
   }
-  $self->{$_} ||= $self->{'parent'}{$_} || {} for qw(peers peers_sid peers_cid want myport);
+  $self->{$_} ||= $self->{'parent'}{$_} || {} for qw(peers peers_sid peers_cid want share_full share_tth);
+  $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{'parse'} ||= {
 #
 #=================
@@ -115,6 +141,7 @@ sub init {
           pack 'S', $self->{'number'}
             #+ int rand 100
         );
+        $self->log( 'adcdevsid', "pack [$self->{'number'}] = [$peerid]" );
         $peerid = ( 'A' x ( 4 - length $peerid ) ) . $peerid;
         $self->{'peerid'} ||= $peerid;
         $self->log( 'adcdev', $dst, 'SUP:', @_, "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}" );
@@ -342,9 +369,8 @@ sub init {
       $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)", );
       $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
       $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = __PACKAGE__->new(
-        %$self, $self->clear(),
-        'host' => $host,
-        'port' => $port,
+        #%$self, $self->clear(),
+        parent => $self, 'host' => $host, 'port' => $port,
         #'parse' => $self->{'parse'},
         #'cmd'   => $self->{'cmd'},
         #'want'  => $self->{'want'},
@@ -457,14 +483,18 @@ sub init {
     'SUP' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-      #$self->log($self, 'SUP inited',"MT:$self->{'message_type'}", "=== $dst");
-      $self->{'SUPADS'} ||= [qw(BASE TIGR PING)] if $dst eq 'I';
-      $self->{'SUPADS'} ||= [qw(BAS0 BASE TIGR UCM0 BLO0 BZIP )];    #PING ZLIG
-      $self->{'SUPRMS'} ||= [qw()];
-      $self->{'SUP'} ||= { ( map { $_ => 1 } @{ $self->{'SUPADS'} } ), ( map { $_ => 0 } @{ $self->{'SUPRMS'} } ) };
-      #$self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
-      $self->cmd_adc                                                 #sendcmd
-        ( $dst, 'SUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
+#$self->log($self, 'SUP inited',"MT:$self->{'message_type'}", "=== $dst");
+#$self->{SUPADS} ||= [qw(BASE TIGR)] if $dst eq 'I'; #PING
+#$self->{SUPADS} ||= [qw(BAS0 BASE TIGR UCM0 BLO0 BZIP )];    #PING ZLIG
+#$self->{SUPRMS} ||= [qw()];
+#$self->{SUP} ||= { ( map { $_ => 1 } @{ $self->{'SUPADS'} } ), ( map { $_ => 0 } @{ $self->{'SUPRMS'} } ) };
+#$self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
+#$self->cmd_adc( $dst, 'SUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
+      $self->cmd_adc(
+        $dst, 'SUP',
+        ( map { 'AD' . $_ } sort keys %{ $self->{SUPAD}{$dst} } ),
+        ( map { 'RM' . $_ } sort keys %{ $self->{SUPRM}{$dst} } ),
+      );
       #ADBAS0 ADBASE ADTIGR ADUCM0 ADBLO0
     },
     'INF' => sub {
@@ -514,12 +544,14 @@ sub init {
         $self->{'CID'} ||= tiger $self->{'PID'};
         $self->{'INF'}{'PD'} ||= base32 $self->{'PID'};
         $self->{'INF'}{'ID'} ||= base32 $self->{'CID'};
-        $self->{'INF'}{'SL'} ||= $self->{'S'} || '2';
+        $self->log( 'id gen',
+          "iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
+        $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
         $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
         $self->{'INF'}{'SF'} ||= 30999;
-        $self->{'INF'}{'HN'} ||= $self->{'H'} || 1;
-        $self->{'INF'}{'HR'} ||= $self->{'R'} || 0;
-        $self->{'INF'}{'HO'} ||= $self->{'O'} || 0;
+        $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
+        $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
+        $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
         $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
           || 'perl'
           . $Net::DirectConnect::VERSION . '_'
@@ -552,6 +584,16 @@ sub init {
       }
       $self->cmd_adc( $dst, 'GET', @_ );
     },
+    'stat_hub' => sub {
+      my $self = shift if ref $_[0];
+      local %_;
+      for my $w qw(SS SF) {
+        #$self->log( 'dev', 'calc', $_, $w),
+        $_{$w} += $self->{'peers'}{$_}{INF}{$w} for grep { $_ and $_ ne $self->{sid} } keys %{ $self->{'peers_sid'} };
+      }
+      $_{UC} = keys %{ $self->{'peers'} };
+      return \%_;
+    },
   };
 
 =auto    
@@ -578,7 +620,7 @@ sub init {
   #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
   unless ( $self->{'no_listen'} ) {
     if ( ( $self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'} ) {
-      $self->log( 'dev', "making listeners: tcp" );
+      $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
       $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
         #%$self, $self->clear(),
         #'want' => $self->{'want'},
@@ -661,5 +703,7 @@ sub init {
         and $self->{'log'};
   };
   $self->get_peer_addr() if $self->{'socket'};
+  $self->log( 'err', 'cant load TigerHash module' ) unless $INC{'Net/DirectConnect/TigerHash.pm'};
+  return $self;
 }
 1;

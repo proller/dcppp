@@ -47,13 +47,13 @@ use strict;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 use Time::HiRes qw(time sleep);
-use Encode;
+#use Encode;
 use lib '../lib';
-use lib '../TigerHash/lib';
+#use lib '../TigerHash/lib';
 use lib './stat/pslib';
 our ( %config, $db );
 use psmisc;
-use pssql;
+#use pssql;
 use Net::DirectConnect;
 use Net::DirectConnect::filelist;
 psmisc::use_try 'Sys::Sendfile';
@@ -61,14 +61,13 @@ $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 $config{'log_pid'} //= 1;
 psmisc::config();    #psmisc::lib_init();
 printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0] and !$config{dc}{host};
-printlog( 'info', 'started:', $^X, $work{'$0'}, join ' ', @ARGV );
+printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 Net::DirectConnect::filelist->new( %{ $config{dc} || {} } )->filelist_make(@ARGV), exit if $ARGV[0] ~~ 'filelist' and !caller;
-$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
+#use Net::DirectConnect::adc;
 my $dc = Net::DirectConnect->new(
-  modules => ['filelist'],
-  ( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
+  modules  => ['filelist'],
   dev_http => 1,
-  'log'    => sub {
+  'log'    => sub (@) {
     my $dc = ref $_[0] ? shift : {};
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   },
@@ -93,4 +92,5 @@ my $dc = Net::DirectConnect->new(
     ) if $config{debug};
   },
   %{ $config{dc} || {} },
+  ( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
 );

@@ -48,7 +48,9 @@ sub init {
   #$self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
   #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
   #$self->{'share_full'} ||=$self->{'parent'}{'share_tth'};
-  $self->{$_} ||= $self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList );
+  $self->{$_} ||= $self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList
+    Nick
+  );
   $self->{'NickList'} ||= {};
   $self->{'IpList'}   ||= {};
   $self->{'PortList'} ||= {};
@@ -75,9 +77,10 @@ sub init {
         #$self->{'key'} = $self->lock2key($1);
         #$self->log ( 'dev','lock2key', "[$1]=[$self->{'key'}]");
       }
-      my ($lock) = $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+      #my ($lock)
+      ( $self->{'key'} ) = $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
       #$_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-      $self->cmd( 'Key', $self->lock2key($lock) );
+      #$self->cmd( 'Key', $self->lock2key($lock) );
     },
     'Direction' => sub {
       my $d = ( split /\s/, $_[0] )[0];
@@ -98,8 +101,8 @@ sub init {
         $self->{'sendbuf'} = 0;
         $self->cmd( 'Key', $self->{'key'} );
       }
-      $self->cmd('file_select') if $self->{'direction'} eq 'Download';
-      $self->log( "get:[filename:", $self->{'filename'}, '; fileas:', $self->{'fileas'}, "]" );
+      $self->cmd('file_select'), $self->log( "get:[filename:", $self->{'filename'}, '; fileas:', $self->{'fileas'}, "]" )
+        if $self->{'direction'} eq 'Download';
       $self->{'get'} = $self->{'filename'} . '$' . ( $self->{'filefrom'} || 1 ),
         $self->{'adcget'} = 'file ' . $self->{'filename'} . ' ' . ( $self->{'filefrom'} || 0 ) . ' -1',
         $self->cmd( ( $self->{'NickList'}->{ $self->{'peernick'} }{'ADCGet'} ? 'ADCGET' : 'Get' ) )
@@ -157,7 +160,9 @@ sub init {
       $self->cmd('Lock');
     },
     'MyNick' => sub {
-      $self->sendcmd( 'MyNick', $self->{'Nick'} || $self->{'parent'}{'Nick'} );
+      $self->sendcmd(
+        'MyNick', $self->{'Nick'}    #|| $self->{'parent'}{'Nick'}
+      );
     },
     'Lock' => sub {
       $self->sendcmd( 'Lock', $self->{'lock'} );
