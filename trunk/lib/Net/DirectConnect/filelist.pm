@@ -20,13 +20,15 @@ sub                                        #init
   shift if $_[0] eq __PACKAGE__;
   #my $self =  shift () ;
   #$self =  Net::DirectConnect->new() unless ref $self;
+#print 'params' ,join ', ',@_;
   %$self = ( %$self, @_ );
+$self->{log} = sub {}   if $standalone;
   #$self->baseinit();
   #$self->log( 'dev', 'inited:', "SA[$standalone]",Dumper($self, @_));
   #$self->{'parse'} ||= {};
   #$self->{'cmd'}   ||= {};
   #print join ' ', ( 'loading', __FILE__, __PACKAGE__, ref $self, 'caller=', caller );
-  $self->log( 'dev', 'loading', __FILE__, __PACKAGE__, ref $self );
+#  $self->log( 'dev', 'loading', __FILE__, __PACKAGE__, ref $self );
   my ($shareloaded);
   $self->{no_sql}            //= 0;
   $self->{files}             //= 'files.xml';
@@ -79,7 +81,7 @@ sub                                        #init
     my $printinfo = sub () {
       $self->log( 'sharesize', psmisc::human( 'size', $sharesize ), $sharefiles, scalar keys %{ $self->{share_full} } );
     };
-    $SIG{INT} = sub { ++$stopscan; ++$interrupted; print "INT rec, stopscan\n" };
+    $SIG{INT} = sub { ++$stopscan; ++$interrupted; $self->log('warn',  "INT rec, stopscan") };
     $SIG{INFO} = sub { $printinfo->(); };
     psmisc::file_rewrite $self->{files}, qq{<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <FileListing Version="1" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
@@ -111,13 +113,17 @@ sub                                        #init
     $scandir = sub (@) {
       for my $dir (@_) {
         $self->log( 'scandir', $dir, 'charset', $self->{chrarset_fs} );
+#$self->log( 'warn', 'stopscan', $stopscan),
         last if $stopscan;
         $dir =~ tr{\\}{/};
         $dir =~ s{/+$}{};
-        opendir( my $dh, $dir ) or $self->log( 'err', "can't opendir $dir: $!\n" ), next;
+        opendir( my $dh, $dir ) or ($self->log( 'err', "can't opendir $dir: $!\n" ), next);
+#$self->log( 'dev','sd', __LINE__,$dh);
+
         #@dots =
         ( my $dirname = $dir );
         $dirname = Encode::encode 'utf8', Encode::decode $self->{chrarset_fs}, $dirname if $self->{chrarset_fs};
+#$self->log( 'dev','sd', __LINE__,$dh);
         unless ($level) {
           for ( split '/', $dirname ) {
             psmisc::file_append( $self->{files}, "\t" x $level, qq{<Directory Name="$_">\n} ), ++$level, if length $_;
@@ -130,9 +136,20 @@ sub                                        #init
           psmisc::file_append( $self->{files}, "\t" x $level, qq{<Directory Name="$dirname">\n} ), ++$level, ++$levelreal,
             if length $dirname;
         }
-        Net::DirectConnect::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { $printinfo->() } );
+#$self->log( 'dev','sd', __LINE__,$dh);
+#        Net::DirectConnect::
+        psmisc::schedule
+        (
+         [ 10, 10 ], 
+         our $my_every_10sec_sub__ ||= 
+         sub {
+         $printinfo->() 
+         }
+          );
+#$self->log( 'readdir', );
         for my $file ( readdir($dh) ) {
-          $self->log( 'scanfile', $file, );
+#          $self->log( 'scanfile', $file, );
+#$self->log( 'warn', 'stopscan', $stopscan),
           last if $stopscan;
           next if $file =~ /^\.\.?$/;
           #$file = Encode::encode( 'utf8', Encode::decode( $self->{chrarset_fs}, $file ) ) if $self->{chrarset_fs};
@@ -250,7 +267,7 @@ sub                                        #init
 #$self->{share_full}{ $self->{files} . '.bz2' } = $self->{files} . '.bz2';  $self->{share_full}{ $self->{files} } = $self->{files};
 #}
     psmisc::unlock('sharescan');
-    printinfo();
+    $printinfo->();
     $SIG{INT} = $SIG{KILL} = undef;
     return ( $sharesize, $sharefiles );
   };
@@ -336,9 +353,9 @@ sub                                        #init
       our $sharescan_sub__ ||= sub {
         $self->log( 'filelist actual', -M $self->{files}, ( time - $^T + 86400 * -M $self->{files} ), $self->{filelist_scan} );
         return if -e $self->{files} and $self->{filelist_scan} > time - $^T + 86400 * -M $self->{files};
-        $self->log( 'starter==', $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
-        psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} };
-        #psmisc::startme( 'filelist', grep { -d } @ARGV );
+#        $self->log( 'starter==', $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
+$0 ne 'share.pl' ?        psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} } :
+        psmisc::startme( 'filelist', grep { -d } @ARGV );
       }
     ) if $self->{filelist_scan};
     #Net::DirectConnect::
