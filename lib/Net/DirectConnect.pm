@@ -1080,8 +1080,7 @@ sub func {
       $self->{'file_send_offset'} += $sended =
         Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
       #);
-      $self->log( 'dev', 'ssendfile0',
-        "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sended=$sended" );
+      #$self->log( 'dev', 'ssendfile0', "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sended=$sended" );
       #$self->{'file_send_offset'} += $sended;
     }
 
@@ -1135,8 +1134,8 @@ $self->{'file_send_offset'} += $sended;
       #$!    );
       #$self->log( 'err', 'send error', $@ ) if $@;
     }
-    #schedule 0,      sub
-    do {
+    schedule 1,      sub
+     {
       our ( $lastmark, $lasttime );
       $self->log(
         'dev',                       "sended bytes",                    #length $self->{'file_send_buf'},
