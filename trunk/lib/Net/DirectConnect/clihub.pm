@@ -58,7 +58,7 @@ sub init {
   );
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
-  $self->baseinit();
+  #$self->baseinit();
   $self->{$_} ||= $self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList );
   $self->{'NickList'} ||= {};
   $self->{'IpList'}   ||= {};
