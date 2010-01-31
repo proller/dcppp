@@ -33,14 +33,16 @@ use psmisc;
 use Net::DirectConnect;
 #$config{disconnect_after}     //= 10;
 #$config{disconnect_after_inf} //= 0;
-$config{'hit_to_ask'}         = 1;
-$config{'queue_recalc_every'} = 10;
-$config{'get_every'}          = 10;
+$config{'hit_to_ask'}         //= 1;
+$config{'queue_recalc_every'} //= 10;
+$config{'get_every'}          //= 10;
+$config{'get_dir'}          //= './downloads/';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 psmisc::config();    #psmisc::lib_init();
 printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit if !$ARGV[0] and !$config{dc}{host} and !$config{dc}{hosts};
 printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
+mkdir $config{'get_dir'};
 #use Net::DirectConnect::adc;
 #my $dc =
 my $hub = $config{dc}{host} || shift @ARGV;
@@ -149,7 +151,7 @@ Net::DirectConnect->new(
           );
           my ($from) = grep { $_->{slotsopen} } values %{ $work{'tthfrom'}{$tth} };
           printlog( 'selected from', Dumper $from);
-          $dc->get( $from->{nick}, 'TTH/' . $tth, $filename );
+          $dc->get( $from->{nick}, 'TTH/' . $tth, $config{'get_dir'}.$filename );
           delete $work{'filename'}{$tth};
           #$work{'tthfrom'}{$s{tth}}
           last;
