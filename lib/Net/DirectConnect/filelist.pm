@@ -33,8 +33,8 @@ sub                                        #init
   my ($shareloaded);
   $self->{no_sql}            //= 0;
   $self->{files}             //= 'files.xml';
-  $self->{share_full}        //= {};
-  $self->{share_tth}         //= {};
+#  $self->{share_full}        //= {};
+#  $self->{share_tth}         //= {};
   $self->{chrarset_fs}       //= 'cp1251' if $^O ~~ 'MSWin32';
   $self->{chrarset_fs}       //= 'koi8r' if $^O ~~ 'freebsd';
   $self->{tth_cheat}         //= 1_000_000;                      #try find file with same name-size-date

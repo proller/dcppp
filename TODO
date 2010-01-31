@@ -37,3 +37,9 @@ filelist.pm:
 
 remove  psmisc and pssql
 
+
+
+downloader:
+ files
+  users
+

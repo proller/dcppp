@@ -88,7 +88,7 @@ return $self;
 sub init {
   my $self = shift;
   #shift if $_[0] eq __PACKAGE__;
-  #print "adcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
+  print "adcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
   #$self->SUPER::new();
   #%$self = (
   #%$self,
@@ -102,10 +102,12 @@ sub init {
     #'auto_wait'        => 1,
     'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
-    'connect_protocol' => 'ADC/0.10', 'message_type' => 'H', @_, 'incomingclass' => __PACKAGE__,    #'Net::DirectConnect::adc',
+    'connect_protocol' => 'ADC/0.10', 'message_type' => 'H', 
+    #@_,
+     'incomingclass' => __PACKAGE__,    #'Net::DirectConnect::adc',
     no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
   );
-  $self->{$_} = $_{$_} for keys %_;
+  $self->{$_} ||= $_{$_} for keys %_;
   #print 'adc init now=',Dumper $self;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
@@ -119,7 +121,7 @@ sub init {
     $self->{'auto_listen'}  = 1;
     $self->{'status'}       = 'working';
   }
-  $self->{$_} ||= $self->{'parent'}{$_} || {} for qw(peers peers_sid peers_cid want share_full share_tth);
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{'parse'} ||= {
 #
@@ -320,7 +322,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       #test $_[1] eq 'I'!
-      $self->log( 'adcdev', '0RES:', "[d=$dst,p=$peerid,t=$toid]", join ':', @_ );
+      #$self->log( 'adcdev', '0RES:', "[d=$dst,p=$peerid,t=$toid]", join ':', @_ );
       my $params = $self->adc_parse_named(@_);
       #$self->log('adcdev', 'RES:',"[d=$dst,p=$peerid]",Dumper $params);
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
@@ -638,6 +640,7 @@ sub init {
       $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
         #%$self, $self->clear(),
         'parent' => $self, 'Proto' => 'udp',
+        'auto_listen' => 1,
         #?    'want'     => \%{ $self->{'want'} },
         #?    'NickList' => \%{ $self->{'NickList'} },
         #?    'IpList'   => \%{ $self->{'IpList'} },
@@ -659,7 +662,6 @@ sub init {
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131
 #$SR [Predator]Wolf DC++\Btyan Adams - Please Forgive Me.mp314217310 18/20TTH:G7DXSTGPHTXSD2ZZFQEUBWI7PORILSKD4EENOII (81.9.63.68:4111)
         },
-        'auto_listen' => 1,
       );
       $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
       $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
