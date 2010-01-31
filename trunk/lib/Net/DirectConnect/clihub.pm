@@ -416,6 +416,7 @@ sub init {
     },
     'Search' => sub {
       my $self = shift if ref $_[0];
+    #  $self->log('devsearch', "mode=[$self->{'M'}]");
       $self->sendcmd( 'Search', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),
         join '?', @_ );
     },
@@ -442,7 +443,7 @@ sub init {
     'search_send' => sub {
       my $self = shift if ref $_[0];
       $self->sendcmd( 'Search',
-        ( ( $self->{'myip'} && $self->{'myport_udp'} ) ? "$self->{'myip'}:$self->{'myport_udp'}" : 'Hub:' . $self->{'Nick'} ),
+        ( ( $self->{'M'} ne 'P' and $self->{'myip'} and $self->{'myport_udp'} ) ? "$self->{'myip'}:$self->{'myport_udp'}" : 'Hub:' . $self->{'Nick'} ),
         join '?', @{ $_[0] || $self->{'search_last'} } );
     },
     'make_hub' => sub {
