@@ -22,7 +22,8 @@ sub                                        #init
   #$self =  Net::DirectConnect->new() unless ref $self;
 #print 'params' ,join ', ',@_;
   %$self = ( %$self, @_ );
-$self->{log} = sub {}   if $standalone;
+  $self->log( 'info','standalone, logs off'),
+  $self->{log} = sub {}   if $standalone;
   #$self->baseinit();
   #$self->log( 'dev', 'inited:', "SA[$standalone]",Dumper($self, @_));
   #$self->{'parse'} ||= {};
@@ -246,7 +247,7 @@ $self->{log} = sub {}   if $standalone;
       #$level
     };
     #else {
-    $self->log( "making filelist $self->{files} from", grep { -d } @_, @{ $self->{'share'} || [] }, );
+    $self->log('info', "making filelist $self->{files} from", grep { -d } @_, @{ $self->{'share'} || [] }, );
     $self->{db}->do('ANALYZE') unless $self->{no_sql};
     $scandir->($_) for ( grep { -d } @_, @{ $self->{'share'} || [] }, );
     undef $SIG{INT};
@@ -384,7 +385,7 @@ $0 ne 'share.pl' ?        psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm
 eval q{ #do
   use lib '../..';
   use Net::DirectConnect;
-  print "making\n";
+  #print "making\n";
   __PACKAGE__->new(@ARGV)->filelist_make(@ARGV),;
 } unless caller;
 1;

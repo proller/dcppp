@@ -26,9 +26,6 @@ make connection-listener
 
 examples/stat : finish adc
 
-send on can_send 
-
-
 lang:
 founded -> found
 sended -> sent
@@ -38,12 +35,5 @@ tigerhash: mmap, speed limit, win32 build, ttfile raw,
 filelist.pm: 
  standalone @ARGV -> config parse
 
-
-can_recv
- recv ..
-can_send 
- send ..
-every 1 
- work
-
+remove  psmisc and pssql
 

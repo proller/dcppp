@@ -42,7 +42,7 @@ printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #my $dc =
 Net::DirectConnect->new(
   #modules  => ['filelist'],
-  SUPAD        => { H => { PING => 1 } },
+  SUPAD => { H => { PING => 1 } },
   #botinfo      => 'devperlpinger',
   auto_GetINFO => 1,
   auto_connect => 1,
