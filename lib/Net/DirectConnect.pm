@@ -145,7 +145,7 @@ sub new {
     'myport'      => 412,                                                   #first try
     'myport_base' => 40000, 'myport_random' => 1000, 'myport_tries' => 5,
     #http://www.dcpp.net/wiki/index.php/%24MyINFO
-    'description' => 'just perl Net::DirectConnect bot',
+    'description' => 'perl '.__PACKAGE__.' bot',
     #====MOVE TO NMDC
     'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
@@ -554,7 +554,8 @@ sub func {
       }
     }
     $self->file_close();
-    delete $self->{$_} for qw(NickList IpList PortList peers);
+    delete $self->{$_} 
+    for qw(NickList IpList PortList peers);
     $self->log( 'info', "disconnected", __FILE__, __LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
   };
@@ -658,7 +659,7 @@ sub func {
     my ( $recv, $send, $exeption ) =
       IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $self->{'select_timeout'} );
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
-#schedule(5, sub {        $self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
+schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     for (@$exeption) { $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ); }
     for (@$recv) { $self->{sockets}{$_}->recv($_); }
     for (@$send) {
@@ -1005,7 +1006,7 @@ sub func {
     if ( $self->{'filehandle'} ) {
       close( $self->{'filehandle'} ), delete $self->{'filehandle'};
       my $dest = ( $self->{'fileas'} || $self->{'filename'} );
-      if ( length $self->{'partial_ext'} ) {
+      if ( length $self->{'partial_ext'} and $self->{'filebytes'} == $self->{'filetotal'}) {
         $self->log( 'dcerr', 'cant move finished file' )
           if !rename $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'}, $dest;
       }
@@ -1134,14 +1135,14 @@ $self->{'file_send_offset'} += $sended;
       #$!    );
       #$self->log( 'err', 'send error', $@ ) if $@;
     }
-    schedule 1,      sub
+    schedule 1,      our $__stat_ ||=sub
      {
       our ( $lastmark, $lasttime );
       $self->log(
         'dev',                       "sended bytes",                    #length $self->{'file_send_buf'},
         "sended=[$sended] of buf [", length $self->{'file_send_buf'},
         "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now", $self->{'file_send_offset'}, 'of',
-        $self->{'file_send_total'}, 's=', ( $self->{'file_send_offset'} - $lastmark ) / ( time - $lasttime or 1 ),,
+        $self->{'file_send_total'}, 's=', ( $self->{'file_send_offset'} - $lastmark ) / ( time - $lasttime or 1 ),
         "status=[$self->{'status'}]",
       );
       $lastmark = $self->{'file_send_offset'};
@@ -1167,7 +1168,7 @@ $self->{'file_send_offset'} += $sended;
         "r:",
         length $self->{'file_send_buf'},
         " by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}",
-        caller 2
+     #   caller 2
       );
       $self->file_close();
       #$self->{'status'} = 'connected';
