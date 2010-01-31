@@ -24,8 +24,9 @@ sub name_to_ip($) {
 
 sub init {
   my $self = shift;
-  %$self = (
-    %$self,
+#  %$self = (
+#    %$self,
+local %_ =  (
     'Nick' => 'NetDCBot',
     'port' => 411,
     'host' => 'localhost',
@@ -53,16 +54,20 @@ sub init {
     #ADC
     #'connect_protocol' => 'ADC/0.10',
     #'message_type'     => 'H',
-    @_, 'incomingclass' => 'Net::DirectConnect::clicli',
+    #@_, 
+    'incomingclass' => 'Net::DirectConnect::clicli',
     #'periodic'      =>
   );
+    $self->{$_} ||= $_{$_} for keys %_;
+
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
-  $self->{$_} ||= $self->{'parent'}{$_} for qw(share_full share_tth want handler NickList IpList PortList );
-  $self->{'NickList'} ||= {};
-  $self->{'IpList'}   ||= {};
-  $self->{'PortList'} ||= {};
+  #share_full share_tth want
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( handler NickList IpList PortList );
+#  $self->{'NickList'} ||= {};
+#  $self->{'IpList'}   ||= {};
+#  $self->{'PortList'} ||= {};
   #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
   #You are already in the hub.
   $self->{'parse'} ||= {
@@ -465,7 +470,7 @@ sub init {
   };
   #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
   if ( $self->{'M'} eq 'A' or !$self->{'M'} ) {
-    $self->log( 'dev', "making listeners: tcp" );
+    $self->log( 'dev', "making listeners: tcp, class=", $self->{'incomingclass'} );
     $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
       #%$self, $self->clear(),
       #'want'        => \%{ $self->{'want'} },

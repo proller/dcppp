@@ -33,9 +33,10 @@ use psmisc;
 use Net::DirectConnect;
 #$config{disconnect_after}     //= 10;
 #$config{disconnect_after_inf} //= 0;
-$config{'hit_to_ask'}         //= 1;
-$config{'queue_recalc_every'} //= 10;
-$config{'get_every'}          //= 10;
+$config{'auto_get_best'} //= 1;
+$config{'hit_to_ask'}         //= 5;
+$config{'queue_recalc_every'} //= 100;
+$config{'get_every'}          //= 60;
 $config{'get_dir'}          //= './downloads/';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 psmisc::config();    #psmisc::lib_init();
@@ -52,6 +53,7 @@ Net::DirectConnect->new(
   #SUPAD        => { H => { PING => 1 } },
   #botinfo      => 'devperlpinger',
   #auto_GetINFO => 1,
+  Nick => 'perlgetterrr',
   auto_connect => 1,
   dev_http     => 1,
   'log'        => sub (@) {
@@ -88,7 +90,25 @@ Net::DirectConnect->new(
       #$db->insert_hash( 'results', \%s );
       ++$work{'filename'}{ $s{tth} }{ $s{filename} };
       $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
-      ++$work{'stat'}{'SR'};
+#      ++$work{'stat'}{'SR'};
+    },
+    'URES' => sub { #_parse_aft
+#      my $dc = shift;
+#      my %s = %{ $_[1] || return };
+      printlog 'UREsparsed:', Dumper \@_;
+      #$db->insert_hash( 'results', \%s );
+#      ++$work{'filename'}{ $s{tth} }{ $s{filename} };
+#      $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
+#      ++$work{'stat'}{'RES'};
+    },
+    'RES' => sub { #_parse_aft
+#      my $dc = shift;
+#      my %s = %{ $_[1] || return };
+      printlog 'SRparsed:', Dumper \@_;
+      #$db->insert_hash( 'results', \%s );
+#      ++$work{'filename'}{ $s{tth} }{ $s{filename} };
+#      $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
+#      ++$work{'stat'}{'RES'};
     },
   },
   auto_work => sub {
@@ -104,7 +124,7 @@ Net::DirectConnect->new(
         ];
         printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
       }
-    );
+    ),
     psmisc::schedule(
       [ 3600, 3600 ],
       our $hashes_cleaner_ ||= sub {
@@ -113,7 +133,7 @@ Net::DirectConnect->new(
         delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
         printlog 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} };
       }
-    );
+    ),
     psmisc::schedule(
       $dc->{'search_every'},
       our $queueask_ ||= sub {
@@ -135,7 +155,7 @@ Net::DirectConnect->new(
         }
       },
       $dc
-    );
+    ),
     psmisc::schedule(
       $config{'get_every'},
       sub {
@@ -145,7 +165,7 @@ Net::DirectConnect->new(
           my ($filename) =
             sort { $work{'filename'}{$tth}{$a} <=> $work{'filename'}{$tth}{$b} } keys %{ $work{'filename'}{$tth} };
           printlog(
-            'selected tth', $tth, 'names=', keys %{ $work{'filename'}{$tth} },
+            'selected tth', $tth, $work{'ask'}{$tth}, 'names=', keys %{ $work{'filename'}{$tth} },
             'filename=', $filename, $work{'filename'}{$tth}{$filename},
             'nicks=', keys %{ $work{'tthfrom'}{$tth} }
           );
@@ -157,7 +177,7 @@ Net::DirectConnect->new(
           last;
         }
       }
-    );
+    ) if $config{'auto_get_best'};
     psmisc::schedule(
       [ 10, 99999999 ],
       #our $dump_sub__ ||=
