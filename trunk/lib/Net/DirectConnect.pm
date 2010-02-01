@@ -111,14 +111,14 @@ sub module_load {
   #%self
   #my $module = __PACKAGE__ . '::' . $self->{'module'};
   my $module = __PACKAGE__ . '::' . $_;
-  $self->log( 'dev', 'try load module', $_, $module, );
+#  $self->log( 'dev', 'try load module', $_, $module, );
   #eval "use $module; $module\->init(\$self);";
   eval "use $module;";
   $self->log( 'err', 'cant load', $module, $@ ) if $@;
-  $self->log( 'dev', 'try new', $module );
+#  $self->log( 'dev', 'try new', $module );
   eval "$module\::new(\$self, \@_);";    #, \@param
   $self->log( 'err', 'cant new', $module, $@ ) if $@;
-  $self->log( 'dev', 'try init', $module );
+#  $self->log( 'dev', 'try init', $module );
   eval "$module\::init(\$self, \@_);";    #, \@param
   $self->log( 'err', 'cant init', $module, $@ ) if $@;
   $self->log( 'dev', 'loaded  module', $_, $module, );
@@ -128,9 +128,9 @@ sub module_load {
 sub new {
   my $class = shift;
   #psmisc::printlog( 'dev', __PACKAGE__, 'new', $class, 'refc=',ref $class, 'next=', $_[0], 'refnext=', ref$_[0], scalar @_ );
-  print 'NEW', __PACKAGE__, "\n";
-#  my @param = @_;
-  my $self  = {};
+#  print 'NEW', __PACKAGE__, "\n";
+  #my @param = @_;
+  my $self = {};
   if ( ref $class eq __PACKAGE__ ) { $self = $class; }
   else {
     #$self  =   {
@@ -145,7 +145,7 @@ sub new {
     'myport'      => 412,                                                   #first try
     'myport_base' => 40000, 'myport_random' => 1000, 'myport_tries' => 5,
     #http://www.dcpp.net/wiki/index.php/%24MyINFO
-    'description' => 'perl '.__PACKAGE__.' bot',
+    'description' => 'perl ' . __PACKAGE__ . ' bot',
     #====MOVE TO NMDC
     'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
@@ -171,7 +171,7 @@ sub new {
     'no_print' => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
     'log'      => sub (@) {
       my $self = ref $_[0] ? shift() : {};
-      #if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
+      if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
       print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
     },
     #'auto_recv'          => 1,
@@ -204,7 +204,7 @@ sub new {
     #};
   );
   $self->{$_} ||= $_{$_} for keys %_;
-  local %_ =   @_;
+  local %_ = @_;
   $self->{$_} = $_{$_} for keys %_;
   #psmisc::printlog('dev', 'init0', Dumper $self);
 
@@ -223,27 +223,25 @@ next unless length $_;
 =cut
 
   #psmisc::printlog('dev', 'func');
-  $self->func(); #@param
+  $self->func();    #@param
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
   #psmisc::printlog('dev', 'init');
-  $self->init(); #@param
+  $self->init();    #@param
   #}
   $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
   $self->{activity} = time;
-#  $self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
-#(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
-$self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
-  $self->{$_} ||= $self->{'parent'}{$_}||={} for qw(want share_full share_tth sockets);
-  $self->log( 'dev', "my number=$self->{'number'} total=$global{'total'} count=$global{'count'}" );
-
-
-   if ( $class eq __PACKAGE__ ) {
-#    local %_ = (@param);
+  #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
+  #(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
+  $self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(want share_full share_tth sockets handler);
+#  $self->log( 'dev', "my number=$self->{'number'} total=$global{'total'} count=$global{'count'}" );
+  if ( $class eq __PACKAGE__ ) {
+    #local %_ = (@param);
     #for keys
-#    $self->{$_} = $_{$_} for keys %_;
-    $self->log( 'init00', $self, "h=$self->{'host'}", 'p=', $self->{'protocol'}, 'm=',$self->{'module'} );
+    #$self->{$_} = $_{$_} for keys %_;
+#    $self->log( 'init00', $self, "h=$self->{'host'}", 'p=', $self->{'protocol'}, 'm=', $self->{'module'} );
     if ( !$self->{'module'} and !$self->{'protocol'} and $self->{'host'} ) {
       #$self->log( 'proto0 ', $1);
       my $p = lc $1 if $self->{'host'} =~ m{^(.+?)://};
@@ -251,7 +249,7 @@ $self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
       $self->{'protocol'} = $p;
       $self->{'protocol'} = 'nmdc' if !$self->{'protocol'} or $self->{'protocol'} eq 'dchub';
       #$self->{'protocol'}
-      $self->log( 'proto ', $self->{'protocol'} );
+#      $self->log( 'proto ', $self->{'protocol'} );
     }
     $self->{'module'} ||= $self->{'protocol'};
     if ( $self->{'module'} eq 'nmdc' ) { $self->{'module'} = $self->{'hub'} ? 'hubcli' : 'clihub'; }
@@ -259,22 +257,17 @@ $self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
     #if ( $self->{'module'} ) {
   }
   #psmisc::printlog('dev', 'modules load', ( $self->{'module'}, @{ $self->{'modules'} || [] } ));
-  my @modules; #= ($self->{'module'});
+  my @modules;    #= ($self->{'module'});
   for (qw(module modules)) {
-  push @modules , @{$self->{$_}} if ref $self->{$_} eq 'ARRAY';
-  push @modules , keys %{$self->{$_}} if ref $self->{$_} eq 'HASH';
-  push @modules , split /[;,\s]/, $self->{$_} unless ref $self->{$_};
+    push @modules, @{ $self->{$_} }      if ref $self->{$_} eq 'ARRAY';
+    push @modules, keys %{ $self->{$_} } if ref $self->{$_} eq 'HASH';
+    push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
-  $self->module_load( $_,) for (@modules); 
+  $self->module_load( $_, ) for (@modules);
   #@param
   #}
- 
-  
-  
-  
   $self->protocol_init();
-  
-  $self->log(  'dev', $self, 'new inited', "MT:$self->{'message_type'}", 'autolisten=', $self->{'auto_listen'});
+#  $self->log( 'dev', $self, 'new inited', "MT:$self->{'message_type'}", 'autolisten=', $self->{'auto_listen'} );
   if ( $self->{'auto_listen'} ) { $self->listen(); }
   elsif ( $self->{'auto_connect'} ) {
     #$self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
@@ -296,7 +289,7 @@ $self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
 
 sub log(@) {
   my $self = shift;
-#print 'LOG0 ', $self->{'log'}, '; ';
+  #print 'LOG0 ', $self->{'log'}, '; ';
   return $self->{'log'}->( $self, @_ ) if ref $self->{'log'} eq 'CODE';
   print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
 }
@@ -426,14 +419,12 @@ sub func {
     my $self = shift;
 #$self->{'select'} ||= $self->{parent}{'select'}         $self->{'select_send'} ||= $self->{parent}{'select_send'}    if $self->{parent};
 #$self->{'sockets'} ||= $self->{parent}{'sockets'} if $self->{parent};
-$self->{$_} ||= $self->{parent}{$_}  ||= IO::Select->new()    for qw (select select_send);
-#    $self->{'select'}      ||= IO::Select->new();    #$self->{'socket'}
-#    $self->{'select_send'} ||= IO::Select->new();    #$self->{'socket'}
+    $self->{$_} ||= $self->{parent}{$_} ||= IO::Select->new() for qw (select select_send);
+    #$self->{'select'}      ||= IO::Select->new();    #$self->{'socket'}
+    #$self->{'select_send'} ||= IO::Select->new();    #$self->{'socket'}
     $self->{'select'}->add( $self->{'socket'} );
     $self->{'sockets'}{ $self->{'socket'} } = $self;
-
-$self->log('dev', 'current select',    $self->{'select'}->handles);
-
+#    $self->log( 'dev', 'current select', $self->{'select'}->handles );
   };
   $self->{'connect'} ||= sub {
     my $self = shift;
@@ -490,8 +481,8 @@ $self->log('dev', 'current select',    $self->{'select'}->handles);
         and !$is_local_ip->( $self->{'hostip'} );
     $self->{'M'} ||= 'A';
     #$self->log( 'info', "mode set [$self->{'M'}] ");
-    $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}) [me=$self->{'myip'}] ok ", );
-    $self->log( $self, 'connected1 inited', "MT:$self->{'message_type'}", ' with' );
+    $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}):$self->{'port'} [me=$self->{'myip'}] ok ", );
+#    $self->log( $self, 'connected1 inited', "MT:$self->{'message_type'}", ' with' );
     $self->cmd('connect_aft');
     #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
     #$self->log( 'dev', "connect_aft after", );
@@ -535,9 +526,9 @@ $self->log('dev', 'current select',    $self->{'select'}->handles);
   };
   $self->{'listen'} ||= sub {
     my $self = shift;
-
-$self->log( 'err',  'listen off', "[$self->{'Listen'}] [$self->{'M'}] [$self->{'allow_passive_ConnectToMe'}]"),
-    return if !$self->{'Listen'} or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} ); #RENAME
+    $self->log( 'err', 'listen off', "[$self->{'Listen'}] [$self->{'M'}] [$self->{'allow_passive_ConnectToMe'}]" ), return
+      if !$self->{'Listen'}
+        or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
     $self->myport_generate();
     for ( 1 .. $self->{'myport_tries'} ) {
       $self->{'socket'} ||= new IO::Socket::INET(
@@ -546,13 +537,10 @@ $self->log( 'err',  'listen off', "[$self->{'Listen'}] [$self->{'M'}] [$self->{'
         ( $self->{'Proto'} ne 'udp' ? ( 'Listen' => $self->{'Listen'} ) : () ),
         ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ), %{ $self->{'sockopts'} or {} },
       );
-      $self->select_add(), 
-      
-      last if $self->{'socket'};
+      $self->select_add(), last if $self->{'socket'};
       $self->log( 'err', "listen $self->{'myport'} socket error: $@" ), $self->myport_generate(1), unless $self->{'socket'};
     }
-$self->log( 'err',  'cant listen'),
-    return unless $self->{'socket'};
+    $self->log( 'err', 'cant listen' ), return unless $self->{'socket'};
     $self->log( 'dcdbg', "listening $self->{'myport'} $self->{'Proto'}" );
     $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
     $self->{'status'} = 'listening';
@@ -582,8 +570,7 @@ $self->log( 'err',  'cant listen'),
       }
     }
     $self->file_close();
-    delete $self->{$_} 
-    for qw(NickList IpList PortList peers);
+    delete $self->{$_} for qw(NickList IpList PortList peers);
     $self->log( 'info', "disconnected", __FILE__, __LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
   };
@@ -608,8 +595,7 @@ $self->log( 'err',  'cant listen'),
     {
       if ( $_ = $self->{'socket'}->accept() ) {
         #$self->log( 'traceDEV', 'DC::recv', 'accept', $self->{'incomingclass'} );
-        $self->log( 'err', 'cant accept, no incomingclass'), return,
-unless $self->{'incomingclass'};
+        $self->log( 'err', 'cant accept, no incomingclass' ), return, unless $self->{'incomingclass'};
         $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
           #%$self,                                clear(),
           'socket' => $_, 'LocalPort' => $self->{'myport'}, 'incoming' => 1,
@@ -643,7 +629,7 @@ unless $self->{'incomingclass'};
         $self->log( 'dcdbg', "recv err, reconnect. d=[$self->{'databuf'}] i=[$self->{'incoming'}]" );
         #$self->log( 'dcdbg',  "recv err, reconnect," );
         $self->reconnect();
-      } elsif ($self->{'status'} ne 'listening' )  {
+      } elsif ( $self->{'status'} ne 'listening' ) {
         $self->log( 'dcdbg', "recv err, destroy," );
         $self->destroy();
       }
@@ -686,8 +672,7 @@ unless $self->{'incomingclass'};
     #my ( $readed, $reads );
     #$self->{'databuf'} = '';
     #$self->log( 'traceD', 'DC::select', 'bef' );
-    my ( $recv, $send, $exeption ) =
-      IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $sleep);
+    my ( $recv, $send, $exeption ) = IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $sleep );
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     for (@$exeption) { $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ); }
@@ -891,7 +876,7 @@ unless $self->{'incomingclass'};
     return if $self->connect_check();
     #$self->{'log'}->( $self,'sendcmd0', @_);
     local @_ = @_, $_[0] .= splice @_, 1, 1 if $self->{'adc'} and length $_[0] == 1;
-    $self->log( $self, 'dcdmp', 'sendcmd1', $self->{number}, @_ );
+    $self->log(  'dcdmp', 'sendcmd1', $self->{number}, @_ );
     push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'} if @_;
     ++$self->{count_sendcmd}{ $_[0] };
     if ( ( $self->{'sendbuf'} and @_ ) or !@{ $self->{'send_buffer'} || [] } ) { }
@@ -901,7 +886,7 @@ unless $self->{'incomingclass'};
       #local $_;
       #eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };
       #$self->log( 'err', 'send error', $@ ) if $@;
-      $self->log( $self, 'dcdmp', "we send [" . join( '', @{ $self->{'send_buffer'} } ) . "]:", $! );
+      $self->log( 'dcdmp', "we send [" . join( '', @{ $self->{'send_buffer'} } ) . "]:", $! );
       $self->{'send_buffer'} = [];
       $self->{'sendbuf'}     = 0;
     }
@@ -927,12 +912,10 @@ unless $self->{'incomingclass'};
     $cid = $nick if $nick =~ /^[A-Z0-9]{39}$/;
     $cid ||= $self->{peers}{$sid}{INF}{ID};
     $sid ||= $self->{peers}{$cid}{SID};
-
     local $_ = $as || $file;
-$self->log( 'warn', "file [$_] already exists size = ", -s $_ )if -e $_;
+    $self->log( 'warn', "file [$_] already exists size = ", -s $_ ) if -e $_;
     #todo by nick
     $self->wait_clients();
-
     $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $nick }{$file} = $as || $file || '';
     $self->log( 'dbg', "getting [$nick] $file as $as" );
     if ( $self->{'adc'} ) {
@@ -961,9 +944,8 @@ $self->log( 'warn', "file [$_] already exists size = ", -s $_ )if -e $_;
       $self->{'filecurrent'} = $self->{'filename'};
       next unless defined $self->{'filename'};
       #delete  $self->{'want'}{ $peerid }{$_} ;   $self->{'filecurrent'}
-
       #$self->{'file_recv_from'}
-#$self->{'fileas'}      
+      #$self->{'fileas'}
       last;
     }
     #$self->log( 'dcdev', 'file_select2', $self->{'filename'}, $self->{'fileas'} );
@@ -984,29 +966,17 @@ $self->log( 'warn', "file [$_] already exists size = ", -s $_ )if -e $_;
       }
       $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
     }
-$self->{'file_recv_partial'} =
-    $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'};
-
-$self->{'filebytes'} =
-    $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
-    
-
-
-    $self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'}, 'from', $self->{'file_recv_from'} );
+    $self->{'file_recv_partial'} =
+      $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'};
+    $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
+    $self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'},
+      'from', $self->{'file_recv_from'} );
   };
   $self->{'file_open'} ||= sub {
     my $self = shift;
     #$self->{'fileas'}=$_[0] if !length $self->{'fileas'} or length $_[0];
     #$self->{'filetotal'} = $_[1]if ! $self->{'filetotal'} or $_[1];
-    my $oparam =
-      $self->{'fileas'} eq '-'
-      ? '>-'
-      : '>' . 
-      
-      
-      $self->{'file_recv_partial'}
-      
-      ;
+    my $oparam = $self->{'fileas'} eq '-' ? '>-' : '>>' . $self->{'file_recv_partial'};
     $self->handler( 'file_open_bef', $oparam );
     $self->log(
       'dbg',             "file_open pre", $oparam, 'want bytes', $self->{'filetotal'}, 'as=',
@@ -1037,9 +1007,7 @@ $self->{'filebytes'} =
         ),
         $self->disconnect(), $self->{'status'} = 'destroy', $self->{'file_start_time'} = 0, $self->{'filename'} = '',
         $self->{'fileas'} = '', delete $self->{'want'}{ $self->{'peerid'} }{ $self->{'filecurrent'} },
-        $self->{'filecurrent'} = '',
-        $self->{'file_recv_partial'} = '',
-        $self->{'file_recv_from'} = undef,
+        $self->{'filecurrent'} = '', $self->{'file_recv_partial'} = '', $self->{'file_recv_from'} = undef,
         if $self->{'filebytes'} >= $self->{'filetotal'};
     }
   };
@@ -1058,10 +1026,8 @@ $self->{'filebytes'} =
     if ( $self->{'filehandle'} ) {
       close( $self->{'filehandle'} ), delete $self->{'filehandle'};
       my $dest = ( $self->{'fileas'} || $self->{'filename'} );
-      if ( length $self->{'partial_ext'} and $self->{'filebytes'} == $self->{'filetotal'}) {
-        $self->log( 'dcerr', 'cant move finished file' )
-          if !rename 
-          $self->{'file_recv_partial'} , $dest;
+      if ( length $self->{'partial_ext'} and $self->{'filebytes'} == $self->{'filetotal'} ) {
+        $self->log( 'dcerr', 'cant move finished file' ) if !rename $self->{'file_recv_partial'}, $dest;
       }
       ( $self->{parent} || $self )->handler( 'file_recieved', $dest );
     }
@@ -1133,9 +1099,9 @@ $self->{'filebytes'} =
       #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
       $self->{'file_send_offset'} += $sended =
         Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
-      #);
-      #$self->log( 'dev', 'ssendfile0', "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sended=$sended" );
-      #$self->{'file_send_offset'} += $sended;
+ #);
+ #$self->log( 'dev', 'ssendfile0', "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sended=$sended" );
+ #$self->{'file_send_offset'} += $sended;
     }
 
 =sux	    
@@ -1188,8 +1154,7 @@ $self->{'file_send_offset'} += $sended;
       #$!    );
       #$self->log( 'err', 'send error', $@ ) if $@;
     }
-    schedule 1,      our $__stat_ ||=sub
-     {
+    schedule 1, our $__stat_ ||= sub {
       our ( $lastmark, $lasttime );
       $self->log(
         'dev',                       "sended bytes",                    #length $self->{'file_send_buf'},
@@ -1217,11 +1182,9 @@ $self->{'file_send_offset'} += $sended;
       )
     {
       $self->{'log'}->(
-        'dev', 'file completed',
-        "r:",
-        length $self->{'file_send_buf'},
+        'dev', 'file completed', "r:", length $self->{'file_send_buf'},
         " by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}",
-     #   caller 2
+        #caller 2
       );
       $self->file_close();
       #$self->{'status'} = 'connected';
@@ -1462,6 +1425,7 @@ $self->{'file_send_offset'} += $sended;
   local %_ = (
     'search' => sub {
       my $self = shift if ref $_[0];
+      $self->log( 'search', @_ );
       return $self->cmd( 'search_tth', @_ ) if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
       return $self->cmd( 'search_string', @_ ) if length $_[0];
     },

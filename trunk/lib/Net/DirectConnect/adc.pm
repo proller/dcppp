@@ -88,7 +88,7 @@ return $self;
 sub init {
   my $self = shift;
   #shift if $_[0] eq __PACKAGE__;
-  print "adcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
+  #print "adcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
   #$self->SUPER::new();
   #%$self = (
   #%$self,
@@ -102,9 +102,9 @@ sub init {
     #'auto_wait'        => 1,
     'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
-    'connect_protocol' => 'ADC/0.10', 'message_type' => 'H', 
+    'connect_protocol' => 'ADC/0.10', 'message_type' => 'H',
     #@_,
-     'incomingclass' => __PACKAGE__,    #'Net::DirectConnect::adc',
+    'incomingclass' => __PACKAGE__,                        #'Net::DirectConnect::adc',
     no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
   );
   $self->{$_} ||= $_{$_} for keys %_;
@@ -396,7 +396,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       #CSND file files.xml.bz2 0 6117
-      $self->{'filetotal'} = $_[3];
+      $self->{'filetotal'} = $_[2] + $_[3];
       return $self->file_open();
     },
     #CGET file TTH/YDIXOH7A3W233WTOQUET3JUGMHNBYNFZ4UBXGNY 637534208 6291456
@@ -440,6 +440,7 @@ sub init {
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
+      $self->log( 'search_tth', @_ );
       if ( $self->{'adc'} ) { $self->search_buffer( { TO => $self->make_token(), TR => $_[0], } ); }    #toauto
       else {
         #$self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] );
@@ -639,8 +640,7 @@ sub init {
       $self->log( 'dev', "making listeners: udp" );
       $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
         #%$self, $self->clear(),
-        'parent' => $self, 'Proto' => 'udp',
-        'auto_listen' => 1,
+        'parent' => $self, 'Proto' => 'udp', 'auto_listen' => 1,
         #?    'want'     => \%{ $self->{'want'} },
         #?    'NickList' => \%{ $self->{'NickList'} },
         #?    'IpList'   => \%{ $self->{'IpList'} },

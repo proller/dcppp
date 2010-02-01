@@ -20,28 +20,28 @@ sub                                        #init
   shift if $_[0] eq __PACKAGE__;
   #my $self =  shift () ;
   #$self =  Net::DirectConnect->new() unless ref $self;
-#print 'params' ,join ', ',@_;
+  #print 'params' ,join ', ',@_;
   %$self = ( %$self, @_ );
-  $self->log( 'info','standalone, logs off'),
-  $self->{log} = sub {}   if $standalone;
+  $self->log( 'info', 'standalone, logs off' ), $self->{log} = sub { }
+    if $standalone;
   #$self->baseinit();
   #$self->log( 'dev', 'inited:', "SA[$standalone]",Dumper($self, @_));
   #$self->{'parse'} ||= {};
   #$self->{'cmd'}   ||= {};
   #print join ' ', ( 'loading', __FILE__, __PACKAGE__, ref $self, 'caller=', caller );
-#  $self->log( 'dev', 'loading', __FILE__, __PACKAGE__, ref $self );
+  #$self->log( 'dev', 'loading', __FILE__, __PACKAGE__, ref $self );
   my ($shareloaded);
-  $self->{no_sql}            //= 0;
-  $self->{files}             //= 'files.xml';
-#  $self->{share_full}        //= {};
-#  $self->{share_tth}         //= {};
-  $self->{chrarset_fs}       //= 'cp1251' if $^O ~~ 'MSWin32';
-  $self->{chrarset_fs}       //= 'koi8r' if $^O ~~ 'freebsd';
-  $self->{tth_cheat}         //= 1_000_000;                      #try find file with same name-size-date
-  $self->{tth_cheat_no_date} //= 0;                              #--//-- only name-size
-  $self->{file_min}          //= 0;                              #skip files  smaller
-  $self->{filelist_scan}     //= 3600;                           #every seconds, 0 to disable
-  $self->{filelist_reload}   //= 300;                            #check and load filelist if new, every seconds
+  $self->{no_sql} //= 0;
+  $self->{files}  //= 'files.xml';
+  #$self->{share_full}        //= {};
+  #$self->{share_tth}         //= {};
+  $self->{chrarset_fs} //= 'cp1251' if $^O ~~ 'MSWin32';
+  $self->{chrarset_fs} //= 'koi8r'  if $^O ~~ 'freebsd';
+  $self->{tth_cheat}         //= 1_000_000;         #try find file with same name-size-date
+  $self->{tth_cheat_no_date} //= 0;                 #--//-- only name-size
+  $self->{file_min}          //= 0;                 #skip files  smaller
+  $self->{filelist_scan}     //= 3600;              #every seconds, 0 to disable
+  $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
   $self->{file_send_by}      //= 1024 * 1024 * 1;
 ##$config{share_root} //= '';
   tr{\\}{/} for @{ $self->{'share'} || [] };
@@ -82,7 +82,7 @@ sub                                        #init
     my $printinfo = sub () {
       $self->log( 'sharesize', psmisc::human( 'size', $sharesize ), $sharefiles, scalar keys %{ $self->{share_full} } );
     };
-    $SIG{INT} = sub { ++$stopscan; ++$interrupted; $self->log('warn',  "INT rec, stopscan") };
+    $SIG{INT} = sub { ++$stopscan; ++$interrupted; $self->log( 'warn', "INT rec, stopscan" ) };
     $SIG{INFO} = sub { $printinfo->(); };
     psmisc::file_rewrite $self->{files}, qq{<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <FileListing Version="1" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
@@ -114,17 +114,16 @@ sub                                        #init
     $scandir = sub (@) {
       for my $dir (@_) {
         $self->log( 'scandir', $dir, 'charset', $self->{chrarset_fs} );
-#$self->log( 'warn', 'stopscan', $stopscan),
+        #$self->log( 'warn', 'stopscan', $stopscan),
         last if $stopscan;
         $dir =~ tr{\\}{/};
         $dir =~ s{/+$}{};
-        opendir( my $dh, $dir ) or ($self->log( 'err', "can't opendir $dir: $!\n" ), next);
-#$self->log( 'dev','sd', __LINE__,$dh);
-
+        opendir( my $dh, $dir ) or ( $self->log( 'err', "can't opendir $dir: $!\n" ), next );
+        #$self->log( 'dev','sd', __LINE__,$dh);
         #@dots =
         ( my $dirname = $dir );
         $dirname = Encode::encode 'utf8', Encode::decode $self->{chrarset_fs}, $dirname if $self->{chrarset_fs};
-#$self->log( 'dev','sd', __LINE__,$dh);
+        #$self->log( 'dev','sd', __LINE__,$dh);
         unless ($level) {
           for ( split '/', $dirname ) {
             psmisc::file_append( $self->{files}, "\t" x $level, qq{<Directory Name="$_">\n} ), ++$level, if length $_;
@@ -137,20 +136,13 @@ sub                                        #init
           psmisc::file_append( $self->{files}, "\t" x $level, qq{<Directory Name="$dirname">\n} ), ++$level, ++$levelreal,
             if length $dirname;
         }
-#$self->log( 'dev','sd', __LINE__,$dh);
-#        Net::DirectConnect::
-        psmisc::schedule
-        (
-         [ 10, 10 ], 
-         our $my_every_10sec_sub__ ||= 
-         sub {
-         $printinfo->() 
-         }
-          );
-#$self->log( 'readdir', );
+        #$self->log( 'dev','sd', __LINE__,$dh);
+        #Net::DirectConnect::
+        psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { $printinfo->() } );
+        #$self->log( 'readdir', );
         for my $file ( readdir($dh) ) {
-#          $self->log( 'scanfile', $file, );
-#$self->log( 'warn', 'stopscan', $stopscan),
+          #$self->log( 'scanfile', $file, );
+          #$self->log( 'warn', 'stopscan', $stopscan),
           last if $stopscan;
           next if $file =~ /^\.\.?$/;
           #$file = Encode::encode( 'utf8', Encode::decode( $self->{chrarset_fs}, $file ) ) if $self->{chrarset_fs};
@@ -247,7 +239,7 @@ sub                                        #init
       #$level
     };
     #else {
-    $self->log('info', "making filelist $self->{files} from", grep { -d } @_, @{ $self->{'share'} || [] }, );
+    $self->log( 'info', "making filelist $self->{files} from", grep { -d } @_, @{ $self->{'share'} || [] }, );
     $self->{db}->do('ANALYZE') unless $self->{no_sql};
     $scandir->($_) for ( grep { -d } @_, @{ $self->{'share'} || [] }, );
     undef $SIG{INT};
@@ -354,9 +346,10 @@ sub                                        #init
       our $sharescan_sub__ ||= sub {
         $self->log( 'filelist actual', -M $self->{files}, ( time - $^T + 86400 * -M $self->{files} ), $self->{filelist_scan} );
         return if -e $self->{files} and $self->{filelist_scan} > time - $^T + 86400 * -M $self->{files};
-#        $self->log( 'starter==', $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
-$0 ne 'share.pl' ?        psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} } :
-        psmisc::startme( 'filelist', grep { -d } @ARGV );
+        #$self->log( 'starter==', $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
+        $0 ne 'share.pl'
+          ? psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} }
+          : psmisc::startme( 'filelist', grep { -d } @ARGV );
       }
     ) if $self->{filelist_scan};
     #Net::DirectConnect::

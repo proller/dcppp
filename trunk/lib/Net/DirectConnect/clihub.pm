@@ -24,9 +24,9 @@ sub name_to_ip($) {
 
 sub init {
   my $self = shift;
-#  %$self = (
-#    %$self,
-local %_ =  (
+  #%$self = (
+  #%$self,
+  local %_ = (
     'Nick' => 'NetDCBot',
     'port' => 411,
     'host' => 'localhost',
@@ -54,20 +54,19 @@ local %_ =  (
     #ADC
     #'connect_protocol' => 'ADC/0.10',
     #'message_type'     => 'H',
-    #@_, 
+    #@_,
     'incomingclass' => 'Net::DirectConnect::clicli',
     #'periodic'      =>
   );
-    $self->{$_} ||= $_{$_} for keys %_;
-
+  $self->{$_} ||= $_{$_} for keys %_;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( handler NickList IpList PortList );
-#  $self->{'NickList'} ||= {};
-#  $self->{'IpList'}   ||= {};
-#  $self->{'PortList'} ||= {};
+  #$self->{'NickList'} ||= {};
+  #$self->{'IpList'}   ||= {};
+  #$self->{'PortList'} ||= {};
   #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
   #You are already in the hub.
   $self->{'parse'} ||= {
@@ -421,7 +420,7 @@ local %_ =  (
     },
     'Search' => sub {
       my $self = shift if ref $_[0];
-    #  $self->log('devsearch', "mode=[$self->{'M'}]");
+      #$self->log('devsearch', "mode=[$self->{'M'}]");
       $self->sendcmd( 'Search', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),
         join '?', @_ );
     },
@@ -447,9 +446,15 @@ local %_ =  (
     },
     'search_send' => sub {
       my $self = shift if ref $_[0];
-      $self->sendcmd( 'Search',
-        ( ( $self->{'M'} ne 'P' and $self->{'myip'} and $self->{'myport_udp'} ) ? "$self->{'myip'}:$self->{'myport_udp'}" : 'Hub:' . $self->{'Nick'} ),
-        join '?', @{ $_[0] || $self->{'search_last'} } );
+      $self->sendcmd(
+        'Search', (
+          ( $self->{'M'} ne 'P' and $self->{'myip'} and $self->{'myport_udp'} )
+          ? "$self->{'myip'}:$self->{'myport_udp'}"
+          : 'Hub:' . $self->{'Nick'}
+        ),
+        join '?',
+        @{ $_[0] || $self->{'search_last'} }
+      );
     },
     'make_hub' => sub {
       my $self = shift if ref $_[0];

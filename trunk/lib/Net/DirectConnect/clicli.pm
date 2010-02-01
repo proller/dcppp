@@ -12,8 +12,9 @@ use base 'Net::DirectConnect';
 sub init {
   my $self = shift;
   #$self->log($self, 'inited0',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
-  %$self = (         #too bad! rewrite
-    %$self,
+  #%$self = (         #too bad! rewrite
+  #%$self,
+  local %_ = (
     #http://www.dcpp.net/wiki/index.php/%24Supports
     'supports_avail' => [ qw(
         BZList
@@ -36,12 +37,13 @@ sub init {
     'TTHF'      => 1,
     #MiniSlots XmlBZList ADCGet TTHL TTHF
     #@_,
-     'direction' => 'Download',
+    'direction' => 'Download',
     #'Direction' => 'Upload', #rand here
-    'incomingclass' => __PACKAGE__,
+    'incomingclass'  => __PACKAGE__,
     'reconnects'     => 0,
     inactive_timeout => 60,
   );
+  $self->{$_} ||= $_{$_} for keys %_;
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
   #$self->log($self, 'inited1',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
@@ -50,7 +52,7 @@ sub init {
   #$self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
   #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
   #$self->{'share_full'} ||=$self->{'parent'}{'share_tth'};
-  #share_full share_tth want 
+  #share_full share_tth want
   $self->{$_} ||= $self->{'parent'}{$_} for qw( handler NickList IpList PortList
     Nick
   );
@@ -61,7 +63,7 @@ sub init {
   $self->{'parse'} = undef if $self->{'parse'} and !keys %{ $self->{'parse'} };
   $self->{'parse'} ||= {
     'Lock' => sub {
-                                                
+
       if ( $self->{'incoming'} ) {
         $self->{'sendbuf'} = 1;
         $self->cmd('MyNick');
@@ -83,7 +85,7 @@ sub init {
       #my ($lock)
       ( $self->{'key'} ) = $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
       #$_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
-      $self->cmd( 'Key', $self->{'key'}  ) if ( $self->{'incoming'} );
+      $self->cmd( 'Key', $self->{'key'} ) if ( $self->{'incoming'} );
     },
     'Direction' => sub {
       my $d = ( split /\s/, $_[0] )[0];
@@ -107,7 +109,8 @@ sub init {
       $self->cmd('file_select'), $self->log( "get:[filename:", $self->{'filename'}, '; fileas:', $self->{'fileas'}, "]" )
         if $self->{'direction'} eq 'Download';
       $self->{'get'} = $self->{'filename'} . '$' . ( $self->{'file_recv_from'} || 1 ),
-        $self->{'adcget'} = 'file ' . $self->{'filename'} . ' ' . ( $self->{'file_recv_from'} || 0 ) . ' '. ($self->{'file_recv_to'} || '-1'),
+        $self->{'adcget'} =
+        'file ' . $self->{'filename'} . ' ' . ( $self->{'file_recv_from'} || 0 ) . ' ' . ( $self->{'file_recv_to'} || '-1' ),
         $self->cmd( ( $self->{'NickList'}->{ $self->{'peernick'} }{'ADCGet'} ? 'ADCGET' : 'Get' ) )
         if $self->{'filename'};
     },
@@ -132,14 +135,15 @@ sub init {
       $self->cmd('Send');
     },
     'ADCSND' => sub {
-      $self->log( 'dev', "ADCSND::", @_ );
-      $_[0] =~ /(\d+?)$/is;
-      $self->{'filetotal'} = $1;
+      #$self->log( 'dev', "ADCSND::", @_ );
+      #$_[0] =~ /(\d+?)$/is;
+      local @_ = split /\s+/, $_[0];
+      $self->{'filetotal'} = $_[2] + $_[3];
       return $self->file_open();
     },
     'CSND' => sub {
       $_[0] =~ /^file\s+\S+\s+(\d+)\s(\d+)$/is;
-      $self->{'filetotal'} = $2;
+      $self->{'filetotal'} = $1 + $2;
       return $self->file_open();
     },
     'Supports' => sub {
