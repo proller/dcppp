@@ -33,11 +33,11 @@ use psmisc;
 use Net::DirectConnect;
 #$config{disconnect_after}     //= 10;
 #$config{disconnect_after_inf} //= 0;
-$config{'auto_get_best'} //= 1;
+$config{'auto_get_best'}      //= 1;
 $config{'hit_to_ask'}         //= 5;
 $config{'queue_recalc_every'} //= 100;
 $config{'get_every'}          //= 60;
-$config{'get_dir'}          //= './downloads/';
+$config{'get_dir'}            //= './downloads/';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 psmisc::config();    #psmisc::lib_init();
 printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit if !$ARGV[0] and !$config{dc}{host} and !$config{dc}{hosts};
@@ -48,12 +48,11 @@ mkdir $config{'get_dir'};
 #my $dc =
 my $hub = $config{dc}{host} || shift @ARGV;
 Net::DirectConnect->new(
-  'host' => $hub,
   #modules  => ['filelist'],
   #SUPAD        => { H => { PING => 1 } },
   #botinfo      => 'devperlpinger',
   #auto_GetINFO => 1,
-  Nick => 'perlgetterrr',
+  Nick         => 'perlgetterrr',
   auto_connect => 1,
   dev_http     => 1,
   'log'        => sub (@) {
@@ -71,13 +70,12 @@ Net::DirectConnect->new(
     ),
     'Search_parse_aft' => sub {
       my $dc = shift;
-      printlog 'sch', Dumper @_ if $dc->{adc};
+      #printlog 'sch', Dumper @_ if $dc->{adc};
       my $who    = shift if $dc->{adc};
       my $search = shift if $dc->{nmdc};
       my $s = $_[0] || {};
       $s = pop if $dc->{adc};
       return if $dc->{nmdc} and $s->{'nick'} eq $dc->{'Nick'};
-      $dc->{__work} ||= \%work;    #for dumper
       #my $q = $s->{'tth'} || $s->{'string'} || $s->{'TR'} || $s->{'AN'} || return;
       my $q = $s->{'tth'} || $s->{'TR'} || return;
       ++$work{'ask'}{$q};
@@ -90,102 +88,99 @@ Net::DirectConnect->new(
       #$db->insert_hash( 'results', \%s );
       ++$work{'filename'}{ $s{tth} }{ $s{filename} };
       $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
-#      ++$work{'stat'}{'SR'};
+      #++$work{'stat'}{'SR'};
     },
-    'URES' => sub { #_parse_aft
-#      my $dc = shift;
-#      my %s = %{ $_[1] || return };
-      printlog 'UREsparsed:', Dumper \@_;
+    'RES' => sub {    #_parse_aft
+      my $dc = shift;
+      printlog 'RESparsed:', Dumper( \@_ );
+      my ( $dst, $peercid ) = @{ $_[0] };
+      my $s = pop || return;    #%{ $_[1] || return };
       #$db->insert_hash( 'results', \%s );
-#      ++$work{'filename'}{ $s{tth} }{ $s{filename} };
-#      $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
-#      ++$work{'stat'}{'RES'};
-    },
-    'RES' => sub { #_parse_aft
-#      my $dc = shift;
-#      my %s = %{ $_[1] || return };
-      printlog 'SRparsed:', Dumper \@_;
-      #$db->insert_hash( 'results', \%s );
-#      ++$work{'filename'}{ $s{tth} }{ $s{filename} };
-#      $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
-#      ++$work{'stat'}{'RES'};
+      my ($file) = $s->{FN} =~ m{([^\\/]+)$};
+      ++$work{'filename'}{ $s->{TR} }{$file};
+      $work{'tthfrom'}{ $s->{TR} }{$peercid} = $s;
+      #++$work{'stat'}{'RES'};
     },
   },
   auto_work => sub {
     my $dc = shift;
-    psmisc::schedule(
-      $config{'queue_recalc_every'},
-      our $queuerecalc_ ||= sub {
-        my $time = int time;
-        $work{'toask'} = [ (
-            sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
-            grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
-          )
-        ];
-        printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
-      }
-    ),
-    psmisc::schedule(
-      [ 3600, 3600 ],
-      our $hashes_cleaner_ ||= sub {
-        my $min = scalar keys %{ $work{'hubs'} || {} };
-        printlog 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} };
-        delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
-        printlog 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} };
-      }
-    ),
-    psmisc::schedule(
-      $dc->{'search_every'},
-      our $queueask_ ||= sub {
-        my ($dc) = @_;
-        my $q;
-        while ( $q = shift @{ $work{'toask'} } or return ) {
-          last if ( !exists $work{'asked'}{$q} );
+    $dc->{'handler'}{'SCH_parse_aft'} ||= $dc->{'handler'}{'Search_parse_aft'};
+    if ( $config{'auto_get_best'} ) {
+      psmisc::schedule(
+        $config{'queue_recalc_every'},
+        our $queuerecalc_ ||= sub {
+          my $time = int time;
+          $work{'toask'} = [ (
+              sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
+              grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
+            )
+          ];
+          printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+        }
+      );
+      psmisc::schedule(
+        [ 3600, 3600 ],
+        our $hashes_cleaner_ ||= sub {
+          my $min = scalar keys %{ $work{'hubs'} || {} };
+          printlog 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} };
+          delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
+          printlog 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} };
+        }
+      );
+      psmisc::schedule(
+        $dc->{'search_every'},
+        our $queueask_ ||= sub {
+          my ($dc) = @_;
+          my $q;
+          while ( $q = shift @{ $work{'toask'} } or return ) {
+            last if ( !exists $work{'asked'}{$q} );
 #$work{'ask_db'}{$q} = $work{'asked'}{$q} = $r->{'time'}, next                  if $r and $r->{'time'};    # + $config{'ask_retry'} > time;
 #$work{'ask_db'}{$q} = 0;
 #last;
+          }
+          return unless length $q;
+          if ( !$dc->{'search_todo'} ) {
+            $work{'asked'}{$q} = int time;
+            printlog( 'info', "search", $q, 'on', $dc->{'host'} );
+            $dc->search($q);
+          } else {
+            unshift @{ $work{'toask'} }, $q;
+          }
+        },
+        $dc
+      );
+      psmisc::schedule(
+        $config{'get_every'},
+        our $get_every_sub__ ||= sub {
+          printlog( 'selecting file from', keys %{ $work{'filename'} } );
+          for
+            my $tth ( sort { keys %{ $work{'filename'}{$a} } <=> keys %{ $work{'filename'}{$b} } } keys %{ $work{'filename'} } )
+          {
+            #++$work{'filename'}{$s{tth}}{$s{filename}};
+            my ($filename) =
+              sort { $work{'filename'}{$tth}{$a} <=> $work{'filename'}{$tth}{$b} } keys %{ $work{'filename'}{$tth} };
+            printlog(
+              'selected tth', $tth, $work{'ask'}{$tth},
+              'names=', keys %{ $work{'filename'}{$tth} },
+              'filename=', $filename, $work{'filename'}{$tth}{$filename},
+              'nicks=', keys %{ $work{'tthfrom'}{$tth} }
+            );
+            my ($from) = grep { $_->{slotsopen} } values %{ $work{'tthfrom'}{$tth} };
+            printlog( 'selected from', Dumper $from);
+            $dc->get( $from->{nick}, 'TTH/' . $tth, $config{'get_dir'} . $filename );
+            delete $work{'filename'}{$tth};
+            #$work{'tthfrom'}{$s{tth}}
+            last;
+          }
         }
-        return unless length $q;
-        if ( !$dc->{'search_todo'} ) {
-          $work{'asked'}{$q} = int time;
-          printlog( 'info', "search", $q, 'on', $dc->{'host'} );
-          $dc->search($q);
-        } else {
-          unshift @{ $work{'toask'} }, $q;
-        }
-      },
-      $dc
-    ),
-    psmisc::schedule(
-      $config{'get_every'},
-      sub {
-        for my $tth ( sort { keys %{ $work{'filename'}{$a} } <=> keys %{ $work{'filename'}{$b} } } keys %{ $work{'filename'} } )
-        {
-          #++$work{'filename'}{$s{tth}}{$s{filename}};
-          my ($filename) =
-            sort { $work{'filename'}{$tth}{$a} <=> $work{'filename'}{$tth}{$b} } keys %{ $work{'filename'}{$tth} };
-          printlog(
-            'selected tth', $tth, $work{'ask'}{$tth}, 'names=', keys %{ $work{'filename'}{$tth} },
-            'filename=', $filename, $work{'filename'}{$tth}{$filename},
-            'nicks=', keys %{ $work{'tthfrom'}{$tth} }
-          );
-          my ($from) = grep { $_->{slotsopen} } values %{ $work{'tthfrom'}{$tth} };
-          printlog( 'selected from', Dumper $from);
-          $dc->get( $from->{nick}, 'TTH/' . $tth, $config{'get_dir'}.$filename );
-          delete $work{'filename'}{$tth};
-          #$work{'tthfrom'}{$s{tth}}
-          last;
-        }
-      }
-    ) if $config{'auto_get_best'};
-    psmisc::schedule(
-      [ 10, 99999999 ],
-      #our $dump_sub__ ||=
-      sub { $dc->search($_) for @ARGV or 'UU6VHFYNDX7HEKCOIXNPQEVS3HRRQHHPPGN2AVY'; }
-    );
+      );
+    }
+    #printlog 'getev' ,$config{'get_every'};
+    psmisc::schedule( [ 10, 99999999 ], our $se_sub__ ||= sub { $dc->search($_) for @ARGV; } );
     psmisc::schedule(
       [ 20, 100 ],
       our $dump_sub__ ||= sub {
+        $dc->{__work} ||= \%work;    #for dumper
         printlog "Writing dump";
         psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
       }
@@ -194,4 +189,5 @@ Net::DirectConnect->new(
   %{ $config{dc} || {} },
   #( $_ ? ( 'host' => $_ ) : () ),
   #( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
-);    # for ( @ARGV, @{ $config{dc}{hosts} || [] } );
+  'host' => $hub,
+);                                   # for ( @ARGV, @{ $config{dc}{hosts} || [] } );
