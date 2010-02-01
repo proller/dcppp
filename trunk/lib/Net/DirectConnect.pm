@@ -234,7 +234,7 @@ next unless length $_;
   #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
   #(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
   $self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(want share_full share_tth sockets handler);
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(want share_full share_tth sockets handler clients); 
 #  $self->log( 'dev', "my number=$self->{'number'} total=$global{'total'} count=$global{'count'}" );
   if ( $class eq __PACKAGE__ ) {
     #local %_ = (@param);
@@ -360,7 +360,8 @@ sub AUTOLOAD {
 
 sub DESTROY {
   my $self = shift;
-  print "DESTROYing $self->{number}\n";
+#  print "DESTROYing $self->{number}\n";
+  $self->log('dev', 'DESTROYing');
   $self->destroy();
   --$global{'count'};
 }
@@ -421,6 +422,7 @@ sub func {
     $self->{$_} ||= $self->{parent}{$_} ||= IO::Select->new() for qw (select select_send);
     #$self->{'select'}      ||= IO::Select->new();    #$self->{'socket'}
     #$self->{'select_send'} ||= IO::Select->new();    #$self->{'socket'}
+    return unless $self->{'socket'};
     $self->{'select'}->add( $self->{'socket'} );
     $self->{'sockets'}{ $self->{'socket'} } = $self;
 #    $self->log( 'dev', 'current select', $self->{'select'}->handles );
@@ -548,7 +550,7 @@ sub func {
   $self->{'disconnect'} ||= sub {
     my $self = shift;
     $self->{'status'} = 'disconnected';
-    #$self->log( 'dev', "[$self->{'number'}] disconnected status=",$self->{'status'});
+    $self->log( 'dev', "[$self->{'number'}] disconnected status=",$self->{'status'}, $self->{'destroying'});
     if ( $self->{'socket'} ) {
       #$self->log( 'dev', "[$self->{'number'}] Closing socket",
       $self->{'select'}->remove( $self->{'socket'} )      if $self->{'select'};
@@ -562,15 +564,17 @@ sub func {
     if ( $self->{'disconnect_recursive'} ) {
       for my $client ( grep { $self->{'clients'}{$_} and !$self->{'clients'}{$_}{'auto_listen'} } keys %{ $self->{'clients'} } )
       {
-        #$self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
+#      next if $self->{'clients'}{$client} eq $self;
+        $self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
         $self->{'clients'}{$client}->destroy() if ref $self->{'clients'}{$client} and $self->{'clients'}{$client}{'destroy'};
         $self->{$_} += $self->{'clients'}{$client}{$_} for qw(bytes_recv bytes_send);
+#        %{$self->{'clients'}{$client}} = ();
         delete( $self->{'clients'}{$client} );
       }
     }
     $self->file_close();
     delete $self->{$_} for qw(NickList IpList PortList peers);
-    $self->log( 'info', "disconnected", __FILE__, __LINE__ );
+ #   $self->log( 'info', "disconnected", __FILE__, __LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
   };
   $self->{'destroy'} ||= sub {
@@ -771,19 +775,22 @@ sub func {
     #$self->periodic();
     schedule(
       1,
-      #our $___work_every ||=
+      our $___work_every ||=
       sub {
         $self->connect_check();
         $_->() for grep { ref $_ eq 'CODE' } values %{ $self->{periodic} || {} };
         #print ("P:$_\n"),
         #$self->{periodic}{$_}->() for grep {ref$self->{periodic}{$_} eq 'CODE'}keys %{$self->{periodic} || {}};
+#$self->log('dev', 'work for', keys %{$self->{'clients'}});
         for ( keys %{ $self->{'clients'} } ) {
           $self->log(
             'dev',
 "del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] last active=",
             time - $self->{'clients'}{$_}{activity}
             ),
-            $self->{'clients'}{$_}->destroy(), delete( $self->{'clients'}{$_} ),
+            $self->{'clients'}{$_}->destroy(), 
+#            %{$self->{'clients'}{$_}} = (),
+            delete( $self->{'clients'}{$_} ),
             $self->log( 'dev', "now clients",
             map { "[$self->{'clients'}{$_}{'number'}]$_" } sort keys %{ $self->{'clients'} } ), next
             if !$self->{'clients'}{$_}{'socket'}
@@ -793,8 +800,15 @@ sub func {
                 and $self->{'clients'}{$_}{inactive_timeout}
                 and time - $self->{'clients'}{$_}{activity} > $self->{'clients'}{$_}{inactive_timeout} );
           #$ret += $self->{'clients'}{$_}->recv();
+#$self->log('dev', 'work', $self->{'clients'}{$_}{'number'}, $self->{'clients'}{$_}, $self);
+
+#next if $self->{'clients'}{$_} eq $self;
+#            $self->{'clients'}{$_}->work();
+        
         }
         $self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
+
+#$self->log('dev', 'work exit',      );
       }
     );
     return $self->wait_sleep(@params) if @params;
@@ -1322,7 +1336,7 @@ $self->{'file_send_offset'} += $sended;
       "protocol stat",
       Dumper( { map { $_ => $self->{$_} } grep { $self->{$_} } qw(count_sendcmd count_parse) } ),
     );
-    ( ref $self->{'clients'}{$_}{info} ? $self->{'clients'}{$_}->info() : () ) for sort keys %{ $self->{'clients'} };
+#    ( ref $self->{'clients'}{$_}{info} ? $self->{'clients'}{$_}->info() : () ) for sort keys %{ $self->{'clients'} };
   };
   $self->{'active'} ||= sub {
     my $self = shift;
