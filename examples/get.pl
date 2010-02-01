@@ -33,26 +33,28 @@ use psmisc;
 use Net::DirectConnect;
 #$config{disconnect_after}     //= 10;
 #$config{disconnect_after_inf} //= 0;
+psmisc::config();    #psmisc::lib_init();
 $config{'auto_get_best'}      //= 1;
 $config{'hit_to_ask'}         //= 5;
 $config{'queue_recalc_every'} //= 100;
 $config{'get_every'}          //= 60;
 $config{'get_dir'}            //= './downloads/';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
-psmisc::config();    #psmisc::lib_init();
 printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit if !$ARGV[0] and !$config{dc}{host} and !$config{dc}{hosts};
 printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
+#printlog 'dev', 'mkdir', $config{'get_dir'}, 
 mkdir $config{'get_dir'};
+#exit;
 #use Net::DirectConnect::adc;
 #my $dc =
 my $hub = $config{dc}{host} || shift @ARGV;
 Net::DirectConnect->new(
-  #modules  => ['filelist'],
+  modules  => ['filelist'],
   #SUPAD        => { H => { PING => 1 } },
   #botinfo      => 'devperlpinger',
   #auto_GetINFO => 1,
-  Nick         => 'perlgetterrr',
+#  Nick         => 'perlgetterrr',
   auto_connect => 1,
   dev_http     => 1,
   'log'        => sub (@) {
@@ -105,7 +107,6 @@ Net::DirectConnect->new(
   auto_work => sub {
     my $dc = shift;
     $dc->{'handler'}{'SCH_parse_aft'} ||= $dc->{'handler'}{'Search_parse_aft'};
-    if ( $config{'auto_get_best'} ) {
       psmisc::schedule(
         $config{'queue_recalc_every'},
         our $queuerecalc_ ||= sub {
@@ -126,28 +127,6 @@ Net::DirectConnect->new(
           delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
           printlog 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} };
         }
-      );
-      psmisc::schedule(
-        $dc->{'search_every'},
-        our $queueask_ ||= sub {
-          my ($dc) = @_;
-          my $q;
-          while ( $q = shift @{ $work{'toask'} } or return ) {
-            last if ( !exists $work{'asked'}{$q} );
-#$work{'ask_db'}{$q} = $work{'asked'}{$q} = $r->{'time'}, next                  if $r and $r->{'time'};    # + $config{'ask_retry'} > time;
-#$work{'ask_db'}{$q} = 0;
-#last;
-          }
-          return unless length $q;
-          if ( !$dc->{'search_todo'} ) {
-            $work{'asked'}{$q} = int time;
-            printlog( 'info', "search", $q, 'on', $dc->{'host'} );
-            $dc->search($q);
-          } else {
-            unshift @{ $work{'toask'} }, $q;
-          }
-        },
-        $dc
       );
       psmisc::schedule(
         $config{'get_every'},
@@ -173,6 +152,30 @@ Net::DirectConnect->new(
             last;
           }
         }
+      );
+
+    if ( $config{'auto_get_best'} ) {
+      psmisc::schedule(
+        $dc->{'search_every'},
+        our $queueask_ ||= sub {
+          my ($dc) = @_;
+          my $q;
+          while ( $q = shift @{ $work{'toask'} } or return ) {
+            last if ( !exists $work{'asked'}{$q} );
+#$work{'ask_db'}{$q} = $work{'asked'}{$q} = $r->{'time'}, next                  if $r and $r->{'time'};    # + $config{'ask_retry'} > time;
+#$work{'ask_db'}{$q} = 0;
+#last;
+          }
+          return unless length $q;
+          if ( !$dc->{'search_todo'} ) {
+            $work{'asked'}{$q} = int time;
+            printlog( 'info', "search", $q, 'on', $dc->{'host'} );
+            $dc->search($q);
+          } else {
+            unshift @{ $work{'toask'} }, $q;
+          }
+        },
+        $dc
       );
     }
     #printlog 'getev' ,$config{'get_every'};
