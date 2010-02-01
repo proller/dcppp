@@ -100,6 +100,7 @@ sub init {
     #'Pass' => '',
     #'key'  => 'zzz',
     #'auto_wait'        => 1,
+    'reconnects'           => 5,
     'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
     'connect_protocol' => 'ADC/0.10', 'message_type' => 'H',

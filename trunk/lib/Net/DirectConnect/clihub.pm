@@ -49,6 +49,8 @@ sub init {
     'search_every_min' => 10,
     'auto_connect'     => 1,
     'auto_bug'         => 1,
+    'reconnects'           => 5,
+
     'NoGetINFO'        => 1,    #test
     'NoHello' => 1, 'UserIP2' => 1, 'TTHSearch' => 1, 'Version' => '1,0091', 'auto_GetNickList' => 1, 'follow_forcemove' => 1,
     #ADC
@@ -205,6 +207,7 @@ sub init {
 #'PortList'     => $self->{'PortList'},
 #'handler'      => $self->{'handler'},
 #'share_tth'      => $self->{'share_tth'},
+#    'reconnects'           => 0,
         'auto_connect' => 1,
       );
     },

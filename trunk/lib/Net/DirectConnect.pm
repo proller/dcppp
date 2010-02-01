@@ -192,7 +192,6 @@ sub new {
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
     'informative_hash'     => [qw(clients)],    #NickList IpList PortList
     'disconnect_recursive' => 1,
-    'reconnects'           => 5,
     'reconnect_sleep'      => 5,
     'partial_ext'          => '.partial',
     'file_send_by'         => 1024 * 1024,      #1024 * 64,
@@ -676,8 +675,12 @@ sub func {
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     for (@$exeption) { $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ); }
-    for (@$recv) { $self->{sockets}{$_}->recv($_); }
+    for (@$recv) { 
+      $self->log( 'err', 'no object for recv handle',$_,  ) , next , unless $self->{sockets}{$_};
+    
+    $self->{sockets}{$_}->recv($_); }
     for (@$send) {
+#      $self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
       #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number} );
       if ( $self->{sockets}{$_}{'filehandle_send'} ) { $self->{sockets}{$_}->file_send_part(); }
     }
