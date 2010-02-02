@@ -509,7 +509,12 @@ sub init {
       'parse' => {
         'SR'  => $self->{'parse'}{'SR'},
         'PSR' => sub {                     #U
-          #$self->log( 'dev', "UPSR", @_ );
+      my $self =  ref $_[0] ? shift() : $self;
+          $self->log( 'dev', "PSR", @_ ) if $self;
+        },
+        'UPSR' => sub {                     
+      my $self =  ref $_[0] ? shift() : $self;
+          $self->log( 'dev', "UPSR", @_ ) if $self;
         },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131

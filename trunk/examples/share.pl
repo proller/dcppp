@@ -62,15 +62,17 @@ $config{'log_pid'} //= 1;
 psmisc::config();    #psmisc::lib_init();
 printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0] and !$config{dc}{host};
 printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
-Net::DirectConnect::filelist->new( %{ $config{dc} || {} } )->filelist_make(@ARGV), exit if $ARGV[0] ~~ 'filelist' and !caller;
+my $log = sub (@) {
+    my $dc = ref $_[0] ? shift : {};
+    psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
+  };
+
+Net::DirectConnect::filelist->new(log=>$log, %{ $config{dc} || {} } )->filelist_make(@ARGV), exit if $ARGV[0] ~~ 'filelist' and !caller;
 #use Net::DirectConnect::adc;
 my $dc = Net::DirectConnect->new(
   modules  => ['filelist'],
   dev_http => 1,
-  'log'    => sub (@) {
-    my $dc = ref $_[0] ? shift : {};
-    psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
-  },
+  'log'    => $log,
   'handler' => {
     map {
       my $msg = $_;

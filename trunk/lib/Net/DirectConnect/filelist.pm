@@ -15,15 +15,27 @@ my ( $tq, $rq, $vq );
 sub                                        #init
   new {
   #my $self = ref $_[0] ? shift () : Net::DirectConnect->new(@_);
-  my $standalone = !ref $_[0];
+  my $standalone = (!ref $_[0]  and  (caller)[0] eq __PACKAGE__);
   my $self = ref $_[0] ? shift() : bless {}, $_[0];
   shift if $_[0] eq __PACKAGE__;
   #my $self =  shift () ;
   #$self =  Net::DirectConnect->new() unless ref $self;
   #print 'params' ,join ', ',@_;
-  %$self = ( %$self, @_ );
-  $self->log( 'info', 'standalone, logs off' ), $self->{log} = sub { }
-    if $standalone;
+#  %$self = ( %$self, @_ );
+  local %_ = @_;
+  $self->{$_} = $_{$_} for keys %_;
+
+#  $self->log( 'info', 'standalone, logs off', #(caller)[0] , 'P=', __PACKAGE__
+#  ), 
+  $self->{log} ||= 
+   sub (@) {
+    my $dc = ref $_[0] ? shift : $self || {};
+    psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
+  },;
+
+  
+#  sub { }
+#    if $standalone;
   #$self->baseinit();
   #$self->log( 'dev', 'inited:', "SA[$standalone]",Dumper($self, @_));
   #$self->{'parse'} ||= {};
@@ -113,7 +125,7 @@ sub                                        #init
     my $scandir;
     $scandir = sub (@) {
       for my $dir (@_) {
-        $self->log( 'scandir', $dir, 'charset', $self->{chrarset_fs} );
+        #$self->log( 'scandir', $dir, 'charset', $self->{chrarset_fs} );
         #$self->log( 'warn', 'stopscan', $stopscan),
         last if $stopscan;
         $dir =~ tr{\\}{/};
@@ -372,7 +384,7 @@ sub                                        #init
     },
     #psmisc::startme( 'filelist', grep { -d } @ARGV )  if  !-e $config{files} or !-e $config{files}.'.bz2';
     $self->filelist_load() unless $standalone;    # (caller)[0] ~~ __PACKAGE__;
-  $self->log('initok');
+#  $self->log('initok');
   return $self;
 }
 eval q{ #do

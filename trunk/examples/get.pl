@@ -70,7 +70,7 @@ Net::DirectConnect->new(
           },
         } qw(welcome chatline To)
     ),
-    'Search_parse_aft' => sub {
+    'Search' => sub { #_parse_aft
       my $dc = shift;
       #printlog 'sch', Dumper @_ if $dc->{adc};
       my $who    = shift if $dc->{adc};
@@ -83,15 +83,26 @@ Net::DirectConnect->new(
       ++$work{'ask'}{$q};
       ++$work{'stat'}{'Search'};
     },
-    'SR_parse_aft' => sub {
+    'SR' => sub { #_parse_aft
       my $dc = shift;
       my %s = %{ $_[1] || return };
-      #printlog 'SRparsed:', Dumper \%s;
+      printlog 'SRparsed:', Dumper \%s;
       #$db->insert_hash( 'results', \%s );
       ++$work{'filename'}{ $s{tth} }{ $s{filename} };
       $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
       #++$work{'stat'}{'SR'};
     },
+    'UPSR' => sub { #_parse_aft
+      my $dc = shift;
+#      my %s = %{ $_[1] || return };
+      printlog 'UPSRparsed:', $dc, ':', @_;#Dumper \%s;
+      #$db->insert_hash( 'results', \%s );
+#      ++$work{'filename'}{ $s{tth} }{ $s{filename} };
+#      $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
+      #++$work{'stat'}{'SR'};
+    },
+
+
     'RES' => sub {    #_parse_aft
       my $dc = shift;
       printlog 'RESparsed:', Dumper( \@_ );
@@ -103,10 +114,12 @@ Net::DirectConnect->new(
       $work{'tthfrom'}{ $s->{TR} }{$peercid} = $s;
       #++$work{'stat'}{'RES'};
     },
+
+
   },
   auto_work => sub {
     my $dc = shift;
-    $dc->{'handler'}{'SCH_parse_aft'} ||= $dc->{'handler'}{'Search_parse_aft'};
+    $dc->{'handler'}{'SCH'} ||= $dc->{'handler'}{'Search'}; #_parse_aft _parse_aft
       psmisc::schedule(
         $config{'queue_recalc_every'},
         our $queuerecalc_ ||= sub {
