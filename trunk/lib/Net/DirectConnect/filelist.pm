@@ -358,8 +358,8 @@ sub                                        #init
       our $sharescan_sub__ ||= sub {
         $self->log( 'filelist actual', -M $self->{files}, ( time - $^T + 86400 * -M $self->{files} ), $self->{filelist_scan} );
         return if -e $self->{files} and $self->{filelist_scan} > time - $^T + 86400 * -M $self->{files};
-        #$self->log( 'starter==', $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
-        $0 ne 'share.pl'
+#        $self->log( 'starter==','$0=',$0, $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
+        $0 !~ m{(.*\W)?share.pl$}
           ? psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} }
           : psmisc::startme( 'filelist', grep { -d } @ARGV );
       }
