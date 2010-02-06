@@ -56,7 +56,7 @@ use psmisc;
 #use pssql;
 use Net::DirectConnect;
 use Net::DirectConnect::filelist;
-psmisc::use_try 'Sys::Sendfile';
+#psmisc::use_try 'Sys::Sendfile';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 $config{'log_pid'} //= 1;
 psmisc::config();    #psmisc::lib_init();

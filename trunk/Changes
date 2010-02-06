@@ -1,5 +1,15 @@
 # $Id$ $URL$
 
+0.05:
+
+bug fixes 
+
+modules
+
+better moduled sharing
+
+
+
 0.04:
 
 initial sharing support see examples/share.pl

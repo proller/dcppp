@@ -40,6 +40,11 @@ remove  psmisc and pssql
 
 
 downloader:
- files
-  users
+ files 
+  users    
 
+
+add finished file to share hashes and db
+
+
+search results via sqlite
