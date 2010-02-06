@@ -191,7 +191,7 @@ sub new {
     'nonblocking' => 1,
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
     'informative_hash'     => [qw(clients)],    #NickList IpList PortList
-    'disconnect_recursive' => 1,
+#    'disconnect_recursive' => 1,
     'reconnect_sleep'      => 5,
     'partial_ext'          => '.partial',
     'file_send_by'         => 1024 * 1024,      #1024 * 64,
@@ -549,8 +549,9 @@ sub func {
   };
   $self->{'disconnect'} ||= sub {
     my $self = shift;
+#    $self->log('dev', 'in disconnect', $self->{'status'});
+    $self->log( 'dev', "[$self->{'number'}] status=",$self->{'status'}, $self->{'destroying'});
     $self->{'status'} = 'disconnected';
-    $self->log( 'dev', "[$self->{'number'}] disconnected status=",$self->{'status'}, $self->{'destroying'});
     if ( $self->{'socket'} ) {
       #$self->log( 'dev', "[$self->{'number'}] Closing socket",
       $self->{'select'}->remove( $self->{'socket'} )      if $self->{'select'};
@@ -561,6 +562,8 @@ sub func {
     }
 #delete $self->{'select'};
 #$self->log('dev',"delclient($self->{'clients'}{$_}->{'number'})[$_][$self->{'clients'}{$_}]\n") for grep {$_} keys %{ $self->{'clients'} };
+#    $self->log('dev', 'run file_close');
+    $self->file_close();
     if ( $self->{'disconnect_recursive'} ) {
       for my $client ( grep { $self->{'clients'}{$_} and !$self->{'clients'}{$_}{'auto_listen'} } keys %{ $self->{'clients'} } )
       {
@@ -572,13 +575,13 @@ sub func {
         delete( $self->{'clients'}{$client} );
       }
     }
-    $self->file_close();
     delete $self->{$_} for qw(NickList IpList PortList peers);
  #   $self->log( 'info', "disconnected", __FILE__, __LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
   };
   $self->{'destroy'} ||= sub {
     my $self = shift;
+#    $self->log('dev', 'in destroy');
     $self->disconnect() if ref $self and !$self->{'destroying'}++;
     #!?  delete $self->{$_} for keys %$self;
     $self->info();
@@ -1040,10 +1043,13 @@ sub func {
   };
   $self->{'file_close'} ||= sub {
     my $self = shift;
+#    $self->log( 'dcerr', 'file_close', 1);
     if ( $self->{'filehandle'} ) {
+#    $self->log( 'dcerr', 'file_close',2);
       close( $self->{'filehandle'} ), delete $self->{'filehandle'};
       my $dest = ( $self->{'fileas'} || $self->{'filename'} );
       if ( length $self->{'partial_ext'} and $self->{'filebytes'} == $self->{'filetotal'} ) {
+#    $self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
         $self->log( 'dcerr', 'cant move finished file' ) if !rename $self->{'file_recv_partial'}, $dest;
       }
       ( $self->{parent} || $self )->handler( 'file_recieved', $dest );
