@@ -565,7 +565,12 @@ sub func {
 #    $self->log('dev', 'run file_close');
     $self->file_close();
     if ( $self->{'disconnect_recursive'} ) {
-      for my $client ( grep { $self->{'clients'}{$_} and !$self->{'clients'}{$_}{'auto_listen'} } keys %{ $self->{'clients'} } )
+      for my $client ( grep { 
+      #$self->{'clients'}{$_} and 
+      !$self->{'clients'}{$_}{'auto_listen'} } 
+      #keys %{ $self->{'clients'} } 
+      $self->clients_my()
+      )
       {
 #      next if $self->{'clients'}{$client} eq $self;
         $self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_}),
@@ -730,7 +735,7 @@ sub func {
       if ( $self->{'filebytes'} and $self->{'filetotal'} and $self->{'filebytes'} < $self->{'filetotal'} - 1 );
     local @_;
     $self->log( 'dcdev', 'not finished clients:', @_ ), return 0
-      if @_ = grep { !$self->{'clients'}{$_}->finished() } keys %{ $self->{'clients'} };
+      if @_ = grep { !$self->{'clients'}{$_}->finished() } $self->clients_my() ;#keys %{ $self->{'clients'} };
     return 1;
   };
   $self->{'wait_connect'} ||= sub {
@@ -755,19 +760,21 @@ sub func {
       'info',
       'finished, but clients still active:',
       map { "[$self->{'clients'}{$_}{'number'}]$_;st=$self->{'clients'}{$_}{'status'}" } @_
-      ) if @_ = keys %{ $self->{'clients'} };
+      ) if @_ = $self->clients_my(); #keys %{ $self->{'clients'} };
   };
   $self->{'wait_clients'} ||= sub {
     my $self = shift;
     for ( 0 .. $self->{'wait_clients_tries'} ) {
-      last if $self->{'clients_max'} > scalar keys %{ $self->{'clients'} };
+      last if $self->{'clients_max'} > scalar $self->clients_my(); #keys %{ $self->{'clients'} };
       $self->info() unless $_;
       $self->log( 'info',
             "wait clients "
-          . scalar( keys %{ $self->{'clients'} } )
+          . scalar( $self->clients_my() 
+#          keys %{ $self->{'clients'} } 
+          )
           . "/$self->{'clients_max'}  $_/$self->{'wait_clients_tries'}" );
-      $self->wait( undef, $self->{'wait_clients_by'} );
-#$self->work();
+#      $self->wait( undef, $self->{'wait_clients_by'} );
+$self->work();
     }
   };
   $self->{'wait_sleep'} ||= sub {
@@ -790,7 +797,10 @@ sub func {
         #print ("P:$_\n"),
         #$self->{periodic}{$_}->() for grep {ref$self->{periodic}{$_} eq 'CODE'}keys %{$self->{periodic} || {}};
 #$self->log('dev', 'work for', keys %{$self->{'clients'}});
-        for ( keys %{ $self->{'clients'} } ) {
+        for ( 
+        keys %{ $self->{'clients'} } 
+        #$self->clients_my()
+        ) {
           $self->log(
             'dev',
 "del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] last active=",
@@ -995,8 +1005,7 @@ sub func {
     $self->{'file_recv_partial'} =
       $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
-    $self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'},
-      'from', $self->{'file_recv_from'} );
+#    $self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'},      'from', $self->{'file_recv_from'} );
   };
   $self->{'file_open'} ||= sub {
     my $self = shift;
@@ -1484,6 +1493,16 @@ $self->{'file_send_offset'} += $sended;
       $self->{'nick_base'} ||= $self->{'Nick'};
       $self->{'Nick'} = $self->{'nick_base'} . int( rand( $self->{'nick_random'} || 100 ) );
     },
+
+
+    'clients_my' => sub {
+      my $self = shift if ref $_[0];
+  grep {$self->{'clients'}{$_} and $self->{'clients'}{$_}{parent} eq $self}  keys %{ $self->{'clients'} }
+},
+
+
+
+
   );
   $self->{$_} = $_{$_} for keys %_;
 }
