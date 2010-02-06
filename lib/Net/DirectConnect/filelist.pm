@@ -11,6 +11,8 @@ use lib '../../../examples/stat/pslib';    # REMOVE
 use lib 'stat/pslib';                      # REMOVE
 use psmisc;                                # REMOVE
 use pssql;                                 # REMOVE
+psmisc::use_try 'Sys::Sendfile';
+
 my ( $tq, $rq, $vq );
 sub                                        #init
   new {
