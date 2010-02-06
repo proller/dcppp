@@ -720,8 +720,8 @@ sub func {
     $wait_once ||= $self->{'wait_once'};
     local $_;
     my $ret;
-#    $ret += $self->recv_try($wait_once) while --$waits > 0 and !$ret;
-    $ret += $self->work($wait_once) while --$waits > 0 and !$ret;
+    $ret += $self->recv_try($wait_once) while --$waits > 0 and !$ret;
+#    $ret += $self->work($wait_once) while --$waits > 0 and !$ret;
     return $ret;
   };
   $self->{'finished'} ||= sub {
@@ -737,8 +737,8 @@ sub func {
     my $self = shift;
     for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
       last if $self->{'status'} eq 'connected';
-      #$self->wait(1);
-      $self->work(1);
+      $self->wait(1);
+#      $self->work(1);
     }
     return $self->{'status'};
   };
@@ -746,8 +746,8 @@ sub func {
     my $self = shift;
     for ( 0 .. $self->{'wait_finish_tries'} ) {
       last if $self->finished();
-#      $self->wait( undef, $self->{'wait_finish_by'} );
-      $self->work( undef, $self->{'wait_finish_by'} );
+      $self->wait( undef, $self->{'wait_finish_by'} );
+#      $self->work( undef, $self->{'wait_finish_by'} );
     }
     local @_;
     $self->info(),
@@ -766,16 +766,16 @@ sub func {
             "wait clients "
           . scalar( keys %{ $self->{'clients'} } )
           . "/$self->{'clients_max'}  $_/$self->{'wait_clients_tries'}" );
-#      $self->wait( undef, $self->{'wait_clients_by'} );
-$self->work();
+      $self->wait( undef, $self->{'wait_clients_by'} );
+#$self->work();
     }
   };
   $self->{'wait_sleep'} ||= sub {
     my $self      = shift;
     my $how       = shift || 1;
     my $starttime = time();
-#    $self->wait(@_) while $starttime + $how > time();
-    $self->work(@_) while $starttime + $how > time();
+    $self->wait(@_) while $starttime + $how > time();
+#    $self->work(@_) while $starttime + $how > time();
   };
   $self->{'work'} ||= sub {
     my $self   = shift;
