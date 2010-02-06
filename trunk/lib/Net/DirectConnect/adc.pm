@@ -121,6 +121,8 @@ sub init {
     $self->{'auto_connect'} = 0;
     $self->{'auto_listen'}  = 1;
     $self->{'status'}       = 'working';
+  $self->{'disconnect_recursive'} = 1;
+
   }
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);

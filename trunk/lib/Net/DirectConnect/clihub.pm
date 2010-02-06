@@ -59,6 +59,7 @@ sub init {
     #@_,
     'incomingclass' => 'Net::DirectConnect::clicli',
     #'periodic'      =>
+  'disconnect_recursive' => 1,
   );
   $self->{$_} ||= $_{$_} for keys %_;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
