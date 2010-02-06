@@ -550,7 +550,7 @@ sub func {
   $self->{'disconnect'} ||= sub {
     my $self = shift;
 #    $self->log('dev', 'in disconnect', $self->{'status'});
-    $self->log( 'dev', "[$self->{'number'}] status=",$self->{'status'}, $self->{'destroying'});
+#    $self->log( 'dev', "[$self->{'number'}] status=",$self->{'status'}, $self->{'destroying'});
     $self->{'status'} = 'disconnected';
     if ( $self->{'socket'} ) {
       #$self->log( 'dev', "[$self->{'number'}] Closing socket",

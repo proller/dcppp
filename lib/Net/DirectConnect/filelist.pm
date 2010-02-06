@@ -361,9 +361,11 @@ sub                                        #init
         $self->log( 'filelist actual', -M $self->{files}, ( time - $^T + 86400 * -M $self->{files} ), $self->{filelist_scan} );
         return if -e $self->{files} and $self->{filelist_scan} > time - $^T + 86400 * -M $self->{files};
 #        $self->log( 'starter==','$0=',$0, $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
-        $0 !~ m{(.*\W)?share.pl$}
-          ? psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} }
-          : psmisc::startme( 'filelist', grep { -d } @ARGV );
+#        $0 !~ m{(.*\W)?share.pl$}
+$self->{'filelist_builder'} ? 
+psmisc::start $self->{'filelist_builder'}, @{ $self->{'share'} } :
+           psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} };
+#          : psmisc::startme( 'filelist', grep { -d } @ARGV );
       }
     ) if $self->{filelist_scan};
     #Net::DirectConnect::
