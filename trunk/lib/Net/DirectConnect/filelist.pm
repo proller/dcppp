@@ -17,7 +17,8 @@ my ( $tq, $rq, $vq );
 sub                                        #init
   new {
   #my $self = ref $_[0] ? shift () : Net::DirectConnect->new(@_);
-  my $standalone = (!ref $_[0]  and  (caller)[0] eq __PACKAGE__);
+#  my $standalone = (!ref $_[0]  and  (caller)[0] eq __PACKAGE__);
+  my $standalone = !ref $_[0];
   my $self = ref $_[0] ? shift() : bless {}, $_[0];
   shift if $_[0] eq __PACKAGE__;
   #my $self =  shift () ;
