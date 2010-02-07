@@ -59,12 +59,14 @@ sub                                        #init
   $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
   $self->{file_send_by}      //= 1024 * 1024 * 1;
 ##$config{share_root} //= '';
+  $self->{'share'} = [$self->{'share'}] unless ref $self->{'share'};
   tr{\\}{/} for @{ $self->{'share'} || [] };
-  $self->{'sql'} //= {
+#  $self->{'sql'} //= {
+local %_  = (
     'driver' => 'sqlite',
     'dbname' => 'files.sqlite',
     #'auto_connect'        => 1,
-    'log' => sub { shift if ref $_[0]; $self->log(@_) },
+    'log' => sub { shift if ref $_[0]; $self->log(@_) if $self},
     #'cp_in'               => 'cp1251',
     'connect_tries' => 0, 'connect_chain_tries' => 0, 'error_tries' => 0, 'error_chain_tries' => 0,
     #insert_by => 1000,
@@ -80,7 +82,10 @@ sub                                        #init
         #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
       },
     }
-    },
+#    },
+),
+(  map {$self->{sql}{$_} //= $_{$_} } keys %_),
+
     $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, ), ( $tq, $rq, $vq ) = $self->{db}->quotes()
     unless $self->{no_sql};
   $self->{'cmd'}{filelist_make} //= sub {
@@ -133,7 +138,7 @@ sub                                        #init
         last if $stopscan;
         $dir =~ tr{\\}{/};
         $dir =~ s{/+$}{};
-        opendir( my $dh, $dir ) or ( $self->log( 'err', "can't opendir $dir: $!\n" ), next );
+        opendir( my $dh, $dir ) or ( $self->log( 'err', "can't opendir [$dir]: $!\n" ), next );
         #$self->log( 'dev','sd', __LINE__,$dh);
         #@dots =
         ( my $dirname = $dir );
@@ -147,7 +152,7 @@ sub                                        #init
           $dirname =~
             #W s/^\w://;
             #$dirname =~
-            s{.*/}{};
+            s{.*/}{};                                
           psmisc::file_append( $self->{files}, "\t" x $level, qq{<Directory Name="$dirname">\n} ), ++$level, ++$levelreal,
             if length $dirname;
         }
@@ -256,7 +261,7 @@ sub                                        #init
     #else {
 
     $self->log( 'info', "making filelist $self->{files} from", 
-#     @_, @{ $self->{'share'} || [] },#'EXISTS=', 
+     @_, @{ $self->{'share'} || [] },'EXISTS=', 
         grep { -d } @_, @{ $self->{'share'} || [] }, );
     $self->{db}->do('ANALYZE') unless $self->{no_sql};
 local %_;
