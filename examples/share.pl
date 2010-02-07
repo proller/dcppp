@@ -71,6 +71,8 @@ Net::DirectConnect::filelist->new(log=>$log, %{ $config{dc} || {} } )->filelist_
 #use Net::DirectConnect::adc;
 my $dc = Net::DirectConnect->new(
   modules  => ['filelist'],
+  'filelist_builder' => (join ' ', $^X, $0, 'filelist'),
+
   dev_http => 1,
   'log'    => $log,
   'handler' => {

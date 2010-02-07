@@ -51,6 +51,7 @@ mkdir $config{'get_dir'};
 my $hub = $config{dc}{host} || shift @ARGV;
 Net::DirectConnect->new(
   modules  => ['filelist'],
+  'filelist_builder' => (join ' ', $^X, 'share.pl', 'filelist'),
   #SUPAD        => { H => { PING => 1 } },
   #botinfo      => 'devperlpinger',
   #auto_GetINFO => 1,

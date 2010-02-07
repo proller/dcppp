@@ -20,6 +20,8 @@ libevent http://paste.org.ru/?nt15er
 
 inlib:
 
+connect-listen ip range
+
 collect search results [n]
 
 make connection-listener
@@ -34,6 +36,8 @@ tigerhash: mmap, speed limit, win32 build, ttfile raw,
 
 filelist.pm: 
  standalone @ARGV -> config parse
+ file mask
+
 
 remove  psmisc and pssql
 
