@@ -60,13 +60,14 @@ sub init {
     'incomingclass' => 'Net::DirectConnect::clicli',
     #'periodic'      =>
   'disconnect_recursive' => 1,
+
   );
   $self->{$_} ||= $_{$_} for keys %_;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( handler NickList IpList PortList );
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(  NickList IpList PortList ); #handler
   #$self->{'NickList'} ||= {};
   #$self->{'IpList'}   ||= {};
   #$self->{'PortList'} ||= {};
@@ -74,6 +75,7 @@ sub init {
   #You are already in the hub.
   $self->{'parse'} ||= {
     'chatline' => sub {
+      my $self = shift if ref $_[0];
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
       #$self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
       $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->cmd('nick_generate'),
@@ -108,6 +110,7 @@ sub init {
         if $self->{'NickList'}->{$nick}{'oper'} and $text eq 'Sorry Hub is busy now, no search, try later..';
     },
     'welcome' => sub {
+      my $self = shift if ref $_[0];
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
       if ( !keys %{ $self->{'NickList'} } or !exists $self->{'NickList'}->{$nick} or $self->{'NickList'}->{$nick}{'oper'} ) {
         if ( $text =~ /^Bad nickname: unallowed characters, use these (\S+)/ )
@@ -126,6 +129,7 @@ sub init {
       }
     },
     'Lock' => sub {
+      my $self = shift if ref $_[0];
       #$self->log( "lockparse", @_ );
       $self->{'sendbuf'} = 1;
       $self->cmd('Supports');
@@ -137,6 +141,7 @@ sub init {
       $self->cmd('ValidateNick');
     },
     'Hello' => sub {
+      my $self = shift if ref $_[0];
       #$self->log('info', "HELLO recieved, connected. me=[$self->{'Nick'}]", @_);
       return unless $_[0] eq $self->{'Nick'};
       $self->{'sendbuf'} = 1;
@@ -150,50 +155,62 @@ sub init {
       $self->cmd('make_hub');
     },
     'Supports' => sub {
+      my $self = shift if ref $_[0];
       $self->supports_parse( $_[0], $self );
     },
     'ValidateDenide' => sub {
+      my $self = shift if ref $_[0];
       $self->log( 'warn', "ValidateDenide", $self->{'Nick'}, @_ );
       $self->cmd('nick_generate');
       $self->cmd('ValidateNick');
     },
     'To' => sub {
+      my $self = shift if ref $_[0];
       $self->log( 'msg', "Private message to", @_ );
     },
     'MyINFO' => sub {
+      my $self = shift if ref $_[0];
       my ( $nick, $info ) = $_[0] =~ /\S+\s+(\S+)\s+(.*)/;
       $self->{'NickList'}->{$nick}{'Nick'} = $nick;
       $self->info_parse( $info, $self->{'NickList'}{$nick} );
       $self->{'NickList'}->{$nick}{'online'} = 1;
     },
     'UserIP' => sub {
+      my $self = shift if ref $_[0];
       /(\S+)\s+(\S+)/, $self->{'NickList'}{$1}{'ip'} = $2, $self->{'IpList'}{$2} = $self->{'NickList'}{$1},
         $self->{'IpList'}{$2}{'port'} = $self->{'PortList'}{$2}
         for grep $_, split /\$\$/, $_[0];
     },
     'HubName' => sub {
+      my $self = shift if ref $_[0];
       $self->{'HubName'} = $_[0];
     },
     'HubTopic' => sub {
+      my $self = shift if ref $_[0];
       $self->{'HubTopic'} = $_[0];
     },
     'NickList' => sub {
+      my $self = shift if ref $_[0];
       $self->{'NickList'}->{$_}{'online'} = 1 for grep $_, split /\$\$/, $_[0];
       $self->GetINFO() if $self->{auto_GetINFO};
     },
     'OpList' => sub {
+      my $self = shift if ref $_[0];
       $self->{'NickList'}->{$_}{'oper'} = 1 for grep $_, split /\$\$/, $_[0];
     },
     'ForceMove' => sub {
+      my $self = shift if ref $_[0];
       $self->log( 'warn', "ForceMove to $_[0]" );
       $self->disconnect();
       sleep(1);
       $self->connect(@_) if $self->{'follow_forcemove'} and @_;
     },
     'Quit' => sub {
+      my $self = shift if ref $_[0];
       $self->{'NickList'}->{ $_[0] }{'online'} = 0;
     },
     'ConnectToMe' => sub {
+      my $self = shift if ref $_[0];
       my ( $nick, $host, $port ) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
       $self->{'PortList'}->{$host} = $port;
       #$self->log('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
@@ -213,17 +230,22 @@ sub init {
       );
     },
     'RevConnectToMe' => sub {
+      my $self = shift if ref $_[0];
       my ( $to, $from ) = split /\s+/, $_[0];
       $self->cmd( 'ConnectToMe', $to ) if $from eq $self->{'Nick'};
     },
     'GetPass' => sub {
+      my $self = shift if ref $_[0];
       $self->cmd('MyPass');
     },
     'BadPass' => sub {
+      my $self = shift if ref $_[0];
     },
     'LogedIn' => sub {
+      my $self = shift if ref $_[0];
     },
     'Search' => sub {
+      my $self = shift if ref $_[0];
       my $search = $_[0];
       $self->cmd('make_hub');
       my %s = ( 'time' => int( time() ), 'hub' => $self->{'hub_name'}, );
@@ -305,6 +327,9 @@ sub init {
       return \%s;
     },
     'SR' => sub {
+      my $self = shift if ref $_[0];
+#          $self->log( 'dev', "SR", @_ , 'parent=>', $self->{parent}, 'h=', $self->{handler}, Dumper($self->{handler}), 'ph=', $self->{parent}{handler}, Dumper($self->{parent}{handler}), ) if $self;
+
       $self->cmd('make_hub');
       my %s = ( 'time' => int( time() ), 'hub' => $self->{'hub_name'}, );
       ( $s{'nick'}, $s{'str'} ) = split / /, $_[0], 2;
@@ -327,6 +352,7 @@ sub init {
       return \%s;
     },
     'UserCommand' => sub {
+      my $self = shift if ref $_[0];
     },
   };
 
@@ -411,6 +437,7 @@ sub init {
       $self->sendcmd( 'MyPass', $pass ) if $pass;
     },
     'Supports' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'Supports', $self->supports() || return );
     },
     'Quit' => sub {
@@ -510,12 +537,18 @@ sub init {
       'parse' => {
         'SR'  => $self->{'parse'}{'SR'},
         'PSR' => sub {                     #U
-      my $self =  ref $_[0] ? shift() : $self;
+      my $self = shift if ref $_[0];
+#      my $self =  ref $_[0] ? shift() : $self;
           $self->log( 'dev', "PSR", @_ ) if $self;
         },
         'UPSR' => sub {                     
-      my $self =  ref $_[0] ? shift() : $self;
-          $self->log( 'dev', "UPSR", @_ ) if $self;
+      my $self = shift if ref $_[0];
+#      my $self =  ref $_[0] ? shift() : $self;
+          $self->log( 'dev', "UPSR", 'udp' ) if $self;
+          for (split /\n+/, $_[0]) {
+return         $self->parser($_) if /^\$SR/;
+          }
+ #         $self->log( 'dev', "UPSR", @_ ) if $self;
         },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131

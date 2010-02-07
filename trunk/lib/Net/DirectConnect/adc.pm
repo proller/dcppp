@@ -107,6 +107,8 @@ sub init {
     #@_,
     'incomingclass' => __PACKAGE__,                        #'Net::DirectConnect::adc',
     no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
+  charset_protocol =>  'utf8',
+
   );
   $self->{$_} ||= $_{$_} for keys %_;
   #print 'adc init now=',Dumper $self;

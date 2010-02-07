@@ -86,8 +86,9 @@ Net::DirectConnect->new(
     },
     'SR' => sub { #_parse_aft
       my $dc = shift;
+ #           printlog 'SRh', @_;
       my %s = %{ $_[1] || return };
-      printlog 'SRparsed:', Dumper \%s;
+#      printlog 'SRparsed:', Dumper \%s;
       #$db->insert_hash( 'results', \%s );
       ++$work{'filename'}{ $s{tth} }{ $s{filename} };
       $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
@@ -96,7 +97,7 @@ Net::DirectConnect->new(
     'UPSR' => sub { #_parse_aft
       my $dc = shift;
 #      my %s = %{ $_[1] || return };
-      printlog 'UPSRparsed:', $dc, ':', @_;#Dumper \%s;
+#      printlog 'UPSRparsed:', $dc, ':', @_;#Dumper \%s;
       #$db->insert_hash( 'results', \%s );
 #      ++$work{'filename'}{ $s{tth} }{ $s{filename} };
 #      $work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
@@ -126,11 +127,11 @@ Net::DirectConnect->new(
         our $queuerecalc_ ||= sub {
           my $time = int time;
           $work{'toask'} = [ (
-              sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
+              sort { $work{'ask'}{$a} <=> $work{'ask'}{$b} }
               grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
             )
           ];
-          printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+          printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } , $work{'toask'}[0]);
         }
       );
       psmisc::schedule(
@@ -193,7 +194,11 @@ Net::DirectConnect->new(
       );
     }
     #printlog 'getev' ,$config{'get_every'};
-    psmisc::schedule( [ 10, 99999999 ], our $se_sub__ ||= sub { $dc->search($_) for @ARGV; } );
+    psmisc::schedule( [ 10, 99999999 ], our $se_sub__ ||= sub { 
+    $dc->search('lost');
+    $dc->search($_) for @ARGV; 
+    
+    } );
     psmisc::schedule(
       [ 20, 100 ],
       our $dump_sub__ ||= sub {

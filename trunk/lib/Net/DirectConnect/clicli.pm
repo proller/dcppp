@@ -42,6 +42,7 @@ sub init {
     'incomingclass'  => __PACKAGE__,
     'reconnects'     => 0,
     inactive_timeout => 60,
+  charset_protocol =>  'cp1251' , #'utf8'
   );
   $self->{$_} ||= $_{$_} for keys %_;
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
@@ -53,16 +54,16 @@ sub init {
   #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
   #$self->{'share_full'} ||=$self->{'parent'}{'share_tth'};
   #share_full share_tth want
-  $self->{$_} ||= $self->{'parent'}{$_} for qw( handler NickList IpList PortList
-    Nick
-  );
-  $self->{'NickList'} ||= {};
-  $self->{'IpList'}   ||= {};
-  $self->{'PortList'} ||= {};
+  $self->{$_} ||= $self->{'parent'}{$_}||= {}  for qw( NickList IpList PortList);#handler 
+    $self->{$_} ||= $self->{'parent'}{$_}for qw(  Nick  ); 
+#  $self->{'NickList'} ||= {};
+#  $self->{'IpList'}   ||= {};
+#  $self->{'PortList'} ||= {};
   $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
   $self->{'parse'} = undef if $self->{'parse'} and !keys %{ $self->{'parse'} };
   $self->{'parse'} ||= {
     'Lock' => sub {
+      my $self = shift if ref $_[0];
 
       if ( $self->{'incoming'} ) {
         $self->{'sendbuf'} = 1;
@@ -88,6 +89,7 @@ sub init {
       $self->cmd( 'Key', $self->{'key'} ) if ( $self->{'incoming'} );
     },
     'Direction' => sub {
+      my $self = shift if ref $_[0];
       my $d = ( split /\s/, $_[0] )[0];
       if ( $d eq 'Download' ) { $self->{'direction'} = 'Upload'; }
       else {
@@ -98,6 +100,7 @@ sub init {
       #2009/11/04-02:08:20 dev [2] direction RECIEVED Download from Download 28048 ;
     },
     'Key' => sub {
+      my $self = shift if ref $_[0];
       if ( $self->{'incoming'} ) { }
       else {
         $self->{'sendbuf'} = 1;
@@ -115,10 +118,12 @@ sub init {
         if $self->{'filename'};
     },
     'Get' => sub {
+      my $self = shift if ref $_[0];
       #TODO
       $self->cmd( 'FileLength', 0 );
     },
     'MyNick' => sub {
+      my $self = shift if ref $_[0];
       $self->log( 'info', "peer is [", ( $self->{'peernick'} = $_[0] ), "]" );
       $self->{'NickList'}->{ $self->{'peernick'} }{'ip'}   = $self->{'host'};
       $self->{'NickList'}->{ $self->{'peernick'} }{'port'} = $self->{'port'};
@@ -130,11 +135,13 @@ sub init {
       #$self->log ( 'dev', "direction", $self->{'direction'}, 'from', keys %{ $self->{'want'}->{ $self->{'peernick'} } }, ';');
     },
     'FileLength' => sub {
+      my $self = shift if ref $_[0];
       $self->{'filetotal'} = $_[0];
       return if $self->file_open();
       $self->cmd('Send');
     },
     'ADCSND' => sub {
+      my $self = shift if ref $_[0];
       #$self->log( 'dev', "ADCSND::", @_ );
       #$_[0] =~ /(\d+?)$/is;
       local @_ = split /\s+/, $_[0];
@@ -142,17 +149,21 @@ sub init {
       return $self->file_open();
     },
     'CSND' => sub {
+      my $self = shift if ref $_[0];
       $_[0] =~ /^file\s+\S+\s+(\d+)\s(\d+)$/is;
       $self->{'filetotal'} = $1 + $2;
       return $self->file_open();
     },
     'Supports' => sub {
+      my $self = shift if ref $_[0];
       $self->supports_parse( $_[0], $self->{'NickList'}->{ $self->{'peernick'} } );
     },
     'MaxedOut' => sub {
+      my $self = shift if ref $_[0];
       $self->disconnect();
     },
     'ADCGET' => sub {
+      my $self = shift if ref $_[0];
       $self->file_send_parse( map { split /\s/, $_ } @_ );
     },
   };
@@ -160,6 +171,7 @@ sub init {
   $self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
   $self->{'cmd'} ||= {
     'connect_aft' => sub {
+      my $self = shift if ref $_[0];
       #my $self = shift if ref $_[0];
       $self->{'sendbuf'} = 1;
       $self->cmd('MyNick');
@@ -167,17 +179,21 @@ sub init {
       $self->cmd('Lock');
     },
     'MyNick' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd(
         'MyNick', $self->{'Nick'}    #|| $self->{'parent'}{'Nick'}
       );
     },
     'Lock' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'Lock', $self->{'lock'} );
     },
     'Supports' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'Supports', $self->supports() || 'MiniSlots XmlBZList ADCGet TTHF' );    #TTHL
     },
     'Direction' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'Direction', $self->{'direction'}, int( rand(0x7FFF) ) );
     },
     'Key' => sub {
@@ -185,9 +201,11 @@ sub init {
       $self->sendcmd( 'Key', $_[0] );
     },
     'Get' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd( 'Get', $self->{'get'} );
     },
     'Send' => sub {
+      my $self = shift if ref $_[0];
       $self->sendcmd('Send');
     },
     'FileLength' => sub {
