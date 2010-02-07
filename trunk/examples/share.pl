@@ -67,6 +67,7 @@ my $log = sub (@) {
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   };
 
+#printlog('dev', 'started', @ARGV),
 Net::DirectConnect::filelist->new(log=>$log, %{ $config{dc} || {} } )->filelist_make(@ARGV), exit if $ARGV[0] ~~ 'filelist' and !caller;
 #use Net::DirectConnect::adc;
 my $dc = Net::DirectConnect->new(
