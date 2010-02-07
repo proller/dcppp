@@ -50,8 +50,6 @@ sub                                        #init
   $self->{files}  //= 'files.xml';
   #$self->{share_full}        //= {};
   #$self->{share_tth}         //= {};
-  $self->{chrarset_fs} //= 'cp1251' if $^O ~~ 'MSWin32';
-  $self->{chrarset_fs} //= 'koi8r'  if $^O ~~ 'freebsd';
   $self->{tth_cheat}         //= 1_000_000;         #try find file with same name-size-date
   $self->{tth_cheat_no_date} //= 0;                 #--//-- only name-size
   $self->{file_min}          //= 0;                 #skip files  smaller
@@ -114,7 +112,7 @@ local %_  = (
         next if !length $f->{file} or !length $f->{'tth'};
         $sharesize += $f->{size};
         ++$sharefiles if $f->{size};
-        #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{chrarset_fs}, $f->{file} ) ) if $self->{chrarset_fs};
+        #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
         psmisc::file_append $self->{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}"/>\n};
         #$self->{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $self->{share_full}{ $f->{file} } ||= $f->{full};
         $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
@@ -133,7 +131,7 @@ local %_  = (
     my $scandir;
     $scandir = sub (@) {
       for my $dir (@_) {
-        #$self->log( 'scandir', $dir, 'charset', $self->{chrarset_fs} );
+        #$self->log( 'scandir', $dir, 'charset', $self->{charset_fs} );
         #$self->log( 'warn', 'stopscan', $stopscan),
         last if $stopscan;
         $dir =~ tr{\\}{/};
@@ -142,7 +140,7 @@ local %_  = (
         #$self->log( 'dev','sd', __LINE__,$dh);
         #@dots =
         ( my $dirname = $dir );
-        $dirname = Encode::encode 'utf8', Encode::decode $self->{chrarset_fs}, $dirname if $self->{chrarset_fs};
+        $dirname = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
         #$self->log( 'dev','sd', __LINE__,$dh);
         unless ($level) {
           for ( split '/', $dirname ) {
@@ -165,7 +163,7 @@ local %_  = (
           #$self->log( 'warn', 'stopscan', $stopscan),
           last if $stopscan;
           next if $file =~ /^\.\.?$/;
-          #$file = Encode::encode( 'utf8', Encode::decode( $self->{chrarset_fs}, $file ) ) if $self->{chrarset_fs};
+          #$file = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $file ) ) if $self->{charset_fs};
           my $f = { path => $dir, path_local => $dir, file => $file, file_local => $file, full_local => "$dir/$file", };
           #$f->{full_local} = "$f->{path_local}/$f->{file_local}";
           #print("d $f->{full}:\n"),
@@ -174,8 +172,8 @@ local %_  = (
           $scandir->( $f->{full_local} ), next if $f->{dir};
           $f->{size} = -s $f->{full_local} if -f $f->{full_local};
           next if $f->{size} < $self->{file_min};
-          $f->{file} = Encode::encode 'utf8', Encode::decode $self->{chrarset_fs}, $f->{file} if $self->{chrarset_fs};
-          $f->{path} = Encode::encode 'utf8', Encode::decode $self->{chrarset_fs}, $f->{path} if $self->{chrarset_fs};
+          $f->{file} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
+          $f->{path} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
           $f->{full} = "$f->{path}/$f->{file}";
           $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
 #$self->log 'timed', $f->{time}, psmisc::human('date_time', $f->{time}), -M $f->{full_local}, int (86400 * -M $f->{full_local}), $^T;
@@ -328,8 +326,8 @@ local %_;
       if ( my ( $file, $size, $tth ) = m{^File Name="([^"]+)" Size="(\d+)" TTH="([^"]+)"}i ) {
         my $full_local = ( my $full = "$dir/$file" );
         #$self->log 'loaded', $dir, $file  , $full;
-        #$full_local = Encode::encode $self->{chrarset_fs}, $full if $self->{chrarset_fs};
-        $full_local = Encode::encode $self->{chrarset_fs}, Encode::decode 'utf8', $full if $self->{chrarset_fs};
+        #$full_local = Encode::encode $self->{charset_fs}, $full if $self->{charset_fs};
+        $full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full if $self->{charset_fs};
         $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth,
           if $tth;
         $self->{share_full}{$file} ||= $full_local;

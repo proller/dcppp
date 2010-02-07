@@ -201,11 +201,14 @@ sub new {
     #ADC
     #number => ++$global{'total'},
     #};
+    charset_fs => ($^O eq 'MSWin32' ? 'cp1251' :  $^O eq 'freebsd' ? 'koi8r'  : 'utf8'),
   );
   $self->{$_} ||= $_{$_} for keys %_;
   local %_ = @_;
   $self->{$_} = $_{$_} for keys %_;
   #psmisc::printlog('dev', 'init0', Dumper $self);
+
+
 
 =del
 
@@ -234,7 +237,14 @@ next unless length $_;
   #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
   #(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
   $self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(want share_full share_tth sockets handler clients); 
+  #$self->{$_} ||= $self->{'parent'}{$_} ||= {} 
+#   $self->log( 'dev', '1uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
+#  $self->{'parent'}{$_} ||= {} ,  $self->{$_} ||= $self->{'parent'}{$_},
+$self->{$_} ||= $self->{'parent'}{$_} ||= {},
+  for qw(want share_full share_tth sockets handler clients); 
+
+#   $self->log( 'dev', '2uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
+
 #  $self->log( 'dev', "my number=$self->{'number'} total=$global{'total'} count=$global{'count'}" );
   if ( $class eq __PACKAGE__ ) {
     #local %_ = (@param);
@@ -370,9 +380,9 @@ sub handler {
   my $self = shift;
   shift if ref $_[0];
   my $cmd = shift;
-  #$self->log('dev', 'handler select', $cmd, $self->{'handler_int'}{$cmd}, $self->{'handler'}{$cmd});
-  $self->{'handler_int'}{$cmd}->( $self, @_ ) if ref $self->{'handler_int'}{$cmd} eq 'CODE';    #internal lib
-  $self->{'handler'}{$cmd}->( $self, @_ ) if ref $self->{'handler'}{$cmd} eq 'CODE';
+#  $self->log('dev', 'handler select', $cmd, $self->{'handler_int'}{$cmd}, $self->{'handler'}{$cmd});
+  $self->{'handler_int'}{$cmd}->( $self, @_ ) if $self->{'handler_int'} and ref $self->{'handler_int'}{$cmd} eq 'CODE';    #internal lib
+  $self->{'handler'}{$cmd}->( $self, @_ ) if $self->{'handler'} and ref $self->{'handler'}{$cmd} eq 'CODE';
 }
 #sub baseinit {
 #my $self = shift;
@@ -869,8 +879,9 @@ $self->work();
       #$self->log( 'dcinf', "parsing", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd});
       my @self;
       #@self = $self if $self->{'adc'};
-      @self = $self if !$self->{'nmdc'};
-      $self->handler( @self, $cmd . '_parse_bef_bef', @param );
+      @self = $self ;#if !$self->{'nmdc'};
+#      $self->handler( @self, $cmd . '_parse_bef_bef', @param );
+     $self->handler( @self, $cmd . '_parse_bef', @param );
       if ( ref $self->{'parse'}{$cmd} eq 'CODE' ) {
         if ( !exists $self->{'no_print'}{$cmd} ) {
           local $_ = $_;
@@ -882,10 +893,10 @@ $self->work();
         } else {
           ++$self->{ 'skip_print_' . $cmd }, if exists $self->{'no_print'}{$cmd};
         }
-        $self->handler( @self, $cmd . '_parse_bef', @param );
+ #       $self->handler( @self, $cmd . '_parse_bef', @param );
         @ret = $self->{'parse'}{$cmd}->( @self, @param );
         $ret = scalar @ret > 1 ? \@ret : $ret[0];
-        $self->handler( @self, $cmd . '_parse_aft', @param, $ret );
+#        $self->handler( @self, $cmd . '_parse_aft', @param, $ret );
         ++$self->{count_parse}{$cmd};
       } else {
 #$self->log( 'dcinf', "unknown", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd}, 'run=', @self, 'unknown', $cmd,@param,);
@@ -893,7 +904,7 @@ $self->work();
       }
       #if ($self->{'parent'}{'hub'}) {           }
       $self->handler( @self, $cmd, @param, $ret );
-      $self->handler( @self, $cmd . '_parse_aft_aft', @param, $ret );
+      #$self->handler( @self, $cmd . '_parse_aft_aft', @param, $ret );
     }
   };
   $self->{'send'} ||= sub {
@@ -1002,8 +1013,12 @@ $self->work();
       }
       $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
     }
+      $self->{'file_recv_dest'} = ( $self->{'fileas'} || $self->{'filename'} );
+        $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol}, $self->{'file_recv_dest'} if $self->{charset_fs} ne $self->{charset_protocol};
+
+
     $self->{'file_recv_partial'} =
-      $self->{'partial_prefix'} . ( $self->{'fileas'} || $self->{'filename'} ) . $self->{'partial_ext'};
+      $self->{'partial_prefix'} . $self->{'file_recv_dest'} . $self->{'partial_ext'};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
 #    $self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'},      'from', $self->{'file_recv_from'} );
   };
@@ -1062,12 +1077,11 @@ $self->work();
     if ( $self->{'filehandle'} ) {
 #    $self->log( 'dcerr', 'file_close',2);
       close( $self->{'filehandle'} ), delete $self->{'filehandle'};
-      my $dest = ( $self->{'fileas'} || $self->{'filename'} );
       if ( length $self->{'partial_ext'} and $self->{'filebytes'} == $self->{'filetotal'} ) {
 #    $self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
-        $self->log( 'dcerr', 'cant move finished file' ) if !rename $self->{'file_recv_partial'}, $dest;
+        $self->log( 'dcerr', 'cant move finished file' ) if !rename $self->{'file_recv_partial'}, $self->{'file_recv_dest'};
       }
-      ( $self->{parent} || $self )->handler( 'file_recieved', $dest );
+      ( $self->{parent} || $self )->handler( 'file_recieved', $self->{'file_recv_dest'});
     }
     $self->{'select_send'}->remove( $self->{'socket'} ), close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
       #$self->{'socket'}->flush(),
@@ -1234,7 +1248,7 @@ $self->{'file_send_offset'} += $sended;
     #$self->{'ADCSND'} =
     sub {
     my $self = shift if ref $_[0];
-    #$self->log(    'cmd_adcSND', Dumper \@_);
+#    $self->log(    'cmd_adcSND', Dumper \@_);
     #my ( $dst, $peerid, $toid ) = @{ shift() };
     if ( $_[0] eq 'file' ) {
       my $file = $_[1];
