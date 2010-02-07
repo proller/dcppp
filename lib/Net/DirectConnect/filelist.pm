@@ -254,9 +254,13 @@ sub                                        #init
       #$level
     };
     #else {
-    $self->log( 'info', "making filelist $self->{files} from", grep { -d } @_, @{ $self->{'share'} || [] }, );
+
+    $self->log( 'info', "making filelist $self->{files} from", 
+#     @_, @{ $self->{'share'} || [] },#'EXISTS=', 
+        grep { -d } @_, @{ $self->{'share'} || [] }, );
     $self->{db}->do('ANALYZE') unless $self->{no_sql};
-    $scandir->($_) for ( grep { -d } @_, @{ $self->{'share'} || [] }, );
+local %_;
+    $scandir->($_) for ( grep { !$_{$_}++ and -d } @_, @{ $self->{'share'} || [] }, );
     undef $SIG{INT};
     undef $SIG{INFO};
     psmisc::file_append $self->{files}, qq{</FileListing>};
