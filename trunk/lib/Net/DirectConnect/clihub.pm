@@ -339,6 +339,7 @@ sub init {
       ( $s{'ext'} )      = $s{'filename'} =~ m{[^.]+\.([^.]+)$};
       ( $s{'size'}, $s{'slots'} )  = split / /, shift @{ $s{'str'} };
       ( $s{'tth'},  $s{'ipport'} ) = split / /, shift @{ $s{'str'} };
+      ( $s{'tth'},  $s{'ipport'} ) = ( $s{'size'}, $s{'slots'} ) unless $s{'tth'};
       ( $s{'target'} ) = shift @{ $s{'str'} };
       $s{'tth'} =~ s/^TTH://;
       ( $s{'ipport'}, $s{'ip'}, $s{'port'} ) = $s{'ipport'} =~ /\(((\S+):(\d+))\)/;

@@ -779,12 +779,12 @@ sub func {
       $self->info() unless $_;
       $self->log( 'info',
             "wait clients "
-          . scalar( $self->clients_my() 
+          , scalar( $self->clients_my() 
 #          keys %{ $self->{'clients'} } 
           )
           . "/$self->{'clients_max'}  $_/$self->{'wait_clients_tries'}" );
 #      $self->wait( undef, $self->{'wait_clients_by'} );
-$self->work();
+$self->work(5);
     }
   };
   $self->{'wait_sleep'} ||= sub {
