@@ -162,8 +162,10 @@ Net::DirectConnect->new(
             );
             my ($from) = (grep { $_->{slotsopen} } values %{ $work{'tthfrom'}{$tth} })or next ;
             printlog( 'selected from', Dumper $from);
-            $dc->get( $from->{nick}, 'TTH/' . $tth, $config{'get_dir'} . $filename );
+            my $dst = $config{'get_dir'} . $filename;
             delete $work{'filename'}{$tth};
+            next if -e $dst and (!$from->{size} or -s $dst == $from->{size});
+            $dc->get( $from->{nick}, 'TTH/' . $tth, $dst );
             #$work{'tthfrom'}{$s{tth}}
             last;
           }
