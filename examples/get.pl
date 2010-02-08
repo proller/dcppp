@@ -3,7 +3,7 @@
 
 =head1 NAME
 
- UNFINISHED!!! get files
+ UNFINISHED!!! auto get popular files
 
 =head1 SYNOPSIS
 
@@ -146,9 +146,10 @@ Net::DirectConnect->new(
       psmisc::schedule(
         $config{'get_every'},
         our $get_every_sub__ ||= sub {
-          printlog( 'selecting file from', keys %{ $work{'filename'} } );
+          printlog( 'selecting file from', grep {exists $work{'ask'}{$_}} keys %{ $work{'filename'} } );
           for
-            my $tth ( sort { keys %{ $work{'filename'}{$a} } <=> keys %{ $work{'filename'}{$b} } } keys %{ $work{'filename'} } )
+            my $tth #( sort { keys %{ $work{'filename'}{$a} } <=> keys %{ $work{'filename'}{$b} } } keys %{ $work{'filename'} } )
+            ( sort { keys %{ $work{'ask'}{$a} } <=> keys %{ $work{'ask'}{$b} } } grep {exists $work{'ask'}{$_}} keys %{ $work{'filename'} } )
           {
             #++$work{'filename'}{$s{tth}}{$s{filename}};
             my ($filename) =
@@ -195,7 +196,7 @@ Net::DirectConnect->new(
     }
     #printlog 'getev' ,$config{'get_every'};
     psmisc::schedule( [ 10, 99999999 ], our $se_sub__ ||= sub { 
-    $dc->search('lost');
+#    $dc->search('lost');
     $dc->search($_) for @ARGV; 
     
     } );
