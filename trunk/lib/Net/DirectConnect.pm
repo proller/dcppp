@@ -774,15 +774,15 @@ sub func {
   };
   $self->{'wait_clients'} ||= sub {
     my $self = shift;
-    for ( 0 .. $self->{'wait_clients_tries'} ) {
-      last if $self->{'clients_max'} > scalar $self->clients_my(); #keys %{ $self->{'clients'} };
+    for my $n ( 0 .. $self->{'wait_clients_tries'} ) {
+      last if $self->{'clients_max'} > (scalar $self->clients_my()); #keys %{ $self->{'clients'} };
       $self->info() unless $_;
       $self->log( 'info',
-            "wait clients "
+            "wait clients"
           , scalar( $self->clients_my() 
 #          keys %{ $self->{'clients'} } 
           )
-          . "/$self->{'clients_max'}  $_/$self->{'wait_clients_tries'}" );
+          . "/$self->{'clients_max'}  $n/$self->{'wait_clients_tries'}" );
 #      $self->wait( undef, $self->{'wait_clients_by'} );
 $self->work(5);
     }

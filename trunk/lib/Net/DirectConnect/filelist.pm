@@ -307,7 +307,7 @@ local %_;
   }
 =cut
 
-    $self->log( "filelist_load try", $shareloaded, -s $self->{files}, );    #ref $_[0]
+#    $self->log( "filelist_load try", $shareloaded, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
         or $shareloaded == -s $self->{files}

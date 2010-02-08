@@ -160,7 +160,7 @@ Net::DirectConnect->new(
               'filename=', $filename, $work{'filename'}{$tth}{$filename},
               'nicks=', keys %{ $work{'tthfrom'}{$tth} }
             );
-            my ($from) = grep { $_->{slotsopen} } values %{ $work{'tthfrom'}{$tth} };
+            my ($from) = (grep { $_->{slotsopen} } values %{ $work{'tthfrom'}{$tth} })or next ;
             printlog( 'selected from', Dumper $from);
             $dc->get( $from->{nick}, 'TTH/' . $tth, $config{'get_dir'} . $filename );
             delete $work{'filename'}{$tth};
