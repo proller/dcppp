@@ -34,6 +34,7 @@ use Net::DirectConnect;
 #$config{disconnect_after}     //= 10;
 #$config{disconnect_after_inf} //= 0;
 psmisc::config();    #psmisc::lib_init();
+psmisc::lib_init();
 $config{'auto_get_best'}      //= 1;
 $config{'hit_to_ask'}         //= 5;
 $config{'queue_recalc_every'} //= 100;
@@ -149,7 +150,7 @@ Net::DirectConnect->new(
           printlog( 'selecting file from', grep {exists $work{'ask'}{$_}} keys %{ $work{'filename'} } );
           for
             my $tth #( sort { keys %{ $work{'filename'}{$a} } <=> keys %{ $work{'filename'}{$b} } } keys %{ $work{'filename'} } )
-            ( sort { keys %{ $work{'ask'}{$a} } <=> keys %{ $work{'ask'}{$b} } } grep {exists $work{'ask'}{$_}  and !exists $dc->{share_full}{$_}} keys %{ $work{'filename'} } )
+            ( sort {  $work{'ask'}{$a}  <=>  $work{'ask'}{$b} } grep {exists $work{'ask'}{$_}  and !exists $dc->{share_full}{$_}} keys %{ $work{'filename'} } )
           {
             #++$work{'filename'}{$s{tth}}{$s{filename}};
             my ($filename) =
