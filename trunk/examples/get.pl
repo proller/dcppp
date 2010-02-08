@@ -128,7 +128,7 @@ Net::DirectConnect->new(
           my $time = int time;
           $work{'toask'} = [ (
               sort { $work{'ask'}{$a} <=> $work{'ask'}{$b} }
-              grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
+              grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} and !exists $dc->{share_full}{$_} } keys %{ $work{'ask'} }
             )
           ];
           printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } , $work{'toask'}[0]);
@@ -149,7 +149,7 @@ Net::DirectConnect->new(
           printlog( 'selecting file from', grep {exists $work{'ask'}{$_}} keys %{ $work{'filename'} } );
           for
             my $tth #( sort { keys %{ $work{'filename'}{$a} } <=> keys %{ $work{'filename'}{$b} } } keys %{ $work{'filename'} } )
-            ( sort { keys %{ $work{'ask'}{$a} } <=> keys %{ $work{'ask'}{$b} } } grep {exists $work{'ask'}{$_}} keys %{ $work{'filename'} } )
+            ( sort { keys %{ $work{'ask'}{$a} } <=> keys %{ $work{'ask'}{$b} } } grep {exists $work{'ask'}{$_}  and !exists $dc->{share_full}{$_}} keys %{ $work{'filename'} } )
           {
             #++$work{'filename'}{$s{tth}}{$s{filename}};
             my ($filename) =
