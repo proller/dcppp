@@ -49,8 +49,7 @@ sub init {
     'search_every_min' => 10,
     'auto_connect'     => 1,
     'auto_bug'         => 1,
-    'reconnects'           => 5,
-
+    'reconnects'       => 5,
     'NoGetINFO'        => 1,    #test
     'NoHello' => 1, 'UserIP2' => 1, 'TTHSearch' => 1, 'Version' => '1,0091', 'auto_GetNickList' => 1, 'follow_forcemove' => 1,
     #ADC
@@ -59,21 +58,20 @@ sub init {
     #@_,
     'incomingclass' => 'Net::DirectConnect::clicli',
     #'periodic'      =>
-  'disconnect_recursive' => 1,
-  charset_protocol =>  'cp1251' , #'utf8'
-
+    'disconnect_recursive' => 1,
+    charset_protocol       => 'cp1251',    #'utf8'
   );
   $self->{$_} ||= $_{$_} for keys %_;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(  NickList IpList PortList ); #handler
-  #$self->{'NickList'} ||= {};
-  #$self->{'IpList'}   ||= {};
-  #$self->{'PortList'} ||= {};
-  #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
-  #You are already in the hub.
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(  NickList IpList PortList );    #handler
+                                                                                       #$self->{'NickList'} ||= {};
+                                                                                       #$self->{'IpList'}   ||= {};
+                                                                                       #$self->{'PortList'} ||= {};
+         #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
+         #You are already in the hub.
   $self->{'parse'} ||= {
     'chatline' => sub {
       my $self = shift if ref $_[0];
@@ -226,7 +224,7 @@ sub init {
 #'PortList'     => $self->{'PortList'},
 #'handler'      => $self->{'handler'},
 #'share_tth'      => $self->{'share_tth'},
-#    'reconnects'           => 0,
+#'reconnects'           => 0,
         'auto_connect' => 1,
       );
     },
@@ -284,9 +282,8 @@ sub init {
           $path =~ s{^\w:}{};
           $path =~ s{^\W+}{};
           $path =~ tr{/}{\\};
-          $path = Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $path if $self->{charset_fs} ne $self->{charset_protocol};
-
-          
+          $path = Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $path
+            if $self->{charset_fs} ne $self->{charset_protocol};
         }
         local @_ = (
           'SR', (
@@ -332,8 +329,7 @@ sub init {
     },
     'SR' => sub {
       my $self = shift if ref $_[0];
-#          $self->log( 'dev', "SR", @_ , 'parent=>', $self->{parent}, 'h=', $self->{handler}, Dumper($self->{handler}), 'ph=', $self->{parent}{handler}, Dumper($self->{parent}{handler}), ) if $self;
-
+#$self->log( 'dev', "SR", @_ , 'parent=>', $self->{parent}, 'h=', $self->{handler}, Dumper($self->{handler}), 'ph=', $self->{parent}{handler}, Dumper($self->{parent}{handler}), ) if $self;
       $self->cmd('make_hub');
       my %s = ( 'time' => int( time() ), 'hub' => $self->{'hub_name'}, );
       ( $s{'nick'}, $s{'str'} ) = split / /, $_[0], 2;
@@ -343,7 +339,7 @@ sub init {
       ( $s{'ext'} )      = $s{'filename'} =~ m{[^.]+\.([^.]+)$};
       ( $s{'size'}, $s{'slots'} )  = split / /, shift @{ $s{'str'} };
       ( $s{'tth'},  $s{'ipport'} ) = split / /, shift @{ $s{'str'} };
-      ( $s{'tth'},  $s{'ipport'} ) = ( $s{'size'}, $s{'slots'} ) unless $s{'tth'};
+      ( $s{'tth'}, $s{'ipport'} ) = ( $s{'size'}, $s{'slots'} ) unless $s{'tth'};
       ( $s{'target'} ) = shift @{ $s{'str'} };
       $s{'tth'} =~ s/^TTH://;
       ( $s{'ipport'}, $s{'ip'}, $s{'port'} ) = $s{'ipport'} =~ /\(((\S+):(\d+))\)/;
@@ -371,7 +367,6 @@ sub init {
 
 
 =cut  
-
   $self->{'cmd'} = {
     'chatline' => sub {
       my $self = shift if ref $_[0];
@@ -533,8 +528,8 @@ sub init {
       #?    'NickList' => \%{ $self->{'NickList'} },
       #?    'IpList'   => \%{ $self->{'IpList'} },
       #?    'PortList' => \%{ $self->{'PortList'} },
- #     'handler' => \%{ $self->{'handler'} },
-#      'handler' => $self->{'handler'} ,
+      #'handler' => \%{ $self->{'handler'} },
+      #'handler' => $self->{'handler'} ,
       #$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
       #'LocalPort'=>$self->{'myport'},
       #'debug'=>1,
@@ -542,18 +537,18 @@ sub init {
       'parse' => {
         'SR'  => $self->{'parse'}{'SR'},
         'PSR' => sub {                     #U
-      my $self = shift if ref $_[0];
-#      my $self =  ref $_[0] ? shift() : $self;
+          my $self = shift if ref $_[0];
+          #my $self =  ref $_[0] ? shift() : $self;
           $self->log( 'dev', "PSR", @_ ) if $self;
         },
-        'UPSR' => sub {                     
-      my $self = shift if ref $_[0];
-#      my $self =  ref $_[0] ? shift() : $self;
+        'UPSR' => sub {
+          my $self = shift if ref $_[0];
+          #my $self =  ref $_[0] ? shift() : $self;
           $self->log( 'dev', "UPSR", 'udp' ) if $self;
-          for (split /\n+/, $_[0]) {
-return         $self->parser($_) if /^\$SR/;
+          for ( split /\n+/, $_[0] ) {
+            return $self->parser($_) if /^\$SR/;
           }
- #         $self->log( 'dev', "UPSR", @_ ) if $self;
+          #$self->log( 'dev', "UPSR", @_ ) if $self;
         },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131
@@ -587,7 +582,6 @@ return         $self->parser($_) if /^\$SR/;
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
-
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};

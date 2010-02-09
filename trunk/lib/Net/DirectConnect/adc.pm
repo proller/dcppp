@@ -100,15 +100,13 @@ sub init {
     #'Pass' => '',
     #'key'  => 'zzz',
     #'auto_wait'        => 1,
-    'reconnects'           => 5,
-    'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
+    'reconnects' => 5, 'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
     'connect_protocol' => 'ADC/0.10', 'message_type' => 'H',
     #@_,
-    'incomingclass' => __PACKAGE__,                        #'Net::DirectConnect::adc',
-    no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
-  charset_protocol =>  'utf8',
-
+    'incomingclass'  => __PACKAGE__,                               #'Net::DirectConnect::adc',
+    no_print         => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
+    charset_protocol => 'utf8',
   );
   $self->{$_} ||= $_{$_} for keys %_;
   #print 'adc init now=',Dumper $self;
@@ -120,11 +118,10 @@ sub init {
   $self->{SUPAD}{I}{$_} = $_ for qw(BASE TIGR BZIP);
   $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
   if ( $self->{'hub'} ) {
-    $self->{'auto_connect'} = 0;
-    $self->{'auto_listen'}  = 1;
-    $self->{'status'}       = 'working';
-  $self->{'disconnect_recursive'} = 1;
-
+    $self->{'auto_connect'}         = 0;
+    $self->{'auto_listen'}          = 1;
+    $self->{'status'}               = 'working';
+    $self->{'disconnect_recursive'} = 1;
   }
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
@@ -281,14 +278,13 @@ sub init {
         )
       {
         my $foundedshow = ( $founded =~ m{^/} ? () : '/' ) . (
-#          $self->{chrarset_fs}          ?
-             $self->{charset_fs} ne $self->{charset_protocol} ?
+          #$self->{chrarset_fs}          ?
+          $self->{charset_fs} ne $self->{charset_protocol}
+          ?
             #Encode::from_to( $founded, $self->{chrarset_fs},  'utf8',)
             #Encode::encode $self->{chrarset_fs},
-          #Encode::decode 'utf8',
-           Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded 
-
-          $founded
+            #Encode::decode 'utf8',
+            Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded$founded
           : $founded
         );
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),

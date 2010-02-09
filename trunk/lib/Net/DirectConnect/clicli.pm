@@ -39,10 +39,7 @@ sub init {
     #@_,
     'direction' => 'Download',
     #'Direction' => 'Upload', #rand here
-    'incomingclass'  => __PACKAGE__,
-    'reconnects'     => 0,
-    inactive_timeout => 60,
-  charset_protocol =>  'cp1251' , #'utf8'
+    'incomingclass' => __PACKAGE__, 'reconnects' => 0, inactive_timeout => 60, charset_protocol => 'cp1251',    #'utf8'
   );
   $self->{$_} ||= $_{$_} for keys %_;
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
@@ -54,17 +51,16 @@ sub init {
   #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
   #$self->{'share_full'} ||=$self->{'parent'}{'share_tth'};
   #share_full share_tth want
-  $self->{$_} ||= $self->{'parent'}{$_}||= {}  for qw( NickList IpList PortList);#handler 
-    $self->{$_} ||= $self->{'parent'}{$_}for qw(  Nick  ); 
-#  $self->{'NickList'} ||= {};
-#  $self->{'IpList'}   ||= {};
-#  $self->{'PortList'} ||= {};
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( NickList IpList PortList);                               #handler
+  $self->{$_} ||= $self->{'parent'}{$_} for qw(  Nick  );
+  #$self->{'NickList'} ||= {};
+  #$self->{'IpList'}   ||= {};
+  #$self->{'PortList'} ||= {};
   $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
   $self->{'parse'} = undef if $self->{'parse'} and !keys %{ $self->{'parse'} };
   $self->{'parse'} ||= {
     'Lock' => sub {
       my $self = shift if ref $_[0];
-
       if ( $self->{'incoming'} ) {
         $self->{'sendbuf'} = 1;
         $self->cmd('MyNick');

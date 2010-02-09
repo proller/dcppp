@@ -63,51 +63,54 @@ psmisc::config();    #psmisc::lib_init();
 printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0] and !$config{dc}{host};
 printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 my $log = sub (@) {
-    my $dc = ref $_[0] ? shift : {};
-    psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
-  };
-
-  my @dirs = grep {-d }@ARGV;
+  my $dc = ref $_[0] ? shift : {};
+  psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
+};
+my @dirs = grep { -d } @ARGV;
 #printlog('dev', 'started', @ARGV),
-Net::DirectConnect::filelist->new(log=>$log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit if $ARGV[0] ~~ 'filelist' and !caller;
-  @ARGV = grep {!-d }@ARGV;
+Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
+  if $ARGV[0] ~~ 'filelist' and !caller;
+@ARGV = grep { !-d } @ARGV;
 #use Net::DirectConnect::adc;
-#my $dc = 
-my @dc; @dc= map {
-
-Net::DirectConnect->new(
-  modules  => ['filelist'],
-  'filelist_builder' => (join ' ', $^X, $0, 'filelist'),
-
-  dev_http => 1,
-  'log'    => $log,
-  'handler' => {
-    map {
-      my $msg = $_;
-      $msg => sub {
-        my $dc = shift;
-        say join ' ', $msg, @_;
-        },
-      } qw(welcome chatline To)
-  },
-  auto_connect => 1,
-#  auto_work    => 1,
-  worker    => sub {
-    my $dc = shift;
-    psmisc::schedule(
-      [ 20, 100 ],
-      our $dump_sub__ ||= sub {
-        printlog "Writing dump";
-        psmisc::file_rewrite( $0 . '.dump', Dumper @dc);
-      }
-    ) if $config{debug};
-  },
-  %{ $config{dc} || {} },
-#  ( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
-'host' => $_,
-)
-} (grep {$_} ref $config{dc}{host}eq 'ARRAY' ? @{$config{dc}{host}} :$config{dc}{host} ,  @ARGV) ;
-
+#my $dc =
+my @dc;
+@dc = map {
+  Net::DirectConnect->new(
+    modules            => ['filelist'],
+    'filelist_builder' => ( join ' ', $^X, $0, 'filelist' ),
+    dev_http           => 1,
+    'log'              => $log,
+    'handler'          => {
+      map {
+        my $msg = $_;
+        $msg => sub {
+          my $dc = shift;
+          say join ' ', $msg, @_;
+          },
+        } qw(welcome chatline To)
+    },
+    auto_connect => 1,
+    #auto_work    => 1,
+    worker => sub {
+      my $dc = shift;
+      psmisc::schedule(
+        [ 20, 100 ],
+        our $dump_sub__ ||= sub {
+          printlog "Writing dump";
+          psmisc::file_rewrite( $0 . '.dump', Dumper @dc );
+        }
+      ) if $config{debug};
+    },
+    %{ $config{dc} || {} },
+    #( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
+    'host' => $_,
+    )
+  } (
+  grep {
+    $_
+    } ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
+  @ARGV
+  );
 while ( @dc = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dc;
 }
