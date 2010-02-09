@@ -7,7 +7,7 @@ run dc client with file sharing
 
 =head1 SYNOPSIS
 
- ./share.pl hub dir dir ...
+ ./share.pl hub hub dir dir ...
 
  unix adc:
  ./share.pl adc://dc.hub.com:412 /share
@@ -67,10 +67,15 @@ my $log = sub (@) {
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   };
 
+  my @dirs = grep {-d }@ARGV;
 #printlog('dev', 'started', @ARGV),
-Net::DirectConnect::filelist->new(log=>$log, %{ $config{dc} || {} } )->filelist_make(@ARGV), exit if $ARGV[0] ~~ 'filelist' and !caller;
+Net::DirectConnect::filelist->new(log=>$log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit if $ARGV[0] ~~ 'filelist' and !caller;
+  @ARGV = grep {!-d }@ARGV;
 #use Net::DirectConnect::adc;
-my $dc = Net::DirectConnect->new(
+#my $dc = 
+my @dc; @dc= map {
+
+Net::DirectConnect->new(
   modules  => ['filelist'],
   'filelist_builder' => (join ' ', $^X, $0, 'filelist'),
 
@@ -86,16 +91,23 @@ my $dc = Net::DirectConnect->new(
       } qw(welcome chatline To)
   },
   auto_connect => 1,
-  auto_work    => sub {
+#  auto_work    => 1,
+  worker    => sub {
     my $dc = shift;
     psmisc::schedule(
       [ 20, 100 ],
       our $dump_sub__ ||= sub {
         printlog "Writing dump";
-        psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
+        psmisc::file_rewrite( $0 . '.dump', Dumper @dc);
       }
     ) if $config{debug};
   },
   %{ $config{dc} || {} },
-  ( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
-);
+#  ( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
+'host' => $_,
+)
+} (grep {$_} ref $config{dc}{host}eq 'ARRAY' ? @{$config{dc}{host}} :$config{dc}{host} ,  @ARGV) ;
+
+while ( @dc = grep { $_ and $_->active() } @dc ) {
+  $_->work() for @dc;
+}

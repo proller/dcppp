@@ -240,8 +240,11 @@ next unless length $_;
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} 
 #   $self->log( 'dev', '1uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
 #  $self->{'parent'}{$_} ||= {} ,  $self->{$_} ||= $self->{'parent'}{$_},
+
+$self->{$_} ||= $self->{'parent'}{$_} ||= $global{$_} ||= {},
+  for qw(sockets share_full share_tth want); 
 $self->{$_} ||= $self->{'parent'}{$_} ||= {},
-  for qw(want share_full share_tth sockets handler clients); 
+  for qw(   handler clients); 
 
 #   $self->log( 'dev', '2uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
 
@@ -283,6 +286,12 @@ $self->{$_} ||= $self->{'parent'}{$_} ||= {},
     $self->connect();
     #$self->work();
     $self->wait_connect();
+  } else 
+  
+  {
+    $self->get_my_addr();
+    $self->get_peer_addr();
+  
   }
   if ( $self->{'auto_work'} ) {
     #$self->log( $self, '', "auto_work ", $self->active() );
@@ -429,7 +438,7 @@ sub func {
     my $self = shift;
 #$self->{'select'} ||= $self->{parent}{'select'}         $self->{'select_send'} ||= $self->{parent}{'select_send'}    if $self->{parent};
 #$self->{'sockets'} ||= $self->{parent}{'sockets'} if $self->{parent};
-    $self->{$_} ||= $self->{parent}{$_} ||= IO::Select->new() for qw (select select_send);
+    $self->{$_} ||= $self->{parent}{$_} ||= $global{$_} ||= IO::Select->new() for qw (select select_send);
     #$self->{'select'}      ||= IO::Select->new();    #$self->{'socket'}
     #$self->{'select_send'} ||= IO::Select->new();    #$self->{'socket'}
     return unless $self->{'socket'};
@@ -457,6 +466,7 @@ sub func {
     $self->{'status'}   = 'connecting';
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
+    $self->{'recv_buf'} = undef;
     $self->{'socket'} ||= new IO::Socket::INET(
       'PeerAddr' => $self->{'host'},
       'PeerPort' => $self->{'port'},
@@ -614,10 +624,11 @@ sub func {
       #and $client eq $self->{'socket'}
       )
     {
-      if ( $_ = $self->{'socket'}->accept() ) {
+      if (local $_ = $self->{'socket'}->accept() ) {
         #$self->log( 'traceDEV', 'DC::recv', 'accept', $self->{'incomingclass'} );
         $self->log( 'err', 'cant accept, no incomingclass' ), return, unless $self->{'incomingclass'};
-        $self->{'clients'}{$_} ||= $self->{'incomingclass'}->new(
+        $_ =
+        $self->{'incomingclass'}->new(
           #%$self,                                clear(),
           'socket' => $_, 'LocalPort' => $self->{'myport'}, 'incoming' => 1,
 #'want'         => \%{ $self->{'want'} },                'NickList'     => \%{ $self->{'NickList'} },                'IpList'       => \%{ $self->{'IpList'} },                'PortList'     => \%{ $self->{'PortList'} },
@@ -625,13 +636,17 @@ sub func {
 #'NickList'     => $self->{'NickList'},
 #'IpList'       => $self->{'IpList'},
 #'PortList'     => $self->{'PortList'},
-          'auto_listen' => 0, 'auto_connect' => 0, 'parent' => $self,
+          #'auto_listen' => 0, 'auto_connect' => 0, 
+          'parent' => $self,
           #'share_tth'      => $self->{'share_tth'},
           'status' => 'connected',
           #$self->incomingopt(),
           %{ $self->{'incomingopt'} || {} },
         );
-        $self->{'clients'}{$_}->select_add();
+ my $name = ($_->{hostip}||$_->{host}).($_->{port} ? ':' : ()).$_->{port};
+        $self->{'clients'}{$name} ||= $_;
+
+        $self->{'clients'}{$name}->select_add();
         #$self->log( 'dev', 'child created',            $_,   $self->{'clients'}{$_});
         #++$ret;
       } else {
@@ -663,7 +678,9 @@ sub func {
     }
     if ( $self->{'filehandle'} ) { $self->file_write( \$self->{'databuf'} ); }
     else {
+#      $self->log( 'dcdmp', "rawrawrcv:", $self->{'databuf'} );
       $self->{'recv_buf'} .= $self->{'databuf'};
+#      $self->log( 'dcdmp', "rawrawbuf:", $self->{'recv_buf'} );
       local $self->{'cmd_aft'} = "\x0A" if !$self->{'adc'} and $self->{'recv_buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
 #$self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
       while ( $self->{'recv_buf'} =~ s/^(.*?)\Q$self->{'cmd_aft'}//s ) {
@@ -835,7 +852,7 @@ $self->work(5);
 #            $self->{'clients'}{$_}->work();
         
         }
-        $self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
+        $self->{$_}->($self) for  grep {ref $self->{$_} eq 'CODE'} qw(worker auto_work);
 
 #$self->log('dev', 'work exit',      );
       }
@@ -1013,6 +1030,7 @@ $self->work(5);
       }
       $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
     }
+
       $self->{'file_recv_dest'} = ( $self->{'fileas'} || $self->{'filename'} );
         $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol}, $self->{'file_recv_dest'} if $self->{charset_fs} ne $self->{charset_protocol};
 
@@ -1081,7 +1099,9 @@ $self->work(5);
 #    $self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
         $self->log( 'dcerr', 'cant move finished file' ) if !rename $self->{'file_recv_partial'}, $self->{'file_recv_dest'};
       }
-      ( $self->{parent} || $self )->handler( 'file_recieved', $self->{'file_recv_dest'});
+
+      
+      ( $self->{parent} || $self )->handler( 'file_recieved', $self->{'file_recv_dest'}, $self->{'filename'});
     }
     $self->{'select_send'}->remove( $self->{'socket'} ), close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
       #$self->{'socket'}->flush(),
@@ -1206,7 +1226,7 @@ $self->{'file_send_offset'} += $sended;
       #$!    );
       #$self->log( 'err', 'send error', $@ ) if $@;
     }
-    schedule 1, our $__stat_ ||= sub {
+    schedule(1, $self->{__stat_} ||= sub {
       our ( $lastmark, $lasttime );
       $self->log(
         'dev',                       "sended bytes",                    #length $self->{'file_send_buf'},
@@ -1214,10 +1234,11 @@ $self->{'file_send_offset'} += $sended;
         "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now", $self->{'file_send_offset'}, 'of',
         $self->{'file_send_total'}, 's=', ( $self->{'file_send_offset'} - $lastmark ) / ( time - $lasttime or 1 ),
         "status=[$self->{'status'}]",
-      );
-      $lastmark = $self->{'file_send_offset'};
-      $lasttime = time;
-    };
+      ),
+      $lastmark = $self->{'file_send_offset'},
+      $lasttime = time, 
+      #if time - $lasttime > 1;
+    });
     #$self->{activity} = time if $sended;
     #$self->{bytes_send} += $sended;
     $self->{'file_send_left'} -= $sended;
@@ -1279,7 +1300,7 @@ $self->{'file_send_offset'} += $sended;
     eval { @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) || return ) };
     return unless $_[1];
     return unless $_[1] = inet_ntoa( $_[1] );
-    $self->{'port'} = $_[0] if $_[0] and !$self->{'incoming'};
+    $self->{'port'} = $_[0] if $_[0] ;#;and !$self->{'incoming'};
     $self->{'hostip'} = $_[1], $self->{'host'} ||= $self->{'hostip'} if $_[1];
     return $self->{'hostip'};
   };

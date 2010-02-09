@@ -60,6 +60,7 @@ sub init {
     'incomingclass' => 'Net::DirectConnect::clicli',
     #'periodic'      =>
   'disconnect_recursive' => 1,
+  charset_protocol =>  'cp1251' , #'utf8'
 
   );
   $self->{$_} ||= $_{$_} for keys %_;
@@ -283,6 +284,9 @@ sub init {
           $path =~ s{^\w:}{};
           $path =~ s{^\W+}{};
           $path =~ tr{/}{\\};
+          $path = Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $path if $self->{charset_fs} ne $self->{charset_protocol};
+
+          
         }
         local @_ = (
           'SR', (

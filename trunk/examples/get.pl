@@ -7,9 +7,9 @@
 
 =head1 SYNOPSIS
 
- ./get.pl hub file ...
+ ./get.pl hub [hub]
 
- file:  topath/name:TTH:size
+ #NONE!file ... file:  topath/name:TTH:size
 
 =head1 CONFIGURE 
 
@@ -41,15 +41,14 @@ $config{'queue_recalc_every'} //= 100;
 $config{'get_every'}          //= 60;
 $config{'get_dir'}            //= './downloads/';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
-printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit if !$ARGV[0] and !$config{dc}{host} and !$config{dc}{hosts};
+printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit if !$ARGV[0] and !$config{dc}{host};# and !$config{dc}{hosts};
 printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
 #printlog 'dev', 'mkdir', $config{'get_dir'}, 
 mkdir $config{'get_dir'};
 #exit;
 #use Net::DirectConnect::adc;
-#my $dc =
-my $hub = $config{dc}{host} || shift @ARGV;
+my @dc; @dc = map {
 Net::DirectConnect->new(
   modules  => ['filelist'],
   'filelist_builder' => (join ' ', $^X, 'share.pl', 'filelist'),
@@ -120,7 +119,9 @@ Net::DirectConnect->new(
 
 
   },
-  auto_work => sub {
+  #auto_work 
+  worker
+  => sub {
     my $dc = shift;
     $dc->{'handler'}{'SCH'} ||= $dc->{'handler'}{'Search'}; #_parse_aft _parse_aft
       psmisc::schedule(
@@ -150,7 +151,7 @@ Net::DirectConnect->new(
           printlog( 'selecting file from', grep {exists $work{'ask'}{$_}} keys %{ $work{'filename'} } );
           for
             my $tth #( sort { keys %{ $work{'filename'}{$a} } <=> keys %{ $work{'filename'}{$b} } } keys %{ $work{'filename'} } )
-            ( sort {  $work{'ask'}{$a}  <=>  $work{'ask'}{$b} } grep {exists $work{'ask'}{$_}  and !exists $dc->{share_full}{$_}} keys %{ $work{'filename'} } )
+            ( sort {  $work{'ask'}{$b}  <=>  $work{'ask'}{$a} } grep {exists $work{'ask'}{$_}  and !exists $dc->{share_full}{$_}} keys %{ $work{'filename'} } )
           {
             #++$work{'filename'}{$s{tth}}{$s{filename}};
             my ($filename) =
@@ -200,7 +201,7 @@ Net::DirectConnect->new(
     #printlog 'getev' ,$config{'get_every'};
     psmisc::schedule( [ 10, 99999999 ], our $se_sub__ ||= sub { 
 #    $dc->search('lost');
-    $dc->search($_) for @ARGV; 
+#    $dc->search($_) for @ARGV; 
     
     } );
     psmisc::schedule(
@@ -208,12 +209,17 @@ Net::DirectConnect->new(
       our $dump_sub__ ||= sub {
         $dc->{__work} ||= \%work;    #for dumper
         printlog "Writing dump";
-        psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
+        psmisc::file_rewrite( $0 . '.dump', Dumper @dc);
       }
     ) if $config{debug};
   },
   %{ $config{dc} || {} },
   #( $_ ? ( 'host' => $_ ) : () ),
   #( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
-  'host' => $hub,
-);                                   # for ( @ARGV, @{ $config{dc}{hosts} || [] } );
+  'host' => $_,
+)                                   # for ( @ARGV, @{ $config{dc}{hosts} || [] } );
+} (grep {$_} ref $config{dc}{host}eq 'ARRAY' ? @{$config{dc}{host}} :$config{dc}{host} ,  @ARGV) ;
+
+while ( @dc = grep { $_ and $_->active() } @dc ) {
+  $_->work() for @dc;
+}
