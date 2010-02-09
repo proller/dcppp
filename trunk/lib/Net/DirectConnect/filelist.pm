@@ -80,7 +80,8 @@ sub                                        #init
     ( map { $self->{sql}{$_} //= $_{$_} } keys %_ ),
     $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, ), ( $tq, $rq, $vq ) = $self->{db}->quotes()
     unless $self->{no_sql};
-  $self->{'cmd'}{filelist_make} //= sub {
+  $self->{filelist_make} //= sub {
+    my $self = shift if ref $_[0];
     my $notth;
     return unless psmisc::lock( 'sharescan', timeout => 0, old => 86400 );
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
