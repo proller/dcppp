@@ -1100,6 +1100,7 @@ sub func {
 #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
     if ( $self->{'share_full'}{$file} ) {
       $self->{'share_full'}{$file} =~ tr{\\}{/};
+#$self->log( 'dcdev', 'call send', $self->{'share_full'}{$file}, $start, $size, $as );
       $self->file_send( $self->{'share_full'}{$file}, $start, $size, $as );
     } else {
       $self->log(
@@ -1111,6 +1112,7 @@ sub func {
   };
   $self->{'file_send'} ||= sub {
     my $self = shift;
+#$self->log( 'dcdev', 'file_send', Dumper \@_);
     my ( $file, $start, $size, $as ) = @_;
     $start //= 0;
     $size  //= -s $file;
@@ -1254,7 +1256,7 @@ $self->{'file_send_offset'} += $sended;
     #$self->{'ADCSND'} =
     sub {
     my $self = shift if ref $_[0];
-    #$self->log(    'cmd_adcSND', Dumper \@_);
+#    $self->log(    'cmd_adcSND', Dumper \@_);
     #my ( $dst, $peerid, $toid ) = @{ shift() };
     if ( $_[0] eq 'file' ) {
       my $file = $_[1];
