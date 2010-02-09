@@ -286,12 +286,12 @@ sub                                        #init
   $self->{share_add_file} //= sub {
     my $self = shift if ref $_[0];
     my ( $full_local, $tth, $file ) = @_;
-    $full_local =~ m{^([^/\\]+)$} unless $file;
-    $file //= $1;
+    $full_local =~ m{([^/\\]+)$} unless $file;
+    $file //= $1;# unless length $file;
     #$full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
     $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth,
       if $tth;
-    $self->{share_full}{$file} ||= $full_local;
+    $self->{share_full}{$file} ||= $full_local if $file;
   };
   $self->{filelist_load} //= sub {    #{'cmd'}
     my $self = shift if ref $_[0];

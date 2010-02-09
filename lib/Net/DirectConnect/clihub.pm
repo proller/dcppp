@@ -260,7 +260,7 @@ sub init {
       my $founded = $self->{'share_full'}{ $s{'tth'} } || $self->{'share_full'}{ $s{'string'} };
       my $tth = $self->{'share_tth'}{$founded};
       if (
-        $founded
+        $founded and $tth
         #$s{'tth'} and $self->{'share_tth'}{ $s{'tth'} }
         )
       {
