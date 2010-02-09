@@ -160,6 +160,7 @@ sub init {
     },
     'ADCGET' => sub {
       my $self = shift if ref $_[0];
+#$self->log('dev', 'ADCGET', @_);
       $self->file_send_parse( map { split /\s/, $_ } @_ );
     },
   };

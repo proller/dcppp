@@ -283,6 +283,7 @@ sub                                        #init
     return ( $sharesize, $sharefiles );
   };
   $self->{share_add_file} //= sub {
+    my $self = shift if ref $_[0];
     my ( $full_local, $tth, $file ) = @_;
     $full_local =~ m{^([^/\\]+)$} unless $file;
     $file //= $1;
