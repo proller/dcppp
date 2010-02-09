@@ -8,6 +8,9 @@ modules
 
 better moduled sharing
 
+examples/share.pl now multihub
+
+examples/get.pl - auto get popular files
 
 
 0.04:

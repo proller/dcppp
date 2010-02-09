@@ -45,7 +45,7 @@ sub                                        #init
   #$self->{'cmd'}   ||= {};
   #print join ' ', ( 'loading', __FILE__, __PACKAGE__, ref $self, 'caller=', caller );
   #$self->log( 'dev', 'loading', __FILE__, __PACKAGE__, ref $self );
-  my ($shareloaded);
+#  my ($global{shareloaded});
   $self->{no_sql} //= 0;
   $self->{files}  //= 'files.xml';
   #$self->{share_full}        //= {};
@@ -286,7 +286,20 @@ local %_;
     $SIG{INT} = $SIG{KILL} = undef;
     return ( $sharesize, $sharefiles );
   };
-  $self->{'cmd'}{filelist_load} //= sub {
+      $self->{share_add_file} //= sub { 
+      my ($full_local, $tth, $file) = @_;
+
+      $full_local =~   m{^([^/\\]+)$} unless $file;
+      $file //= $1;
+#        $full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
+        $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth,
+          if $tth;
+        $self->{share_full}{$file} ||= $full_local;
+
+      
+      };
+
+  $self->{filelist_load} //= sub { #{'cmd'}
     my $self = shift if ref $_[0];
 
 =old
@@ -307,18 +320,23 @@ local %_;
   }
 =cut
 
-#    $self->log( "filelist_load try", $shareloaded, -s $self->{files}, );    #ref $_[0]
+#    $self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
-        or $shareloaded == -s $self->{files}
-        or ( $shareloaded and !psmisc::lock( 'sharescan', readonly => 1, timeout => 0, old => 86400 ) )
+        or $Net::DirectConnect::global{shareloaded} == -s $self->{files}
+        or ( $Net::DirectConnect::global{shareloaded} and !psmisc::lock( 'sharescan', readonly => 1, timeout => 0, old => 86400 ) )
         or !open my $f, '<', $self->{files};
     my ( $sharesize, $sharefiles );
-    $self->log( "loading filelist", -s $f );
-    $shareloaded = -s $f;
+    $self->log('info', "loading filelist", -s $f );
+    $Net::DirectConnect::global{shareloaded} = -s $f;
     local $/ = '<';
     %{ $self->{share_full} } = %{ $self->{share_tth} } = ();
     my $dir;
+
+
+
+
+
 
     while (<$f>) {
       #<Directory Name="distr">
@@ -327,12 +345,13 @@ local %_;
         my $full_local = ( my $full = "$dir/$file" );
         #$self->log 'loaded', $dir, $file  , $full;
         #$full_local = Encode::encode $self->{charset_fs}, $full if $self->{charset_fs};
-        $full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full if $self->{charset_fs};
-        $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth,
-          if $tth;
-        $self->{share_full}{$file} ||= $full_local;
+        $full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
+$self->share_add_file        ( $full_local, $tth, $file );
         ++$sharefiles;
         $sharesize += $size;
+
+        
+        
         #$self->{'share_tth'}{ $params->{TR} }
         #$file =~ tr{\\}{/};
       } elsif ( my ($curdir) = m{^Directory Name="([^"]+)">}i ) {
@@ -346,9 +365,9 @@ local %_;
     }
     $self->{share_full}{ $self->{files} . '.bz2' } = $self->{files} . '.bz2';
     $self->{share_full}{ $self->{files} } = $self->{files};
-    $self->log(
+    $self->log('info',
       "loaded filelist size",
-      $shareloaded, ' : files=', $sharefiles, 'bytes=',
+      $Net::DirectConnect::global{shareloaded}, ' : files=', $sharefiles, 'bytes=',
       psmisc::human( 'size', $sharesize ),
       scalar keys %{ $self->{share_full} }
     );
@@ -395,6 +414,31 @@ psmisc::start $self->{'filelist_builder'}, @{ $self->{'share'} } :
     ) if $self->{filelist_scan};
     },
     #psmisc::startme( 'filelist', grep { -d } @ARGV )  if  !-e $config{files} or !-e $config{files}.'.bz2';
+$self->{handler_int}{file_recieved} = sub {
+my $self=shift if ref $_[0];
+my ($full, $filename) = @_;
+#$self->{'file_recv_tth'} =  
+my ($tth) = $filename =~   m{^TTH/(\w+)};
+=z
+return unless $tth;
+$self->{share_full}{$tth} = $as;
+my ($name) = $as =~   m{^([^/\\]+)$};
+return unless $name;
+
+        $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth,
+          if $tth;
+        $self->{share_full}{$file} ||= $full_local;
+=cut
+$self->log('dev', 'adding downloaded file to share', $full, $tth);
+
+$self->share_add_file( $full, $tth);
+
+#TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
+
+
+};
+    
+    
     $self->filelist_load() unless $standalone;    # (caller)[0] ~~ __PACKAGE__;
 #  $self->log('initok');
   return $self;

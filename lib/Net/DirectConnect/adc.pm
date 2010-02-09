@@ -281,11 +281,13 @@ sub init {
         )
       {
         my $foundedshow = ( $founded =~ m{^/} ? () : '/' ) . (
-          $self->{chrarset_fs}
-          ?
+#          $self->{chrarset_fs}          ?
+             $self->{charset_fs} ne $self->{charset_protocol} ?
             #Encode::from_to( $founded, $self->{chrarset_fs},  'utf8',)
-            Encode::encode $self->{chrarset_fs},
+            #Encode::encode $self->{chrarset_fs},
           #Encode::decode 'utf8',
+           Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded 
+
           $founded
           : $founded
         );
