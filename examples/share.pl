@@ -60,6 +60,7 @@ use Net::DirectConnect::filelist;
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 $config{'log_pid'} //= 1;
 psmisc::config();    #psmisc::lib_init();
+psmisc::lib_init(); #for die handler
 printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0] and !$config{dc}{host};
 printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 my $log = sub (@) {

@@ -34,7 +34,7 @@ use Net::DirectConnect;
 #$config{disconnect_after}     //= 10;
 #$config{disconnect_after_inf} //= 0;
 psmisc::config();    #psmisc::lib_init();
-psmisc::lib_init();
+psmisc::lib_init(); #for die handler
 $config{'auto_get_best'}      //= 1;
 $config{'hit_to_ask'}         //= 5;
 $config{'queue_recalc_every'} //= 100;
