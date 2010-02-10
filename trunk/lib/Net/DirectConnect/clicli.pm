@@ -41,7 +41,9 @@ sub init {
     #'Direction' => 'Upload', #rand here
     'incomingclass' => __PACKAGE__, 'reconnects' => 0, inactive_timeout => 60, charset_protocol => 'cp1251',    #'utf8'
   );
-  $self->{$_} ||= $_{$_} for keys %_;
+#  $self->{$_} ||= $_{$_} for keys %_;
+    !exists $self->{$_} ?  $self->{$_} ||= $_{$_} : ()  for keys %_;
+
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
   #$self->log($self, 'inited1',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();

@@ -61,7 +61,7 @@ sub init {
     'disconnect_recursive' => 1,
     charset_protocol       => 'cp1251',    #'utf8'
   );
-  $self->{$_} ||= $_{$_} for keys %_;
+  !exists $self->{$_} ?  $self->{$_} ||= $_{$_} : ()  for keys %_;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
