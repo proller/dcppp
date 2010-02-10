@@ -515,6 +515,7 @@ sub init {
       #'PortList'    => \%{ $self->{'PortList'} },
       #'handler'     => \%{ $self->{'handler'} },
       #'share_tth'      => $self->{'share_tth'},
+      'myport' => $self->{myport},
       'auto_listen' => 1,
       'parent'      => $self,
     );
@@ -524,6 +525,7 @@ sub init {
     $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
       #%$self, $self->clear(),
       'parent' => $self, 'Proto' => 'udp',
+      'myport' => $self->{myport_udp},
       #?    'want'     => \%{ $self->{'want'} },
       #?    'NickList' => \%{ $self->{'NickList'} },
       #?    'IpList'   => \%{ $self->{'IpList'} },
