@@ -210,7 +210,7 @@ my @dc;
         }
       );
       psmisc::schedule(
-        [ 20, 100 ],
+        [ 60, 3600 ],
         our $dump_sub__ ||= sub {
           $dc->{__work} ||= \%work;    #for dumper
           printlog "Writing dump";

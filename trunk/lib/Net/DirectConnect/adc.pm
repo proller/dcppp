@@ -283,10 +283,7 @@ sub init {
           #$self->{chrarset_fs}          ?
           $self->{charset_fs} ne $self->{charset_protocol}
           ?
-            #Encode::from_to( $founded, $self->{chrarset_fs},  'utf8',)
-            #Encode::encode $self->{chrarset_fs},
-            #Encode::decode 'utf8',
-            Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded$founded
+            Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded
           : $founded
         );
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),
