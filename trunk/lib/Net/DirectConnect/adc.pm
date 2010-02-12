@@ -281,10 +281,9 @@ sub init {
       {
         my $foundedshow = ( $founded =~ m{^/} ? () : '/' ) . (
           #$self->{chrarset_fs}          ?
-          $self->{charset_fs} ne $self->{charset_protocol}
-          ?
-            Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded
-          : $founded
+#          $self->{charset_fs} ne $self->{charset_protocol} ?
+            Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded 
+            #: $founded
         );
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),
           $founded, -s $founded, -e $founded, 'c=', $self->{chrarset_fs}, );
