@@ -20,10 +20,10 @@ $_{dist} = {
   SUFFIX   => '.gz',
 };
 $_{PREREQ_PM}{'Net::DirectConnect::TigerHash'} = 0,    #for sharing and adc
-  $_{NORECURS} = 1, if $^O =~ /win32/i or $^O =~ /mswin/;
+  $_{NORECURS} = 1, if $^O =~ /win32/i or $^O =~ /mswin/ or $^O =~ /freebsd/i;
 WriteMakefile(%_);
 
-sub NONONO_MY::postamble {
+sub MY::postamble {
   qq{
 
 #docs: README
@@ -32,7 +32,7 @@ sub NONONO_MY::postamble {
 #pod2text $_{VERSION_FROM} > README
 
 fullclean: distclean veryclean
-	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old MANIFEST README
+	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old *.core MANIFEST README
 
 release: fullclean manifest metafile dist
 }

@@ -1,7 +1,7 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
-our $VERSION = '0.04' . '_' . ( split( ' ', '$Revision$' ) )[1];
+our $VERSION = '0.05'; # . '_' . ( split( ' ', '$Revision$' ) )[1];
 no warnings qw(uninitialized);
 use Socket;
 use IO::Socket;
@@ -79,29 +79,6 @@ sub schedule($$;@)
     and ( !( ref $p->{'cond'} eq 'CODE' ) or $p->{'cond'}->( $p, $schedule{ $p->{'id'} }, @_ ) )
     and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
 }
-
-=del
-sub clear {
-  return map { $_ => undef } qw(
-    clients
-    socket
-    select
-    accept
-    filehandle
-    parse
-    cmd
-    send_buffer
-    databuf
-    buf
-    peers
-    supports_avail
-    auto_connect
-    auto_work
-    number
-  );
-  #
-}
-=cut
 
 sub module_load {
   my $self = shift if ref $_[0];
@@ -204,19 +181,6 @@ sub new {
   $self->{$_} = $_{$_} for keys %_;
   #psmisc::printlog('dev', 'init0', Dumper $self);
 
-=del
-
-for  ( $self->{'module'}, @{$self->{'modules'} || []} ) {
-next unless length $_;
-      #%self
-#my $module = __PACKAGE__ . '::' . $self->{'module'};
-      my $module = __PACKAGE__ . '::' . $_;
-      #eval "use $module; $module\->init(\$self);";
-      eval "use $module; $module\::init(\$self, \@param);";
-      $self->log( 'err', 'cant load', $module, $@ ) if $@;
-#}
-  } #else {
-=cut
 
   #psmisc::printlog('dev', 'func');
   $self->func();    #@param
@@ -712,23 +676,6 @@ sub func {
       if ( $self->{sockets}{$_}{'filehandle_send'} ) { $self->{sockets}{$_}->file_send_part(); }
     }
 
-=old
-    if (0) {
-      do {
-        #$self->log( 'trace', 'DC::recv', 'in loop', $reads );
-        $readed = 0;
-        $ret = '0E0', last unless $self->{'select'} and $self->{'socket'};
-        $self->log( 'err', "SOCKET UNEXISTS must delete select" ) unless $self->{'select'}->exists( $self->{'socket'} );
-        $self->log( 'err', "SOCKET IS NOT CONNECTED must delete select" )
-          if !$self->{'accept'}
-            and !$self->{'socket'}->connected()
-            and $self->{'Proto'} ne 'udp';
-        for my $client ( $self->{'select'}->can_read($sleep) ) { $self->recv( $client, ); }
-      } while ( $readed and $reads++ < $self->{'max_reads'} );
-      #TODO !!! timed
-    }
-=cut    
-
     #if ( $self->{'filehandle_send'} ) { $self->file_send_part(); }
     #$self->{'recv_runned'}{ $self->{'number'} } = undef;
     return $ret;
@@ -1161,37 +1108,36 @@ sub func {
  #$self->{'file_send_offset'} += $sended;
     }
 
-=sux	    
-    elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
+#sux	    
+#    elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
 #use Sys::Sendfile::FreeBSD qw(sendfile);
 #use Errno qw(EINTR EIO :POSIX);
-    $self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended, 'ff=', fileno($self->{'filehandle_send'}), fileno($self->{'socket'}));
+#    $self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended, 'ff=', fileno($self->{'filehandle_send'}), fileno($self->{'socket'}));
 #my $result = sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sended);
-my $result = sendfile( fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read, $sended);
-    $self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, 's=', $sended, 'r=',  $result, $!, 
-    #Dumper \%!
+#my $result = sendfile( fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read, $sended);
+#    $self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, 's=', $sended, 'r=',  $result, $!, 
+#    #Dumper \%!
 #grep {$!{$_}} keys %!
-    );
+#    );
 
-}
-=cut
+#}
 
-=sux
-    elsif ($INC{'IO/AIO.pm'}) {
+#sux
+#    elsif ($INC{'IO/AIO.pm'}) {
 
-    $self->log(      'dev','sendfile0',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended);
+#    $self->log(      'dev','sendfile0',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended);
 #use IO::AIO;
 #$sended = IO::AIO::sendfile(  fileno($self->{'filehandle_send'}), $self->{'socket'}->fileno(),$self->{'file_send_offset'}, $read );
 #$sended = IO::AIO::sendfile(   $self->{'socket'}->fileno(), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
 #$sended = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
- $sended = IO::AIO::sendfile(   $self->{'socket'}, $self->{'filehandle_send'},$self->{'file_send_offset'}, $read );
- #$self->{'file_send_left'}
-
-    $self->log(      'dev','sendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended);
+# $sended = IO::AIO::sendfile(   $self->{'socket'}, $self->{'filehandle_send'},$self->{'file_send_offset'}, $read );
+# #$self->{'file_send_left'}
+#
+#    $self->log(      'dev','sendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended);
 $self->{'file_send_offset'} += $sended;
 #$self->{'file_send_offset'} += $read, $sended = $read,if $sended == 12;
-} 
-=cut
+#} 
+
 
     else {
       read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
@@ -1562,6 +1508,7 @@ look at examples for handlers
  segmented, multisource download;
  async connect;
 
+  BROKEN: in freebsd8 tigerhash compile
 
 =head1 INSTALLATION
 
