@@ -1134,7 +1134,7 @@ sub func {
 # #$self->{'file_send_left'}
 #
 #    $self->log(      'dev','sendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended);
-$self->{'file_send_offset'} += $sended;
+#$self->{'file_send_offset'} += $sended;
 #$self->{'file_send_offset'} += $read, $sended = $read,if $sended == 12;
 #} 
 
