@@ -6,28 +6,16 @@
 #
 
 PORTNAME=	Net-DirectConnect
-PORTVERSION=	0.04
-#PORTREVISION=	0
-#PORTEPOCH=	0
+PORTVERSION=	0.06
 CATEGORIES=	net-p2p net perl5
 MASTER_SITES=	CPAN
-#MASTER_SITE_SUBDIR=authors/id/P/PR/PRO
 PKGNAMEPREFIX=	p5-
-#PKGNAMESUFFIX=
-#DISTNAME=OB
-#EXTRACT_SUFX=
-#DISTFILES=
-#DIST_SUBDIR=	${PORTNAME}
-#EXTRACT_ONLY=
 
 MAINTAINER=	proler@gmail.com
-COMMENT=	Direct Connect lib and client.
+COMMENT=	Perl Direct Connect lib and client.
 
-#RUN_DEPENDS=
-
-#BUILD_DEPENDS=<>${SITE_PERL}/${PERL_ARCH}/List/Util.pm:${PORTSDIR}/lang/p5-Scalar-List-Utils \
-#<------><------>${SITE_PERL}/TAP/Harness.pm:${PORTSDIR}/devel/p5-Test-Harness \
-# todo: MIME::Base32 Sys::Sendfile
+RUN_DEPENDS=	p5-MIME-Base32>=0:${PORTSDIR}/converters/p5-MIME-Base32 \
+		p5-Sys-Sendfile-FreeBSD>=0:${PORTSDIR}/devel/p5-Sys-Sendfile-FreeBSD 
 
 PERL_CONFIGURE=	yes
 
