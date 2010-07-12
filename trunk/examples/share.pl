@@ -67,6 +67,10 @@ my $log = sub (@) {
   my $dc = ref $_[0] ? shift : {};
   psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
 };
+
+    $SIG{PIPE} = sub { printlog('sig', 'PIPE') };
+
+
 my @dirs = grep { -d } @ARGV;
 #printlog('dev', 'started', @ARGV),
 Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit

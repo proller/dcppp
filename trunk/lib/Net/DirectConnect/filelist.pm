@@ -13,6 +13,21 @@ use psmisc;                                # REMOVE
 use pssql;                                 # REMOVE
 psmisc::use_try 'Sys::Sendfile';
 my ( $tq, $rq, $vq );
+
+sub skip ($$) {
+my ($file, $match) = @_;
+return unless length $match;
+#print ('skptst', $file, $match, "\n");
+for my $m (ref $match eq 'ARRAY' ? @$match : $match) {
+#print ('skptst', $file, $m, "\n");
+#printlog('skipre', $file, $m),
+return 1 if ref $m eq 'Regexp' and $file =~ $m;
+#printlog('skipeq', $file, $m),
+return 1 if !ref $m and $file eq $m;
+}
+
+}
+
 sub                                        #init
   new {
   #my $self = ref $_[0] ? shift () : Net::DirectConnect->new(@_);
@@ -51,6 +66,8 @@ sub                                        #init
   $self->{filelist_scan}     //= 3600;              #every seconds, 0 to disable
   $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
   $self->{file_send_by}      //= 1024 * 1024 * 1;
+  $self->{skip_dir} //= 'Incomplete';
+  $self->{skip_file} //= [qr/\.(?:partial|(?:dc)tmp)$/i, qr/^~uTorrentPartFile_/i];
 ##$config{share_root} //= '';
   $self->{'share'} = [ $self->{'share'} ] unless ref $self->{'share'};
   tr{\\}{/} for @{ $self->{'share'} || [] };
@@ -136,6 +153,8 @@ sub                                        #init
         ( my $dirname = $dir );
         $dirname = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
         #$self->log( 'dev','sd', __LINE__,$dh);
+next   if  skip ($dirname, $self->{skip_dir});
+
         unless ($level) {
           for ( split '/', $dirname ) {
             psmisc::file_append( $self->{files}, "\t" x $level, qq{<Directory Name="$_">\n} ), ++$level, if length $_;
@@ -152,7 +171,7 @@ sub                                        #init
         #Net::DirectConnect::
         psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { $printinfo->() } );
         #$self->log( 'readdir', );
-        for my $file ( readdir($dh) ) {
+FILE:        for my $file ( readdir($dh) ) {
           #$self->log( 'scanfile', $file, );
           #$self->log( 'warn', 'stopscan', $stopscan),
           last if $stopscan;
@@ -163,11 +182,19 @@ sub                                        #init
           #print("d $f->{full}:\n"),
           $f->{dir} = -d $f->{full_local};
           #filelist_line($f),
-          $scandir->( $f->{full_local} ), next if $f->{dir};
+          if ($f->{dir}) {
+#next  FILE if  skip ($f->{file}, $self->{skip_dir});
+          $scandir->( $f->{full_local} );
+          next ;
+          }
           $f->{size} = -s $f->{full_local} if -f $f->{full_local};
           next if $f->{size} < $self->{file_min};
           $f->{file} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
           $f->{path} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
+
+next  FILE if  skip ($f->{file}, $self->{skip_file});
+
+          
           $f->{full} = "$f->{path}/$f->{file}";
           $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
 #$self->log 'timed', $f->{time}, psmisc::human('date_time', $f->{time}), -M $f->{full_local}, int (86400 * -M $f->{full_local}), $^T;
