@@ -1,5 +1,9 @@
 # $Id$ $URL$
 
+0.06:
+skip from sharing various temporary files
+
+
 0.05:
 
 bug fixes 

@@ -667,7 +667,7 @@ sub func {
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     for (@$exeption) { $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ); }
     for (@$recv) {
-      $self->log( 'err', 'no object for recv handle', $_, ), next, unless $self->{sockets}{$_};
+      $self->log( 'err', 'no object for recv handle', $_, ), next, if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
       $self->{sockets}{$_}->recv($_);
     }
     for (@$send) {
