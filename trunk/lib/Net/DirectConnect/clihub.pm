@@ -58,20 +58,19 @@ sub init {
     #@_,
     'incomingclass' => 'Net::DirectConnect::clicli',
     #'periodic'      =>
-    'disconnect_recursive' => 1,
-    charset_protocol       => 'cp1251',    #'utf8'
+    'disconnect_recursive' => 1, charset_protocol => 'cp1251',    #'utf8'
   );
-  !exists $self->{$_} ?  $self->{$_} ||= $_{$_} : ()  for keys %_;
+  !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(  NickList IpList PortList );    #handler
-                                                                                       #$self->{'NickList'} ||= {};
-                                                                                       #$self->{'IpList'}   ||= {};
-                                                                                       #$self->{'PortList'} ||= {};
-         #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
-         #You are already in the hub.
+  #$self->{'NickList'} ||= {};
+  #$self->{'IpList'}   ||= {};
+  #$self->{'PortList'} ||= {};
+  #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
+  #You are already in the hub.
   $self->{'parse'} ||= {
     'chatline' => sub {
       my $self = shift if ref $_[0];
@@ -260,7 +259,8 @@ sub init {
       my $founded = $self->{'share_full'}{ $s{'tth'} } || $self->{'share_full'}{ $s{'string'} };
       my $tth = $self->{'share_tth'}{$founded};
       if (
-        $founded and $tth
+            $founded
+        and $tth
         #$s{'tth'} and $self->{'share_tth'}{ $s{'tth'} }
         )
       {
@@ -367,6 +367,7 @@ sub init {
 
 
 =cut  
+
   $self->{'cmd'} = {
     'chatline' => sub {
       my $self = shift if ref $_[0];
@@ -455,25 +456,39 @@ sub init {
       $self->sendcmd( 'Search', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),
         join '?', @_ );
     },
+    'search_nmdc' => sub {
+      my $self = shift if ref $_[0];
+      local @_ = @_;
+      $_[0] =~ tr/ /$/;
+      @_ = ( ( 'F', 'T', '0', undef )[ 0 .. 3 - $#_ ], reverse @_ );
+      $_[3] ||= ( $_[4] =~ s/^(TTH:)?([A-Z0-9]{39})$/TTH:$2/ ? '9' : '1' ) unless defined $_[3];
+      #
+      #$self->cmd( 'search_buffer', 'F', 'T', '0', '1', @_ );
+      $self->cmd( 'search_buffer', @_ );
+    },
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
-      if ( $self->{'adc'} ) {
-        #$self->cmd( 'search_buffer', { TO => $self->make_token(), TR => $_[0], } );
-      }    #toauto
-      else { $self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] ); }
+      $self->cmd(
+        'search_nmdc',
+        #'F', 'T', '0', '9',
+        #'TTH:' .
+        #$_[0],
+        @_
+      );
     },
     'search_string' => sub {
       my $self = shift if ref $_[0];
-      my $string = $_[0];
-      if ( $self->{'adc'} ) {
-        #$self->cmd( 'search_buffer', { TO => 'auto', map AN => $_, split /\s+/, $string } );
-        #$self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), } );    #TOauto
-      } else {
-        $self->{'search_last_string'} = $string;
-        $string =~ tr/ /$/;
-        $self->cmd( 'search_buffer', 'F', 'T', '0', '1', $string );
-      }
+      #my $string = $_[0];
+      $self->{'search_last_string'} = $_[0];    #$string;
+      #$string =~ tr/ /$/;
+      $self->cmd(
+        'search_nmdc',
+        #'F', 'T', '0', '1',
+        #$string,
+        @_
+      );
+      #}
     },
     'search_send' => sub {
       my $self = shift if ref $_[0];
@@ -515,7 +530,7 @@ sub init {
       #'PortList'    => \%{ $self->{'PortList'} },
       #'handler'     => \%{ $self->{'handler'} },
       #'share_tth'      => $self->{'share_tth'},
-      'myport' => $self->{myport},
+      'myport'      => $self->{myport},
       'auto_listen' => 1,
       'parent'      => $self,
     );
@@ -524,8 +539,7 @@ sub init {
     $self->log( 'dev', "making listeners: udp" );
     $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
       #%$self, $self->clear(),
-      'parent' => $self, 'Proto' => 'udp',
-      'myport' => $self->{myport_udp},
+      'parent' => $self, 'Proto' => 'udp', 'myport' => $self->{myport_udp},
       #?    'want'     => \%{ $self->{'want'} },
       #?    'NickList' => \%{ $self->{'NickList'} },
       #?    'IpList'   => \%{ $self->{'IpList'} },
@@ -547,9 +561,7 @@ sub init {
           my $self = shift if ref $_[0];
           #my $self =  ref $_[0] ? shift() : $self;
           $self->log( 'dev', "UPSR", 'udp' ) if $self;
-          for ( split /\n+/, $_[0] ) {
-            return $self->parser($_) if /^\$SR/;
-          }
+          for ( split /\n+/, $_[0] ) { return $self->parser($_) if /^\$SR/; }
           #$self->log( 'dev', "UPSR", @_ ) if $self;
         },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
@@ -584,6 +596,7 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
+
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};

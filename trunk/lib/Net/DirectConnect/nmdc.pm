@@ -37,8 +37,8 @@ sub init {
     #'incomingclass' => __PACKAGE__,    #'Net::DirectConnect::adc',
     #no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
   );
-#  $self->{$_} ||= $_{$_} for keys %_;
-  !exists $self->{$_} ?  $self->{$_} ||= $_{$_} : ()  for keys %_;
+  #$self->{$_} ||= $_{$_} for keys %_;
+  !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
   #print 'adc init now=',Dumper $self;
   #$self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
 }
