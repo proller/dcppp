@@ -15,20 +15,18 @@ psmisc::use_try 'Sys::Sendfile';
 my ( $tq, $rq, $vq );
 
 sub skip ($$) {
-my ($file, $match) = @_;
-return unless length $match;
-#print ('skptst', $file, $match, "\n");
-for my $m (ref $match eq 'ARRAY' ? @$match : $match) {
-#print ('skptst', $file, $m, "\n");
-#printlog('skipre', $file, $m),
-return 1 if ref $m eq 'Regexp' and $file =~ $m;
-#printlog('skipeq', $file, $m),
-return 1 if !ref $m and $file eq $m;
+  my ( $file, $match ) = @_;
+  return unless length $match;
+  #print ('skptst', $file, $match, "\n");
+  for my $m ( ref $match eq 'ARRAY' ? @$match : $match ) {
+    #print ('skptst', $file, $m, "\n");
+    #printlog('skipre', $file, $m),
+    return 1 if ref $m eq 'Regexp' and $file =~ $m;
+    #printlog('skipeq', $file, $m),
+    return 1 if !ref $m and $file eq $m;
+  }
 }
-
-}
-
-sub                                        #init
+sub    #init
   new {
   #my $self = ref $_[0] ? shift () : Net::DirectConnect->new(@_);
   #my $standalone = (!ref $_[0]  and  (caller)[0] eq __PACKAGE__);
@@ -66,8 +64,8 @@ sub                                        #init
   $self->{filelist_scan}     //= 3600;              #every seconds, 0 to disable
   $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
   $self->{file_send_by}      //= 1024 * 1024 * 1;
-  $self->{skip_dir} //= 'Incomplete';
-  $self->{skip_file} //= [qr/\.(?:partial|(?:dc)tmp)$/i, qr/^~uTorrentPartFile_/i];
+  $self->{skip_dir}          //= 'Incomplete';
+  $self->{skip_file} //= [ qr/\.(?:partial|(?:dc)tmp)$/i, qr/^~uTorrentPartFile_/i ];
 ##$config{share_root} //= '';
   $self->{'share'} = [ $self->{'share'} ] unless ref $self->{'share'};
   tr{\\}{/} for @{ $self->{'share'} || [] };
@@ -88,14 +86,14 @@ sub                                        #init
         'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
         'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
         'time' => pssql::row( 'time', ),    #'index' => 1,
-                                            #'added'  => pssql::row( 'added', ),
-                                            #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
+        #'added'  => pssql::row( 'added', ),
+        #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
       },
       }
       #},
     ),
-    ( map { $self->{sql}{$_} //= $_{$_} } keys %_ ),
-    $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, ), ( $tq, $rq, $vq ) = $self->{db}->quotes()
+    ( map { $self->{sql}{$_} //= $_{$_} } keys %_ ), $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, ),
+    ( $tq, $rq, $vq ) = $self->{db}->quotes()
     unless $self->{no_sql};
   $self->{filelist_make} //= sub {
     my $self = shift if ref $_[0];
@@ -103,7 +101,7 @@ sub                                        #init
     return unless psmisc::lock( 'sharescan', timeout => 0, old => 86400 );
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
       unless psmisc::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
-                                                                 #$self->log( 'info',"ntth=[$notth]");    exit;
+    #$self->log( 'info',"ntth=[$notth]");    exit;
     my $stopscan;
     my $level     = 0;
     my $levelreal = 0;
@@ -135,6 +133,7 @@ sub                                        #init
         if $f->{'tth'};
       $self->{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
 =cut
+
   #$self->log 'set share', "[$f->{file}], [$f->{tth}] = [$self->{share_full}{ $f->{tth} }],[$self->{share_full}{ $f->{file} }]";
   #$self->log Dumper $self->{share_full};
       }
@@ -153,8 +152,7 @@ sub                                        #init
         ( my $dirname = $dir );
         $dirname = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
         #$self->log( 'dev','sd', __LINE__,$dh);
-next   if  skip ($dirname, $self->{skip_dir});
-
+        next if skip( $dirname, $self->{skip_dir} );
         unless ($level) {
           for ( split '/', $dirname ) {
             psmisc::file_append( $self->{files}, "\t" x $level, qq{<Directory Name="$_">\n} ), ++$level, if length $_;
@@ -171,7 +169,7 @@ next   if  skip ($dirname, $self->{skip_dir});
         #Net::DirectConnect::
         psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { $printinfo->() } );
         #$self->log( 'readdir', );
-FILE:        for my $file ( readdir($dh) ) {
+      FILE: for my $file ( readdir($dh) ) {
           #$self->log( 'scanfile', $file, );
           #$self->log( 'warn', 'stopscan', $stopscan),
           last if $stopscan;
@@ -182,19 +180,16 @@ FILE:        for my $file ( readdir($dh) ) {
           #print("d $f->{full}:\n"),
           $f->{dir} = -d $f->{full_local};
           #filelist_line($f),
-          if ($f->{dir}) {
-#next  FILE if  skip ($f->{file}, $self->{skip_dir});
-          $scandir->( $f->{full_local} );
-          next ;
+          if ( $f->{dir} ) {
+            #next  FILE if  skip ($f->{file}, $self->{skip_dir});
+            $scandir->( $f->{full_local} );
+            next;
           }
           $f->{size} = -s $f->{full_local} if -f $f->{full_local};
           next if $f->{size} < $self->{file_min};
           $f->{file} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
           $f->{path} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
-
-next  FILE if  skip ($f->{file}, $self->{skip_file});
-
-          
+          next FILE if skip( $f->{file}, $self->{skip_file} );
           $f->{full} = "$f->{path}/$f->{file}";
           $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
 #$self->log 'timed', $f->{time}, psmisc::human('date_time', $f->{time}), -M $f->{full_local}, int (86400 * -M $f->{full_local}), $^T;
@@ -314,10 +309,9 @@ next  FILE if  skip ($f->{file}, $self->{skip_file});
     my $self = shift if ref $_[0];
     my ( $full_local, $tth, $file ) = @_;
     $full_local =~ m{([^/\\]+)$} unless $file;
-    $file //= $1;# unless length $file;
+    $file //= $1;    # unless length $file;
     #$full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
-    $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth,
-      if $tth;
+    $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth, if $tth;
     $self->{share_full}{$file} ||= $full_local if $file;
   };
   $self->{filelist_load} //= sub {    #{'cmd'}
@@ -340,6 +334,7 @@ next  FILE if  skip ($f->{file}, $self->{skip_file});
     $self->log ".done:", ( scalar keys %{ $self->{share_full} } ), "\n";
   }
 =cut
+
     #$self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
@@ -404,9 +399,8 @@ next  FILE if  skip ($f->{file}, $self->{skip_file});
         return if -e $self->{files} and $self->{filelist_scan} > time - $^T + 86400 * -M $self->{files};
         #$self->log( 'starter==','$0=',$0, $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
         #$0 !~ m{(.*\W)?share.pl$}
-        $self->{'filelist_builder'}
-          ? psmisc::start $self->{'filelist_builder'}, @{ $self->{'share'} }
-          : psmisc::start $^X, $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} };
+        $self->{'filelist_builder'} ? psmisc::start $self->{'filelist_builder'}, @{ $self->{'share'} } : psmisc::start $^X,
+          $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} };
         #: psmisc::startme( 'filelist', grep { -d } @ARGV );
       }
     ) if $self->{filelist_scan};

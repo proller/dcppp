@@ -3,6 +3,7 @@ package    #hide from cpan
   Net::DirectConnect::adc;
 use strict;
 use Time::HiRes qw(time sleep);
+use Socket;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 #eval "use MIME::Base32 qw( RFC ); 1;"        or print join ' ', ( 'err', 'cant use', $@ );
@@ -108,9 +109,8 @@ sub init {
     no_print         => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
     charset_protocol => 'utf8',
   );
-#  $self->{$_} ||= $_{$_} for keys %_;
-  !exists $self->{$_} ?  $self->{$_} ||= $_{$_} : ()  for keys %_;
-
+  #$self->{$_} ||= $_{$_} for keys %_;
+  !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
   #print 'adc init now=',Dumper $self;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
@@ -281,8 +281,8 @@ sub init {
       {
         my $foundedshow = ( $founded =~ m{^/} ? () : '/' ) . (
           #$self->{chrarset_fs}          ?
-#          $self->{charset_fs} ne $self->{charset_protocol} ?
-            Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded 
+          #$self->{charset_fs} ne $self->{charset_protocol} ?
+          Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded
             #: $founded
         );
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),
@@ -328,6 +328,9 @@ sub init {
       #$self->log('adcdev', 'RES:',"[d=$dst,p=$peerid]",Dumper $params);
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RES', $peerid, $toid, @_ );
+      }
+      if ( exists $self->{'want_download'}{ $params->{'TR'} } ) {
+        $self->{'want_download'}{ $params->{'TR'} }{$peerid} = $params;    #maybe not all
       }
       $params;
     },
@@ -437,22 +440,24 @@ sub init {
     'search_send' => sub {
       my $self = shift if ref $_[0];
       $self->cmd_adc( 'B', 'SCH', @{ $_[0] || $self->{'search_last'} } );
+#$self->send_udp(inet_ntoa(INADDR_BROADCAST), $self->{'dev_broadcast'}, $self->adc_make_string( 'BSCH', @{ $_[0] || $self->{'search_last'} })) if $self->{'dev_broadcast'};
     },
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
       $self->log( 'search_tth', @_ );
-      if ( $self->{'adc'} ) { $self->search_buffer( { TO => $self->make_token(), TR => $_[0], } ); }    #toauto
+      local $_ = shift;
+      if ( $self->{'adc'} ) { $self->search_buffer( { TO => $self->make_token(), TR => $_, @_ } ); }    #toauto
       else {
         #$self->cmd( 'search_buffer', 'F', 'T', '0', '9', 'TTH:' . $_[0] );
       }
     },
     'search_string' => sub {
       my $self = shift if ref $_[0];
-      my $string = $_[0];
+      my $string = shift;
       if ( $self->{'adc'} ) {
         #$self->cmd( 'search_buffer', { TO => 'auto', map AN => $_, split /\s+/, $string } );
-        $self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), } );    #TOauto
+        $self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), @_ } );    #TOauto
       } else {
         #$self->{'search_last_string'} = $string;
         #$string =~ tr/ /$/;
@@ -473,10 +478,11 @@ sub init {
     #ADC dev
     #
     'connect_aft' => sub {
-      print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
+      #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
       #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
-      $self->cmd( $self->{'message_type'}, 'SUP' ) if $self->{'adc'};
+      $self->cmd( $self->{'message_type'}, 'SUP' );
+      $self->cmd( $self->{'message_type'}, 'INF' ) if $self->{'broadcast'};
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
@@ -583,7 +589,8 @@ sub init {
       #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
       local @_ = @_;
       if ( !@_ ) {
-        @_ = ( 'file', $self->{'filename'}, '0', '-1' ) if $self->{'filename'};
+        @_ = ( 'file', $self->{'filename'}, $self->{'file_recv_from'} || '0', $self->{'file_recv_to'} || '-1' )
+          if $self->{'filename'};
         $self->log( 'err', "Nothing to get" ), return unless @_;
       }
       $self->cmd_adc( $dst, 'GET', @_ );
@@ -668,6 +675,20 @@ sub init {
       $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
     }
     #DEV=z
+
+=no
+    if ( $self->{'dev_broadcast'} ) {
+$self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{'port'});
+      $self->{'clients'}{'listener_udp_broadcast'} = $self->{'incomingclass'}->new(
+        #%$self, $self->clear(),
+        'parent' => $self, 'Proto' => 'udp', 'auto_listen' => 1,
+      'sockopts' => {%{$self->{'sockopts'}||{}}, 'Broadcast'=>1},
+      myport => $self->{'dev_broadcast'} || $self->{'port'},
+      );
+      $self->log( 'err', "cant listen broadcast (hubless)" ) unless $self->{'clients'}{'listener_udp_broadcast'}{'myport'};
+    }
+=cut
+
     if ( $self->{'dev_http'} ) {
       $self->log( 'dev', "making listeners: http" );
       #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
