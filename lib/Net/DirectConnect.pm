@@ -595,7 +595,8 @@ sub func {
     }
     $self->log( 'dev', "SOCKERR", $client, $self->{'socket'}, $self->{'select'} ) if $client ne $self->{'socket'};
     $self->{'databuf'} = '';
-    if ( !defined( my $r = $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
+#    my $r;
+    if ( !defined( $self->{'recv_addr'} = $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
       or !length( $self->{'databuf'} ) )
     {
       #TODO not here
@@ -628,6 +629,7 @@ sub func {
         #$self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
         last unless length $_ and length $self->{'cmd_aft'};
         next unless length;
+        $self->get_peer_addr_recv() if $self->{'broadcast'};
         $self->parser($_);
         last if ( $self->{'filehandle'} );
       }
@@ -803,7 +805,7 @@ last;
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
-      $self->log( 'dcdmp', "rawrcv:", $_ );
+      $self->log( 'dcdmp', "rawrcv[$self->{'host'}]:", $_ );
       my ( $dst, $cmd, @param );
       $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;    #farcolorer
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
@@ -1243,9 +1245,11 @@ last;
     push @{ $self->{'queue_download'} ||= [] }, $file;
     $self->{'want_download'}{$file} = {};
   };
-  $self->{'get_peer_addr'} ||= sub {
-    my ($self) = @_;
+  $self->{'get_peer_addr'} ||= sub (){
+    my ($self, $recv) = @_;
     return unless $self->{'socket'};
+
+    local @_;
     eval { @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) || return ) };
     return unless $_[1];
     return unless $_[1] = inet_ntoa( $_[1] );
@@ -1253,6 +1257,18 @@ last;
     $self->{'hostip'} = $_[1], $self->{'host'} ||= $self->{'hostip'} if $_[1];
     return $self->{'hostip'};
   };
+  $self->{'get_peer_addr_recv'} ||= sub (;$){
+    my ($self, $recv) = @_;
+#    return unless $self->{'socket'};
+    $recv ||= $self->{'recv_addr'} ;
+    ($self->{'recv_port'}, my $hostn) = sockaddr_in($recv);
+	$self->{'recv_host'} =  gethostbyaddr($hostn , AF_INET);
+	$self->{'recv_hostip'} = inet_ntoa($hostn);
+		return $self->{'hostip'};
+    
+};
+
+
   $self->{'get_my_addr'} ||= sub {
     my ($self) = @_;
     return unless $self->{'socket'};
