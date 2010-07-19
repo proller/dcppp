@@ -127,6 +127,7 @@ sub init {
   }
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
+  $self->{message_type} = 'B' if $self->{'broadcast'};
   $self->{'parse'} ||= {
 #
 #=================
@@ -209,7 +210,16 @@ sub init {
       }
       #$dst eq 'I' ?
       $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{hostip}] " ), $params->{I4} = $self->{hostip}
-        if $dst eq 'B' and $self->{parent}{hub} and $params->{I4} and $params->{I4} ne $self->{hostip};   #!$self->{parent}{hub}
+        if $dst eq 'B' and $self->{parent}{hub}  and $params->{I4} and $params->{I4} ne $self->{hostip};   #!$self->{parent}{hub}
+
+                if ($dst eq 'B' and $self->{broadcast}) {
+      $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{recv_hostip}:$self->{recv_port}] " );
+      
+        $params->{U4} = $self->{recv_port};
+        $params->{I4} = $self->{recv_hostip};
+        }
+
+      
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
       $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
@@ -481,8 +491,12 @@ sub init {
       #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
       #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
+      if ($self->{'broadcast'}) {
+	      $self->cmd( $self->{'message_type'}, 'INF' ) ;
+      } else {
       $self->cmd( $self->{'message_type'}, 'SUP' );
-      $self->cmd( $self->{'message_type'}, 'INF' ) if $self->{'broadcast'};
+      
+      }
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
