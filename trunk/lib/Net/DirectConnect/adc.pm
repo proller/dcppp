@@ -210,16 +210,13 @@ sub init {
       }
       #$dst eq 'I' ?
       $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{hostip}] " ), $params->{I4} = $self->{hostip}
-        if $dst eq 'B' and $self->{parent}{hub}  and $params->{I4} and $params->{I4} ne $self->{hostip};   #!$self->{parent}{hub}
-
-                if ($dst eq 'B' and $self->{broadcast}) {
-      $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{recv_hostip}:$self->{recv_port}] " );
-      
-        $params->{U4} = $self->{recv_port};
+        if $dst eq 'B' and $self->{parent}{hub} and $params->{I4} and $params->{I4} ne $self->{hostip};   #!$self->{parent}{hub}
+      if ( $dst eq 'B' and $self->{broadcast} ) {
+        $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{recv_hostip}:$self->{recv_port}] " );
+        #$params->{U4} = $self->{recv_port};
+        $params->{U4} = $self->{port};
         $params->{I4} = $self->{recv_hostip};
-        }
-
-      
+      }
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
       $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
@@ -230,9 +227,9 @@ sub init {
       #$self->log('adcdev', 'INF7', $peerid, @_);
       if ( $dst eq 'I' ) {
         $self->cmd( 'B', 'INF' );
-        $self->{'status'} = 'connected';                                                                  #clihub
+        $self->{'status'} = 'connected';    #clihub
       } elsif ( $dst eq 'C' ) {
-        $self->{'status'} = 'connected';                                                                  #clicli
+        $self->{'status'} = 'connected';    #clicli
         $self->cmd( $dst, 'INF' );
         if   ( $params->{TO} ) { }
         else                   { }
@@ -491,12 +488,8 @@ sub init {
       #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
       #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
-      if ($self->{'broadcast'}) {
-	      $self->cmd( $self->{'message_type'}, 'INF' ) ;
-      } else {
-      $self->cmd( $self->{'message_type'}, 'SUP' );
-      
-      }
+      if   ( $self->{'broadcast'} ) { $self->cmd( $self->{'message_type'}, 'INF' ); }
+      else                          { $self->cmd( $self->{'message_type'}, 'SUP' ); }
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
