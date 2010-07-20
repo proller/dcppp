@@ -13,7 +13,7 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 our $AUTOLOAD;
 our %global;
 
-sub float {               #v1
+sub float {    #v1
   my $self = shift if ref $_[0];
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
     ? sprintf( '%.' . ( $_[0] < 1 ? 3 : ( $_[0] < 3 ? 2 : 1 ) ) . 'f', $_[0] )
@@ -87,11 +87,9 @@ sub module_load {
 
 sub new {
   my $class = shift;
-  my $self = {};
+  my $self  = {};
   if ( ref $class eq __PACKAGE__ ) { $self = $class; }
-  else {
-    bless( $self, $class ) unless ref $class;
-  }
+  else                             { bless( $self, $class ) unless ref $class; }
   local %_ = (
     'Listen'      => 10,
     'Timeout'     => 5,
@@ -103,19 +101,19 @@ sub new {
     'connection' => 'LAN(T3)',
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
-    'flag' => '1',    # User status as ascii char (byte)
-                      #1 normal
-                      #2, 3 away
-                      #4, 5 server               The server icon is used when the client has
-                      #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
-                      #8, 9 fireball             The fireball icon is used when the client
-                      #10, 11 fireball away      has had an upload > 100 kB/s.
+    'flag' => '1',                                                          # User status as ascii char (byte)
+    #1 normal
+    #2, 3 away
+    #4, 5 server               The server icon is used when the client has
+    #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
+    #8, 9 fireball             The fireball icon is used when the client
+    #10, 11 fireball away      has had an upload > 100 kB/s.
     'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024 + int rand( 1024 * 1024 ),    #10GB
-    'client' => 'perl',      #'dcp++',                                                              #++: indicates the client
-                             #'protocol' => 'nmdc',    # or 'adc'
-    'V'      => $VERSION,    #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
-                             #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
-    'H'      => '0/1/0'
+    'client' => 'perl',    #'dcp++',                                                              #++: indicates the client
+    #'protocol' => 'nmdc',    # or 'adc'
+    'V' => $VERSION,       #. '_' . ( split( ' ', '$Revision$' ) )[1],    #V: tells you the version number
+    #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+    'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
@@ -141,9 +139,9 @@ sub new {
     #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'nonblocking' => 1,
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
-    'informative_hash' => [qw(clients)],                                                    #NickList IpList PortList
-                                                                                            #'disconnect_recursive' => 1,
-    'reconnect_sleep'  => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
+    'informative_hash' => [qw(clients)],    #NickList IpList PortList
+    #'disconnect_recursive' => 1,
+    'reconnect_sleep' => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
     'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', time_start => time,
     #'peers' => {},
     #'partial_prefix' => './partial/',
@@ -162,7 +160,7 @@ sub new {
   $self->{'recv_flags'} ||= 0;
   #psmisc::printlog('dev', 'init');
   $self->init();    #@param
-                    #}
+  #}
   $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
   $self->{activity} = time;
@@ -187,7 +185,7 @@ sub new {
       $self->{'Proto'}                 = 'udp';
       $self->{'sockopts'}{'Broadcast'} = 1;
       $self->{'sockopts'}{'ReuseAddr'} = 1;
-      $self->{'host'}                  = inet_ntoa(INADDR_BROADCAST) if $self->{'host'} !~ /^255\./ ;
+      $self->{'host'}                  = inet_ntoa(INADDR_BROADCAST) if $self->{'host'} !~ /^255\./;
       #$self->{'port'},
       #$self->log( 'dev',  "send to", );
       $self->{'broadcast'} = 1;
@@ -234,7 +232,7 @@ sub new {
     #$self->log( $self, '', "auto_work ", $self->active() );
     while ( $self->active() ) {
       $self->work();    #forever
-                        #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
+      #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
     }
     $self->disconnect();
   }
@@ -595,7 +593,7 @@ sub func {
     }
     $self->log( 'dev', "SOCKERR", $client, $self->{'socket'}, $self->{'select'} ) if $client ne $self->{'socket'};
     $self->{'databuf'} = '';
-#    my $r;
+    #my $r;
     if ( !defined( $self->{'recv_addr'} = $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
       or !length( $self->{'databuf'} ) )
     {
@@ -780,23 +778,23 @@ sub func {
           my $file = shift @{ $self->{'queue_download'} };
           $self->search($file);
         }
-#=todo
-        for my $tth (grep {keys %{ $self->{'want_download'}{$_}}} keys %{ $self->{'want_download'}}) {
-        if ( my ($from) = ( grep { $_->{slotsopen} or $_->{SL} } values %{ $self->{'want_download'}{$tth} } ) ) {
-my $filename = $from->{FN};
-$filename =~ s{^.*[/\\]}{}g;
-          $self->log( "selected [$filename] from", Dumper $from);
-          my $dst = $self->{'get_dir'} . $filename;
-          my $size = $from->{size} || $from->{SI};
-          unless ( -e $dst and ( !$size or -s $dst == $size ) ) {
-            $self->get( $from->{nick} || $from->{NI}, 'TTH/' . $tth, $dst );
-delete $self->{'want_download'}{$tth}; #dont!
-last;
+        #=todo
+        for my $tth ( grep { keys %{ $self->{'want_download'}{$_} } } keys %{ $self->{'want_download'} } ) {
+          if ( my ($from) = ( grep { $_->{slotsopen} or $_->{SL} } values %{ $self->{'want_download'}{$tth} } ) ) {
+            my $filename = $from->{FN};
+            $filename =~ s{^.*[/\\]}{}g;
+            $self->log( "selected [$filename] from", Dumper $from);
+            my $dst = $self->{'get_dir'} . $filename;
+            my $size = $from->{size} || $from->{SI};
+            unless ( -e $dst and ( !$size or -s $dst == $size ) ) {
+              $self->get( $from->{nick} || $from->{NI}, 'TTH/' . $tth, $dst );
+              delete $self->{'want_download'}{$tth};    #dont!
+              last;
+            }
+            #$work{'tthfrom'}{$s{tth}}
           }
-          #$work{'tthfrom'}{$s{tth}}
         }
-        }
-#=cut
+        #=cut
       }
     );
     return $self->wait_sleep(@params) if @params;
@@ -805,7 +803,7 @@ last;
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
-      $self->log( 'dcdmp', "rawrcv[$self->{'host'}]:", $_ );
+      $self->log( 'dcdmp', "rawrcv[" . ( $self->{'recv_host'} || $self->{'host'} ) . "]:", $_ );
       my ( $dst, $cmd, @param );
       $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;    #farcolorer
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
@@ -816,6 +814,7 @@ last;
           #$self->log( 'dcdmp', "P0 $dst$cmd p=",(Dumper \@param));
           #push @{ $param[0] }, shift@param;
           push @{ $param[0] }, splice @param, 1, 1;
+          #$self->log( 'dcdmp', "P0 $dst$cmd p=",(Dumper \@param));
           if ( $dst eq 'F' ) {
             #$self->log( 'dcdmp', 'feature'
             push @{ $param[0] }, splice @param, 1, 1 while $param[1] =~ /^[+\-]/;
@@ -839,7 +838,7 @@ last;
       my @self;
       #@self = $self if $self->{'adc'};
       @self = $self;    #if !$self->{'nmdc'};
-                        #$self->handler( @self, $cmd . '_parse_bef_bef', @param );
+      #$self->handler( @self, $cmd . '_parse_bef_bef', @param );
       $self->handler( @self, $cmd . '_parse_bef', @param );
       if ( ref $self->{'parse'}{$cmd} eq 'CODE' ) {
         if ( !exists $self->{'no_print'}{$cmd} ) {
@@ -869,8 +868,8 @@ last;
   $self->{'send'} ||= sub {
     my $self = shift;
     local $_;    # = join( '', @_ );
-                 #$self->{bytes_send} += length $_;
-                 #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
+    #$self->{bytes_send} += length $_;
+    #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
     eval { $_ = $self->{'socket'}->send(@_); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
@@ -1040,6 +1039,7 @@ last;
     $self->file_write(@_);
   };
 =cut
+
   $self->{'file_close'} ||= sub {
     my $self = shift;
     #$self->log( 'dcerr', 'file_close', 1);
@@ -1119,7 +1119,7 @@ last;
     #my $readed =
     my $sended;
     if ( $INC{'Sys/Sendfile.pm'} ) {    #works
-          #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
+      #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
       $self->{'file_send_offset'} += $sended =
         Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
  #);
@@ -1156,10 +1156,10 @@ last;
       read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
         $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
         unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
-                                                   #send $self->{'socket'},
-                                                   #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-                                                   #my $sended;
-                                                   #$self->log(      'snd',      length $self->{'file_send_buf'},
+      #send $self->{'socket'},
+      #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+      #my $sended;
+      #$self->log(      'snd',      length $self->{'file_send_buf'},
       $sended = $self->send( $self->{'file_send_buf'} );
       #eval {
       #$sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
@@ -1245,10 +1245,9 @@ last;
     push @{ $self->{'queue_download'} ||= [] }, $file;
     $self->{'want_download'}{$file} = {};
   };
-  $self->{'get_peer_addr'} ||= sub (){
-    my ($self, $recv) = @_;
+  $self->{'get_peer_addr'} ||= sub () {
+    my ( $self, $recv ) = @_;
     return unless $self->{'socket'};
-
     local @_;
     eval { @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) || return ) };
     return unless $_[1];
@@ -1257,18 +1256,15 @@ last;
     $self->{'hostip'} = $_[1], $self->{'host'} ||= $self->{'hostip'} if $_[1];
     return $self->{'hostip'};
   };
-  $self->{'get_peer_addr_recv'} ||= sub (;$){
-    my ($self, $recv) = @_;
-#    return unless $self->{'socket'};
-    $recv ||= $self->{'recv_addr'} ;
-    ($self->{'recv_port'}, my $hostn) = sockaddr_in($recv);
-	$self->{'recv_host'} =  gethostbyaddr($hostn , AF_INET);
-	$self->{'recv_hostip'} = inet_ntoa($hostn);
-		return $self->{'hostip'};
-    
-};
-
-
+  $self->{'get_peer_addr_recv'} ||= sub (;$) {
+    my ( $self, $recv ) = @_;
+    #return unless $self->{'socket'};
+    $recv ||= $self->{'recv_addr'};
+    ( $self->{'recv_port'}, my $hostn ) = sockaddr_in($recv);
+    $self->{'recv_host'} = gethostbyaddr( $hostn, AF_INET );
+    $self->{'recv_hostip'} = inet_ntoa($hostn);
+    return $self->{'hostip'};
+  };
   $self->{'get_my_addr'} ||= sub {
     my ($self) = @_;
     return unless $self->{'socket'};
@@ -1391,11 +1387,12 @@ last;
   $self->{'cmd_adc'} ||= sub {
     my ( $self, $dst, $cmd ) = ( shift, shift, shift );
     #$self->sendcmd( $dst, $cmd,map {ref $_ eq 'HASH'}@_);
-    #$self->log(    'cmd_adc', Dumper \@_);
+    $self->log( 'cmd_adc', $dst, $cmd, Dumper \@_ );
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-      ( $dst eq 'C' || !length $self->{'sid'} ? () : $self->{'sid'} ), $self->adc_make_string(@_)
+      ( $self->{'broadcast'} ? $self->{'INF'}{'ID'} : $dst eq 'C' || !length $self->{'sid'} ? () : $self->{'sid'} ),
+      $self->adc_make_string(@_)
         #( $dst eq 'D' || !length $self->{'sid'} ? () : $self->{'sid'} ),
     );
   };

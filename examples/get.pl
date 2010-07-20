@@ -36,7 +36,6 @@ use Net::DirectConnect;
 psmisc::config();      #psmisc::lib_init();
 psmisc::lib_init();    #for die handler
 $config{'auto_get_best'}      //= 1;
-
 $config{'hit_to_ask'}         //= 5;
 $config{'queue_recalc_every'} //= 100;
 $config{'get_every'}          //= 60;
@@ -49,10 +48,8 @@ printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 mkdir $config{'get_dir'};
 #exit;
 #use Net::DirectConnect::adc;
-
-my @todl = grep {/^[A-Z0-9]{39}$/} @ARGV;
-@ARGV = grep {!/^[A-Z0-9]{39}$/} @ARGV;
-
+my @todl = grep { /^[A-Z0-9]{39}$/ } @ARGV;
+@ARGV = grep { !/^[A-Z0-9]{39}$/ } @ARGV;
 my @dc;
 @dc = map {
   Net::DirectConnect->new(
@@ -175,7 +172,7 @@ my @dc;
             printlog( 'selected from', Dumper $from);
             my $dst = $config{'get_dir'} . $filename;
             delete $work{'filename'}{$tth};
-          my $size = $from->{size} || $from->{SI};
+            my $size = $from->{size} || $from->{SI};
             next if ( -e $dst and ( !$size or -s $dst == $size ) );
             $dc->get( $from->{nick}, 'TTH/' . $tth, $dst );
             #$work{'tthfrom'}{$s{tth}}
@@ -218,10 +215,10 @@ my @dc;
       psmisc::schedule(
         [ 10, 11 ],
         our $dl_sub__ ||= sub {
-        return unless @todl;
+          return unless @todl;
           #$dc->search('lost');
           #$dc->search($_) for @ARGV;
-          $dc->download(shift @todl);
+          $dc->download( shift @todl );
         }
       );
       psmisc::schedule(
