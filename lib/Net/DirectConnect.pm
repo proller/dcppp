@@ -1387,7 +1387,7 @@ sub func {
   $self->{'cmd_adc'} ||= sub {
     my ( $self, $dst, $cmd ) = ( shift, shift, shift );
     #$self->sendcmd( $dst, $cmd,map {ref $_ eq 'HASH'}@_);
-    $self->log( 'cmd_adc', $dst, $cmd, Dumper \@_ );
+    #$self->log( 'cmd_adc', $dst, $cmd, Dumper \@_ );
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
