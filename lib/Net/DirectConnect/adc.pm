@@ -171,6 +171,8 @@ sub init {
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
+$self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
+
 
       return $self->{'peers'}{$peerid}{'SUP'};
     },
@@ -489,7 +491,8 @@ sub init {
       my $self = shift if ref $_[0];
       #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
       if   ( $self->{'broadcast'} ) { $self->cmd( $self->{'message_type'}, 'INF' ); }
-      else                          { $self->cmd( $self->{'message_type'}, 'SUP' ); }
+      #else
+                                { $self->cmd( $self->{'message_type'}, 'SUP' ); }
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
