@@ -24,6 +24,8 @@ print(
   if !$ARGV[0];
 my $n = -1;
 
+my ( $tq, $rq, $vq ) = $db->quotes();
+
 for my $arg (@ARGV) {
   ++$n;
   #print "ar[$arg]";
@@ -72,7 +74,7 @@ for my $arg (@ARGV) {
           $db->insert_hash( $table, { 'n' => $n, 'date' => psmisc::human('date'), %$row, 'time' => $nowtime } );
           #}
         }
-        $db->do( "DELETE FROM slow WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " )
+        $db->do( "DELETE FROM ${tq}slow${tq} WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " )
           if $config{'use_slow'};
         #$db->flush_insert('slow');
         $db->flush_insert();
@@ -85,10 +87,12 @@ for my $arg (@ARGV) {
     for my $table ( sort keys %{ $config{'sql'}{'table'} } ) {
       #print "$table  \n";
       my ($col) = grep { $config{'sql'}{'table'}{$table}{$_}{'purge'} } keys %{ $config{'sql'}{'table'}{$table} };
-      my $purge = $config{'sql'}{'table'}{$table}{$col}{'purge'};
+        #printlog('err', "no col in [$table]", Dumper $config{'sql'}{'table'}{$table}), 
+	next unless $col;
+	my $purge = $config{'sql'}{'table'}{$table}{$col}{'purge'};
       #print "t $table c$col p$purge \n";
       $purge = $config{'purge'} if $purge and $purge <= 1;
-      printlog 'info', "purge $table $col $purge =", $db->do( "DELETE FROM $table WHERE $col < " . int( time - $purge ) );
+      printlog 'info', "purge $table $col $purge =", $db->do( "DELETE FROM $tq$table$tq WHERE $col < " . int( time - $purge ) );
     }
     $db->optimize() unless $config{'no_auto_optimize'};
   } elsif ( $arg eq 'install' ) {
@@ -101,7 +105,7 @@ for my $arg (@ARGV) {
     #$db->do( "DROP TABLE $_")       for qw(queries_top_string_daily queries_top_tth_daily results_top_daily);
     local $db->{'auto_install'} = 0;
     local $db->{'error_sleep'}  = 0;
-    my ( $tq, $rq, $vq ) = $db->quotes();
+    #my ( $tq, $rq, $vq ) = $db->quotes();
 
 =old 
     $db->do( "DROP TABLE ${_}d")    for qw(queries_top_string_ queries_top_tth_ results_top_);
@@ -121,6 +125,8 @@ for my $arg (@ARGV) {
 
   } elsif ( $arg eq 'stat' ) {
     $ARGV[$n] = undef;
+      $db->{'auto_repair'}  = 1;
+      $db->{'force_repair'} = 1;
     $db->table_stat();
   }
 }
