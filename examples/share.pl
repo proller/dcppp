@@ -24,12 +24,17 @@ recommended module: Sys::Sendfile
 
 =head1 CONFIGURE 
 
+ create config.pl and fill with your sharedir, hubs and other options:
+
  echo '$config{dc}{'share'} = [qw(/usr/ports/distfiles c:\distr c:\pub\ )];' >> config.pl
 
  also useful:
  $config{dc}{host} = 'myhub.net';
 
-
+ full list of options available in ../lib/Net/DirectConnect/filelist.pm:
+  $self->{file_min} in filelist.pm must be written as 
+  $config{dc}{file_min} = 1_000_000; #skip files smaller 1MB 
+  
 =head1 TUNING
 
 freebsd:
