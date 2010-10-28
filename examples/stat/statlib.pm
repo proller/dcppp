@@ -12,6 +12,7 @@ use psmisc;
 use Exporter 'import';
 our @EXPORT = qw(%config  $param   $db );
 our ( %config, $param, $db, );
+our ( $tq, $rq, $vq );
 $config{'log_trace'}  ||= 0;
 $config{'log_dmpbef'} ||= 0;
 $config{'log_dmp'}    ||= 0;
@@ -396,7 +397,7 @@ sub make_query {
   my $sql;
   if ( is_slow($query) and $ENV{'SERVER_PORT'} and $config{'use_slow'} ) {
     $sql =
-        "SELECT * FROM slow WHERE name = "
+        "SELECT * FROM ${tq}slow${tq} WHERE name = "
       . $db->quote($query)
       . ( ( $config{'queries'}{$query}{'periods'} ? ' AND period=' . $db->quote($period) : '' )
       . " ORDER BY n"
@@ -417,4 +418,5 @@ sub make_query {
   return $db->query($sql);
 }
 $db ||= pssql->new( %{ $config{'sql'} || {} }, );
+( $tq, $rq, $vq ) = $db->quotes();
 1;
