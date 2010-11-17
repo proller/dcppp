@@ -46,9 +46,11 @@ fullclean: distclean veryclean
 	rm -rf \$(DISTNAME)-*.tar.gz *.bak *.old *.core MANIFEST README eiskaltdcpp
     
 release: update test fullclean manifest metafile dist
-
+}. (
+$^O eq 'MSWin32' ? () : 
+qq{
 update:
 	[ -d eiskaltdcpp ] || git clone git://github.com/negativ/eiskaltdcpp.git
 	cp $dcppfiles ./dcpp
-}
+})
 }
