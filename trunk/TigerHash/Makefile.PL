@@ -16,7 +16,7 @@ use ExtUtils::MakeMaker;
     : ()
   ),
   #LIBS   => [''],                                               # e.g., '-lm'
-  DEFINE => '-I./linuxdcpp/ -I../linuxdcpp/',                   # e.g., '-DHAVE_SOMETHING'
+  DEFINE => '-I./dcpp/ -I../dcpp/',                   # e.g., '-DHAVE_SOMETHING'
   #Insert -I. if you add *.h files later:
   INC => '-I.',                                                 # e.g., '-I/usr/include/other'
   #Un-comment this if you add C files to link with later:
@@ -31,7 +31,11 @@ $_{dist} = {
 };
 WriteMakefile(%_);
 
+
 sub MY::postamble {
+my $dcppfiles=join ' ', map {'./eiskaltdcpp/dcpp/'.$_} qw(CriticalSection.h DCPlusPlus.h Encoder.cpp Encoder.h Exception.h FastAlloc.h HashValue.h MerkleTree.h Thread.h TigerHash.cpp TigerHash.h stdinc.cpp);
+#config.h DCPlusPlus.cpp  stdinc.h
+
   qq{
 #docs: README
 
@@ -39,9 +43,12 @@ sub MY::postamble {
 #pod2text $_{VERSION_FROM} > README
 
 fullclean: distclean veryclean
-	rm -f \$(DISTNAME)-*.tar.gz MANIFEST README
+	rm -rf \$(DISTNAME)-*.tar.gz *.bak *.old *.core MANIFEST README eiskaltdcpp
+    
+release: update test fullclean manifest metafile dist
 
-release: test fullclean manifest metafile dist
-
+update:
+	[ -d eiskaltdcpp ] || git clone git://github.com/negativ/eiskaltdcpp.git
+	cp $dcppfiles ./dcpp
 }
 }

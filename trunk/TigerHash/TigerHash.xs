@@ -32,9 +32,9 @@ tthbin(s)
     CODE:
         STRLEN len;
         char *  ptr = SvPV(s, len);
-        TigerHash th;
+        dcpp::TigerHash th;
         th.update(ptr, len);
-        RETVAL = newSVpv((const char*)(th.finalize()), (STRLEN)TigerHash::HASH_SIZE);
+        RETVAL = newSVpv((const char*)(th.finalize()), (STRLEN)dcpp::TigerHash::BYTES);
     OUTPUT:
         RETVAL
     
@@ -46,10 +46,10 @@ tth(s)
     CODE:
         STRLEN len;
         char *  ptr = SvPV(s, len);
-        TigerHash th;
+        dcpp::TigerHash th;
         th.update(ptr, len);
-	string enc ;
-	Encoder::toBase32(    th.finalize(), TigerHash::HASH_SIZE, enc);
+	std::string enc ;
+	dcpp::Encoder::toBase32(    th.finalize(), dcpp::TigerHash::BYTES, enc);
     RETVAL = newSVpv( enc.data(), enc.length());
     OUTPUT:
 		RETVAL
@@ -83,9 +83,9 @@ tthfile(s)
 	uint8_t* buf = NULL;
 	buf = new uint8_t[BUF_SIZE];
 	size_t n = 0;
-	int64_t bs = max(TigerTree::calcBlockSize(size, 10), MIN_BLOCK_SIZE);
+	int64_t bs = std::max(dcpp::TigerTree::calcBlockSize(size, 10), MIN_BLOCK_SIZE);
 
-	TigerTree th(bs);
+	dcpp::TigerTree th(bs);
 
 	do {
 		size_t bufSize = BUF_SIZE;
@@ -97,8 +97,8 @@ tthfile(s)
 	close(fd);
 
 	th.update(buf, 0);
-	string enc ;
-	Encoder::toBase32(    th.finalize(), TigerHash::HASH_SIZE, enc);
+	std::string enc ;
+	dcpp::Encoder::toBase32(    th.finalize(), dcpp::TigerHash::BYTES, enc);
 	delete [] buf;
 	RETVAL = newSVpv( enc.data(), enc.length());
 

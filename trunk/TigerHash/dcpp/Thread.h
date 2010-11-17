@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2001-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#if !defined(THREAD_H)
-#define THREAD_H
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef DCPLUSPLUS_DCPP_THREAD_H
+#define DCPLUSPLUS_DCPP_THREAD_H
 
 #ifndef _WIN32
 #include <pthread.h>
@@ -30,9 +26,12 @@
 #endif
 
 #include "Exception.h"
+
+namespace dcpp {
+
 STANDARD_EXCEPTION(ThreadException);
 
-class Thread
+class Thread : private boost::noncopyable
 {
 public:
 #ifdef _WIN32
@@ -64,17 +63,25 @@ public:
 
 	static void sleep(uint32_t millis) { ::Sleep(millis); }
 	static void yield() { ::Sleep(1); }
+
+#ifdef __MINGW32__
+	static long safeInc(volatile long& v) { return InterlockedIncrement((long*)&v); }
+	static long safeDec(volatile long& v) { return InterlockedDecrement((long*)&v); }
+	static long safeExchange(volatile long& target, long value) { return InterlockedExchange((long*)&target, value); }
+
+#else
 	static long safeInc(volatile long& v) { return InterlockedIncrement(&v); }
 	static long safeDec(volatile long& v) { return InterlockedDecrement(&v); }
 	static long safeExchange(volatile long& target, long value) { return InterlockedExchange(&target, value); }
+#endif
 
 #else
 
 	enum Priority {
-/*		IDLE = 1,
+		IDLE = 1,
 		LOW = 1,
 		NORMAL = 0,
-		HIGH = -1*/
+		HIGH = -1
 	};
 	Thread() throw() : threadHandle(0) { }
 	virtual ~Thread() {
@@ -112,14 +119,17 @@ public:
 		pthread_mutex_unlock(&mtx);
 		return ret;
 	}
+        static bool safeCmp(volatile long & target, long value) {
+            pthread_mutex_lock(&mtx);
+            bool ret = (target == value);
+            pthread_mutex_unlock(&mtx);
+            return ret;
+        }
+
 #endif
 
 protected:
 	virtual int run() = 0;
-
-private:
-	Thread(const Thread&);
-	Thread& operator=(const Thread&);
 
 #ifdef _WIN32
 	HANDLE threadHandle;
@@ -139,5 +149,7 @@ private:
 	}
 #endif
 };
+
+} // namespace dcpp
 
 #endif // !defined(THREAD_H)

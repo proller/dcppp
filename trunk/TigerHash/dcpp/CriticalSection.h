@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2001-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,55 +19,58 @@
 #if !defined(CRITICAL_SECTION_H)
 #define CRITICAL_SECTION_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifdef FIX_FOR_OLD_BOOST
+    #include "Thread.h"
+#else
+    // header-only implementation of mutex
+    #include <boost/signals2/mutex.hpp>
+#endif
 
-#include "Thread.h"
+namespace dcpp {
 
 class CriticalSection
 {
 #ifdef _WIN32
 public:
-	void enter() throw() {
-		EnterCriticalSection(&cs);
-		dcdrun(counter++);
-	}
-	void leave() throw() {
-		dcassert(--counter >= 0);
-		LeaveCriticalSection(&cs);
-	}
-	CriticalSection() throw() {
-		dcdrun(counter = 0;);
-		InitializeCriticalSection(&cs);
-	}
-	~CriticalSection() throw() {
-		dcassert(counter==0);
-		DeleteCriticalSection(&cs);
-	}
+    void enter() throw() {
+        EnterCriticalSection(&cs);
+        dcdrun(counter++);
+    }
+    void leave() throw() {
+        dcassert(--counter >= 0);
+        LeaveCriticalSection(&cs);
+    }
+    CriticalSection() throw() {
+        dcdrun(counter = 0;);
+        InitializeCriticalSection(&cs);
+    }
+    ~CriticalSection() throw() {
+        dcassert(counter==0);
+        DeleteCriticalSection(&cs);
+    }
 private:
-	dcdrun(long counter;);
-	CRITICAL_SECTION cs;
+    dcdrun(long counter);
+    CRITICAL_SECTION cs;
 #else
 public:
-	CriticalSection() throw() {
-		pthread_mutexattr_init(&ma);
-		pthread_mutexattr_settype(&ma, PTHREAD_MUTEX_RECURSIVE);
-		pthread_mutex_init(&mtx, &ma);
-	}
-	~CriticalSection() throw() {
-		pthread_mutex_destroy(&mtx);
-		pthread_mutexattr_destroy(&ma);
-	}
-	void enter() throw() { pthread_mutex_lock(&mtx); }
-	void leave() throw() { pthread_mutex_unlock(&mtx); }
-	pthread_mutex_t& getMutex() { return mtx; }
+    CriticalSection() throw() {
+        pthread_mutexattr_init(&ma);
+        pthread_mutexattr_settype(&ma, PTHREAD_MUTEX_RECURSIVE);
+        pthread_mutex_init(&mtx, &ma);
+    }
+    ~CriticalSection() throw() {
+        pthread_mutex_destroy(&mtx);
+        pthread_mutexattr_destroy(&ma);
+    }
+    void enter() throw() { pthread_mutex_lock(&mtx); }
+    void leave() throw() { pthread_mutex_unlock(&mtx); }
+    pthread_mutex_t& getMutex() { return mtx; }
 private:
-	pthread_mutex_t mtx;
-	pthread_mutexattr_t ma;
+    pthread_mutex_t mtx;
+    pthread_mutexattr_t ma;
 #endif
-	CriticalSection(const CriticalSection&);
-	CriticalSection& operator=(const CriticalSection&);
+    CriticalSection(const CriticalSection&);
+    CriticalSection& operator=(const CriticalSection&);
 };
 
 /**
@@ -80,21 +83,7 @@ private:
  */
 class FastCriticalSection {
 public:
-#ifdef _WIN32
-	FastCriticalSection() : state(0) { }
-
-	void enter() {
-		while(Thread::safeExchange(state, 1) == 1) {
-			Thread::yield();
-		}
-	}
-	void leave() {
-		Thread::safeDec(state);
-	}
-private:
-	volatile long state;
-
-#else
+#ifdef FIX_FOR_OLD_BOOST
 	// We have to use a pthread (nonrecursive) mutex, didn't find any test_and_set on linux...
 	FastCriticalSection() {
 		static pthread_mutex_t fastmtx = PTHREAD_MUTEX_INITIALIZER;
@@ -105,19 +94,27 @@ private:
 	void leave() { pthread_mutex_unlock(&mtx); }
 private:
 	pthread_mutex_t mtx;
+#else
+    void enter() { mtx.lock(); }
+	void leave() { mtx.unlock(); }
+private:
+	typedef boost::signals2::mutex mutex_t;
+	mutex_t mtx;
 #endif
 };
 
 template<class T>
 class LockBase {
 public:
-	LockBase(T& aCs) throw() : cs(aCs) { cs.enter(); }
-	~LockBase() throw() { cs.leave(); }
+    LockBase(T& aCs) throw() : cs(aCs) { cs.enter(); }
+    ~LockBase() throw() { cs.leave(); }
 private:
-	LockBase& operator=(const LockBase&);
-	T& cs;
+    LockBase& operator=(const LockBase&);
+    T& cs;
 };
 typedef LockBase<CriticalSection> Lock;
 typedef LockBase<FastCriticalSection> FastLock;
+
+} // namespace dcpp
 
 #endif // !defined(CRITICAL_SECTION_H)
