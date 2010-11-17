@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2001-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 #include "DCPlusPlus.h"
 
 #include "Encoder.h"
+
+namespace dcpp {
 
 const int8_t Encoder::base32Table[] = {
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
@@ -102,3 +104,5 @@ void Encoder::fromBase32(const char* src, uint8_t* dst, size_t len) {
 		}
 	}
 }
+
+} // namespace dcpp

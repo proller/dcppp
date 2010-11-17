@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2001-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,9 @@
 #if !defined(FAST_ALLOC_H)
 #define FAST_ALLOC_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "CriticalSection.h"
+
+namespace dcpp {
 
 #ifndef _DEBUG
 struct FastAllocBase {
@@ -59,6 +57,9 @@ struct FastAlloc : public FastAllocBase {
 			deallocate((uint8_t*)m);
 		}
 	}
+protected:
+	~FastAlloc() { }
+
 private:
 
 	static void* allocate() {
@@ -96,5 +97,7 @@ template<class T> void* FastAlloc<T>::freeList = NULL;
 #else
 template<class T> struct FastAlloc { };
 #endif
+
+} // namespace dcpp
 
 #endif // !defined(FAST_ALLOC_H)

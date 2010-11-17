@@ -1,5 +1,9 @@
 Revision history for Perl extension TigerHash.
 
+0.03 2010-11-17
+	now getting cpp lib from 
+	git://github.com/negativ/eiskaltdcpp.git
+
 0.02 2009 01 26
 	cleaned
 	now standalone
