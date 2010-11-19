@@ -1,7 +1,7 @@
-#Before `make install' is performed this script should be runnable with
-#`make test'. After `make install' it should work as `perl tiger.t'
-#########################
-#change 'tests => 1' to 'tests => last_test_to_print';
+#!/usr/bin/perl
+use strict;
+use warnings;
+no warnings qw(uninitialized);
 use Test::More qw(no_plan);
 BEGIN { use_ok('Net::DirectConnect::TigerHash') }
 #########################
@@ -15,10 +15,11 @@ local %_ = (
 );
 
 for my $str ( sort keys %_ ) {
-    ok( ( $_ = Net::DirectConnect::TigerHash::tth($_) ) eq $_{$str}, "[" . substr( $str, 0, 20 ) . "..]=[$_{$str}] r=[$_]" );
+    ok( ( $_ = Net::DirectConnect::TigerHash::tth($str) ) eq $_{$str}, "[" .  ($str =~ /^(.{20})/ ? $1.'...' : $str)  . "]=[$_{$str}] r=[$_]" );
 }
 
 ok( !defined Net::DirectConnect::TigerHash::tthfile('___Not_Existen_t_ffiiiillee____') );
 ok( !defined Net::DirectConnect::TigerHash::tthfile('./') );
 ok( !defined Net::DirectConnect::TigerHash::tthfile('../t') );
+
 1;
