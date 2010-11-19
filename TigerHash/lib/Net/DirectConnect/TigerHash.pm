@@ -28,7 +28,7 @@ Net::DirectConnect::TigerHash - Perl extension for calculating tiger hashes from
 
 =head1 DESCRIPTION
 
- ported from linuxdcpp-1.0.3/client
+ ported from eiskaltdc
 
 =head2 EXPORT
 
