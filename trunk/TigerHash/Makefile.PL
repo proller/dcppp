@@ -34,7 +34,7 @@ WriteMakefile(%_);
 
 
 sub MY::postamble {
-my $dcppfiles=join ' ', map {'./eiskaltdcpp/dcpp/'.$_} qw(CriticalSection.h DCPlusPlus.h Encoder.cpp Encoder.h Exception.h FastAlloc.h HashValue.h MerkleTree.h Thread.h TigerHash.cpp TigerHash.h stdinc.cpp);
+my $dcppfiles=join ' ', map {'./eiskaltdcpp/dcpp/'.$_} qw(DCPlusPlus.h Encoder.cpp Encoder.h HashValue.h MerkleTree.h TigerHash.cpp TigerHash.h stdinc.cpp);
 #config.h DCPlusPlus.cpp  stdinc.h
 
   qq{
