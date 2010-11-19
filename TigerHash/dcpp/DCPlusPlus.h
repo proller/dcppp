@@ -99,8 +99,19 @@ typedef std::pair<wstring, wstring> WStringPair;
 typedef std::vector<WStringPair> WStringPairList;
 typedef WStringPairList::iterator WStringPairIter;
 
-typedef std::vector<uint8_t> ByteVector;
+typedef unsigned char uint8_t;
+typedef signed char int8_t             ;
+typedef unsigned char uint8_t          ;
+typedef signed int int16_t             ;
+typedef unsigned int uint16_t          ;
+typedef signed long int int32_t        ;
+typedef unsigned long int uint32_t     ;
+typedef signed long long int int64_t   ;
+typedef unsigned long long int uint64_t;
 
+
+typedef std::vector<uint8_t> ByteVector;
+/*
 template<typename T>
 boost::basic_format<T> dcpp_fmt(const T* t) {
     boost::basic_format<T> fmt;
@@ -112,7 +123,7 @@ boost::basic_format<T> dcpp_fmt(const T* t) {
 template<typename T>
 boost::basic_format<T> dcpp_fmt(const std::basic_string<T>& t) {
     return dcpp_fmt(t.c_str());
-}
+}*/
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #define _LL(x) x##ll
@@ -178,8 +189,8 @@ typedef StringMapIter TStringMapIter;
 
 #endif
 
-extern void startup(void (*f)(void*, const string&), void* p);
-extern void shutdown();
+//extern void startup(void (*f)(void*, const string&), void* p);
+//extern void shutdown();
 
 #ifdef BUILDING_DCPP
 #define PACKAGE "libeiskaltdcpp"

@@ -19,12 +19,12 @@
 #if !defined(CRITICAL_SECTION_H)
 #define CRITICAL_SECTION_H
 
-#ifdef FIX_FOR_OLD_BOOST
+//#ifdef FIX_FOR_OLD_BOOST
     #include "Thread.h"
-#else
+//#else
     // header-only implementation of mutex
-    #include <boost/signals2/mutex.hpp>
-#endif
+//    #include <boost/signals2/mutex.hpp>
+//#endif
 
 namespace dcpp {
 

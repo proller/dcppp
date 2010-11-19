@@ -51,7 +51,7 @@
 # endif
 #endif
 
-#ifdef _MSC_VER
+//#if defined(_MSC_VER) || defined(WIN32) 
 # pragma warning(disable: 4711) // function 'xxx' selected for automatic inline expansion
 # pragma warning(disable: 4786) // identifier was truncated to '255' characters in the debug information
 # pragma warning(disable: 4290) // C++ Exception Specification ignored
@@ -59,8 +59,7 @@
 # pragma warning(disable: 4710) // function not inlined
 # pragma warning(disable: 4503) // decorated name length exceeded, name was truncated
 
-# if _MSC_VER == 1200 || _MSC_VER == 1300 || _MSC_VER == 1310 || _MSC_VER == 1400
-
+//# if 1
 typedef signed __int8 int8_t;
 typedef signed __int16 int16_t;
 typedef signed __int32 int32_t;
@@ -71,9 +70,9 @@ typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
 
-# endif
+//# endif
 
-#endif
+//#endif
 
 #if defined(_MSC_VER)
 #define _LL(x) x##ll
