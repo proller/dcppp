@@ -91,7 +91,7 @@ tthfile(s)
 	uint8_t* buf = NULL;
 	buf = new uint8_t[BUF_SIZE];
 	size_t n = 0;
-	int64_t bs = std::max(dcpp::TigerTree::calcBlockSize(size, 10), MIN_BLOCK_SIZE);
+	int64_t bs = std::max((unsigned long)dcpp::TigerTree::calcBlockSize(size, 10), (unsigned long)MIN_BLOCK_SIZE);
 
 	dcpp::TigerTree th(bs);
 
