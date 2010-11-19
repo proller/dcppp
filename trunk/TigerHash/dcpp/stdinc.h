@@ -63,12 +63,13 @@ typedef unsigned __int64 uint64_t;
 
 #endif // _MSC_VER
 
-#ifdef _WIN32
-# define _WIN32_WINNT 0x0501
-# define _WIN32_IE      0x0501
-# define WINVER 0x501
 
-#define STRICT
+#ifdef _WIN32
+//# define _WIN32_WINNT 0x0501
+# define _WIN32_IE      0x0501
+//# define WINVER 0x501
+
+//#define STRICT
 #define WIN32_LEAN_AND_MEAN
 
 #include <winsock2.h>
@@ -77,7 +78,7 @@ typedef unsigned __int64 uint64_t;
 #include <mmsystem.h>
 
 #include <tchar.h>
-#include <shlobj.h>
+//#include <shlobj.h>
 
 #else
 #include <unistd.h>
@@ -110,11 +111,11 @@ typedef unsigned __int64 uint64_t;
 #include <memory>
 #include <numeric>
 #include <limits>
-#include <libintl.h>
+//#include <libintl.h>
 
-#include <boost/format.hpp>
-#include <boost/scoped_array.hpp>
-#include <boost/noncopyable.hpp>
+//#include <boost/format.hpp>
+//#include <boost/scoped_array.hpp>
+//#include <boost/noncopyable.hpp>
 
 #if defined(_MSC_VER) || defined(_STLPORT_VERSION)
 
