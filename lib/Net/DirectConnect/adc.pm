@@ -7,7 +7,7 @@ use Socket;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 #eval "use MIME::Base32 qw( RFC ); 1;"        or print join ' ', ( 'err', 'cant use', $@ );
-use MIME::Base32 qw( RFC );
+#use MIME::Base32 qw( RFC );
 use Net::DirectConnect;
 #use Net::DirectConnect::clicli;
 use Net::DirectConnect::http;
@@ -51,8 +51,9 @@ qq{Direct connection failed, flag "TO" the token, flag "PR" the protocol string.
   '54' => 'No hash support overlap in SUP between clients.',
 );
 #eval "use Net::DirectConnect::TigerHash; 1;" or print join ' ', ( 'err', 'cant use', $@ );
-eval q{use Net::DirectConnect::TigerHash;};
+#eval q{use Net::DirectConnect::TigerHash;};
 
+=no
 sub base32 ($) {
   #eval {
   MIME::Base32::encode( $_[0] );
@@ -69,6 +70,7 @@ sub tiger ($) {
     #mhash(Mhash::MHASH_TIGER, $_);
 }
 sub hash ($) { base32( tiger( $_[0] ) ); }
+=cut
 #sub init {  my $self = shift;
 
 =cu
@@ -128,6 +130,27 @@ sub init {
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{message_type} = 'B' if $self->{'broadcast'};
+
+if (use_try('MIME::Base32')) {
+$self->{base_encode} ||= sub {
+  shift if ref $_[0];
+  MIME::Base32::encode( @_ ) 
+};
+$self->{base_decode} ||= sub { 
+  shift if ref $_[0];   
+  MIME::Base32::decode( @_ ) 
+};
+}
+
+if (use_try('Net::DirectConnect::TigerHash')) {
+$self->{hash} ||= sub {shift if ref $_[0];    Net::DirectConnect::TigerHash::tthbin($_[0]); };
+}
+
+$self->{hash_base} ||= sub {shift if ref $_[0]; $self->base_encode($self->hash($_[0])) };
+#sub hash ($) { base32( tiger( $_[0] ) ); }
+
+
+
   $self->{'parse'} ||= {
 #
 #=================
@@ -144,7 +167,7 @@ sub init {
       if ( $dst eq 'H' ) {
         $self->cmd( 'I', 'SUP' );
         #$peerid ||= join '', map {} 1..4
-        $peerid ||= base32(
+        $peerid ||= $self->base_encode(
           pack 'S', $self->{'number'}
             #+ int rand 100
         );
@@ -560,10 +583,10 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
         $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
         $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
         $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
-        $self->{'PID'} ||= tiger $self->{'ID'};
-        $self->{'CID'} ||= tiger $self->{'PID'};
-        $self->{'INF'}{'PD'} ||= base32 $self->{'PID'};
-        $self->{'INF'}{'ID'} ||= base32 $self->{'CID'};
+        $self->{'PID'} ||= $self->hash($self->{'ID'});
+        $self->{'CID'} ||= $self->hash($self->{'PID'});
+        $self->{'INF'}{'PD'} ||= $self->base_encode($self->{'PID'});
+        $self->{'INF'}{'ID'} ||= $self->base_encode($self->{'CID'});
         $self->log( 'id gen',
           "iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
         $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
