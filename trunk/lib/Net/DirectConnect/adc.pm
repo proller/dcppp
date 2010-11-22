@@ -131,7 +131,7 @@ sub init {
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{message_type} = 'B' if $self->{'broadcast'};
 
-if (use_try('MIME::Base32', 'RFC')) {
+if (Net::DirectConnect::use_try('MIME::Base32', 'RFC')) {
 $self->{base_encode} ||= sub {
   shift if ref $_[0];
   MIME::Base32::encode_rfc3548( @_ ) 
@@ -140,20 +140,24 @@ $self->{base_decode} ||= sub {
   shift if ref $_[0];   
   MIME::Base32::decode_rfc3548( @_ ) 
 };
+} else {
+$self->log('err', 'cant use MIME::Base32');
 }
 
-if (use_try('Net::DirectConnect::TigerHash')) {
+if (Net::DirectConnect::use_try('Net::DirectConnect::TigerHash')) {
 $self->{hash} ||= sub {shift if ref $_[0];    Net::DirectConnect::TigerHash::tthbin($_[0]); };
 
 $self->{base_encode} ||= sub {
   shift if ref $_[0];
-  Net::DirectConnect::TigerHash::toBase32 $_[0];
+  Net::DirectConnect::TigerHash::toBase32($_[0]);
 };
 $self->{base_decode} ||= sub { 
   shift if ref $_[0];   
-  Net::DirectConnect::TigerHash::fromBase32 $_[0];
+  Net::DirectConnect::TigerHash::fromBase32($_[0]);
 };
 
+} else {
+$self->log('err', 'cant use Net::DirectConnect::TigerHash');
 }
 
 $self->{hash_base} ||= sub {shift if ref $_[0]; $self->base_encode($self->hash($_[0])) };
@@ -597,8 +601,7 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
         $self->{'CID'} ||= $self->hash($self->{'PID'});
         $self->{'INF'}{'PD'} ||= $self->base_encode($self->{'PID'});
         $self->{'INF'}{'ID'} ||= $self->base_encode($self->{'CID'});
-        $self->log( 'id gen',
-          "iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
+        #$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
         $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
         $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
         $self->{'INF'}{'SF'} ||= 30999;
@@ -768,6 +771,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       'hub=', $self->{'parent'}{'hub'},
       ) if $self
         and $self->{'log'};
+	#psmisc::caller_trace 15;
   };
   $self->get_peer_addr() if $self->{'socket'};
   $self->log( 'err', 'cant load TigerHash module' ) unless $INC{'Net/DirectConnect/TigerHash.pm'};
