@@ -7,20 +7,27 @@ use ExtUtils::MakeMaker;
   INSTALLDIRS  => 'site',
   PREREQ_PM    => {
     'Time::HiRes'         => 0,
-    'MIME::Base32'        => 0,    #for adc only
-    'Sys::Sendfile'       => 0,    #faster file sending
+    #'MIME::Base32'        => 0,    #for adc only
+    #'Sys::Sendfile'       => 0,    #faster file sending
     'IO::Compress::Bzip2' => 0,    #preparing filelists
     'DBI'                 => 0,
     'DBD::SQLite'         => 0,
+    'Net::DirectConnect::TigerHash' => 0,
   },
+  NORECURS => 1,
 );
 $_{dist} = {
   PREOP    => "pod2text $_{VERSION_FROM} | tee README >\$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;",
   COMPRESS => 'gzip -9v',
   SUFFIX   => '.gz',
 };
-$_{PREREQ_PM}{'Net::DirectConnect::TigerHash'} = 0,    #for sharing and adc
-  $_{NORECURS} = 1, if $^O =~ /win32/i or $^O =~ /mswin/ or $^O =~ /freebsd/i;
+#$_{PREREQ_PM}{'Net::DirectConnect::TigerHash'} = 0,    #for sharing and adc
+#  $_{NORECURS} = 1, if $^O =~ /win32/i or $^O =~ /mswin/ or $^O =~ /freebsd/i;
+
+if ( $^O !~ /MSWin32/i) { #mingw fail
+	$_{PREREQ_PM}{$_} = 0 for qw(MIME::Base32 Sys::Sendfile);
+}
+
 WriteMakefile(%_);
 
 sub MY::postamble {

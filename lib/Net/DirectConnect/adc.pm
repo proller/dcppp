@@ -131,19 +131,29 @@ sub init {
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{message_type} = 'B' if $self->{'broadcast'};
 
-if (use_try('MIME::Base32')) {
+if (use_try('MIME::Base32', 'RFC')) {
 $self->{base_encode} ||= sub {
   shift if ref $_[0];
-  MIME::Base32::encode( @_ ) 
+  MIME::Base32::encode_rfc3548( @_ ) 
 };
 $self->{base_decode} ||= sub { 
   shift if ref $_[0];   
-  MIME::Base32::decode( @_ ) 
+  MIME::Base32::decode_rfc3548( @_ ) 
 };
 }
 
 if (use_try('Net::DirectConnect::TigerHash')) {
 $self->{hash} ||= sub {shift if ref $_[0];    Net::DirectConnect::TigerHash::tthbin($_[0]); };
+
+$self->{base_encode} ||= sub {
+  shift if ref $_[0];
+  Net::DirectConnect::TigerHash::toBase32 $_[0];
+};
+$self->{base_decode} ||= sub { 
+  shift if ref $_[0];   
+  Net::DirectConnect::TigerHash::fromBase32 $_[0];
+};
+
 }
 
 $self->{hash_base} ||= sub {shift if ref $_[0]; $self->base_encode($self->hash($_[0])) };

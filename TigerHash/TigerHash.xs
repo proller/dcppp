@@ -105,7 +105,7 @@ tthfile(s)
 	close(fd);
 
 	th.update(buf, 0);
-	std::string enc ;
+	std::string enc;
 	dcpp::Encoder::toBase32(    th.finalize(), dcpp::TigerHash::BYTES, enc);
 	delete [] buf;
 	RETVAL = newSVpv( enc.data(), enc.length());
@@ -113,4 +113,33 @@ tthfile(s)
     OUTPUT:
 		RETVAL  
   
+
+SV * 
+toBase32(s)
+    SV *s
+    PROTOTYPE: $
+    CODE:
+        STRLEN len;
+        char *  ptr = SvPV(s, len);
+	std::string enc ;
+	dcpp::Encoder::toBase32((const uint8_t*)ptr, len, enc);
+	RETVAL = newSVpv( enc.data(), enc.length());
+    OUTPUT:
+        RETVAL
+
   
+SV * 
+fromBase32(s)
+    SV *s
+    PROTOTYPE: $
+    CODE:
+        STRLEN len;
+        char * ptr = SvPV(s, len);
+	len = len * 5 / 8;
+	uint8_t* dst = new uint8_t [len * 5 / 8];
+	dcpp::Encoder::fromBase32(ptr, dst, len);
+	RETVAL = newSVpv((const char*) dst, len);
+    OUTPUT:
+        RETVAL
+
+
