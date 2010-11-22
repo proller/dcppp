@@ -15,11 +15,15 @@ local %_ = (
 );
 
 for my $str ( sort keys %_ ) {
-    ok( ( $_ = Net::DirectConnect::TigerHash::tth($str) ) eq $_{$str}, "[" .  ($str =~ /^(.{20})/ ? $1.'...' : $str)  . "]=[$_{$str}] r=[$_]" );
+    ok ( $_ = Net::DirectConnect::TigerHash::tth($str) ) eq $_{$str}, "[" .  ($str =~ /^(.{20})/ ? $1.'...' : $str)  . "]=[$_{$str}] r=[$_]" ;
 }
 
-ok( !defined Net::DirectConnect::TigerHash::tthfile('___Not_Existen_t_ffiiiillee____') );
-ok( !defined Net::DirectConnect::TigerHash::tthfile('./') );
-ok( !defined Net::DirectConnect::TigerHash::tthfile('../t') );
+ok !defined Net::DirectConnect::TigerHash::tthfile('___Not_Existen_t_ffiiiillee____') ;
+ok !defined Net::DirectConnect::TigerHash::tthfile('./') ;
+ok !defined Net::DirectConnect::TigerHash::tthfile('../t') ;
+
+ok Net::DirectConnect::TigerHash::toBase32('a');
+ok Net::DirectConnect::TigerHash::fromBase32('3UACGB4Z6UAJ73DN5PEDRO3KE7PSXHLPCEGHSNY');
+ok 'a' eq Net::DirectConnect::TigerHash::fromBase32 Net::DirectConnect::TigerHash::toBase32 'a';
 
 1;
