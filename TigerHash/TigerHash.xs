@@ -14,17 +14,14 @@ extern "C" {
 #endif
 
 #include "os.h"
+#include "getpagesize.c"
 
-// files from linuxdcpp-1.0.3/client
-// bzr branch lp:linuxdcpp
 #include "stdinc.h"
-//#include "config.h"
 #include "DCPlusPlus.h"
 #include "TigerHash.cpp"
 #include "Encoder.cpp"
 #include "MerkleTree.h"
 
-#include "getpagesize.c"
 
 MODULE = Net::DirectConnect::TigerHash		PACKAGE = Net::DirectConnect::TigerHash		
 
@@ -120,8 +117,8 @@ toBase32(s)
     PROTOTYPE: $
     CODE:
         STRLEN len;
-        char *  ptr = SvPV(s, len);
-	std::string enc ;
+        char * ptr = SvPV(s, len);
+	std::string enc;
 	dcpp::Encoder::toBase32((const uint8_t*)ptr, len, enc);
 	RETVAL = newSVpv( enc.data(), enc.length());
     OUTPUT:
@@ -136,7 +133,7 @@ fromBase32(s)
         STRLEN len;
         char * ptr = SvPV(s, len);
 	len = len * 5 / 8;
-	uint8_t* dst = new uint8_t [len * 5 / 8];
+	uint8_t* dst = new uint8_t [len];
 	dcpp::Encoder::fromBase32(ptr, dst, len);
 	RETVAL = newSVpv((const char*) dst, len);
     OUTPUT:
