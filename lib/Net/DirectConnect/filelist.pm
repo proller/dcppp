@@ -11,7 +11,7 @@ use lib '../../../examples/stat/pslib';    # REMOVE
 use lib 'stat/pslib';                      # REMOVE
 use psmisc;                                # REMOVE
 use pssql;                                 # REMOVE
-psmisc::use_try 'Sys::Sendfile';
+Net::DirectConnect::use_try 'Sys::Sendfile';
 my ( $tq, $rq, $vq );
 
 sub skip ($$) {
@@ -100,7 +100,7 @@ sub    #init
     my $notth;
     return unless psmisc::lock( 'sharescan', timeout => 0, old => 86400 );
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
-      unless psmisc::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
+      unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
     #$self->log( 'info',"ntth=[$notth]");    exit;
     my $stopscan;
     my $level     = 0;

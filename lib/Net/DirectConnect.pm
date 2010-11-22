@@ -71,18 +71,29 @@ sub schedule($$;@)
     and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
 }
 
+
+sub use_try ($;@) {
+  my $self = shift if ref $_[0];
+  our %tried;
+  ( my $path = ( my $module = shift ) . '.pm' ) =~ s{::}{/}g;
+  return $tried{$module} if exists $tried{$module};
+  $tried{$module} = ($INC{$path} or eval 'use ' . $module . ' qw(' . ( join ' ', @_ ) . ');1;' and $INC{$path});
+}
+
+
 sub module_load {
   my $self = shift if ref $_[0];
   local $_ = shift;
   return unless length $_;
   my $module = __PACKAGE__ . '::' . $_;
   eval "use $module;";
-  $self->log( 'err', 'cant load', $module, $@ ) if $@;
+  $self->log( 'err', 'cant load', $module, $@ ), return if $@;
   eval "$module\::new(\$self, \@_);";    #, \@param
-  $self->log( 'err', 'cant new', $module, $@ ) if $@;
+  $self->log( 'err', 'cant new', $module, $@ ), return if $@;
   eval "$module\::init(\$self, \@_);";    #, \@param
-  $self->log( 'err', 'cant init', $module, $@ ) if $@;
+  $self->log( 'err', 'cant init', $module, $@ ), return if $@;
   $self->log( 'dev', 'loaded  module', $_, $module, );
+1;
 }
 
 sub new {
@@ -285,6 +296,7 @@ sub cmd {
   } else {
     $self->log(
       'info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
+	"self=",ref $self,
       #Dumper $self->{'cmd'},
       $self->{'parse'}
     );
