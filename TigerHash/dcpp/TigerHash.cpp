@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-//#include "stdinc.h"
+#include "stdinc.h"
 #include "DCPlusPlus.h"
 
 #include "TigerHash.h"
@@ -34,7 +34,7 @@ namespace dcpp {
 #if defined(__x86_64__) || defined(__alpha)
 #define TIGER_ARCH64
 #endif
-#if !(defined(__i386__) || defined(__x86_64__) || defined(__alpha) || defined(__arm__))
+#if !(defined(__i386__) || defined(__x86_64__) || defined(__alpha)  || defined(__arm__))
 #define TIGER_BIG_ENDIAN
 #endif
 #endif // _WIN32

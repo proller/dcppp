@@ -33,14 +33,8 @@
 #define BZ_NO_STDIO 1
 #endif
 
-#ifdef _MSC_VER
-
-//disable the deprecated warnings for the CRT functions.
-#define _CRT_SECURE_NO_DEPRECATE 1
-#define _ATL_SECURE_NO_DEPRECATE 1
-#define _CRT_NON_CONFORMING_SWPRINTFS 1
-
-
+//msc, mingw
+#if defined(_MSC_VER) || ( defined(__WIN32__) && !defined(__CYGWIN__))
 typedef signed __int8 int8_t;
 typedef signed __int16 int16_t;
 typedef signed __int32 int32_t;
@@ -50,6 +44,15 @@ typedef unsigned __int8 uint8_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
+#endif
+
+
+#ifdef _MSC_VER
+
+//disable the deprecated warnings for the CRT functions.
+#define _CRT_SECURE_NO_DEPRECATE 1
+#define _ATL_SECURE_NO_DEPRECATE 1
+#define _CRT_NON_CONFORMING_SWPRINTFS 1
 
 # ifndef CDECL
 #  define CDECL _cdecl
@@ -62,7 +65,6 @@ typedef unsigned __int64 uint64_t;
 # endif
 
 #endif // _MSC_VER
-
 
 #ifdef _WIN32
 //# define _WIN32_WINNT 0x0501
@@ -111,11 +113,13 @@ typedef unsigned __int64 uint64_t;
 #include <memory>
 #include <numeric>
 #include <limits>
-//#include <libintl.h>
+/*
+#include <libintl.h>
 
-//#include <boost/format.hpp>
-//#include <boost/scoped_array.hpp>
-//#include <boost/noncopyable.hpp>
+#include <boost/format.hpp>
+#include <boost/scoped_array.hpp>
+#include <boost/noncopyable.hpp>
+*/
 
 #if defined(_MSC_VER) || defined(_STLPORT_VERSION)
 
