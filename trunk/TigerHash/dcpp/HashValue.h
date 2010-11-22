@@ -25,10 +25,7 @@
 namespace dcpp {
 
 template<class Hasher>
-struct HashValue /*: 
-FastAlloc<HashValue<Hasher> > HashValue<Hasher> 
-*/
-{
+struct HashValue /*: FastAlloc<HashValue<Hasher> > HashValue<Hasher> */ {
     static const size_t BITS = Hasher::BITS;
     static const size_t BYTES = Hasher::BYTES;
 
