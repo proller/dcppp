@@ -166,7 +166,7 @@ $SIG{__WARN__} = sub {
 };
 $SIG{__DIE__} = sub {
   printlog( 'die', $!, $@, @_ );
-  printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
+  #printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
   psmisc::caller_trace(5);
 };
 for ( grep { length $_ } @ARGV ) {
