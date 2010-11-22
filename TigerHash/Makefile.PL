@@ -69,7 +69,8 @@ patchmake:
                 qq{	diff -u ./eiskaltdcpp/dcpp/$_ dcpp/$_ > patch/$_ || true
 }
               } @dcppfiles
-        ) .qq{
+          )
+          . qq{
 
 patchapply:
 } . (
@@ -78,7 +79,8 @@ patchapply:
                 qq{	patch -N dcpp/$_ < patch/$_ || true
 }
               } @dcppfiles
-        ) . qq{
+          )
+          . qq{
 update: download patchapply
 
 }
