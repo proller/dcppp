@@ -7,29 +7,28 @@ run dc client with file sharing
 
 =head1 SYNOPSIS
 
- ./share.pl hub hub dir dir ...
+ ./share.pl dchub://hub.net hub.com adc://hub.edu dir /dir/dir ...
 
  unix adc:
  ./share.pl adc://dc.hub.com:412 /share
  win nmdc:
  ./share.pl dc.hub.com c:/pub c:/distr
 
- build filelist:
- ./share.pl adc://dc.hub.com:412 filelist /share
-
+ manual build filelist:
+ ./share.pl /share /sharemore
 
 =head1 INSTALL
 
 recommended module: Sys::Sendfile
 
-=head1 CONFIGURE 
+=head1 CONFIGURE
 
  create config.pl and fill with your sharedir, hubs and other options:
+ create with sharedirs:
+ echo '  $config{dc}{'share'} = [qw(/usr/ports/distfiles c:\distr c:\pub\ )];  ' >> config.pl
 
- echo '$config{dc}{'share'} = [qw(/usr/ports/distfiles c:\distr c:\pub\ )];' >> config.pl
-
- also useful:
- $config{dc}{host} = 'myhub.net';
+ predefined dc hubs:
+ $config{dc}{host} = ['myhub.net', 'adc://otherhub.com'];
 
  full list of options available in ../lib/Net/DirectConnect/filelist.pm:
   $self->{file_min} in filelist.pm must be written as 
@@ -75,9 +74,10 @@ my $log = sub (@) {
 $SIG{PIPE} = sub { printlog( 'sig', 'PIPE' ) };
 my @dirs = grep { -d } @ARGV;
 #printlog('dev', 'started', @ARGV),
-Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
-  if $ARGV[0] ~~ 'filelist' and !caller;
+my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
 @ARGV = grep { !-d } @ARGV;
+Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
+  if ($filelist and !caller) or !@ARGV;
 #use Net::DirectConnect::adc;
 #my $dc =
 my @dc;
