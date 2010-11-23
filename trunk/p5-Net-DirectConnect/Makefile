@@ -15,7 +15,8 @@ MAINTAINER=	proler@gmail.com
 COMMENT=	Perl Direct Connect lib and client.
 
 RUN_DEPENDS=	p5-MIME-Base32>=0:${PORTSDIR}/converters/p5-MIME-Base32 \
-		p5-Sys-Sendfile-FreeBSD>=0:${PORTSDIR}/devel/p5-Sys-Sendfile-FreeBSD 
+		p5-Sys-Sendfile-FreeBSD>=0:${PORTSDIR}/devel/p5-Sys-Sendfile-FreeBSD \
+		p5-Net-DirectConnect-TigerHash>=0:${PORTSDIR}/net-p2p/p5-Net-DirectConnect-TigerHash
 
 PERL_CONFIGURE=	yes
 
