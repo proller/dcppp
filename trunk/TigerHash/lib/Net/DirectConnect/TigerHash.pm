@@ -42,8 +42,7 @@ None by default.
 
 =head1 SEE ALSO
 
- https://launchpad.net/linuxdcpp
- http://www.open-content.net/specs/draft-jchapweske-thex-02.html  
+ http://code.google.com/p/eiskaltdc/
 
 =head1 BUGS
 
@@ -53,7 +52,7 @@ Oleg Alexeenkov, E<lt>pro@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 Oleg Alexeenkov, linuxdcpp authors
+Copyright (C) 2009-2010 Oleg Alexeenkov, eiskaltdc authors
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.1 or,
