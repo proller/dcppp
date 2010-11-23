@@ -17,55 +17,43 @@ my ( $tq, $rq, $vq );
 sub skip ($$) {
   my ( $file, $match ) = @_;
   return unless length $match;
-  #print ('skptst', $file, $match, "\n");
+  #say join ' ', ('skptst', $file, $match,);
   for my $m ( ref $match eq 'ARRAY' ? @$match : $match ) {
-    #print ('skptst', $file, $m, "\n");
-    #printlog('skipre', $file, $m),
     return 1 if ref $m eq 'Regexp' and $file =~ $m;
-    #printlog('skipeq', $file, $m),
     return 1 if !ref $m and $file eq $m;
   }
 }
-sub    #init
+sub    
   new {
-  #my $self = ref $_[0] ? shift () : Net::DirectConnect->new(@_);
-  #my $standalone = (!ref $_[0]  and  (caller)[0] eq __PACKAGE__);
   my $standalone = !ref $_[0];
   my $self = ref $_[0] ? shift() : bless {}, $_[0];
   shift if $_[0] eq __PACKAGE__;
-  #my $self =  shift () ;
-  #$self =  Net::DirectConnect->new() unless ref $self;
-  #print 'params' ,join ', ',@_;
-  #%$self = ( %$self, @_ );
   local %_ = @_;
   $self->{$_} = $_{$_} for keys %_;
-  #$self->log( 'info', 'standalone, logs off', #(caller)[0] , 'P=', __PACKAGE__
-  #),
   $self->{log} ||= sub (@) {
     my $dc = ref $_[0] ? shift : $self || {};
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   },;
-  #sub { }
-  #if $standalone;
-  #$self->baseinit();
-  #$self->log( 'dev', 'inited:', "SA[$standalone]",Dumper($self, @_));
-  #$self->{'parse'} ||= {};
-  #$self->{'cmd'}   ||= {};
-  #print join ' ', ( 'loading', __FILE__, __PACKAGE__, ref $self, 'caller=', caller );
-  #$self->log( 'dev', 'loading', __FILE__, __PACKAGE__, ref $self );
-  #my ($global{shareloaded});
   $self->{no_sql} //= 0;
+#
+# adjustable
+#
   $self->{files}  //= 'files.xml';
-  #$self->{share_full}        //= {};
-  #$self->{share_tth}         //= {};
   $self->{tth_cheat}         //= 1_000_000;         #try find file with same name-size-date
   $self->{tth_cheat_no_date} //= 0;                 #--//-- only name-size
   $self->{file_min}          //= 0;                 #skip files  smaller
   $self->{filelist_scan}     //= 3600;              #every seconds, 0 to disable
   $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
   $self->{file_send_by}      //= 1024 * 1024 * 1;
-  $self->{skip_dir}          //= 'Incomplete';
-  $self->{skip_file} //= [ qr/\.(?:partial|(?:dc)tmp)$/i, qr/^~uTorrentPartFile_/i ];
+  $self->{skip_hidden}       //= 1;
+  $self->{skip_symlink}      //= 0;
+  $self->{skip_dir}          //= [qr'(?:^|/)Incomplete(?:/|$)', (!$self->{skip_hidden} ? () : qr{(?:^|/)\.}),];
+  $self->{skip_file} //= [ qr/\.(?:partial|(?:dc)tmp)$/i, qr/^~uTorrentPartFile_/i, (!$self->{skip_hidden} ? () : qr{(?:^|/)\.}), ];
+#
+# ==========
+#
+  #$self->{share_full}        //= {};
+  #$self->{share_tth}         //= {};
 ##$config{share_root} //= '';
   $self->{'share'} = [ $self->{'share'} ] unless ref $self->{'share'};
   tr{\\}{/} for @{ $self->{'share'} || [] };
@@ -152,7 +140,7 @@ sub    #init
         ( my $dirname = $dir );
         $dirname = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
         #$self->log( 'dev','sd', __LINE__,$dh);
-        next if skip( $dirname, $self->{skip_dir} );
+        next if skip( $dirname, $self->{skip_dir} ) or ($self->{skip_symlink} and -l $dirname);
         unless ($level) {
           for ( split '/', $dirname ) {
             psmisc::file_append( $self->{files}, "\t" x $level, qq{<Directory Name="$_">\n} ), ++$level, if length $_;
@@ -189,7 +177,8 @@ sub    #init
           next if $f->{size} < $self->{file_min};
           $f->{file} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
           $f->{path} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
-          next FILE if skip( $f->{file}, $self->{skip_file} );
+          next FILE if skip( $f->{file}, $self->{skip_file} ) or ($self->{skip_symlink} and -l $f->{file});
+;
           $f->{full} = "$f->{path}/$f->{file}";
           $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
 #$self->log 'timed', $f->{time}, psmisc::human('date_time', $f->{time}), -M $f->{full_local}, int (86400 * -M $f->{full_local}), $^T;
