@@ -52,7 +52,7 @@ sub MY::postamble {
 fullclean: distclean veryclean
 	rm -rf \$(DISTNAME)-*.tar.gz *.bak *.old *.core MANIFEST README eiskaltdcpp
     
-release: update test fullclean manifest metafile dist
+release: test fullclean manifest metafile dist
 } . (
         $^O eq 'MSWin32'
         ? ()
