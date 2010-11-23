@@ -84,6 +84,7 @@ my @dc;
 @dc = map {
   Net::DirectConnect->new(
     modules            => ['filelist'],
+    share => \@dirs,
     'filelist_builder' => ( join ' ', $^X, $0, 'filelist' ),
     dev_http           => 1,
     'log'              => $log,
