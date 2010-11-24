@@ -77,7 +77,7 @@ my @dirs = grep { -d } @ARGV;
 my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
 @ARGV = grep { !-d } @ARGV;
 Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
-  if ($filelist and !caller) or !@ARGV;
+  if ($filelist and !caller) or (!@ARGV and !$config{dc}{host});
 #use Net::DirectConnect::adc;
 #my $dc =
 my @dc;
