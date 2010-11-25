@@ -24,11 +24,16 @@ recommended module: Sys::Sendfile
 =head1 CONFIGURE
 
  create config.pl and fill with your sharedir, hubs and other options:
- create with sharedirs:
- echo '  $config{dc}{'share'} = [qw(/usr/ports/distfiles c:\distr c:\pub\ )];  ' >> config.pl
+  cp config.pl config.pl.dist 
+ 
+ config with sharedirs:
+  $config{dc}{'share'} = [qw(/usr/ports/distfiles c:\distr c:\pub\ )];
 
  predefined dc hubs:
- $config{dc}{host} = ['myhub.net', 'adc://otherhub.com'];
+  $config{dc}{host} = ['myhub.net', 'adc://otherhub.com'];
+
+ if hubs and shares defined in config you can use simple
+  ./share.pl
 
  full list of options available in ../lib/Net/DirectConnect/filelist.pm:
   $self->{file_min} in filelist.pm must be written as 
@@ -51,6 +56,8 @@ use strict;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 use Time::HiRes qw(time sleep);
+use Encode;
+
 #use Encode;
 use lib '../lib';
 #use lib '../TigerHash/lib';
@@ -61,7 +68,7 @@ use psmisc;
 use Net::DirectConnect;
 use Net::DirectConnect::filelist;
 #psmisc::use_try 'Sys::Sendfile';
-$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
+$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg adcdev);
 $config{'log_pid'} //= 1;
 psmisc::config();      #psmisc::lib_init();
 psmisc::lib_init();    #for die handler
@@ -93,6 +100,10 @@ my @dc;
         my $msg = $_;
         $msg => sub {
           my $dc = shift;
+          #warn join ' ', "c$dc->{charset_console}, $dc->{charset_chat} , $dc->{charset_protocol}";
+          if ($dc->{nmdc}) {
+            @_ = Encode::encode $dc->{charset_console}, Encode::decode(($dc->{charset_chat} || $dc->{charset_protocol}), join ' ', @_);
+          }
           say join ' ', $msg, @_;
           },
         } qw(welcome chatline To)

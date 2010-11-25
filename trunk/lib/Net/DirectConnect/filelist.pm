@@ -1,4 +1,12 @@
 #$Id$ $URL$
+
+=head1 SYNOPSIS
+
+perl filelist.pm /path/to/dir
+
+=cut
+
+
 package    #hide from cpan
   Net::DirectConnect::filelist;
 use 5.10.0;
@@ -6,7 +14,24 @@ use strict;
 use Encode;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
+
+=tofix
+$0 =~ m|^(.+)[/\\].+?$|;                #v0
+our $root_path ||= $1 . '/' if $1;
+$root_path =~ s|\\|/|g;
+warn "rp[$root_path]";
+
+eval "use lib '$root_path./stat/pslib'";
+eval "use lib '$root_path./../../../examples/stat/pslib'; 
+      use psmisc; use pssql;
+use Net::DirectConnect;
+use base 'Net::DirectConnect';      
+      "; #use Net::DirectConnect; 
+      #psmisc::use_try ('Net::DirectConnect');
+=cut
+
 use base 'Net::DirectConnect';
+
 use lib '../../../examples/stat/pslib';    # REMOVE
 use lib 'stat/pslib';                      # REMOVE
 use psmisc;                                # REMOVE
@@ -98,8 +123,8 @@ sub
     my $printinfo = sub () {
       $self->log( 'sharesize', psmisc::human( 'size', $sharesize ), $sharefiles, scalar keys %{ $self->{share_full} } );
     };
-    $SIG{INT} = sub { ++$stopscan; ++$interrupted; $self->log( 'warn', "INT rec, stopscan" ) };
-    $SIG{INFO} = sub { $printinfo->(); };
+    local $SIG{INT} = sub { ++$stopscan; ++$interrupted; $self->log( 'warn', "INT rec, stopscan" ) };
+    local $SIG{INFO} = sub { $printinfo->(); };
     psmisc::file_rewrite $self->{files}, qq{<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <FileListing Version="1" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
 };
@@ -272,8 +297,8 @@ sub
     $self->{db}->do('ANALYZE') unless $self->{no_sql};
     local %_;
     $scandir->($_) for ( grep { !$_{$_}++ and -d } @_, @{ $self->{'share'} || [] }, );
-    undef $SIG{INT};
-    undef $SIG{INFO};
+    #undef $SIG{INT};
+    #undef $SIG{INFO};
     psmisc::file_append $self->{files}, qq{</FileListing>};
     psmisc::file_append $self->{files};
     $self->{db}->flush_insert() unless $self->{no_sql};
@@ -291,7 +316,7 @@ sub
 #}
     psmisc::unlock('sharescan');
     $printinfo->();
-    $SIG{INT} = $SIG{KILL} = undef;
+    #$SIG{INT} = $SIG{KILL} = undef;
     return ( $sharesize, $sharefiles );
   };
   $self->{share_add_file} //= sub {
@@ -362,6 +387,10 @@ sub
     }
     $self->{share_full}{ $self->{files} . '.bz2' } = $self->{files} . '.bz2';
     $self->{share_full}{ $self->{files} } = $self->{files};
+
+#    $self->{'INF'}{'SS'} = $self->{'sharesize'} = $sharesize;
+#    $self->{'INF'}{'SF'} = $sharefiles;
+    
     $self->log(
       'info',
       "loaded filelist size",
@@ -374,6 +403,14 @@ sub
     #$_[0]->( $sharesize, $sharefiles ) if ref $_[0] ~~ 'CODE';
     #( $self->{share_size} , $self->{share_files} ) = ( $sharesize, $sharefiles );
     $self->{sharefiles} = $self->{INF}{SF} = $sharefiles, $self->{INF}{SS} = $self->{sharesize} = $sharesize, if $sharesize;
+    if ($self->{'status'} eq 'connected') {
+    if ($self->{adc}) {
+
+	    $self->cmd( 'I', 'INF', undef, 'SS', 'SF');
+    } else {
+    	$self->cmd('MyINFO');
+    }
+    }
     return ( $sharesize, $sharefiles );
   };
   #($self->{share_size} = $self->{share_files} )=
