@@ -127,8 +127,8 @@ my @dc;
   } (
   grep {
     $_
-    } ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
-  @ARGV
+    } @ARGV ? @ARGV : ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
+  
   );
 while ( @dc = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dc;
