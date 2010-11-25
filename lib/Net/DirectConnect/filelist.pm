@@ -327,6 +327,18 @@ sub
     #$full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
     $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth, if $tth;
     $self->{share_full}{$file} ||= $full_local if $file;
+  #$self->share_changed();
+  };
+  $self->{share_changed} //= sub {
+                    if ($self->{'status'} eq 'connected') {
+    if ($self->{adc}) {
+
+	    $self->cmd( 'I', 'INF', undef, 'SS', 'SF');
+    } else {
+    	$self->cmd('MyINFO');
+    }
+    }
+
   };
   $self->{filelist_load} //= sub {    #{'cmd'}
     my $self = shift if ref $_[0];
@@ -403,14 +415,10 @@ sub
     #$_[0]->( $sharesize, $sharefiles ) if ref $_[0] ~~ 'CODE';
     #( $self->{share_size} , $self->{share_files} ) = ( $sharesize, $sharefiles );
     $self->{sharefiles} = $self->{INF}{SF} = $sharefiles, $self->{INF}{SS} = $self->{sharesize} = $sharesize, if $sharesize;
-    if ($self->{'status'} eq 'connected') {
-    if ($self->{adc}) {
 
-	    $self->cmd( 'I', 'INF', undef, 'SS', 'SF');
-    } else {
-    	$self->cmd('MyINFO');
-    }
-    }
+      $self->share_changed();
+
+         
     return ( $sharesize, $sharefiles );
   };
   #($self->{share_size} = $self->{share_files} )=
@@ -469,6 +477,8 @@ return unless $name;
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth );
     $self->share_add_file( $full, $tth );
     #TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
+      $self->share_changed();
+
     };
   $self->filelist_load() unless $standalone;    # (caller)[0] ~~ __PACKAGE__;
   #$self->log('initok');
