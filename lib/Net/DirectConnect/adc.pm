@@ -109,7 +109,6 @@ sub init {
     #@_,
     'incomingclass'  => __PACKAGE__,                               #'Net::DirectConnect::adc',
     no_print         => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
-    charset_protocol => 'utf8',
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
@@ -163,6 +162,33 @@ $self->log('err', 'cant use Net::DirectConnect::TigerHash');
 $self->{hash_base} ||= sub {shift if ref $_[0]; $self->base_encode($self->hash($_[0])) };
 #sub hash ($) { base32( tiger( $_[0] ) ); }
 
+$self->{INF_generate} ||= sub {        
+      my $self = shift if ref $_[0];
+        $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
+        $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
+        $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
+        $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
+        $self->{'PID'} ||= $self->hash($self->{'ID'});
+        $self->{'CID'} ||= $self->hash($self->{'PID'});
+        $self->{'INF'}{'PD'} ||= $self->base_encode($self->{'PID'});
+        $self->{'INF'}{'ID'} ||= $self->base_encode($self->{'CID'});
+        #$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
+        $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
+        $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
+        $self->{'INF'}{'SF'} ||= 30999;
+        $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
+        $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
+        $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
+        $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
+          || 'perl'
+          . $Net::DirectConnect::VERSION . '_'
+          . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
+        $self->{'INF'}{'US'} ||= 10000;
+        $self->{'INF'}{'U4'} ||= $self->{'myport_udp'};
+        $self->{'INF'}{'I4'} ||= $self->{'myip'};
+        $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
+return $self->{'INF'};
+};
 
 
   $self->{'parse'} ||= {
@@ -572,57 +598,17 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
           return;
         }
       } else {
-        $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
-        #eval "use MIME::Base32 qw( RFC );  use Digest::Tiger;" or $self->log( 'err', 'cant use', $@ );
 
-=z
-      eval "use MIME::Base32 qw( RFC ); 1;"        or $self->log( 'err', 'cant use', $@ );
-      eval "use Net::DirectConnect::TigerHash; 1;" or $self->log( 'err', 'cant use', $@ );
-      sub base32 ($) { MIME::Base32::encode( $_[0] ); }
-      sub hash ($)   { base32( tiger( $_[0] ) ); }
+      	$self->INF_generate();
 
-      sub tiger ($) {
-        local ($_) = @_;
-        #use Mhash qw( mhash mhash_hex MHASH_TIGER);
-        #eval "use MIME::Base32 qw( RFC ); use Digest::Tiger;" or $self->log('err', 'cant use', $@);
-        #$_.=("\x00"x(1024 - length $_));        print ( 'hlen', length $_);
-        #Digest::Tiger::hash($_);
-      eval{  Net::DirectConnect::TigerHash::tthbin($_);}	
-        #mhash(Mhash::MHASH_TIGER, $_);
-      }
-=cut
-
-        #$self->log('tiger of NULL is', hash(''));#''=      LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ
-        #
-        $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
-        $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-        $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
-        $self->{'PID'} ||= $self->hash($self->{'ID'});
-        $self->{'CID'} ||= $self->hash($self->{'PID'});
-        $self->{'INF'}{'PD'} ||= $self->base_encode($self->{'PID'});
-        $self->{'INF'}{'ID'} ||= $self->base_encode($self->{'CID'});
-        #$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
-        $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
-        $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
-        $self->{'INF'}{'SF'} ||= 30999;
-        $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
-        $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
-        $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
-        $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
-          || 'perl'
-          . $Net::DirectConnect::VERSION . '_'
-          . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
-        $self->{'INF'}{'US'} ||= 10000;
-        $self->{'INF'}{'U4'} ||= $self->{'myport_udp'};
-        $self->{'INF'}{'I4'} ||= $self->{'myip'};
-        $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
+     
      #$self->{''} ||= $self->{''} || '';
      #$self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       }
       $self->cmd_adc     #sendcmd
         (
         $dst, 'INF',     #$self->{'sid'},
-        map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : sort keys %{ $self->{'INF'} }
+        map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : @_ ? @_ : sort keys %{ $self->{'INF'} }
         );
       #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       #$self->cmd_adc( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
