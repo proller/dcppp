@@ -26,6 +26,10 @@ Net::DirectConnect::TigerHash - Perl extension for calculating tiger hashes from
   print tthfile('/etc/passwd'); #base32 encoded
   print tthfile('__NOT_eXisted_file___'); #undef
 
+
+ cmdline usage:
+  perl -MNet::DirectConnect::TigerHash -e "print join qq{\n}, map { Net::DirectConnect::TigerHash::tthfile $_ } @ARGV" your files here
+
 =head1 DESCRIPTION
 
  ported from eiskaltdc
