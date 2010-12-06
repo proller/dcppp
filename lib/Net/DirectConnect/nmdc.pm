@@ -65,9 +65,9 @@ sub init {
     charset_chat => 'cp1251',  
   );
   #$self->{$_} ||= $_{$_} for keys %_;
-  $self->log('dev', 's0',$self->{'sharesize'});
+  #$self->log('dev', 's0',$self->{'sharesize'});
   !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
-  $self->log('dev', 's1',$self->{'sharesize'});
+  #$self->log('dev', 's1',$self->{'sharesize'});
   #print 'adc init now=',Dumper $self;
   #$self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
 

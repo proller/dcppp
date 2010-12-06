@@ -128,6 +128,11 @@ for my $arg (@ARGV) {
       $db->{'auto_repair'}  = 1;
       $db->{'force_repair'} = 1;
     $db->table_stat();
+  } elsif ( $arg eq 'check' ) {
+    $ARGV[$n] = undef;
+      $db->{'auto_repair'}  = 1;
+      $db->{'force_repair'} = 1;
+    $db->check();
   }
 }
 our %work;
