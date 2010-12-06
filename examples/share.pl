@@ -49,6 +49,16 @@ or: sysctl kern.ipc.maxsockbuf=8388608 net.inet.tcp.sendspace=3217968
 
 filelist xml escape chars
 
+=head1 windows install:
+get perl from http://strawberryperl.com/ and install and run
+C:\strawberry\perl\bin\cpan.bat Net::DirectConnect::TigerHash
+get tar.gz from http://search.cpan.org/dist/Net-DirectConnect/
+unpack, 
+cd examples
+cp config.pl.dist config.pl
+edit config.pl
+perl share.pl
+
 =cut
 
 use 5.10.0;

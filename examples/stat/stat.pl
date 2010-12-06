@@ -65,7 +65,7 @@ for my $arg (@ARGV) {
         my $n = 0;
         for my $row (@$res) {
           ++$n;
-          my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Terse(1)->Purity(1)->Dump();
+          my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
           $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => int(time) } )
             if $config{'use_slow'};
           #if ( $time eq 'd' ) {
@@ -156,15 +156,15 @@ sub print_info {
     $__hup_time__ = time;
   }
 }
-$SIG{INT} = $SIG{__DIE__} = \&close_all;
-$SIG{HUP}      = $^O =~ /win/i ? \&print_info : \&flush_all;
-$SIG{INFO}     = \&print_info;
-$SIG{__WARN__} = sub {
+local $SIG{INT} = $SIG{__DIE__} = \&close_all;
+local $SIG{HUP}      = $^O =~ /win/i ? \&print_info : \&flush_all;
+local $SIG{INFO}     = \&print_info;
+local $SIG{__WARN__} = sub {
   printlog( 'warn', $!, $@, @_ );
   #printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
   psmisc::caller_trace(15);
 };
-$SIG{__DIE__} = sub {
+local $SIG{__DIE__} = sub {
   printlog( 'die', $!, $@, @_ );
   #printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
   psmisc::caller_trace(5);
@@ -194,7 +194,8 @@ for ( grep { length $_ } @ARGV ) {
       #'auto_connect' => 0,
       'reconnects' => 500,
       'handler'    => {
-        'Search_parse_aft' => sub {
+        #'Search_parse_aft' => sub {
+		'Search' => sub {
           my $dc = shift;
           printlog 'sch', Dumper @_ if $dc->{adc};
           my $who    = shift if $dc->{adc};
@@ -279,7 +280,8 @@ for ( grep { length $_ } @ARGV ) {
             $dc
           );
         },
-        'SR_parse_aft' => sub {
+        #'SR_parse_aft' => sub {
+        'SR' => sub {
           my $dc = shift;
           my %s = %{ $_[1] || return };
           $db->insert_hash( 'results', \%s );
@@ -313,7 +315,7 @@ for ( grep { length $_ } @ARGV ) {
               'size'   => $dc->{'NickList'}{$_}{'sharesize'},
               'ip'     => $dc->{'NickList'}{$_}{'ip'},
               'port'   => $dc->{'NickList'}{$_}{'port'},
-              'info'   => Data::Dumper->new( [ $dc->{'NickList'}{$_} ] )->Indent(0)->Terse(1)->Purity(1)->Dump(),
+              'info'   => Data::Dumper->new( [ $dc->{'NickList'}{$_} ] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump(),
               'online' => int time
             }
           );
@@ -351,7 +353,7 @@ for ( grep { length $_ } @ARGV ) {
               'size' => $params->{SS},
               'ip'   => $params->{I4},
               'port' => $params->{U4},
-              'info' => Data::Dumper->new( [$params] )->Indent(0)->Terse(1)->Purity(1)->Dump(),
+              'info' => Data::Dumper->new( [$params] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump(),
               #maybe full from peers ?
               'online' => int time
             }
@@ -389,7 +391,8 @@ for ( grep { length $_ } @ARGV ) {
       %config,
     );
     #$dc->connect($hub);
-    $dc->{'handler'}{'SCH_parse_aft'} = $dc->{'handler'}{'Search_parse_aft'};
+    #$dc->{'handler'}{'SCH_parse_aft'} = $dc->{'handler'}{'Search_parse_aft'};
+    $dc->{'handler'}{'SCH'} = $dc->{'handler'}{'Search'};
 
 =no    
 	$dc->{'clients'}{'listener_http'}{'handler'}{''} = sub {
