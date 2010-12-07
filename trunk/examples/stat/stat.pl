@@ -202,7 +202,7 @@ for ( grep { length $_ } @ARGV ) {
         #'Search_parse_aft' => sub {
 		'Search' => sub {
           my $dc = shift;
-          printlog 'sch', Dumper @_ if $dc->{adc};
+          #printlog 'sch', Dumper @_ if $dc->{adc};
           my $who    = shift if $dc->{adc};
           my $search = shift if $dc->{nmdc};
           my $s = $_[0] || {};
@@ -289,6 +289,7 @@ for ( grep { length $_ } @ARGV ) {
         'SR' => sub {
           my $dc = shift;
           my %s = %{ $_[1] || return };
+          printlog('SR recieved');
           $db->insert_hash( 'results', \%s );
           ++$work{'stat'}{'SR'};
         },
@@ -337,7 +338,7 @@ for ( grep { length $_ } @ARGV ) {
               'size'   => $dc->{'NickList'}{$_}{'sharesize'},
               'ip'     => $dc->{'NickList'}{$_}{'ip'},
               'port'   => $dc->{'NickList'}{$_}{'port'},
-              'info'   => Data::Dumper->new( [ $dc->{'NickList'}{$_} ] )->Indent(0)->Terse(1)->Purity(1)->Dump,
+              'info'   => Data::Dumper->new( [ $dc->{'NickList'}{$_} ] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump(),
               'online' => 0
             }
           );
