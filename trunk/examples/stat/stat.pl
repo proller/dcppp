@@ -132,7 +132,8 @@ for my $arg (@ARGV) {
     $ARGV[$n] = undef;
       $db->{'auto_repair'}  = 1;
       $db->{'force_repair'} = 1;
-    $db->check();
+    #$db->check();
+    $db->check_data();
   }
 }
 our %work;
@@ -183,6 +184,7 @@ for ( grep { length $_ } @ARGV ) {
     my $hub = $_;
     ++$work{'hubs'}{$hub};
     my $dc = Net::DirectConnect->new(
+       #modules            => ['filelist'],
       'host'      => $hub,
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),

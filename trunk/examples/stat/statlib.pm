@@ -35,7 +35,7 @@ my $browsers = join '|', @{ $config{'browsers'} };
 $config{'browser_ie'} = 1 if $ENV{'HTTP_USER_AGENT'} =~ /MSIE/ and $ENV{'HTTP_USER_AGENT'} !~ /$browsers/i;
 #$config{'client'} = $_,
 $config{ 'browser_' . $_ } = 1 for grep { $ENV{'HTTP_USER_AGENT'} =~ /$_/i } @{ $config{'browsers'} };
-$config{'use_graph'} ||= 1 if $config{browser_firefox} or $config{browser_safari} or $config{browser_chrome};
+$config{'use_graph'} ||= 1  if grep {$config{'browser_'. $_}} qw(firefox safari chrome opera);
 $config{'sql'} ||= {
   'driver'              => 'mysql',
   'dbname'              => 'dcstat',
