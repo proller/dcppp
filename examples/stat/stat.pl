@@ -66,14 +66,22 @@ for my $arg (@ARGV) {
         for my $row (@$res) {
           ++$n;
           my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
-          $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => int(time) } )
+          $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => $nowtime } )
             if $config{'use_slow'};
           #if ( $time eq 'd' ) {
           my $table = $query . '_' . $time;
           $table =~ s/\s/_/g;
-          $db->insert_hash( $table, { 'n' => $n, 'date' => psmisc::human('date'), %$row, 'time' => $nowtime } );
+#print Dumper $row;
+
+#warn $date;
+          $db->insert_hash( $table, { 'n' => $n, 
+, %$row, 'time' => $nowtime, 'date' => psmisc::human('date', $nowtime)  
+            
+ .( $tim ne 'h' ? '' : '-' . ((localtime($nowtime))[2])),
+} );
           #}
         }
+#exit;
         $db->do( "DELETE FROM ${tq}slow${tq} WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " )
           if $config{'use_slow'};
         #$db->flush_insert('slow');

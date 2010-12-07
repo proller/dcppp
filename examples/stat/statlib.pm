@@ -107,7 +107,7 @@ $config{'sql'} ||= {
   },
 };
 $config{'sql'}{'table'}{ 'queries_top_string_' . $_ } = {
-  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 10, 'default' => '', 'index' => 1, primary => 1 ),
+  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 15, 'default' => '', 'index' => 1, primary => 1 ),
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
   n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
   cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
@@ -115,14 +115,14 @@ $config{'sql'}{'table'}{ 'queries_top_string_' . $_ } = {
   },
   $config{'sql'}{'table'}{ 'queries_top_tth_' . $_ } = {
   #queries_top_tth_daily
-  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 10, 'default' => '', primary => 1, 'index' => 1, ),
+  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 15, 'default' => '', primary => 1, 'index' => 1, ),
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
   n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
   cnt => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
   tth => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
   },
   $config{'sql'}{'table'}{ 'results_top_' . $_ } = {
-  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 10, 'default' => '', primary => 1, 'index' => 1, ),
+  'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 15, 'default' => '', primary => 1, 'index' => 1, ),
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
   n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
   cnt => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
