@@ -44,7 +44,7 @@ print '<a href="?">home</a>';
 print ' days ', (
   map {
     '<a '
-      . ( $param->{'period'} eq $_ ? '' : 'href="#"' )
+      . ( $param->{'period'} eq $_ ? '' : qq{href="?period=$_"} )
       . qq{ onclick="createCookie('period', '$_');window.location.reload(false);">}
       . psmisc::human( 'time_period', $config{'periods'}{$_} ) . '</a> '
     } sort {
@@ -172,9 +172,10 @@ for my $query ( sort keys %makegraph ) {
     $db->query( "SELECT * FROM $table WHERE " . join ' OR ', map { "$by=" . $db->quote($_) } keys %{ $makegraph{$query} } ) )
   {
     #for my $row ( $db->query("SELECT * FROM $table  " ) ) {
-    #print $row;
+    #print Dumper $row;
     my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string} };
-#print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
+    #print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
+    #$row->{date} .= '-'. (localtime $row->{time})[2];
     ++$dates{ $row->{date} };
     $graph
       #{$query}
