@@ -191,7 +191,7 @@ sub new {
       #$self->log( 'proto ', $self->{'protocol'} );
     }
     $self->{'module'} ||= $self->{'protocol'};
-    if ( $self->{'module'} eq 'nmdc' ) { $self->{'module'} = ['nmdc',$self->{'hub'} ? 'hubcli' : 'clihub']; }
+    if ( $self->{'module'} eq 'nmdc' ) { $self->{'module'} = ['nmdc', ($self->{'hub'} ? 'hubcli' : 'clihub')]; }
     #$self->log( 'module load', $self->{'module'});
     #if ( $self->{'module'} ) {
   }
