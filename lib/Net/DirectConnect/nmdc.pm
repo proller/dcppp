@@ -17,7 +17,7 @@ use base 'Net::DirectConnect';
 sub init {
   my $self = shift;
   #shift if $_[0] eq __PACKAGE__;
-  print "nmdcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
+  #print "nmdcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
   #$self->SUPER::new();
   #%$self = (
   #%$self,
