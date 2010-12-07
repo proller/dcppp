@@ -1372,7 +1372,7 @@ sub func {
   local %_ = (
     'search' => sub {
       my $self = shift if ref $_[0];
-      $self->log( 'search', @_ );
+      #$self->log( 'search', @_ );
       return $self->cmd( 'search_tth', @_ ) if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
       return $self->cmd( 'search_string', @_ ) if length $_[0];
     },
