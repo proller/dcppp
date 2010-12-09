@@ -36,6 +36,7 @@ $config{'browser_ie'} = 1 if $ENV{'HTTP_USER_AGENT'} =~ /MSIE/ and $ENV{'HTTP_US
 #$config{'client'} = $_,
 $config{ 'browser_' . $_ } = 1 for grep { $ENV{'HTTP_USER_AGENT'} =~ /$_/i } @{ $config{'browsers'} };
 $config{'use_graph'} ||= 1  if grep {$config{'browser_'. $_}} qw(firefox safari chrome opera);
+$config{'graph_inner'} ||= 1  if grep {$config{'browser_'. $_}} qw(firefox safari chrome);
 $config{'sql'} ||= {
   'driver'              => 'mysql',
   'dbname'              => 'dcstat',
@@ -111,7 +112,7 @@ $config{'sql'}{'table'}{ 'queries_top_string_' . $_ } = {
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
   n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
   cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-  string => pssql::row( undef, 'type' => 'VARCHAR',  'index'   => 1, ),
+  string => pssql::row( undef, 'type' => 'VARCHAR', 'length'      => 1000, 'index'   => 1, ),
   },
   $config{'sql'}{'table'}{ 'queries_top_tth_' . $_ } = {
   #queries_top_tth_daily
@@ -119,16 +120,22 @@ $config{'sql'}{'table'}{ 'queries_top_string_' . $_ } = {
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
   n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
   cnt => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-  tth => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
+  tth => pssql::row( undef, 'type' => 'VARCHAR', 'length'      => 40, 'index'   => 1, ),
   },
   $config{'sql'}{'table'}{ 'results_top_' . $_ } = {
   'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 15, 'default' => '', primary => 1, 'index' => 1, ),
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
   n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
   cnt => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-  tth => pssql::row( undef, 'type' => 'VARCHAR',, 'index'   => 1, ),
+  tth => pssql::row( undef, 'type' => 'VARCHAR','length'      => 40, 'index'   => 1, ),
   },
   for sort keys %{ $config{'periods'} };
+
+unless ($ENV{'SERVER_PORT'}) {
+    $config{'sql'}{'auto_repair'} = 1;
+    $config{'sql'}{'force_repair'} = 1;
+}
+
 $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
 $config{'queries'}{'queries top string'} ||= {

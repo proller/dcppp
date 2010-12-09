@@ -2,6 +2,7 @@
 #$Id$ $URL$
 package statcgi;
 use strict;
+use MIME::Base64;
 eval { use Time::HiRes qw(time sleep); };
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
@@ -149,7 +150,11 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     if ( $q->{'graph'} ) {
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
-      print qq{<td class='graph' id='$query' rowspan='100'> </td>}    if $n == 1;
+
+      print qq{<td class='graph' id='$query' rowspan='100' style='min-width:100px;'> </td>}    if $n == 1;
+      #print qq{<td class='graph' rowspan='100' width='100%'><img id='$query' src='' NOtype='image/svg+xml' width='100%' height='100%'/></td>}    if $n == 1;
+      #print qq{<td class='graph' rowspan='100' width='100%'><img id='$query' src='' width='100%' /></td>}    if $n == 1;
+
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
     }
     print '</tr>';
@@ -161,6 +166,7 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
 #print Dumper \%makegraph;
 my $graphtime = time;
 for my $query ( sort keys %makegraph ) {
+#last;
   my $q = { %{ $config{'queries'}{$query} || next } };
   my $table = $query;
   my %graph;
@@ -168,6 +174,7 @@ for my $query ( sort keys %makegraph ) {
   $table =~ s/\s/_/g;
   $table .= '_' . $param->{'period'};
   my ($by) = values %{ $makegraph{$query} };
+  my ($maxy, %date_max, %date_step, );
   for my $row (
     $db->query( "SELECT * FROM $table WHERE " . join ' OR ', map { "$by=" . $db->quote($_) } keys %{ $makegraph{$query} } ) )
   {
@@ -179,18 +186,36 @@ for my $query ( sort keys %makegraph ) {
     ++$dates{ $row->{date} };
     $graph
       #{$query}
-      { $row->{$by} }{ $row->{date} } = $row->{n} if length $row->{$by};
+      #{ $row->{$by} }{ $row->{date} } = $row->{n} if length $row->{$by};
+      { $row->{$by} }{ $row->{date} } = $row->{cnt} if length $row->{$by};
+    $maxy = $row->{cnt} if $row->{cnt} > $maxy;
+    $date_max{$row->{date}} = $row->{cnt} if $row->{cnt} > $date_max{$row->{date}}   ;
   }
+#next;
   #my $id  = $query;
   #$id =~ tr/ /_/;
   my $xl = 1000;
   my $yl = 700;
-  my $xs = $xl / ( scalar keys(%dates) - 1 or 1 );
-  my $yn = 10;
+  my $xs = int ($xl / ( scalar keys(%dates) - 1 or 1 ));
+  #my $yn = 10;
+  my $yn = $maxy;
   my $ys = $yl / $yn;
-  print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},
-qq{gid('$query').innerHTML='<svg:svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 $xl $yl">},
-#qq{<svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>},
+
+for my $date (%date_max) {
+$date_step{$date} = $date_max{$date} ? $yl / $date_max{$date} : 1 ;
+}
+  #my $ys = int $yl / $maxy;
+  #$ys = 1;
+  #printlog 'dev', "yn=$yn; ys=$ys";
+
+my $svgns = $config{'graph_inner'} ? 'svg:' : '';
+my $img = #join '', 
+($config{'graph_inner'} ? () :
+qq{<?xml version="1.0" standalone="no"?>}.
+#qq{<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">}.
+ qq{<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">}).
+qq{<${svgns}svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="0 0 $xl $yl">}
+#qq{<${svgns}circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>},
 #qq{<g fill="none" stroke="red" stroke-width="3">},
 #qq{<path d="M100,100 Q200,400,300,100"/>},
 #qq{ <rect x="1" y="1" width="1198" height="398"         fill="none" stroke="blue" stroke-width="2" />},
@@ -200,28 +225,68 @@ qq{gid('$query').innerHTML='<svg:svg version="1.1" baseProfile="full" xmlns="htt
   for my $line ( sort keys %graph ) {
     my $n;
     #$colors[$color] <!-- $line : -->
-    print qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="}, (
-      join ' ',
-      map {
-        ( $n++ * $xs ) . ',' . (
-          #$yl -
-          ( $graph{$line}{$_} > 10 ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
-          )
-        } sort keys %dates
-      ),
+    $img .= qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="};#. #( #"mc
+     # join ' ',
+
+ 	 for (sort 
+	#grep {$graph{$line}{$_}} 
+keys %dates) {
+
+#      map {
+ if ($graph{$line}{$_}) { # ? () : (
+    $img .= 
+        int( $n * $xs ) . ',' . int(
+          $yl -
+          ( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
+          #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
+
+          ) . ' ';
+}
+$n++; 
+
+#)
+ #       } 
+#      ).
+}
+    $img .= 
       qq{" />};
     #++$color;
   }
   my $n;
-  print qq{<text x="}, ( $n++ * $xs ), qq{" y="}, $yl - 20, qq{" font-size="30">$_</text>} for sort keys %dates;
-  print
+for (sort keys %dates) {
+my $tx = ( $n++ * $xs ) ;
+my $ty =  ($yl - 10) ;
+  $img .= qq{<text x="$tx" y="$ty" font-size="20" transform="rotate(270 $tx $ty)">$_</text>} ;
+}
+  $img .=
     #qq{</g>},
-    qq{</svg:svg>';}, "]]></script>";
-  printlog 'dev', Dumper \%graph, \%dates;
+    qq{</${svgns}svg>},
+;
+
+
+
+
+
+
+
+  #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;base64,}, encode_base64($img, ''),
+  #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;}, psmisc::encode_url($img, ''),
+  #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').},qq{src='data:image/svg+xml;base64,}, encode_base64($img, ''),
+   print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').innerHTML='},
+($config{'graph_inner'} ? qq{$img} :(
+    qq{<img width="100%" src="data:image/svg+xml;base64,}, encode_base64($img, ''),
+  #print  qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;}, psmisc::encode_url($img),
+  #print  qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg;}, psmisc::encode_url($img),
+  #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').innerHTML='}, $img,
+
+qq{"/>},)),
+qq{';}, qq{]]></script>}
+;
+  #printlog 'dev', Dumper \%graph, \%dates;
 }
 print
   #log'dev',
-  '<div>graph per ', psmisc::human( 'time_period', time - $graphtime ), '</div>' if $config{'use_graph'};
+  '<div>graph per ', psmisc::human( 'time_period', time - $graphtime ), '</div>' if $config{'use_graph'} and %makegraph;
 print
 qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/trunk/examples/stat">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}
   . ( split( ' ', '$Revision$' ) )[1]
