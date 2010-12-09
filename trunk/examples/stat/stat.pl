@@ -66,6 +66,7 @@ for my $arg (@ARGV) {
         for my $row (@$res) {
           ++$n;
           my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
+#warn "SLOWi:[$config{'use_slow'}][$dmp]";
           $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => $nowtime } )
             if $config{'use_slow'};
           #if ( $time eq 'd' ) {
@@ -74,11 +75,8 @@ for my $arg (@ARGV) {
 #print Dumper $row;
 
 #warn $date;
-          $db->insert_hash( $table, { 'n' => $n, 
-, %$row, 'time' => $nowtime, 'date' => psmisc::human('date', $nowtime)  
-            
- .( $tim ne 'h' ? '' : '-' . ((localtime($nowtime))[2])),
-} );
+          $db->insert_hash( $table, { 'n' => $n, , %$row, 'time' => $nowtime, 'date' => psmisc::human('date', $nowtime)  
+	     .( $tim ne 'h' ? '' : '-' . sprintf '%02d', (localtime $nowtime)[2]),} );
           #}
         }
 #exit;
@@ -299,7 +297,7 @@ for ( grep { length $_ } @ARGV ) {
         'SR' => sub {
           my $dc = shift;
           my %s = %{ $_[1] || return };
-          printlog('SR recieved');
+          #printlog('SR recieved');
           $db->insert_hash( 'results', \%s );
           ++$work{'stat'}{'SR'};
         },
@@ -452,7 +450,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     ,
     @dc
   );
-  psmisc::schedule( [ 300, 60 * 40 ], our $hubrunhour_ ||= sub { psmisc::startme('calch'); } ),
+  psmisc::schedule( [ 300, 60 * 19 ], our $hubrunhour_ ||= sub { psmisc::startme('calch'); } ),
     psmisc::schedule( [ 600, 60 * 60 * 6 ], our $hubrunrare_ ||= sub { psmisc::startme('calcr'); } )
     if $config{'use_slow'};
 #psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
