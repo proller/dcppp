@@ -16,6 +16,8 @@ use ExtUtils::MakeMaker;
     'Net::DirectConnect::TigerHash' => 0,
   },
   NORECURS => 1,
+  EXE_FILES => [qw(examples/share.pl examples/get.pl examples/hub.pl)],
+
 );
 $_{dist} = {
   PREOP    => "pod2text $_{VERSION_FROM} | tee README >\$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;",
