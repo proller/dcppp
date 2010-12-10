@@ -16,7 +16,7 @@ use ExtUtils::MakeMaker;
     'Net::DirectConnect::TigerHash' => 0,
   },
   NORECURS => 1,
-  EXE_FILES => [qw(examples/share.pl examples/get.pl examples/hub.pl)],
+  EXE_FILES => [qw(examples/dcshare examples/dcget examples/dchub)],
 
 );
 $_{dist} = {
@@ -44,6 +44,13 @@ sub MY::postamble {
 fullclean: distclean veryclean
 	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old *.core MANIFEST README
 
-release: test fullclean manifest metafile dist
+prerelease:
+
+release: prerelease test fullclean manifest metafile dist
 }
 }
+=TODO:
+prerelease:
+delete !*.pm from psmisc
+delete tigerhash
+
