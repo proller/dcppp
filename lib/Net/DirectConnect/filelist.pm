@@ -2,13 +2,14 @@
 
 =head1 SYNOPSIS
 
+generate dc++ xml filelist
+
 perl filelist.pm /path/to/dir
 
 =cut
 
 
-package    #hide from cpan
-  Net::DirectConnect::filelist;
+package Net::DirectConnect::filelist;
 use 5.10.0;
 use strict;
 use Encode;
@@ -32,8 +33,9 @@ use base 'Net::DirectConnect';
 
 use base 'Net::DirectConnect';
 
-use lib '../../../examples/stat/pslib';    # REMOVE
-use lib 'stat/pslib';                      # REMOVE
+#use lib '../../../examples/stat/pslib';    # REMOVE
+#use lib 'stat/pslib';                      # REMOVE
+use lib::abs('pslib');
 use psmisc;                                # REMOVE
 use pssql;                                 # REMOVE
 Net::DirectConnect::use_try 'Sys::Sendfile';

@@ -4,7 +4,7 @@ use strict;
 no warnings qw(uninitialized);
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
-use lib '../lib';
+use lib::abs '../lib';
 use Net::DirectConnect;
 my $dc = Net::DirectConnect->new(
   'host'         => $ARGV[0],

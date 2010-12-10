@@ -15,7 +15,7 @@ run flood.pl dchub://1.4.5.6:4111
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use Socket;
-use lib '../lib';
+use lib::abs '../lib';
 use Net::DirectConnect::clihub;
 our (%config);
 
