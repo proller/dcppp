@@ -6,9 +6,26 @@ use Time::HiRes qw(time sleep);
 our $root_path;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
-use lib $root_path. './pslib';
-use pssql;
-use psmisc;
+#use lib $root_path. './pslib';
+#use Net::DirectConnect::pslib::psmisc;
+#use Net::DirectConnect;
+#warn Dumper \%INC;
+#BEGIN {
+#$INC{'Net/DirectConnect.pm'} =~ m{(.*/)};
+#warn $1 . 'DirectConnect/pslib';
+
+#use lib $1 . 'DirectConnect/pslib/';
+
+use Net::DirectConnect::pslib::pssql;
+#use Net::DirectConnect::pslib::pssql;
+#eval q{
+#Net::DirectConnect::use_try 'pssql';
+#Net::DirectConnect::use_try 'psmisc';
+#use pssql;
+#use psmisc;
+#};
+#}
+#warn $@;
 use Exporter 'import';
 our @EXPORT = qw(%config  $param   $db );
 our ( %config, $param, $db, );

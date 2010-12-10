@@ -52,6 +52,9 @@ filelist xml escape chars
 =head1 windows install:
 get perl from http://strawberryperl.com/ and install and run
 C:\strawberry\perl\bin\cpan.bat Net::DirectConnect::TigerHash
+C:\strawberry\perl\bin\cpan.bat Net::DirectConnect
+C:\strawberry\perl\site\bin\share.bat 
+or with config:
 get tar.gz from http://search.cpan.org/dist/Net-DirectConnect/
 unpack, 
 cd examples
