@@ -69,11 +69,11 @@ use Time::HiRes qw(time sleep);
 use Encode;
 
 #use Encode;
-use lib '../lib';
+use lib::abs '../lib';
 #use lib '../TigerHash/lib';
-use lib './stat/pslib';
+#use lib './stat/pslib';
 our ( %config, $db );
-use psmisc;
+use Net::DirectConnect::pslib::psmisc;# qw(:config :log);
 #use pssql;
 use Net::DirectConnect;
 use Net::DirectConnect::filelist;
@@ -82,8 +82,8 @@ $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg adcdev);
 $config{'log_pid'} //= 1;
 psmisc::config();      #psmisc::lib_init();
 psmisc::lib_init();    #for die handler
-printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0] and !$config{dc}{host};
-printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
+psmisc::printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0] and !$config{dc}{host};
+psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 my $log = sub (@) {
   my $dc = ref $_[0] ? shift : {};
   psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
@@ -125,7 +125,7 @@ my @dc;
       psmisc::schedule(
         [ 20, 100 ],
         our $dump_sub__ ||= sub {
-          printlog "Writing dump";
+          psmisc::printlog "Writing dump";
           psmisc::file_rewrite( $0 . '.dump', Dumper @dc );
         }
       ) if $config{debug};

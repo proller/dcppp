@@ -10,12 +10,14 @@ dev hub test
 use strict;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
-use lib '../lib';
+use lib::abs '../lib';
 use Net::DirectConnect::hub;
-use lib '../lib';
-use lib '../TigerHash/lib';
-use lib './stat/pslib';
-use psmisc;
+#use lib::abs '../lib';
+#use lib::abs '../TigerHash/lib';
+#use lib './stat/pslib';
+#use psmisc;
+our %config;
+use Net::DirectConnect::pslib::psmisc;
 psmisc::config();
 #my $dc = Net::DirectConnect::hub->new( no_print => undef, );
 my $dc = Net::DirectConnect->new(

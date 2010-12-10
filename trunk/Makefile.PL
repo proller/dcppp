@@ -6,6 +6,7 @@ use ExtUtils::MakeMaker;
   VERSION_FROM => 'lib/Net/DirectConnect.pm',
   INSTALLDIRS  => 'site',
   PREREQ_PM    => {
+    'lib::abs'         => 0,
     'Time::HiRes'         => 0,
     #'MIME::Base32'        => 0,    #for adc only
     #'Sys::Sendfile'       => 0,    #faster file sending

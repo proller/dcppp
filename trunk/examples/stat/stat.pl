@@ -378,7 +378,7 @@ for ( grep { length $_ } @ARGV ) {
         'QUI' => sub {
           my $dc = shift;
           local $_ = $_[0];
-          printlog 'qui', Dumper @_;
+          #printlog 'qui', Dumper @_;
 
 =c
           $db->insert_hash(
@@ -399,7 +399,18 @@ for ( grep { length $_ } @ARGV ) {
         },
         'RES' => sub {
           #$db->insert_hash( 'results', \%s );
+		  printlog 'RES:', Dumper @_;
           ++$work{'stat'}{'RES'};
+        },
+        #'FSCH' => sub {
+	#	printlog 'FSCH:', Dumper @_;
+        #  #$db->insert_hash( 'results', \%s );
+        #  ++$work{'stat'}{'FSCH'};
+        #},
+        'MSG' => sub {
+          #$db->insert_hash( 'results', \%s );
+		  printlog 'MSG:', Dumper @_;
+          ++$work{'stat'}{'MSG'};
         },
       },
       %config,
@@ -456,15 +467,15 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
 #psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
 
-=z
+#=z
    psmisc::schedule(
     [ 10, 100 ],
     our $dump_sub__ ||= sub {
       print "Writing dump\n";
       psmisc::file_rewrite( 'dump', Dumper @dc);
     }
-  );
-=cut
+  ) if $config{'debug'};
+#=cut
 
 }
 printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
