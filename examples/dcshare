@@ -76,14 +76,19 @@ use lib::abs '../lib';
 #use lib '../TigerHash/lib';
 #use lib './stat/pslib';
 #our ( %config, $db );
-our ( %config); #, $db 
-use Net::DirectConnect::pslib::psmisc;# qw(:config :log);
 
-local *config = *psmisc::config;
+use Net::DirectConnect::pslib::psmisc;
+psmisc->import qw(:log);
+#use Net::DirectConnect::pslib::psmisc qw(:config :log);
+#local *config = *psmisc::config;
+#local *config = *main::config;
+
 #local *main::config = *psmisc::config;
 #local *config = *Net::DirectConnect::pslib::psmisc::config;
 #use Net::DirectConnect::pslib::psmisc (qw(:config :log));
-#psmisc->import qw(:config :log);
+
+our ( %config); #, $db 
+
 #psmisc::import qw(:config :log);
 #Net::DirectConnect::pslib::psmisc::import(qw(:config :log));
 #use pssql;
@@ -92,11 +97,17 @@ use Net::DirectConnect::filelist;
 #psmisc::use_try 'Sys::Sendfile';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg adcdev);
 $config{'log_pid'} //= 1;
-psmisc::config();      #psmisc::lib_init();
+psmisc::configure();      #psmisc::lib_init();
 psmisc::lib_init();    #for die handler
 #print Dumper \%config, \%psmisc::config;
+
+#printlog('err','ok');
+
+
 psmisc::printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0] and !$config{dc}{host};
 psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
+
+
 
 
 my $log = sub (@) {
