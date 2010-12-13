@@ -17,6 +17,8 @@ $Data::Dumper::Sortkeys = 1;
 #use lib $1 . 'DirectConnect/pslib/';
 
 use Net::DirectConnect::pslib::pssql;
+#psmisc->import qw(:log);
+
 #use Net::DirectConnect::pslib::pssql;
 #eval q{
 #Net::DirectConnect::use_try 'pssql';
@@ -404,7 +406,7 @@ $config{'queries'}{'filename'} ||= {
   'show'     => [qw(cnt string filename size tth)],
   'GROUP BY' => 'tth',
 };
-psmisc::config( 0, 0, 0, 1 );
+psmisc::configure( 0, 0, 0, 1 );
 
 sub is_slow {
   my ($query) = @_;
