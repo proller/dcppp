@@ -2,6 +2,11 @@
 #$Id$ $URL$
 
 =copyright
+
+NOT SUPPORTED, OLD
+
+
+
 flood tests
 
 flood.pl config:

@@ -29,13 +29,15 @@ use lib::abs '../lib';
 #use lib './stat/pslib';
 our (%config);
 use Net::DirectConnect::pslib::psmisc;
+psmisc->import qw(:log);
+
 #use psmisc;
 #use pssql;
 use Net::DirectConnect;
 $config{disconnect_after}     //= 10;
 $config{disconnect_after_inf} //= 0;
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
-psmisc::config();    #psmisc::lib_init();
+psmisc::configure();    #psmisc::lib_init();
 printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit if !$ARGV[0] and !$config{dc}{host} and !$config{dc}{hosts};
 printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
@@ -66,7 +68,7 @@ Net::DirectConnect->new(
       my $dst = shift @{ $_[0] };
       return if $dst ne 'I';
       my $info = pop;
-      printlog "getted adc info: $info->{UC} $info->{SS} $info->{SF}, full=", Dumper $info;
+      printlog( "getted adc info: $info->{UC} $info->{SS} $info->{SF}, full=", Dumper $info);
       $dc->destroy() if $config{disconnect_after_inf};    #no manual calc, disconnect
     },
   },
@@ -76,13 +78,13 @@ Net::DirectConnect->new(
     #$BotINFO <bot description>|
     if ( time - $dc->{time_start} > $config{disconnect_after} ) {    # works only 10 seconds (for users inf getting)
       my $info = $dc->stat_hub();
-      printlog "calced info: $info->{UC} $info->{SS} $info->{SF}, full=", Dumper($info);
+      printlog("calced info: $info->{UC} $info->{SS} $info->{SF}, full=", Dumper($info));
       $dc->destroy();
     }
     psmisc::schedule(
       [ 20, 100 ],
       our $dump_sub__ ||= sub {
-        printlog "Writing dump";
+        printlog("Writing dump");
         psmisc::file_rewrite( $0 . '.dump', Dumper $dc);
       }
     ) if $config{debug};

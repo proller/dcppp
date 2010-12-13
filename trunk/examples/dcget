@@ -29,14 +29,15 @@ use lib::abs '../lib';
 #use lib './stat/pslib';
 our ( %config, %work );
 #use psmisc;
-use Net::DirectConnect::pslib::psmisc;# qw(:config :log printlog);
+use Net::DirectConnect::pslib::psmisc;
+psmisc->import qw(:log);
 #require Net::DirectConnect::pslib::psmisc;
 #psmisc->import qw(:config :log printlog);
 #use pssql;
 use Net::DirectConnect;
 #$config{disconnect_after}     //= 10;
 #$config{disconnect_after_inf} //= 0;
-psmisc::config();      #psmisc::lib_init();
+psmisc::configure();      #psmisc::lib_init();
 psmisc::lib_init();    #for die handler
 $config{'auto_get_best'}      //= 1;
 $config{'hit_to_ask'}         //= 5;

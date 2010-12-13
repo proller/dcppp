@@ -18,7 +18,8 @@ use Net::DirectConnect::hub;
 #use psmisc;
 our %config;
 use Net::DirectConnect::pslib::psmisc;
-psmisc::config();
+psmisc->import qw(:log);
+psmisc::configure();
 #my $dc = Net::DirectConnect::hub->new( no_print => undef, );
 my $dc = Net::DirectConnect->new(
   'protocol' => 'adc',
