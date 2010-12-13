@@ -11,6 +11,7 @@ use lib::abs '../../lib';
 
 #use psmisc;
 use Net::DirectConnect::pslib::psmisc;# qw(:config :log printlog);
+psmisc->import qw(:log);
 
 #our $root_path;
 #use lib $root_path. '../../lib';
