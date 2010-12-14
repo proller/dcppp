@@ -63,6 +63,7 @@ sub init {
     'lock'     => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
 
     charset_chat => 'cp1251',  
+    charset_protocol => 'cp1251',  
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   #$self->log('dev', 's0',$self->{'sharesize'});
