@@ -211,8 +211,15 @@ sub new {
   $self->module_load( $_ ) for @modules;
   #@param
   #}
+
+      $self->{charset_chat} ||= $self->{charset_protocol};
+
+
+
   $self->protocol_init();
   #$self->log( 'dev', $self, 'new inited', "MT:$self->{'message_type'}", 'autolisten=', $self->{'auto_listen'} );
+
+  
   if ( $self->{'auto_listen'} ) {
     $self->listen();
     $self->cmd('connect_aft') if $self->{'broadcast'};
@@ -837,9 +844,11 @@ sub func {
         if $self->{'nmdc'} and !exists $self->{'parse'}{$cmd};
 
 if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
-#$self->log( 'dev', 'pre encode', @param, Dumper \@param);
-            $_ =  Encode::decode(($self->{charset_chat} || $self->{charset_protocol}), $_) for @param;
-#$self->log( 'dev', 'postencode', @param, Dumper \@param);
+#$self->log( 'dev', 'RCV pre encode', ($self->{charset_chat} ), @param, Dumper \@param);
+            #$_ =  Encode::decode(($self->{charset_chat} ), $_) for @param;
+            $_ =  Encode::encode $self->{charset_internal}, Encode::decode $self->{charset_chat}, $_ for @param;
+
+#$self->log( 'dev', 'RCV postencode', @param, Dumper \@param);
 #Encode::encode $self->{charset_console},;
 } else {
             #$_ =  Encode::encode $self->{charset_internal}, 
@@ -1394,13 +1403,14 @@ if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
 
   $self->{'say'} = sub (@) {
     my $self   = shift;
-
-    #  $self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}==== @_" , Dumper \@_);
+     @_ = $_[2] if $_[0] eq 'MSG';
+     #$self->log("SAY charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}==== @_" , Dumper \@_);
 
     
-              local $_ = Encode::encode $self->{charset_console} , join ' ', @_;
+              #local $_ = Encode::encode $self->{charset_console} , join ' ', @_;
+          local $_ =  Encode::encode $self->{charset_console}, Encode::decode $self->{charset_internal}, join ' ', @_;
           #}
-     # $self->log("after === $_");
+      #$self->log("SAY after === $_", Dumper $_);
           print $_, "\n";
   };
 

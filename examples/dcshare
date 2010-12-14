@@ -138,7 +138,7 @@ my @dc;
           my $dc = shift;
           $dc->say($msg, @_); #print with console encoding
           },
-        } qw(welcome chatline To)
+        } qw(welcome chatline To MSG)
     },
     auto_connect => 1,
     #auto_work    => 1,
