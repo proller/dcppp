@@ -62,8 +62,8 @@ sub init {
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
     'lock'     => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
 
-    charset_chat => 'cp1251',  
-    charset_protocol => 'cp1251',  
+    #charset_chat => 'cp1251',  
+    #charset_protocol => 'cp1251',  
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   #$self->log('dev', 's0',$self->{'sharesize'});

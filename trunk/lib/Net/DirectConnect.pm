@@ -147,6 +147,9 @@ sub new {
   $self->{$_} ||= $_{$_} for keys %_;
   local %_ = @_;
   $self->{$_} = $_{$_} for keys %_;
+
+  #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
+
   #psmisc::printlog('dev', 'init0', Dumper $self);
   #psmisc::printlog('dev', 'func');
   $self->func();    #@param
@@ -834,7 +837,9 @@ sub func {
         if $self->{'nmdc'} and !exists $self->{'parse'}{$cmd};
 
 if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
+#$self->log( 'dev', 'pre encode', @param, Dumper \@param);
             $_ =  Encode::decode(($self->{charset_chat} || $self->{charset_protocol}), $_) for @param;
+#$self->log( 'dev', 'postencode', @param, Dumper \@param);
 #Encode::encode $self->{charset_console},;
 } else {
             #$_ =  Encode::encode $self->{charset_internal}, 
@@ -1387,11 +1392,16 @@ if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
     return $token + $_ + int time;
   };
 
-  $self->{'say'} = sub (;$) {
+  $self->{'say'} = sub (@) {
     my $self   = shift;
-              local @_ = Encode::encode $self->{charset_console} , join ' ', @_;
+
+    #  $self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}==== @_" , Dumper \@_);
+
+    
+              local $_ = Encode::encode $self->{charset_console} , join ' ', @_;
           #}
-          print @_, "\n";
+     # $self->log("after === $_");
+          print $_, "\n";
   };
 
 
