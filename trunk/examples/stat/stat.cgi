@@ -19,7 +19,7 @@ BEGIN {
   eval "use lib '$root_path./pslib'; use psmisc; use pssql;";    # use psweb;
   print( "Content-type: text/html\n\n", " lib load error rp=$root_path o=$0 sf=$ENV{'SCRIPT_FILENAME'}; ", $@ ), exit if $@;
 }
-$param = get_params();
+$param = psmisc::get_params();
 delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
 use statlib;
 print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
