@@ -3,6 +3,8 @@ package Net::DirectConnect;
 use strict;
 our $VERSION = '0.06' . '_' . ( split( ' ', '$Revision$' ) )[1];
 no warnings qw(uninitialized);
+use utf8;
+use Encode;
 use Socket;
 use IO::Socket;
 use IO::Select;
@@ -140,6 +142,7 @@ sub new {
     charset_fs => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
     charset_console => ( $^O eq 'MSWin32' ? 'cp866' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
     charset_protocol => 'utf8',
+    charset_internal => 'utf8',
   );
   $self->{$_} ||= $_{$_} for keys %_;
   local %_ = @_;
@@ -797,7 +800,11 @@ sub func {
     for ( local @_ = @_ ) {
       $self->log( 'dcdmp', "rawrcv[" . ( $self->{'recv_host'} || $self->{'host'} ) . "]:", $_ );
       my ( $dst, $cmd, @param );
-      $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ) if /^[<*]/;    #farcolorer
+      if (/^[<*]/){
+      $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' );   
+      }
+
+
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
       if ( $self->{'adc'} ) {
         $cmd =~ s/^([BCDEFHIU])//, $dst = $1;
@@ -825,6 +832,16 @@ sub func {
       #$self->log( 'dcinf', "UNKNOWN PEERCMD:[$cmd]->($_) : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
       $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
         if $self->{'nmdc'} and !exists $self->{'parse'}{$cmd};
+
+if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
+            $_ =  Encode::decode(($self->{charset_chat} || $self->{charset_protocol}), $_) for @param;
+#Encode::encode $self->{charset_console},;
+} else {
+            #$_ =  Encode::encode $self->{charset_internal}, 
+            #TODO $_ = Encode::decode($self->{charset_protocol}, $_),             for @param;
+
+}
+      
       my ( @ret, $ret );
       #$self->log( 'dcinf', "parsing", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd});
       my @self;
@@ -1369,6 +1386,15 @@ sub func {
     s/\D//g;
     return $token + $_ + int time;
   };
+
+  $self->{'say'} = sub (;$) {
+    my $self   = shift;
+              local @_ = Encode::encode $self->{charset_console} , join ' ', @_;
+          #}
+          print @_, "\n";
+  };
+
+
   local %_ = (
     'search' => sub {
       my $self = shift if ref $_[0];

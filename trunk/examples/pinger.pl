@@ -59,7 +59,8 @@ Net::DirectConnect->new(
         my $msg = $_;
         $msg => sub {
           my $dc = shift;
-          say join ' ', $msg, @_;
+          #say join ' ', $msg, @_;
+          $dc->say($msg, @_); #print with console encoding
           },
         } qw(welcome chatline To)
     ),

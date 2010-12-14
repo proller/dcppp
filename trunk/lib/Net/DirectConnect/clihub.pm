@@ -118,7 +118,7 @@ sub init {
           $try =~ s/[^\Q$1\E]//g;
           $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
           $self->{'Nick'} = $try if length $try;
-        } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i ) {
+        } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i or $text =~ /Пожалуйста подождите (\d+) секунд до повторного подключения\./ ) {
           sleep $1 + 1;
         } elsif ( $self->{'auto_bug'} and $nick eq 'VerliHub' and $text =~ /^This Hub Is Running Version 0.9.8d/i ) {    #_RC1
           ++$self->{'bug_MyINFO_last'};

@@ -136,11 +136,7 @@ my @dc;
         my $msg = $_;
         $msg => sub {
           my $dc = shift;
-          #warn join ' ', "c$dc->{charset_console}, $dc->{charset_chat} , $dc->{charset_protocol}";
-          if ($dc->{nmdc}) {
-            @_ = Encode::encode $dc->{charset_console}, Encode::decode(($dc->{charset_chat} || $dc->{charset_protocol}), join ' ', @_);
-          }
-          say join ' ', $msg, @_;
+          $dc->say($msg, @_); #print with console encoding
           },
         } qw(welcome chatline To)
     },
