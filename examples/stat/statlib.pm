@@ -15,6 +15,8 @@ $Data::Dumper::Sortkeys = 1;
 #warn $1 . 'DirectConnect/pslib';
 
 #use lib $1 . 'DirectConnect/pslib/';
+*statlib::config = *main::config;
+
 
 use Net::DirectConnect::pslib::pssql;
 #psmisc->import qw(:log);
@@ -54,7 +56,7 @@ my $browsers = join '|', @{ $config{'browsers'} };
 $config{'browser_ie'} = 1 if $ENV{'HTTP_USER_AGENT'} =~ /MSIE/ and $ENV{'HTTP_USER_AGENT'} !~ /$browsers/i;
 #$config{'client'} = $_,
 $config{ 'browser_' . $_ } = 1 for grep { $ENV{'HTTP_USER_AGENT'} =~ /$_/i } @{ $config{'browsers'} };
-$config{'use_graph'} ||= 1  if grep {$config{'browser_'. $_}} qw(firefox safari chrome opera);
+$config{'use_graph'} ||= 1; #  if grep {$config{'browser_'. $_}} qw(firefox safari chrome opera);
 $config{'graph_inner'} ||= 1  if grep {$config{'browser_'. $_}} qw(firefox safari chrome);
 $config{'sql'} ||= {
   #'driver'              => 'mysql',
@@ -158,45 +160,6 @@ unless ($ENV{'SERVER_PORT'}) {
 
 $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
-$config{'queries'}{'queries top string'} ||= {
-  'main'    => 1,
-  'periods' => 1,
-  ( !$config{'use_graph'} ? ( 'class' => 'half' ) : ( 'graph' => 1 ) ),
-  'show'   => [qw(cnt string)],
-  'desc'   => { 'ru' => 'Чаще всего ищут', 'en' => 'Most searched' },
-  'SELECT' => 'string, COUNT(*) as cnt',
-  'FROM'   => 'queries',
-  'WHERE'  => ['string != ""'],
-  #todo: show time last
-  'GROUP BY' => 'string',
-  'ORDER BY' => 'cnt DESC',
-  'order'    => ++$order,
-};
-$config{'queries'}{'queries string last'} ||= {
-  'main'      => 1,
-  'class'     => 'half',
-  'group_end' => 1,
-  'desc'      => { 'ru' => 'Сейчас ищут', 'en' => 'last searches' },
-  'FROM'      => 'queries',
-  'show'      => [qw(time hub nick ip string )],
-  'SELECT'    => '*',
-  'WHERE'     => ['queries.string != ""'],
-  'ORDER BY'  => 'queries.time DESC',
-  'order'     => ++$order,
-};
-$config{'queries'}{'results top'} ||= {
-  'main'    => 1,
-  'periods' => 1,
-  #( !$config{'use_graph'} ? () : ( 'graph' => 1 ) ),
-  'show'     => [qw(cnt string filename size tth)],                                                 #time
-  'desc'     => { 'ru' => 'Распространенные файлы', 'en' => 'Most stored' },
-  'SELECT'   => '*, COUNT(*) as cnt',
-  'FROM'     => 'results',
-  'WHERE'    => ['tth != ""'],
-  'GROUP BY' => 'tth',
-  'ORDER BY' => 'cnt DESC',
-  'order'    => ++$order,
-};
 $config{'queries'}{'queries top tth'} ||= {
   'main'    => 1,
   'periods' => 1,
@@ -211,7 +174,32 @@ $config{'queries'}{'queries top tth'} ||= {
   'ORDER BY'  => 'cnt DESC',
   'order'     => ++$order,
 };
-#
+$config{'queries'}{'queries top string'} ||= {
+  'main'    => 1,
+  'periods' => 1,
+  ( !$config{'use_graph'} ? ( 'class' => 'half' ) : ( 'graph' => 1 ) ),
+  'group_end' => 1,
+  'show'   => [qw(cnt string)],
+  'desc'   => { 'ru' => 'Чаще всего ищут', 'en' => 'Most searched' },
+  'SELECT' => 'string, COUNT(*) as cnt',
+  'FROM'   => 'queries',
+  'WHERE'  => ['string != ""'],
+  #todo: show time last
+  'GROUP BY' => 'string',
+  'ORDER BY' => 'cnt DESC',
+  'order'    => ++$order,
+};
+$config{'queries'}{'queries string last'} ||= {
+  'main'      => 1,
+  'class'     => 'half',
+  'desc'      => { 'ru' => 'Сейчас ищут', 'en' => 'last searches' },
+  'FROM'      => 'queries',
+  'show'      => [qw(time hub nick ip string )],
+  'SELECT'    => '*',
+  'WHERE'     => ['queries.string != ""'],
+  'ORDER BY'  => 'queries.time DESC',
+  'order'     => ++$order,
+};
 $config{'queries'}{'queries tth last'} ||= {
   %{ $config{'queries'}{'queries string last'} },
   'desc'      => { 'ru' => 'Сейчас скачивают', 'en' => 'last downloads' },
@@ -224,6 +212,20 @@ $config{'queries'}{'queries tth last'} ||= {
   'ORDER BY' => 'queries.time DESC',
   'order'    => ++$order,
 };
+$config{'queries'}{'results top'} ||= {
+  'main'    => 1,
+  'periods' => 1,
+  #( !$config{'use_graph'} ? () : ( 'graph' => 1 ) ),
+  'show'     => [qw(cnt string filename size tth)],                                                 #time
+  'desc'     => { 'ru' => 'Распространенные файлы', 'en' => 'Most stored' },
+  'SELECT'   => '*, COUNT(*) as cnt',
+  'FROM'     => 'results',
+  'WHERE'    => ['tth != ""'],
+  'GROUP BY' => 'tth',
+  'ORDER BY' => 'cnt DESC',
+  'order'    => ++$order,
+};
+
 $config{'queries'}{'users top'} ||= {
   'main'     => 1,
   'class'    => 'half',

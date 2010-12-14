@@ -17,7 +17,7 @@ psmisc->import qw(:log);
 #use lib $root_path. '../../lib';
 #use lib $root_path. './';
 use Net::DirectConnect;
-#psmisc::config_init();
+psmisc::configure();
 
 use statlib;
 
@@ -312,8 +312,9 @@ for ( grep { length $_ } @ARGV ) {
         },
         'chatline' => sub {
           my $dc = shift;
-          psmisc::printlog( 'chatline', @_ );
-          my %s;
+          #psmisc::printlog( 'chatline', @_ );
+          $dc->say('chatline', @_);
+	  my %s;
           ( $s{nick}, $s{string} ) = $_[0] =~
             #/^<([^>]+)> (.+)$/s;
             /^(?:<|\* )(.+?)>? (.+)$/s;
@@ -325,7 +326,8 @@ for ( grep { length $_ } @ARGV ) {
         },
         'welcome' => sub {
           my $dc = shift;
-          psmisc::printlog( 'welcome', @_ );
+          #psmisc::printlog( 'welcome', @_ );
+          $dc->say( 'welcome', @_ );
         },
         'MyINFO' => sub {
           my $dc = shift;
@@ -417,8 +419,10 @@ for ( grep { length $_ } @ARGV ) {
         #  ++$work{'stat'}{'FSCH'};
         #},
         'MSG' => sub {
+          my $dc = shift;
           #$db->insert_hash( 'results', \%s );
-		  psmisc::printlog 'MSG:', Dumper @_;
+		  #psmisc::printlog 'MSG:', Dumper @_;
+	    $dc->say('MSG',  @_);
           ++$work{'stat'}{'MSG'};
         },
       },
