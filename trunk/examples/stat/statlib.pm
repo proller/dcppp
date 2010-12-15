@@ -308,10 +308,13 @@ $config{'queries'}{'hubs top'} ||= {
   'class' => 'half',
   'show'  => [qw(time hub users size )],    #time
   #'SELECT'         => 'DISTINCT hub , MAX(size), h2.*', # DISTINCT hub,size,time
-  'SELECT' => '*, hub as h1'
+  #!'SELECT' => '*, hub as h1'
   , #DISTINCT DISTINCT hub,size,time                                                    'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs as h2 USING (hub,size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'h2.size DESC',
   #'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
-  'WHERE' => ['time = (SELECT time FROM hubs WHERE hub=h1 ORDER BY size DESC LIMIT 1)'],
+  #!'WHERE' => ['time = (SELECT time FROM hubs WHERE hub=h1 ORDER BY size DESC LIMIT 1)'],
+  'SELECT' => '*',
+  'WHERE' => ['time = (SELECT time FROM hubs /*WHERE hub=h1*/ ORDER BY size DESC LIMIT 1)'],
+
   #'GROUP BY' => 'hubs.hub',
   #'ORDER BY' => 'size DESC',
   #'SELECT' => '*',
@@ -366,6 +369,7 @@ $config{'queries'}{'counts'} ||= {
 };
 $config{'queries'}{'chat top'} ||= {
   'main'     => 1,
+  'periods' => 1,
   'class'    => 'half',
   'show'     => [qw(cnt hub nick)],
   'desc'     => { 'ru' => 'Находки для шпиона', 'en' => 'top flooders' },
@@ -374,6 +378,7 @@ $config{'queries'}{'chat top'} ||= {
   'GROUP BY' => 'nick',
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
+  'slow'     => 1,
 };
 $config{'queries'}{'chat last'} ||= {
   'main'           => 1,
