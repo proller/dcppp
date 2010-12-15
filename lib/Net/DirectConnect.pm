@@ -208,6 +208,7 @@ sub new {
     push @modules, keys %{ $self->{$_} } if ref $self->{$_} eq 'HASH';
     push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
+    #$self->log( 'modules load', @modules);
   $self->module_load( $_ ) for @modules;
   #@param
   #}
