@@ -43,6 +43,8 @@ sub init {
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
+  $self->{'modules'}{'nmdc'} = 1;
+  
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
   #$self->log($self, 'inited1',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
@@ -62,6 +64,7 @@ sub init {
   $self->{'parse'} ||= {
     'Lock' => sub {
       my $self = shift if ref $_[0];
+#$self->log('dev', 'LOCK:incoming', $self->{'incoming'});
       if ( $self->{'incoming'} ) {
         $self->{'sendbuf'} = 1;
         $self->cmd('MyNick');
@@ -75,6 +78,7 @@ sub init {
         #my ($lock) = $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
         #$_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
         #$self->cmd( 'Key', $self->lock2key($lock) );
+	
       } else {
         #$_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
         #$self->{'key'} = $self->lock2key($1);
@@ -83,6 +87,8 @@ sub init {
       #my ($lock)
       ( $self->{'key'} ) = $_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
       #$_[0] =~ /^(.+?)(\s+Pk=.+)?\s*$/is;
+      
+#$self->log('dev', 'keycmd', $self->{'key'},$self->{'incoming'});
       $self->cmd( 'Key', $self->{'key'} ) if ( $self->{'incoming'} );
     },
     'Direction' => sub {
@@ -100,6 +106,8 @@ sub init {
       my $self = shift if ref $_[0];
       if ( $self->{'incoming'} ) { }
       else {
+#$self->log('dev', 'outk',);
+      
         $self->{'sendbuf'} = 1;
         $self->cmd('Supports');
         $self->cmd('Direction');
@@ -167,6 +175,7 @@ sub init {
   };
   #$self->log ( 'dev', "del empty cmd", ),
   $self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
+#$self->log('PRECMD',Dumper $self->{'cmd'});
   $self->{'cmd'} ||= {
     'connect_aft' => sub {
       my $self = shift if ref $_[0];
@@ -184,7 +193,8 @@ sub init {
     },
     'Lock' => sub {
       my $self = shift if ref $_[0];
-      $self->sendcmd( 'Lock', $self->{'lock'} );
+ #$self->log('dev', 'cmdLOCK', $_[0],$self->{'lock'});
+      $self->sendcmd( 'Lock', $_[0] || $self->{'lock'} );
     },
     'Supports' => sub {
       my $self = shift if ref $_[0];
@@ -196,7 +206,8 @@ sub init {
     },
     'Key' => sub {
       my $self = shift if ref $_[0];
-      $self->sendcmd( 'Key', $_[0] );
+ #$self->log('dev', 'cmdKEY', $_[0],$self->{'incoming'});
+     $self->sendcmd( 'Key', $_[0] );
     },
     'Get' => sub {
       my $self = shift if ref $_[0];
