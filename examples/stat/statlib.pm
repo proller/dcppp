@@ -13,14 +13,9 @@ $Data::Dumper::Sortkeys = 1;
 #BEGIN {
 #$INC{'Net/DirectConnect.pm'} =~ m{(.*/)};
 #warn $1 . 'DirectConnect/pslib';
-
 #use lib $1 . 'DirectConnect/pslib/';
-*statlib::config = *main::config;
-
-
 use Net::DirectConnect::pslib::pssql;
 #psmisc->import qw(:log);
-
 #use Net::DirectConnect::pslib::pssql;
 #eval q{
 #Net::DirectConnect::use_try 'pssql';
@@ -33,6 +28,7 @@ use Net::DirectConnect::pslib::pssql;
 use Exporter 'import';
 our @EXPORT = qw(%config  $param   $db );
 our ( %config, $param, $db, );
+*statlib::config = *main::config;
 our ( $tq, $rq, $vq );
 $config{'log_trace'}  ||= 0;
 $config{'log_dmpbef'} ||= 0;
@@ -56,14 +52,14 @@ my $browsers = join '|', @{ $config{'browsers'} };
 $config{'browser_ie'} = 1 if $ENV{'HTTP_USER_AGENT'} =~ /MSIE/ and $ENV{'HTTP_USER_AGENT'} !~ /$browsers/i;
 #$config{'client'} = $_,
 $config{ 'browser_' . $_ } = 1 for grep { $ENV{'HTTP_USER_AGENT'} =~ /$_/i } @{ $config{'browsers'} };
-$config{'use_graph'} ||= 1; #  if grep {$config{'browser_'. $_}} qw(firefox safari chrome opera);
-$config{'graph_inner'} ||= 1  if grep {$config{'browser_'. $_}} qw(firefox safari chrome);
+$config{'use_graph'} ||= 1;    #  if grep {$config{'browser_'. $_}} qw(firefox safari chrome opera);
+$config{'graph_inner'} ||= 1 if grep { $config{ 'browser_' . $_ } } qw(firefox safari chrome);
 $config{'sql'} ||= {
   #'driver'              => 'mysql',
-  'driver'              => 'sqlite',
-  'dbname'              => 'dcstat',
-  'auto_connect'        => 1,
-  'log'                 => sub { shift; psmisc::printlog(@_) },
+  'driver'       => 'sqlite',
+  'dbname'       => 'dcstat',
+  'auto_connect' => 1,
+  'log'          => sub { shift; psmisc::printlog(@_) },
   #'cp_in'               => 'cp1251',
   'connect_tries'       => 0,
   'connect_chain_tries' => 0,
@@ -132,32 +128,30 @@ $config{'sql'} ||= {
 $config{'sql'}{'table'}{ 'queries_top_string_' . $_ } = {
   'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 15, 'default' => '', 'index' => 1, primary => 1 ),
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
-  n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
+  n      => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,    primary => 1 ),
   cnt    => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-  string => pssql::row( undef, 'type' => 'VARCHAR', 'length'      => 1000, 'index'   => 1, ),
+  string => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 1000, 'index' => 1, ),
   },
   $config{'sql'}{'table'}{ 'queries_top_tth_' . $_ } = {
   #queries_top_tth_daily
   'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 15, 'default' => '', primary => 1, 'index' => 1, ),
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
-  n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
+  n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,  primary => 1 ),
   cnt => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-  tth => pssql::row( undef, 'type' => 'VARCHAR', 'length'      => 40, 'index'   => 1, ),
+  tth => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 40, 'index' => 1, ),
   },
   $config{'sql'}{'table'}{ 'results_top_' . $_ } = {
   'date' => pssql::row( undef,  'type'  => 'VARCHAR', 'length'      => 15, 'default' => '', primary => 1, 'index' => 1, ),
   'time' => pssql::row( 'time', 'index' => 1, ),      #'purge' => 1,
-  n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0, primary => 1 ),
+  n   => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,  primary => 1 ),
   cnt => pssql::row( undef, 'type' => 'INT',      'default' => 0, ),
-  tth => pssql::row( undef, 'type' => 'VARCHAR','length'      => 40, 'index'   => 1, ),
+  tth => pssql::row( undef, 'type' => 'VARCHAR',  'length'  => 40, 'index' => 1, ),
   },
   for sort keys %{ $config{'periods'} };
-
-unless ($ENV{'SERVER_PORT'}) {
-    $config{'sql'}{'auto_repair'} = 1;
-    $config{'sql'}{'force_repair'} = 1;
+unless ( $ENV{'SERVER_PORT'} ) {
+  $config{'sql'}{'auto_repair'}  = 1;
+  $config{'sql'}{'force_repair'} = 1;
 }
-
 $config{'query_default'}{'LIMIT'} ||= 100;
 my $order;
 $config{'queries'}{'queries top tth'} ||= {
@@ -179,26 +173,26 @@ $config{'queries'}{'queries top string'} ||= {
   'periods' => 1,
   ( !$config{'use_graph'} ? ( 'class' => 'half' ) : ( 'graph' => 1 ) ),
   'group_end' => 1,
-  'show'   => [qw(cnt string)],
-  'desc'   => { 'ru' => 'Чаще всего ищут', 'en' => 'Most searched' },
-  'SELECT' => 'string, COUNT(*) as cnt',
-  'FROM'   => 'queries',
-  'WHERE'  => ['string != ""'],
+  'show'      => [qw(cnt string)],
+  'desc'      => { 'ru' => 'Чаще всего ищут', 'en' => 'Most searched' },
+  'SELECT'    => 'string, COUNT(*) as cnt',
+  'FROM'      => 'queries',
+  'WHERE'     => ['string != ""'],
   #todo: show time last
   'GROUP BY' => 'string',
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
 $config{'queries'}{'queries string last'} ||= {
-  'main'      => 1,
-  'class'     => 'half',
-  'desc'      => { 'ru' => 'Сейчас ищут', 'en' => 'last searches' },
-  'FROM'      => 'queries',
-  'show'      => [qw(time hub nick ip string )],
-  'SELECT'    => '*',
-  'WHERE'     => ['queries.string != ""'],
-  'ORDER BY'  => 'queries.time DESC',
-  'order'     => ++$order,
+  'main'     => 1,
+  'class'    => 'half',
+  'desc'     => { 'ru' => 'Сейчас ищут', 'en' => 'last searches' },
+  'FROM'     => 'queries',
+  'show'     => [qw(time hub nick ip string )],
+  'SELECT'   => '*',
+  'WHERE'    => ['queries.string != ""'],
+  'ORDER BY' => 'queries.time DESC',
+  'order'    => ++$order,
 };
 $config{'queries'}{'queries tth last'} ||= {
   %{ $config{'queries'}{'queries string last'} },
@@ -225,7 +219,6 @@ $config{'queries'}{'results top'} ||= {
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
-
 $config{'queries'}{'users top'} ||= {
   'main'     => 1,
   'class'    => 'half',
@@ -307,14 +300,13 @@ $config{'queries'}{'hubs top'} ||= {
   'main'  => 1,
   'class' => 'half',
   'show'  => [qw(time hub users size )],    #time
-  #'SELECT'         => 'DISTINCT hub , MAX(size), h2.*', # DISTINCT hub,size,time
-  #!'SELECT' => '*, hub as h1'
+                                            #'SELECT'         => 'DISTINCT hub , MAX(size), h2.*', # DISTINCT hub,size,time
+                                            #!'SELECT' => '*, hub as h1'
   , #DISTINCT DISTINCT hub,size,time                                                    'FROM'     => 'hubs',  'LEFT JOIN' => 'hubs as h2 USING (hub,size)','GROUP BY' => 'hubs.hub',  'ORDER BY' => 'h2.size DESC',
-  #'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
-  #!'WHERE' => ['time = (SELECT time FROM hubs WHERE hub=h1 ORDER BY size DESC LIMIT 1)'],
+    #'WHERE'    => ['time = (SELECT time FROM hubs WHERE hub=h ORDER BY size DESC LIMIT 1)'],
+    #!'WHERE' => ['time = (SELECT time FROM hubs WHERE hub=h1 ORDER BY size DESC LIMIT 1)'],
   'SELECT' => '*',
-  'WHERE' => ['time = (SELECT time FROM hubs /*WHERE hub=h1*/ ORDER BY size DESC LIMIT 1)'],
-
+  'WHERE'  => ['time = (SELECT time FROM hubs /*WHERE hub=h1*/ ORDER BY size DESC LIMIT 1)'],
   #'GROUP BY' => 'hubs.hub',
   #'ORDER BY' => 'size DESC',
   #'SELECT' => '*',
@@ -369,7 +361,7 @@ $config{'queries'}{'counts'} ||= {
 };
 $config{'queries'}{'chat top'} ||= {
   'main'     => 1,
-  'periods' => 1,
+  'periods'  => 1,
   'class'    => 'half',
   'show'     => [qw(cnt hub nick)],
   'desc'     => { 'ru' => 'Находки для шпиона', 'en' => 'top flooders' },

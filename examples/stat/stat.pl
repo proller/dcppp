@@ -6,23 +6,20 @@ no warnings qw(uninitialized);
 our ( %config, %static, $param, $db, );
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
-
-use lib::abs '../../lib';
-
-#use psmisc;
-use Net::DirectConnect::pslib::psmisc;# qw(:config :log printlog);
+use lib::abs qw(../../lib ./);
+use Net::DirectConnect::pslib::psmisc;    # qw(:config :log printlog);
 psmisc->import qw(:log);
-
+#*statpl::config = *main::config;
 #our $root_path;
 #use lib $root_path. '../../lib';
 #use lib $root_path. './';
 use Net::DirectConnect;
-psmisc::configure();
-
+#psmisc::configure();
 use statlib;
-
+#warn Dumper \%config, \%psmisc::config, \%statlib::config, \%statpl::config, \%main::config, \%pssql::config,;
+#warn Dumper \%INC, \@INC;
 $config{'queue_recalc_every'} ||= 60;
-$static{'no_sig_log'} = 1;    #test
+$static{'no_sig_log'} = 1;                #test
 print(
   "usage:
  $0 [--configParam=configValue] [adc|dchub://]host[:port] [more params and hubs]\n
@@ -32,9 +29,7 @@ print(
   exit
   if !$ARGV[0];
 my $n = -1;
-
 my ( $tq, $rq, $vq ) = $db->quotes();
-
 for my $arg (@ARGV) {
   ++$n;
   #print "ar[$arg]";
@@ -75,21 +70,28 @@ for my $arg (@ARGV) {
         for my $row (@$res) {
           ++$n;
           my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
-#warn "SLOWi:[$config{'use_slow'}][$dmp]";
+          #warn "SLOWi:[$config{'use_slow'}][$dmp]";
           $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => $nowtime } )
             if $config{'use_slow'};
           #if ( $time eq 'd' ) {
           my $table = $query . '_' . $time;
           $table =~ s/\s/_/g;
-#print Dumper $row;
-
-#warn $date;
-          $db->insert_hash( $table, { 'n' => $n, , %$row, 'time' => $nowtime, 'date' => psmisc::human('date', $nowtime)  
-	     .( $tim ne 'h' ? '' : '-' . sprintf '%02d', (localtime $nowtime)[2]),} );
+          #print Dumper $row;
+          #warn $date;
+          $db->insert_hash(
+            $table, {
+              'n' => $n,
+              , %$row,
+              'time' => $nowtime,
+              'date' => psmisc::human( 'date', $nowtime )
+                . ( $tim ne 'h' ? '' : '-' . sprintf '%02d', ( localtime $nowtime )[2] ),
+            }
+          );
           #}
         }
-#exit;
-        $db->do( "DELETE FROM ${tq}slow${tq} WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " )
+        #exit;
+        $db->do(
+          "DELETE FROM ${tq}slow${tq} WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " )
           if $config{'use_slow'};
         #$db->flush_insert('slow');
         $db->flush_insert();
@@ -102,12 +104,13 @@ for my $arg (@ARGV) {
     for my $table ( sort keys %{ $config{'sql'}{'table'} } ) {
       #print "$table  \n";
       my ($col) = grep { $config{'sql'}{'table'}{$table}{$_}{'purge'} } keys %{ $config{'sql'}{'table'}{$table} };
-        #printlog('err', "no col in [$table]", Dumper $config{'sql'}{'table'}{$table}), 
-	next unless $col;
-	my $purge = $config{'sql'}{'table'}{$table}{$col}{'purge'};
+      #printlog('err', "no col in [$table]", Dumper $config{'sql'}{'table'}{$table}),
+      next unless $col;
+      my $purge = $config{'sql'}{'table'}{$table}{$col}{'purge'};
       #print "t $table c$col p$purge \n";
       $purge = $config{'purge'} if $purge and $purge <= 1;
-      psmisc::printlog 'info', "purge $table $col $purge =", $db->do( "DELETE FROM $tq$table$tq WHERE $col < " . int( time - $purge ) );
+      psmisc::printlog 'info', "purge $table $col $purge =",
+        $db->do( "DELETE FROM $tq$table$tq WHERE $col < " . int( time - $purge ) );
     }
     $db->optimize() unless $config{'no_auto_optimize'};
   } elsif ( $arg eq 'install' ) {
@@ -137,16 +140,15 @@ for my $arg (@ARGV) {
         for qw(queries_top_string_ queries_top_tth_ results_top_);
     }
 =cut
-
   } elsif ( $arg eq 'stat' ) {
-    $ARGV[$n] = undef;
-      $db->{'auto_repair'}  = 1;
-      $db->{'force_repair'} = 1;
+    $ARGV[$n]             = undef;
+    $db->{'auto_repair'}  = 1;
+    $db->{'force_repair'} = 1;
     $db->table_stat();
   } elsif ( $arg eq 'check' ) {
-    $ARGV[$n] = undef;
-      $db->{'auto_repair'}  = 1;
-      $db->{'force_repair'} = 1;
+    $ARGV[$n]             = undef;
+    $db->{'auto_repair'}  = 1;
+    $db->{'force_repair'} = 1;
     #$db->check();
     $db->check_data();
   }
@@ -199,7 +201,7 @@ for ( grep { length $_ } @ARGV ) {
     my $hub = $_;
     ++$work{'hubs'}{$hub};
     my $dc = Net::DirectConnect->new(
-       #modules            => ['filelist'],
+      #modules            => ['filelist'],
       'host'      => $hub,
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
@@ -217,7 +219,7 @@ for ( grep { length $_ } @ARGV ) {
       'reconnects' => 500,
       'handler'    => {
         #'Search_parse_aft' => sub {
-		'Search' => sub {
+        'Search' => sub {
           my $dc = shift;
           #printlog 'sch', Dumper @_ if $dc->{adc};
           my $who    = shift if $dc->{adc};
@@ -254,14 +256,15 @@ for ( grep { length $_ } @ARGV ) {
               ];
               psmisc::printlog( 'warn', "reasking" ), $work{'toask'} = [ (
                   sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} } grep {
-                    $work{'ask'}{$_} >= $config{'hit_to_ask'}
+                          $work{'ask'}{$_} >= $config{'hit_to_ask'}
                       and $work{'asked'}{$_}
                       and $work{'asked'}{$_} + $config{'ask_retry'} < $time
                     } keys %{ $work{'ask'} }
                 )
                 ]
                 unless @{ $work{'toask'} };
-              psmisc::printlog( 'info', "queue len=", scalar @{ $work{'toask'} }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+              psmisc::printlog( 'info', "queue len=", scalar @{ $work{'toask'} },
+                " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
             }
           );
           psmisc::schedule(
@@ -313,8 +316,8 @@ for ( grep { length $_ } @ARGV ) {
         'chatline' => sub {
           my $dc = shift;
           #psmisc::printlog( 'chatline', @_ );
-          $dc->say('chatline', @_);
-	  my %s;
+          $dc->say( 'chatline', @_ );
+          my %s;
           ( $s{nick}, $s{string} ) = $_[0] =~
             #/^<([^>]+)> (.+)$/s;
             /^(?:<|\* )(.+?)>? (.+)$/s;
@@ -405,24 +408,23 @@ for ( grep { length $_ } @ARGV ) {
             }
           );
 =cut
-
           ++$work{'stat'}{'QUI'};
         },
         'RES' => sub {
           #$db->insert_hash( 'results', \%s );
-		  psmisc::printlog 'RES:', Dumper @_;
+          psmisc::printlog 'RES:', Dumper @_;
           ++$work{'stat'}{'RES'};
         },
         #'FSCH' => sub {
-	#	printlog 'FSCH:', Dumper @_;
+        #	printlog 'FSCH:', Dumper @_;
         #  #$db->insert_hash( 'results', \%s );
         #  ++$work{'stat'}{'FSCH'};
         #},
         'MSG' => sub {
           my $dc = shift;
           #$db->insert_hash( 'results', \%s );
-		  #psmisc::printlog 'MSG:', Dumper @_;
-	    $dc->say('MSG',  @_);
+          #psmisc::printlog 'MSG:', Dumper @_;
+          $dc->say( 'MSG', @_ );
           ++$work{'stat'}{'MSG'};
         },
       },
@@ -441,7 +443,6 @@ for ( grep { length $_ } @ARGV ) {
       $dc->destroy();
     };
 =cut	
-
     push @dc, $dc;
     $_->work() for @dc;
   }
@@ -479,17 +480,15 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     if $config{'use_slow'};
 #psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
-
-#=z
-   psmisc::schedule(
+  #=z
+  psmisc::schedule(
     [ 10, 100 ],
     our $dump_sub__ ||= sub {
       print "Writing dump\n";
-      psmisc::file_rewrite( 'dump', Dumper @dc);
+      psmisc::file_rewrite( 'dump', Dumper @dc );
     }
   ) if $config{'debug'};
-#=cut
-
+  #=cut
 }
 psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
 #psmisc::caller_trace(20);

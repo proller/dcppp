@@ -66,11 +66,11 @@ sub init {
   #$self->baseinit();
   #share_full share_tth want
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(  NickList IpList PortList );    #handler
-  #$self->{'NickList'} ||= {};
-  #$self->{'IpList'}   ||= {};
-  #$self->{'PortList'} ||= {};
-  #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
-  #You are already in the hub.
+                                                                                       #$self->{'NickList'} ||= {};
+                                                                                       #$self->{'IpList'}   ||= {};
+                                                                                       #$self->{'PortList'} ||= {};
+         #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
+         #You are already in the hub.
   $self->{'parse'} ||= {
     'chatline' => sub {
       my $self = shift if ref $_[0];
@@ -118,7 +118,9 @@ sub init {
           $try =~ s/[^\Q$1\E]//g;
           $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
           $self->{'Nick'} = $try if length $try;
-        } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i or $text =~ /Пожалуйста подождите (\d+) секунд до повторного подключения\./ ) {
+        } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i
+          or $text =~ /Пожалуйста подождите (\d+) секунд до повторного подключения\./ )
+        {
           sleep $1 + 1;
         } elsif ( $self->{'auto_bug'} and $nick eq 'VerliHub' and $text =~ /^This Hub Is Running Version 0.9.8d/i ) {    #_RC1
           ++$self->{'bug_MyINFO_last'};
@@ -230,7 +232,8 @@ sub init {
     'RevConnectToMe' => sub {
       my $self = shift if ref $_[0];
       my ( $to, $from ) = split /\s+/, $_[0];
-      $self->cmd( 'ConnectToMe', $to ) if $from eq $self->{'Nick'};
+      $self->log( 'dev', "[$from eq $self->{'Nick'}] ($_[0])" );
+      $self->log( 'dev', 'go ctm' ), $self->cmd( 'ConnectToMe', $to ) if $from eq $self->{'Nick'};
     },
     'GetPass' => sub {
       my $self = shift if ref $_[0];
@@ -367,7 +370,6 @@ sub init {
 
 
 =cut  
-
   $self->{'cmd'} = {
     'chatline' => sub {
       my $self = shift if ref $_[0];
@@ -423,7 +425,8 @@ sub init {
     },
     'ConnectToMe' => sub {
       my $self = shift if ref $_[0];
-      return if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
+      $self->log( 'dcdbg', "cannot ConnectToMe from passive mode" ), return
+        if $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'};
       $self->log( 'err', "please define myip" ), return unless $self->{'myip'};
       $self->sendcmd( 'ConnectToMe', $_[0], "$self->{'myip'}:$self->{'myport'}" );
     },
@@ -481,7 +484,7 @@ sub init {
       my $self = shift if ref $_[0];
       #my $string = $_[0];
       $self->{'search_last_string'} = $_[0];    #$string;
-      #$string =~ tr/ /$/;
+                                                #$string =~ tr/ /$/;
       $self->cmd(
         'search_nmdc',
         #'F', 'T', '0', '1',
@@ -596,7 +599,6 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
-
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};

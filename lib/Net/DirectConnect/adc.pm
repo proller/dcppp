@@ -71,6 +71,7 @@ sub tiger ($) {
 }
 sub hash ($) { base32( tiger( $_[0] ) ); }
 =cut
+
 #sub init {  my $self = shift;
 
 =cu
@@ -87,7 +88,6 @@ return $self;
 
 }
 =cut
-
 sub init {
   my $self = shift;
   #shift if $_[0] eq __PACKAGE__;
@@ -107,8 +107,8 @@ sub init {
     #ADC
     'connect_protocol' => 'ADC/0.10', 'message_type' => 'H',
     #@_,
-    'incomingclass'  => __PACKAGE__,                               #'Net::DirectConnect::adc',
-    no_print         => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
+    'incomingclass' => __PACKAGE__,                        #'Net::DirectConnect::adc',
+    no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
@@ -129,68 +129,61 @@ sub init {
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{message_type} = 'B' if $self->{'broadcast'};
-
-if (Net::DirectConnect::use_try('MIME::Base32', 'RFC')) {
-$self->{base_encode} ||= sub {
-  shift if ref $_[0];
-  MIME::Base32::encode_rfc3548( @_ ) 
-};
-$self->{base_decode} ||= sub { 
-  shift if ref $_[0];   
-  MIME::Base32::decode_rfc3548( @_ ) 
-};
-} else {
-$self->log('err', 'cant use MIME::Base32');
-}
-
-if (Net::DirectConnect::use_try('Net::DirectConnect::TigerHash')) {
-$self->{hash} ||= sub {shift if ref $_[0];    Net::DirectConnect::TigerHash::tthbin($_[0]); };
-
-$self->{base_encode} ||= sub {
-  shift if ref $_[0];
-  Net::DirectConnect::TigerHash::toBase32($_[0]);
-};
-$self->{base_decode} ||= sub { 
-  shift if ref $_[0];   
-  Net::DirectConnect::TigerHash::fromBase32($_[0]);
-};
-
-} else {
-$self->log('err', 'cant use Net::DirectConnect::TigerHash');
-}
-
-$self->{hash_base} ||= sub {shift if ref $_[0]; $self->base_encode($self->hash($_[0])) };
-#sub hash ($) { base32( tiger( $_[0] ) ); }
-
-$self->{INF_generate} ||= sub {        
-      my $self = shift if ref $_[0];
-        $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
-        $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
-        $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-        $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
-        $self->{'PID'} ||= $self->hash($self->{'ID'});
-        $self->{'CID'} ||= $self->hash($self->{'PID'});
-        $self->{'INF'}{'PD'} ||= $self->base_encode($self->{'PID'});
-        $self->{'INF'}{'ID'} ||= $self->base_encode($self->{'CID'});
-        #$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
-        $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
-        $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
-        $self->{'INF'}{'SF'} ||= 30999;
-        $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
-        $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
-        $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
-        $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
-          || 'perl'
-          . $Net::DirectConnect::VERSION . '_'
-          . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
-        $self->{'INF'}{'US'} ||= 10000;
-        $self->{'INF'}{'U4'} ||= $self->{'myport_udp'};
-        $self->{'INF'}{'I4'} ||= $self->{'myip'};
-        $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
-return $self->{'INF'};
-};
-
-
+  if ( Net::DirectConnect::use_try( 'MIME::Base32', 'RFC' ) ) {
+    $self->{base_encode} ||= sub {
+      shift if ref $_[0];
+      MIME::Base32::encode_rfc3548(@_);
+    };
+    $self->{base_decode} ||= sub {
+      shift if ref $_[0];
+      MIME::Base32::decode_rfc3548(@_);
+    };
+  }
+  else {
+    $self->log( 'err', 'cant use MIME::Base32' );
+  }
+  if ( Net::DirectConnect::use_try('Net::DirectConnect::TigerHash') ) {
+    $self->{hash} ||= sub { shift if ref $_[0]; Net::DirectConnect::TigerHash::tthbin( $_[0] ); };
+    $self->{base_encode} ||= sub {
+      shift if ref $_[0];
+      Net::DirectConnect::TigerHash::toBase32( $_[0] );
+    };
+    $self->{base_decode} ||= sub {
+      shift if ref $_[0];
+      Net::DirectConnect::TigerHash::fromBase32( $_[0] );
+    };
+  } else {
+    $self->log( 'err', 'cant use Net::DirectConnect::TigerHash' );
+  }
+  $self->{hash_base} ||= sub { shift if ref $_[0]; $self->base_encode( $self->hash( $_[0] ) ) };
+  #sub hash ($) { base32( tiger( $_[0] ) ); }
+  $self->{INF_generate} ||= sub {
+    my $self = shift if ref $_[0];
+    $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
+    $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
+    $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
+    $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
+    $self->{'PID'} ||= $self->hash( $self->{'ID'} );
+    $self->{'CID'} ||= $self->hash( $self->{'PID'} );
+    $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
+    $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
+#$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
+    $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
+    $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
+    $self->{'INF'}{'SF'} ||= 30999;
+    $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
+    $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
+    $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
+    $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
+      || 'perl'
+      . $Net::DirectConnect::VERSION . '_'
+      . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
+    $self->{'INF'}{'US'} ||= 10000;
+    $self->{'INF'}{'U4'} ||= $self->{'myport_udp'};
+    $self->{'INF'}{'I4'} ||= $self->{'myip'};
+    $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
+    return $self->{'INF'};
+  };
   $self->{'parse'} ||= {
 #
 #=================
@@ -217,7 +210,7 @@ return $self->{'INF'};
         $self->log( 'adcdev', $dst, 'SUP:', @_, "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}" );
         $self->cmd( 'I', 'SID', $peerid );
         $self->cmd( 'I', 'INF', );    #$self->{'peers'}{$_}{'INF'}
-        #for keys %{$self->{'peers'}};
+                                      #for keys %{$self->{'peers'}};
         $self->{'status'} = 'connected';
       }
       $peerid ||= '';
@@ -234,9 +227,8 @@ return $self->{'INF'};
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
-$self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
 
-
+      $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
       return $self->{'peers'}{$peerid}{'SUP'};
     },
     'SID' => sub {
@@ -268,8 +260,8 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
       my $sendbinf;
       if ( $self->{parent}{hub} and $dst eq 'B' ) {
         if ( !keys %{ $self->{'peers'}{$peerid}{'INF'} } ) {    #join
-          #++$sendbinf;
-          #$self->log( 'adcdev', 'FIRSTINF:', $peerid, Dumper $params, $self->{'peers'} );
+              #++$sendbinf;
+              #$self->log( 'adcdev', 'FIRSTINF:', $peerid, Dumper $params, $self->{'peers'} );
           $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} };
         }
       }
@@ -437,7 +429,6 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
         'auto_connect' => 1,
       );
 =cut
-
     },
     'CTM' => sub {
       my $self = shift if ref $_[0];
@@ -492,7 +483,6 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
         $self->log( 'dcerr', 'SND', "unknown type", @_ );
       }
 =cut
-
     },
   };
 
@@ -506,7 +496,6 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
 
 
 =cut  
-
   $self->{'cmd'} = {
     #move to main
     'search_send' => sub {
@@ -553,9 +542,9 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
       #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
       #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
-      if   ( $self->{'broadcast'} ) { $self->cmd( $self->{'message_type'}, 'INF' ); }
+      if ( $self->{'broadcast'} ) { $self->cmd( $self->{'message_type'}, 'INF' ); }
       #else
-                                { $self->cmd( $self->{'message_type'}, 'SUP' ); }
+      { $self->cmd( $self->{'message_type'}, 'SUP' ); }
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
@@ -598,16 +587,13 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
           return;
         }
       } else {
-
-      	$self->INF_generate();
-
-     
+        $self->INF_generate();
      #$self->{''} ||= $self->{''} || '';
      #$self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       }
-      $self->cmd_adc     #sendcmd
+      $self->cmd_adc        #sendcmd
         (
-        $dst, 'INF',     #$self->{'sid'},
+        $dst, 'INF',        #$self->{'sid'},
         map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : @_ ? @_ : sort keys %{ $self->{'INF'} }
         );
       #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
@@ -659,7 +645,6 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
-
   #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
   unless ( $self->{'no_listen'} ) {
     if ( ( $self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'} ) {
@@ -693,7 +678,7 @@ $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
         'NONONOparse' => {
           'SR'  => $self->{'parse'}{'SR'},
           'PSR' => sub {                     #U
-            #$self->log( 'dev', "UPSR", @_ );
+                                             #$self->log( 'dev', "UPSR", @_ );
           },
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131
@@ -720,7 +705,6 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'err', "cant listen broadcast (hubless)" ) unless $self->{'clients'}{'listener_udp_broadcast'}{'myport'};
     }
 =cut
-
     if ( $self->{'dev_http'} ) {
       $self->log( 'dev', "making listeners: http" );
       #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
@@ -755,9 +739,10 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
     $self->log(
       'dev',  'disconnect int',           #psmisc::caller_trace(30)
       'hub=', $self->{'parent'}{'hub'},
-      ) if $self
+      )
+      if $self
         and $self->{'log'};
-	#psmisc::caller_trace 15;
+    #psmisc::caller_trace 15;
   };
   $self->get_peer_addr() if $self->{'socket'};
   $self->log( 'err', 'cant load TigerHash module' ) unless $INC{'Net/DirectConnect/TigerHash.pm'};

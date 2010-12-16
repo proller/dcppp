@@ -16,7 +16,6 @@ run flood.pl dchub://1.4.5.6:4111
 
 
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use Socket;
@@ -134,10 +133,10 @@ TRY: for ( 0 .. $config{'flood_tries'} ) {
   #print("destroy1.\n"),
   handler( 'destroy', $dc ), next if !$dc->active();    #!$dc->{'socket'} and $dc->{'disconnect_recursive'};
   for ( 1 .. $config{'connect_wait'} ) {                #sleep(5); $dc->recv();
-    #last if (!$dc->{'socket'} and $dc->{'disconnect_recursive'}) or $dc->{'status'} eq 'connected';
+        #last if (!$dc->{'socket'} and $dc->{'disconnect_recursive'}) or $dc->{'status'} eq 'connected';
     last if ( !$dc->active() ) or $dc->{'status'} eq 'connected';
-    $dc->wait_sleep(10);                                #for 0 .. 10;
-    #sleep(1);
+    $dc->wait_sleep(10);    #for 0 .. 10;
+                            #sleep(1);
   }
   #print("destroy2.\n"),
   handler( 'destroy', $dc ), next if !$dc->active();    #!$dc->{'socket'} and $dc->{'disconnect_recursive'};

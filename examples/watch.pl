@@ -6,7 +6,6 @@
 chat watch 
 
 =cut
-
 use strict;
 eval { use Time::HiRes qw(time sleep); };
 use lib::abs '../lib';
@@ -32,7 +31,7 @@ my $dc = Net::DirectConnect->new(
       $msg => sub {
         my $dc = shift;
         #print join ' ', $msg, @_, "\n";
-        $dc->say($msg, @_); #print with console encoding
+        $dc->say( $msg, @_ );    #print with console encoding
         },
       } qw(welcome chatline To)
   },
