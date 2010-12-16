@@ -6,16 +6,17 @@
 #
 
 PORTNAME=	Net-DirectConnect-TigerHash
-PORTVERSION=	0.03
+PORTVERSION=	0.04
 CATEGORIES=	net-p2p net perl5
 MASTER_SITES=	CPAN
 PKGNAMEPREFIX=	p5-
 
 MAINTAINER=	proler@gmail.com
-COMMENT=	Perl Direct Connect TigerHash module.
+COMMENT=	Perl Direct Connect TigerHash module
 
 PERL_CONFIGURE=	yes
-CC=	g++
+CC=		g++
 
-.include <bsd.port.pre.mk>
-.include <bsd.port.post.mk>
+MAN3=		Net::DirectConnect::TigerHash.3
+
+.include <bsd.port.mk>
