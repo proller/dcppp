@@ -421,7 +421,11 @@ sub is_slow {
 sub make_query {
   my ( $q, $query, $period ) = @_;
   my $sql;
-  if ( is_slow($query) and $ENV{'SERVER_PORT'} and $config{'use_slow'} ) {
+#warn Dumper caller(0);
+#(caller(0))[1] eq 'statcgi'
+#return ;
+  if ( is_slow($query) and (caller(0))[0] eq 'statcgi' and $config{'use_slow'} ) {
+#warn "SLOWweb";
     $sql =
         "SELECT * FROM ${tq}slow${tq} WHERE name = "
       . $db->quote($query)
@@ -435,6 +439,8 @@ sub make_query {
     #print Dumper @ret if $param->{'debug'};
     return \@ret;
   }
+#warn "SLOWcalc";
+#return;
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
   $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'},
     map { $_ . '=' . $db->quote( $param->{$_} ) } grep { length $param->{$_} } keys %{ $config{'queries'} };    #qw(string tth);

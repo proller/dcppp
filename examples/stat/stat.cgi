@@ -207,10 +207,11 @@ for my $query ( sort keys %makegraph ) {
   my $ys = $yl / $yn;
   for my $date (%date_max) {
     $date_step{$date} = $date_max{$date} ? $yl / $date_max{$date} : 1;
+  psmisc::printlog 'dev', "$date: [$date_step{$date}] yn=$yn; ys=$ys $yl<br\n/>";
   }
   #my $ys = int $yl / $maxy;
   #$ys = 1;
-  #printlog 'dev', "yn=$yn; ys=$ys";
+  #psmisc::printlog 'dev', "yn=$yn; ys=$ys<br\n/>";
   my $svgns = $config{'graph_inner'} ? 'svg:' : '';
   my $img =    #join '',
     (
@@ -236,7 +237,7 @@ for my $query ( sort keys %makegraph ) {
                                                                                                   # join ' ',
     for (
       sort
-      #grep {$graph{$line}{$_}}
+      grep {$graph{$line}{$_}}
       keys %dates
       )
     {
@@ -244,8 +245,8 @@ for my $query ( sort keys %makegraph ) {
       if ( $graph{$line}{$_} ) {                                                                  # ? () : (
         $img .= int( $n * $xs ) . ',' . int(
           $yl -
-            ( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
-            #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
+            #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
+            ( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
         ) . ' ';
       }
       $n++;
