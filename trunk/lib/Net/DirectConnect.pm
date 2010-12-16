@@ -1,7 +1,7 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
-our $VERSION = '0.06' . '_' . ( split( ' ', '$Revision$' ) )[1];
+our $VERSION = '0.07';    # . '_' . ( split( ' ', '$Revision$' ) )[1];
 no warnings qw(uninitialized);
 use utf8;
 use Encode;
@@ -73,15 +73,13 @@ sub schedule($$;@)
     and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
 }
 
-
 sub use_try ($;@) {
   my $self = shift if ref $_[0];
   our %tried;
   ( my $path = ( my $module = shift ) . '.pm' ) =~ s{::}{/}g;
   return $tried{$module} if exists $tried{$module};
-  $tried{$module} = ($INC{$path} or eval 'use ' . $module . ' qw(' . ( join ' ', @_ ) . ');1;' and $INC{$path});
+  $tried{$module} = ( $INC{$path} or eval 'use ' . $module . ' qw(' . ( join ' ', @_ ) . ');1;' and $INC{$path} );
 }
-
 
 sub module_load {
   my $self = shift if ref $_[0];
@@ -95,7 +93,7 @@ sub module_load {
   eval "$module\::init(\$self, \@_);";    #, \@param
   $self->log( 'err', 'cant init', $module, $@ ), return if $@;
   $self->log( 'dev', 'loaded  module', $_, $module, );
-1;
+  1;
 }
 
 sub new {
@@ -104,14 +102,15 @@ sub new {
   if ( ref $class eq __PACKAGE__ ) { $self = $class; }
   else                             { bless( $self, $class ) unless ref $class; }
   local %_ = (
-    'Listen'      => 10,
-    'Timeout'     => 5,
-    'myport'      => 412,                                                   #first try
-    'myport_base' => 40000, 'myport_random' => 1000, 'myport_tries' => 5,
-
-    'cmd_sep'  => ' ',
-    'no_print' => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
-    'log'      => sub (@) {
+    'Listen'        => 10,
+    'Timeout'       => 5,
+    'myport'        => 412,                                                               #first try
+    'myport_base'   => 40000,
+    'myport_random' => 1000,
+    'myport_tries'  => 5,
+    'cmd_sep'       => ' ',
+    'no_print'      => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
+    'log'           => sub (@) {
       my $self = ref $_[0] ? shift() : {};
       if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
       print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
@@ -130,26 +129,24 @@ sub new {
     #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'nonblocking' => 1,
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
-    'informative_hash' => [qw(clients)],    #NickList IpList PortList
-    #'disconnect_recursive' => 1,
-    'reconnect_sleep' => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
+    'informative_hash' => [qw(clients)],                                                    #NickList IpList PortList
+                                                                                            #'disconnect_recursive' => 1,
+    'reconnect_sleep'  => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
     'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', time_start => time,
     #'peers' => {},
     #'partial_prefix' => './partial/',
     #ADC
     #number => ++$global{'total'},
     #};
-    charset_fs => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
-    charset_console => ( $^O eq 'MSWin32' ? 'cp866' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+    charset_fs      => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+    charset_console => ( $^O eq 'MSWin32' ? 'cp866'  : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
     charset_protocol => 'utf8',
     charset_internal => 'utf8',
   );
   $self->{$_} ||= $_{$_} for keys %_;
   local %_ = @_;
   $self->{$_} = $_{$_} for keys %_;
-
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
-
   #psmisc::printlog('dev', 'init0', Dumper $self);
   #psmisc::printlog('dev', 'func');
   $self->func();    #@param
@@ -157,7 +154,7 @@ sub new {
   $self->{'recv_flags'} ||= 0;
   #psmisc::printlog('dev', 'init');
   $self->init();    #@param
-  #}
+                    #}
   $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
   $self->{activity} = time;
@@ -197,7 +194,7 @@ sub new {
       #$self->log( 'proto ', $self->{'protocol'} );
     }
     $self->{'module'} ||= $self->{'protocol'};
-    if ( $self->{'module'} eq 'nmdc' ) { $self->{'module'} = ['nmdc', ($self->{'hub'} ? 'hubcli' : 'clihub')]; }
+    if ( $self->{'module'} eq 'nmdc' ) { $self->{'module'} = [ 'nmdc', ( $self->{'hub'} ? 'hubcli' : 'clihub' ) ]; }
     #$self->log( 'module load', $self->{'module'});
     #if ( $self->{'module'} ) {
   }
@@ -208,19 +205,13 @@ sub new {
     push @modules, keys %{ $self->{$_} } if ref $self->{$_} eq 'HASH';
     push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
-    #$self->log( 'modules load', @modules);
-  $self->module_load( $_ ) for @modules;
+  #$self->log( 'modules load', @modules);
+  $self->module_load($_) for @modules;
   #@param
   #}
-
-      $self->{charset_chat} ||= $self->{charset_protocol};
-
-
-
+  $self->{charset_chat} ||= $self->{charset_protocol};
   $self->protocol_init();
   #$self->log( 'dev', $self, 'new inited', "MT:$self->{'message_type'}", 'autolisten=', $self->{'auto_listen'} );
-
-  
   if ( $self->{'auto_listen'} ) {
     $self->listen();
     $self->cmd('connect_aft') if $self->{'broadcast'};
@@ -237,7 +228,7 @@ sub new {
     #$self->log( $self, '', "auto_work ", $self->active() );
     while ( $self->active() ) {
       $self->work();    #forever
-      #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
+                        #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
     }
     $self->disconnect();
   }
@@ -289,8 +280,8 @@ sub cmd {
     @ret = $self->cmd_adc( $dst, $cmd, @_ );
   } else {
     $self->log(
-      'info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
-	"self=",ref $self,
+      'info',  "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
+      "self=", ref $self,
       #Dumper $self->{'cmd'},
       $self->{'parse'}
     );
@@ -811,11 +802,9 @@ sub func {
     for ( local @_ = @_ ) {
       $self->log( 'dcdmp', "rawrcv[" . ( $self->{'recv_host'} || $self->{'host'} ) . "]:", $_ );
       my ( $dst, $cmd, @param );
-      if (/^[<*]/){
-      $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' );   
+      if (/^[<*]/) {
+        $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' );
       }
-
-
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
       if ( $self->{'adc'} ) {
         $cmd =~ s/^([BCDEFHIU])//, $dst = $1;
@@ -843,26 +832,22 @@ sub func {
       #$self->log( 'dcinf', "UNKNOWN PEERCMD:[$cmd]->($_) : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
       $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
         if $self->{'nmdc'} and !exists $self->{'parse'}{$cmd};
-
-if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
-#$self->log( 'dev', 'RCV pre encode', ($self->{charset_chat} ), @param, Dumper \@param);
-            #$_ =  Encode::decode(($self->{charset_chat} ), $_) for @param;
-            $_ =  Encode::encode $self->{charset_internal}, Encode::decode $self->{charset_chat}, $_ for @param;
-
-#$self->log( 'dev', 'RCV postencode', @param, Dumper \@param);
-#Encode::encode $self->{charset_console},;
-} else {
-            #$_ =  Encode::encode $self->{charset_internal}, 
-            #TODO $_ = Encode::decode($self->{charset_protocol}, $_),             for @param;
-
-}
-      
+      if ( $cmd eq 'chatline' or $cmd eq 'welcome' or $cmd eq 'To' ) {
+        #$self->log( 'dev', 'RCV pre encode', ($self->{charset_chat} ), @param, Dumper \@param);
+        #$_ =  Encode::decode(($self->{charset_chat} ), $_) for @param;
+        $_ = Encode::encode $self->{charset_internal}, Encode::decode $self->{charset_chat}, $_ for @param;
+        #$self->log( 'dev', 'RCV postencode', @param, Dumper \@param);
+        #Encode::encode $self->{charset_console},;
+      } else {
+        #$_ =  Encode::encode $self->{charset_internal},
+        #TODO $_ = Encode::decode($self->{charset_protocol}, $_),             for @param;
+      }
       my ( @ret, $ret );
       #$self->log( 'dcinf', "parsing", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd});
       my @self;
       #@self = $self if $self->{'adc'};
       @self = $self;    #if !$self->{'nmdc'};
-      #$self->handler( @self, $cmd . '_parse_bef_bef', @param );
+                        #$self->handler( @self, $cmd . '_parse_bef_bef', @param );
       $self->handler( @self, $cmd . '_parse_bef', @param );
       if ( ref $self->{'parse'}{$cmd} eq 'CODE' ) {
         if ( !exists $self->{'no_print'}{$cmd} ) {
@@ -892,8 +877,8 @@ if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
   $self->{'send'} ||= sub {
     my $self = shift;
     local $_;    # = join( '', @_ );
-    #$self->{bytes_send} += length $_;
-    #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
+                 #$self->{bytes_send} += length $_;
+                 #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
     eval { $_ = $self->{'socket'}->send(@_); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
@@ -1129,7 +1114,7 @@ if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
     #my $readed =
     my $sended;
     if ( $INC{'Sys/Sendfile.pm'} ) {    #works
-      #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
+          #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
       $self->{'file_send_offset'} += $sended =
         Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
  #);
@@ -1166,10 +1151,10 @@ if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
       read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
         $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
         unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
-      #send $self->{'socket'},
-      #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-      #my $sended;
-      #$self->log(      'snd',      length $self->{'file_send_buf'},
+                                                   #send $self->{'socket'},
+                                                   #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+                                                   #my $sended;
+                                                   #$self->log(      'snd',      length $self->{'file_send_buf'},
       $sended = $self->send( $self->{'file_send_buf'} );
       #eval {
       #$sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
@@ -1401,21 +1386,16 @@ if ($cmd eq 'chatline' or $cmd eq  'welcome' or $cmd eq 'To'           ) {
     s/\D//g;
     return $token + $_ + int time;
   };
-
   $self->{'say'} = sub (@) {
-    my $self   = shift;
-     @_ = $_[2] if $_[0] eq 'MSG';
-     #$self->log("SAY charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}==== @_" , Dumper \@_);
-
-    
-              #local $_ = Encode::encode $self->{charset_console} , join ' ', @_;
-          local $_ =  Encode::encode $self->{charset_console}, Encode::decode $self->{charset_internal}, join ' ', @_;
-          #}
-      #$self->log("SAY after === $_", Dumper $_);
-          print $_, "\n";
+    my $self = shift;
+    @_ = $_[2] if $_[0] eq 'MSG';
+    #$self->log("SAY charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}==== @_" , Dumper \@_);
+    #local $_ = Encode::encode $self->{charset_console} , join ' ', @_;
+    local $_ = Encode::encode $self->{charset_console}, Encode::decode $self->{charset_internal}, join ' ', @_;
+    #}
+    #$self->log("SAY after === $_", Dumper $_);
+    print $_, "\n";
   };
-
-
   local %_ = (
     'search' => sub {
       my $self = shift if ref $_[0];

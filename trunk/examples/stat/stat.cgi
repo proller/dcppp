@@ -7,21 +7,24 @@ eval { use Time::HiRes qw(time sleep); };
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 our ( %config, $param, $db, );
-our $root_path;
+use lib::abs qw(../../lib ./);
+use statlib;
+#our $root_path;
 our @colors =
   qw(aqua 		gray		navy		silver	 black		green		olive		teal	 blue		lime		purple		 magenta		maroon		red		yellow	  	);    #white
-
-BEGIN {
-  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;                                                             #v0w
-  $root_path = $1 . '/' if $1;
-  $root_path =~ s|\\|/|g;
-  eval "use lib '$root_path'" if $root_path;
-  eval "use lib '$root_path./pslib'; use psmisc; use pssql;";    # use psweb;
-  print( "Content-type: text/html\n\n", " lib load error rp=$root_path o=$0 sf=$ENV{'SCRIPT_FILENAME'}; ", $@ ), exit if $@;
-}
+#BEGIN {
+#  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;                                                             #v0w
+#  $root_path = $1 . '/' if $1;
+#  $root_path =~ s|\\|/|g;
+#  eval "use lib '$root_path'" if $root_path;
+#  eval "use lib '$root_path./pslib'; use psmisc; use pssql;";    # use psweb;
+#  print( "Content-type: text/html\n\n", " lib load error rp=$root_path o=$0 sf=$ENV{'SCRIPT_FILENAME'}; ", $@ ), exit if $@;
+#}
+#use lib::abs ;
+use Net::DirectConnect::pslib::psmisc;    # qw(:config :log printlog);
+psmisc->import qw(:log);
 $param = psmisc::get_params();
 delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
-use statlib;
 print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
 print '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -44,7 +47,7 @@ $param->{'period'} ||= $config{'default_period'};
 print '<a href="?">home</a>';
 print ' days ', (
   map {
-    '<a '
+        '<a '
       . ( $param->{'period'} eq $_ ? '' : qq{href="?period=$_"} )
       . qq{ onclick="createCookie('period', '$_');window.location.reload(false);">}
       . psmisc::human( 'time_period', $config{'periods'}{$_} ) . '</a> '
@@ -93,8 +96,10 @@ $config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
 my %makegraph;
 my %graphcolors;
 
-for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
-  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
+for my $query (
+  @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
+  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} }
+  )
 {
   my $q = { %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
@@ -129,17 +134,18 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
       my ($v) = map { $row->{'orig'}{$_} } grep { $by eq $_ } @{ $q->{'show'} };
       $makegraph{$query}{$v} = $by;
       $graphcolor = $graphcolors{$v} = $colors[ $n - 1 ];    #if length $query;
-      #my $id = $query;
-      #$id =~ tr/ /_/;
+                                                             #my $id = $query;
+                                                             #$id =~ tr/ /_/;
     }
-    $row->{$_} =
-      ( $param->{$_}
+    $row->{$_} = (
+      $param->{$_}
       ? ''
       : qq{<a class="$_" title="}
         . psmisc::html_chars( $row->{$_} )
         . qq{" href="?$_=}
         . psmisc::encode_url( $row->{$_} )
-        . qq{">$row->{$_}</a>} )
+        . qq{">$row->{$_}</a>}
+      )
       . psmisc::human( 'magnet-dl', $row->{'orig'} )
       for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } }
       grep { $config{'queries'}{$_} } @{ $q->{'show'} };    #qw(string tth);
@@ -150,11 +156,9 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     if ( $q->{'graph'} ) {
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
-
-      print qq{<td class='graph' id='$query' rowspan='100' style='min-width:100px;'> </td>}    if $n == 1;
-      #print qq{<td class='graph' rowspan='100' width='100%'><img id='$query' src='' NOtype='image/svg+xml' width='100%' height='100%'/></td>}    if $n == 1;
-      #print qq{<td class='graph' rowspan='100' width='100%'><img id='$query' src='' width='100%' /></td>}    if $n == 1;
-
+      print qq{<td class='graph' id='$query' rowspan='100' style='min-width:100px;'> </td>} if $n == 1;
+#print qq{<td class='graph' rowspan='100' width='100%'><img id='$query' src='' NOtype='image/svg+xml' width='100%' height='100%'/></td>}    if $n == 1;
+#print qq{<td class='graph' rowspan='100' width='100%'><img id='$query' src='' width='100%' /></td>}    if $n == 1;
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
     }
     print '</tr>';
@@ -166,7 +170,7 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
 #print Dumper \%makegraph;
 my $graphtime = time;
 for my $query ( sort keys %makegraph ) {
-#last;
+  #last;
   my $q = { %{ $config{'queries'}{$query} || next } };
   my $table = $query;
   my %graph;
@@ -174,47 +178,50 @@ for my $query ( sort keys %makegraph ) {
   $table =~ s/\s/_/g;
   $table .= '_' . $param->{'period'};
   my ($by) = values %{ $makegraph{$query} };
-  my ($maxy, %date_max, %date_step, );
+  my ( $maxy, %date_max, %date_step, );
+
   for my $row (
     $db->query( "SELECT * FROM $table WHERE " . join ' OR ', map { "$by=" . $db->quote($_) } keys %{ $makegraph{$query} } ) )
   {
     #for my $row ( $db->query("SELECT * FROM $table  " ) ) {
     #print Dumper $row;
     my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string} };
-    #print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
-    #$row->{date} .= '-'. (localtime $row->{time})[2];
+#print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
+#$row->{date} .= '-'. (localtime $row->{time})[2];
     ++$dates{ $row->{date} };
     $graph
       #{$query}
       #{ $row->{$by} }{ $row->{date} } = $row->{n} if length $row->{$by};
       { $row->{$by} }{ $row->{date} } = $row->{cnt} if length $row->{$by};
     $maxy = $row->{cnt} if $row->{cnt} > $maxy;
-    $date_max{$row->{date}} = $row->{cnt} if $row->{cnt} > $date_max{$row->{date}}   ;
+    $date_max{ $row->{date} } = $row->{cnt} if $row->{cnt} > $date_max{ $row->{date} };
   }
-#next;
+  #next;
   #my $id  = $query;
   #$id =~ tr/ /_/;
   my $xl = 1000;
   my $yl = 700;
-  my $xs = int ($xl / ( scalar keys(%dates) - 1 or 1 ));
+  my $xs = int( $xl / ( scalar keys(%dates) - 1 or 1 ) );
   #my $yn = 10;
   my $yn = $maxy;
   my $ys = $yl / $yn;
-
-for my $date (%date_max) {
-$date_step{$date} = $date_max{$date} ? $yl / $date_max{$date} : 1 ;
-}
+  for my $date (%date_max) {
+    $date_step{$date} = $date_max{$date} ? $yl / $date_max{$date} : 1;
+  }
   #my $ys = int $yl / $maxy;
   #$ys = 1;
   #printlog 'dev', "yn=$yn; ys=$ys";
-
-my $svgns = $config{'graph_inner'} ? 'svg:' : '';
-my $img = #join '', 
-($config{'graph_inner'} ? () :
-qq{<?xml version="1.0" standalone="no"?>}.
-#qq{<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">}.
- qq{<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">}).
-qq{<${svgns}svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="0 0 $xl $yl">}
+  my $svgns = $config{'graph_inner'} ? 'svg:' : '';
+  my $img =    #join '',
+    (
+    $config{'graph_inner'}
+    ? ()
+    : qq{<?xml version="1.0" standalone="no"?>}
+      .
+      #qq{<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">}.
+      qq{<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">}
+    )
+    . qq{<${svgns}svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="0 0 $xl $yl">}
 #qq{<${svgns}circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>},
 #qq{<g fill="none" stroke="red" stroke-width="3">},
 #qq{<path d="M100,100 Q200,400,300,100"/>},
@@ -225,63 +232,52 @@ qq{<${svgns}svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="ht
   for my $line ( sort keys %graph ) {
     my $n;
     #$colors[$color] <!-- $line : -->
-    $img .= qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="};#. #( #"mc
-     # join ' ',
-
- 	 for (sort 
-	#grep {$graph{$line}{$_}} 
-keys %dates) {
-
-#      map {
- if ($graph{$line}{$_}) { # ? () : (
-    $img .= 
-        int( $n * $xs ) . ',' . int(
+    $img .= qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="};    #. #( #"mc
+                                                                                                  # join ' ',
+    for (
+      sort
+      #grep {$graph{$line}{$_}}
+      keys %dates
+      )
+    {
+      #      map {
+      if ( $graph{$line}{$_} ) {                                                                  # ? () : (
+        $img .= int( $n * $xs ) . ',' . int(
           $yl -
-          ( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
-          #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
-
-          ) . ' ';
-}
-$n++; 
-
-#)
- #       } 
-#      ).
-}
-    $img .= 
-      qq{" />};
+            ( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
+            #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
+        ) . ' ';
+      }
+      $n++;
+      #)
+      #       }
+      #      ).
+    }
+    $img .= qq{" />};
     #++$color;
   }
   my $n;
-for (sort keys %dates) {
-my $tx = ( $n++ * $xs ) ;
-my $ty =  ($yl - 10) ;
-  $img .= qq{<text x="$tx" y="$ty" font-size="20" transform="rotate(270 $tx $ty)">$_</text>} ;
-}
+  for ( sort keys %dates ) {
+    my $tx = ( $n++ * $xs );
+    my $ty = ( $yl - 10 );
+    $img .= qq{<text x="$tx" y="$ty" font-size="20" transform="rotate(270 $tx $ty)">$_</text>};
+  }
   $img .=
     #qq{</g>},
-    qq{</${svgns}svg>},
-;
-
-
-
-
-
-
-
-  #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;base64,}, encode_base64($img, ''),
-  #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;}, psmisc::encode_url($img, ''),
-  #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').},qq{src='data:image/svg+xml;base64,}, encode_base64($img, ''),
-   print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').innerHTML='},
-($config{'graph_inner'} ? qq{$img} :(
-    qq{<img width="100%" src="data:image/svg+xml;base64,}, encode_base64($img, ''),
-  #print  qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;}, psmisc::encode_url($img),
-  #print  qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg;}, psmisc::encode_url($img),
-  #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').innerHTML='}, $img,
-
-qq{"/>},)),
-qq{';}, qq{]]></script>}
-;
+    qq{</${svgns}svg>},;
+#print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;base64,}, encode_base64($img, ''),
+#print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;}, psmisc::encode_url($img, ''),
+#print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').},qq{src='data:image/svg+xml;base64,}, encode_base64($img, ''),
+  print qq{<script type="text/javascript" language="JavaScript"><![CDATA[}, qq{gid('$query').innerHTML='}, (
+    $config{'graph_inner'} ? qq{$img} : (
+      qq{<img width="100%" src="data:image/svg+xml;base64,}, encode_base64( $img, '' ),
+#print  qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;}, psmisc::encode_url($img),
+#print  qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg;}, psmisc::encode_url($img),
+#print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').innerHTML='}, $img,
+      qq{"/>},
+    )
+    ),
+    qq{';}, qq{]]></script>};
   #printlog 'dev', Dumper \%graph, \%dates;
 }
 print

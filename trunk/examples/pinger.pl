@@ -17,7 +17,6 @@ get info about hubs
  $config{dc}{host} = 'myhub.net';
 
 =cut
-
 use 5.10.0;
 use strict;
 use Data::Dumper;
@@ -30,7 +29,6 @@ use lib::abs '../lib';
 our (%config);
 use Net::DirectConnect::pslib::psmisc;
 psmisc->import qw(:log);
-
 #use psmisc;
 #use pssql;
 use Net::DirectConnect;
@@ -60,7 +58,7 @@ Net::DirectConnect->new(
         $msg => sub {
           my $dc = shift;
           #say join ' ', $msg, @_;
-          $dc->say($msg, @_); #print with console encoding
+          $dc->say( $msg, @_ );    #print with console encoding
           },
         } qw(welcome chatline To)
     ),
@@ -79,7 +77,7 @@ Net::DirectConnect->new(
     #$BotINFO <bot description>|
     if ( time - $dc->{time_start} > $config{disconnect_after} ) {    # works only 10 seconds (for users inf getting)
       my $info = $dc->stat_hub();
-      printlog("calced info: $info->{UC} $info->{SS} $info->{SF}, full=", Dumper($info));
+      printlog( "calced info: $info->{UC} $info->{SS} $info->{SF}, full=", Dumper($info) );
       $dc->destroy();
     }
     psmisc::schedule(
