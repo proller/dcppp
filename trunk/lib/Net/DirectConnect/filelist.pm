@@ -7,7 +7,8 @@ generate dc++ xml filelist
 perl filelist.pm /path/to/dir
 
 =cut
-package Net::DirectConnect::filelist;
+package # no cpan 
+Net::DirectConnect::filelist;
 use 5.10.0;
 use strict;
 use Encode;
