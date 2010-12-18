@@ -159,10 +159,14 @@ sub init {
   #sub hash ($) { base32( tiger( $_[0] ) ); }
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
+    #$self->log( 'dev', 'ing_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
+    #$self->{'clients'}{'listener_udp'}
+
+
     $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
     $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
     $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-    $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $self->{'INF'}{'NI'};
+    $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $VERSION. $0 . $self->{'INF'}{'NI'};
     $self->{'PID'} ||= $self->hash( $self->{'ID'} );
     $self->{'CID'} ||= $self->hash( $self->{'PID'} );
     $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
@@ -179,7 +183,7 @@ sub init {
       . $Net::DirectConnect::VERSION . '_'
       . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
     $self->{'INF'}{'US'} ||= 10000;
-    $self->{'INF'}{'U4'} ||= $self->{'myport_udp'};
+    $self->{'INF'}{'U4'} ||= $self->{'myport_udp'} || $self->{'myport'}; #maybe if broadcast only
     $self->{'INF'}{'I4'} ||= $self->{'myip'};
     $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
     return $self->{'INF'};
@@ -227,8 +231,12 @@ sub init {
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
+      #$self->log('adcdev', 'SUPans:', $peerid, $self->{'peers'}{$peerid}{'INF'}{I4}, $self->{'peers'}{$peerid}{'INF'}{U4});
 
-      $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};
+      
+      #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; can answer direct
+      #local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4};
+      $self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
       return $self->{'peers'}{$peerid}{'SUP'};
     },
     'SID' => sub {
@@ -268,11 +276,12 @@ sub init {
       #$dst eq 'I' ?
       $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{hostip}] " ), $params->{I4} = $self->{hostip}
         if $dst eq 'B' and $self->{parent}{hub} and $params->{I4} and $params->{I4} ne $self->{hostip};   #!$self->{parent}{hub}
-      if ( $dst eq 'B' and $self->{broadcast} ) {
-        $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{recv_hostip}:$self->{recv_port}] " );
+      if ( #$dst eq 'B' and 
+      $self->{broadcast} ) {
+        $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{recv_hostip}:$self->{recv_port}] ($self->{recv_hostip}:$self->{port})" );
         #$params->{U4} = $self->{recv_port};
-        $params->{U4} = $self->{port};
-        $params->{I4} = $self->{recv_hostip};
+        $params->{U4} ||= $self->{port};
+        $params->{I4} ||= $self->{recv_hostip};
       }
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
@@ -295,7 +304,7 @@ sub init {
       }
       #$self->log('adcdev', 'INF8', $peerid, @_);
       #if ($sendbinf) { $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} }; }
-      #$self->log('adcdev', 'INF9', $peerid, @_);
+      $self->log('adcdev', 'INF9', $peerid, "H:$self->{parent}{hub}", @_);
       if ( $self->{parent}{hub} ) {
         my $params_send = \%$params;
         delete $params_send->{PD};
@@ -415,10 +424,12 @@ sub init {
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RCM', $peerid, $toid, @_ );
       }
-
 =z      
-       $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
-        %$self, $self->clear(),
+	my $host= $self->{'peers'}{$toid}{I4};
+	my $port= $self->{'peers'}{$toid}{U4}
+       $self->{'clients'}{ $host . ':' . $port } = __PACKAGE__->new(
+        #%$self, $self->clear(),
+        'parent' => $self,
         'host'         => $host,
         'port'         => $port,
 #'want'         => \%{ $self->{'want'} },
@@ -435,7 +446,7 @@ sub init {
       my ( $dst,   $peerid, $toid )  = @{ shift() };
       my ( $proto, $port,   $token ) = @_;
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
-      $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)", );
+      $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'sid'}", );
       $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
       $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = __PACKAGE__->new(
         #%$self, $self->clear(),
@@ -645,8 +656,9 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
-  #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
+  #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
   unless ( $self->{'no_listen'} ) {
+      #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}");
     if ( ( $self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'} ) {
       $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
       $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
@@ -689,6 +701,7 @@ sub init {
         },
       );
       $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
+      $self->log( 'dev', 'nyportgen',$self->{'myport_udp'});
       $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
     }
     #DEV=z
