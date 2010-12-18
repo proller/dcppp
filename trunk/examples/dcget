@@ -119,6 +119,7 @@ my @dc;
         #$db->insert_hash( 'results', \%s );
         my ($file) = $s->{FN} =~ m{([^\\/]+)$};
         ++$work{'filename'}{ $s->{TR} }{$file};
+        $s->{CID} = $peercid;
         $work{'tthfrom'}{ $s->{TR} }{$peercid} = $s;
         #++$work{'stat'}{'RES'};
       },
@@ -179,7 +180,7 @@ my @dc;
             delete $work{'filename'}{$tth};
             my $size = $from->{size} || $from->{SI};
             next if ( -e $dst and ( !$size or -s $dst == $size ) );
-            $dc->get( $from->{nick}, 'TTH/' . $tth, $dst );
+            $dc->get( $from->{nick} || $from->{CID}, 'TTH/' . $tth, $dst );
             #$work{'tthfrom'}{$s{tth}}
             last;
           }

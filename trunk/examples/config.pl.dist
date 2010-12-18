@@ -8,5 +8,7 @@ our %config;
 # $config{dc}{skip_hidden}       = 0;
 # $config{dc}{skip_symlink}      = 1;
 # $config{debug} = 1;
-# $config{ 'log_' . $_ } = 1 for qw (dmp dcdmp dcdbg adcdev);
+# $config{ 'log_' . $_ } = 1 for qw (dmp dcdmp dcdbg adcdev dev);
+# $config{dc}{dev_http} = 1; 
+
 1;

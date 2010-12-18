@@ -343,6 +343,7 @@ sub func {
   #$self->{'log'}->( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
   $self->{'myport_generate'} ||= sub {
     my $self = shift;
+    $self->{'log'}->( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}");
     return $self->{'myport'} unless $self->{'myport_base'} or $self->{'myport_random'};
     $self->{'myport'} = undef if $_[0];
     return $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) );
@@ -800,7 +801,7 @@ sub func {
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
-      $self->log( 'dcdmp', "rawrcv[" . ( $self->{'recv_host'} || $self->{'host'} ) . "]:", $_ );
+      $self->log( 'dcdmp', "rawrcv[" . ( $self->{'recv_hostip'} ? $self->{'recv_hostip'} . ':' . $self->{'recv_port'} : $self->{'host'} ) . "]:", $_ );
       my ( $dst, $cmd, @param );
       if (/^[<*]/) {
         $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' );
