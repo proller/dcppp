@@ -50,9 +50,9 @@ sub send_udp ($$;@) {
     $s->send( $_[0] );
     $self->{bytes_send} += length $_[0];
     #$s->shutdown(2);
-    #$s->close();
-    close($s);
-    $self->log( 'dcdev', "sended ",length $_[0]," closed [$s],");
+    $s->close();
+    #close($s);
+    #$self->log( 'dcdev', "sended ",length $_[0]," closed [$s],");
   } else {
     $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
   }
@@ -513,7 +513,7 @@ sub func {
       $self->{'select'}->remove( $self->{'socket'} )      if $self->{'select'};
       $self->{'select_send'}->remove( $self->{'socket'} ) if $self->{'select_send'};
       delete $self->{'sockets'}{ $self->{'socket'} };
-      $self->{'socket'}->shutdown(2);
+      #$self->{'socket'}->shutdown(2);
       $self->{'socket'}->close();
       delete $self->{'socket'};
     }
@@ -617,14 +617,16 @@ sub func {
     }
     if ( $self->{'filehandle'} ) { $self->file_write( \$self->{'databuf'} ); }
     else {
-      #$self->log( 'dcdmp', "rawrawrcv:", $self->{'databuf'} );
+#$self->log( 'dcdmp', "rawrawrcv:", $self->{'databuf'} );
       $self->{'recv_buf'} .= $self->{'databuf'};
       #$self->log( 'dcdmp', "rawrawbuf:", $self->{'recv_buf'} );
       local $self->{'cmd_aft'} = "\x0A" if !$self->{'adc'} and $self->{'recv_buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
 #$self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
+      $self->{'recv_buf'} .= $self->{'cmd_aft'} if   $self->{'Proto'}                eq 'udp' and    $self->{'status'} eq 'listening';
+
       while ( $self->{'recv_buf'} =~ s/^(.*?)\Q$self->{'cmd_aft'}//s ) {
         local $_ = $1;
-        #$self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
+#$self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
         last if $self->{'status'} eq 'destroy';
         #$self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
         last unless length $_ and length $self->{'cmd_aft'};
