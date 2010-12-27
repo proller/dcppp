@@ -39,7 +39,7 @@ sub send_udp ($$;@) {
         $opt->{'nonblocking'}
         ? (
           'Blocking'   => 0,
-          'MultiHomed' => 1,    #del
+          #'MultiHomed' => 1,    #del
           )
         : ()
       ),
@@ -49,6 +49,7 @@ sub send_udp ($$;@) {
   {
     $s->send( $_[0] );
     $self->{bytes_send} += length $_[0];
+    $s->shutdown(2);
     $s->close();
   } else {
     $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
@@ -126,7 +127,7 @@ sub new {
     'wait_clients_tries' => 200,
     #del    'wait_clients_by'    => 0.01,
     'work_sleep' => 0.01, 'select_timeout' => 1, 'cmd_recurse_sleep' => 0,
-    #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
+    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
     'nonblocking' => 1,
     'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
     'informative_hash' => [qw(clients)],                                                    #NickList IpList PortList
@@ -408,7 +409,7 @@ sub func {
         $self->{'nonblocking'}
         ? (
           'Blocking'   => 0,
-          'MultiHomed' => 1,    #del
+          #'MultiHomed' => 1,    #del
           )
         : ()
       ),
@@ -510,6 +511,7 @@ sub func {
       $self->{'select'}->remove( $self->{'socket'} )      if $self->{'select'};
       $self->{'select_send'}->remove( $self->{'socket'} ) if $self->{'select_send'};
       delete $self->{'sockets'}{ $self->{'socket'} };
+      $self->{'socket'}->shutdown(2);
       $self->{'socket'}->close();
       delete $self->{'socket'};
     }
@@ -1321,7 +1323,8 @@ sub func {
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-      ( $self->{'broadcast'} ? $self->{'INF'}{'ID'} : $dst eq 'C' || !length $self->{'sid'} ? () : $self->{'sid'} ),
+      ( $self->{'broadcast'} ? $self->{'INF'}{'BID'} #$self->{'INF'}{'ID'} 
+      : $dst eq 'C' || !length $self->{'sid'} ? () : $self->{'sid'} ),
       $self->adc_make_string(@_)
         #( $dst eq 'D' || !length $self->{'sid'} ? () : $self->{'sid'} ),
     );
