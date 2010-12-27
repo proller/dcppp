@@ -58,7 +58,7 @@ my @dc;
 @dc = map {
   Net::DirectConnect->new(
     modules            => ['filelist'],
-    'filelist_builder' => ( join ' ', $^X, 'share.pl', 'filelist' ),
+    'filelist_builder' => ( join ' ', $^X, 'dcshare', 'filelist' ),
     #SUPAD        => { H => { PING => 1 } },
     #botinfo      => 'devperlpinger',
     #auto_GetINFO => 1,
