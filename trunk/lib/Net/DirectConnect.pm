@@ -31,7 +31,7 @@ sub send_udp ($$;@) {
   $self->log( 'dcdev', "sending UDP to [$host]:[$port] = [$_[0]]" );
   my $opt = $_[1] || {};
   if (
-    my $s = new IO::Socket::INET(
+    my $s = IO::Socket::INET->new(
       'PeerAddr' => $host,
       'PeerPort' => $port,
       'Proto'    => 'udp',
@@ -49,8 +49,10 @@ sub send_udp ($$;@) {
   {
     $s->send( $_[0] );
     $self->{bytes_send} += length $_[0];
-    $s->shutdown(2);
-    $s->close();
+    #$s->shutdown(2);
+    #$s->close();
+    close($s);
+    $self->log( 'dcdev', "sended ",length $_[0]," closed [$s],");
   } else {
     $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
   }
