@@ -12,6 +12,10 @@ use Net::DirectConnect;
 #use Net::DirectConnect::clicli;
 use Net::DirectConnect::http;
 #use Net::DirectConnect::httpcli;
+
+use lib::abs('pslib');
+use psmisc;    # REMOVE
+
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
@@ -109,6 +113,7 @@ sub init {
     #@_,
     'incomingclass' => __PACKAGE__,                        #'Net::DirectConnect::adc',
     no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
+   'ID_file' => 'ID',
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
@@ -157,6 +162,16 @@ sub init {
   }
   $self->{hash_base} ||= sub { shift if ref $_[0]; $self->base_encode( $self->hash( $_[0] ) ) };
   #sub hash ($) { base32( tiger( $_[0] ) ); }
+
+  $self->{cmd_direct} ||= sub {
+    my $self = shift if ref $_[0];
+		my $peerid = shift;
+       local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4},
+      local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4} if $self->{'peers'}{$peerid}{'INF'}{I4} and $self->{'peers'}{$peerid}{'INF'}{U4};
+      $self->cmd( @_ );
+ };
+
+  
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
     #$self->log( 'dev', 'ing_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
@@ -166,11 +181,18 @@ sub init {
     $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
     $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
     $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-    $self->{'ID'}  ||= 'perl' . $self->{'myip'} . $VERSION. $0 . $self->{'INF'}{'NI'};
+    if (-s $self->{'ID_file'}) {
+        $self->{'ID'}  ||= psmisc::file_read($self->{'ID_file'});
+    }
+    unless ($self->{'ID'}) {
+    	$self->{'ID'}  ||= join ' ', 'perl' , $self->{'myip'} ,  $VERSION , $0 ,$self->{'INF'}{'NI'}, time;
+    	psmisc::file_rewrite($self->{'ID_file'}, $self->{'ID'});
+    }
     $self->{'PID'} ||= $self->hash( $self->{'ID'} );
     $self->{'CID'} ||= $self->hash( $self->{'PID'} );
     $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
     $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
+    $self->{'INF'}{'BID'} ||= substr $self->{'INF'}{'ID'}, 0, 4;
 #$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
     $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
     $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
@@ -234,9 +256,10 @@ sub init {
       #$self->log('adcdev', 'SUPans:', $peerid, $self->{'peers'}{$peerid}{'INF'}{I4}, $self->{'peers'}{$peerid}{'INF'}{U4});
 
       
-      #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; can answer direct
+      #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; #can answer direct
       #local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4};
-      $self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
+      #$self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
+      $self->cmd_direct( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
       return $self->{'peers'}{$peerid}{'SUP'};
     },
     'SID' => sub {
@@ -373,12 +396,12 @@ sub init {
           $self->log(
             'dcdev', 'SCH', 'i=', $self->{'peers'}{$peerid}{INF}{I4},
             'u=', $self->{'peers'}{$peerid}{INF}{U4},
-            'T==>', 'U' . 'RES' . $self->adc_make_string(@_)
+            'T==>', 'U' . 'RES ' . $self->adc_make_string(@_)
           );
           $self->send_udp(
             $self->{'peers'}{$peerid}{INF}{I4},
             $self->{'peers'}{$peerid}{INF}{U4},
-            'U' . 'RES ' . $self->adc_make_string(@_)
+            'U' . 'RES ' .$self->adc_make_string(@_)
           );
         } else {
           $self->cmd( 'D', 'RES', @_ );
@@ -396,7 +419,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       #test $_[1] eq 'I'!
-      #$self->log( 'adcdev', '0RES:', "[d=$dst,p=$peerid,t=$toid]", join ':', @_ );
+      $self->log( 'adcdev', '0RES:', "[d=$dst,p=$peerid,t=$toid]", join ':', @_ );
       my $params = $self->adc_parse_named(@_);
       #$self->log('adcdev', 'RES:',"[d=$dst,p=$peerid]",Dumper $params);
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
@@ -553,9 +576,11 @@ sub init {
       #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
       #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
+      #{ 
+      $self->cmd( $self->{'message_type'}, 'SUP' ); 
+      #}
       if ( $self->{'broadcast'} ) { $self->cmd( $self->{'message_type'}, 'INF' ); }
       #else
-      { $self->cmd( $self->{'message_type'}, 'SUP' ); }
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
@@ -605,7 +630,7 @@ sub init {
       $self->cmd_adc        #sendcmd
         (
         $dst, 'INF',        #$self->{'sid'},
-        map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : @_ ? @_ : sort keys %{ $self->{'INF'} }
+        map { $_ . $self->{'INF'}{$_} } grep {length $self->{'INF'}{$_}} $dst eq 'C' ? qw(ID TO) : @_ ? @_ : qw(ID I4 I6 U6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF)#sort keys %{ $self->{'INF'} }
         );
       #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       #$self->cmd_adc( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
