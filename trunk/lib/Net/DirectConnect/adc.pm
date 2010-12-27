@@ -192,7 +192,7 @@ sub init {
     $self->{'CID'} ||= $self->hash( $self->{'PID'} );
     $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
     $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
-    $self->{'INF'}{'BID'} ||= substr $self->{'INF'}{'ID'}, 0, 4;
+    $self->{'INF'}{'BID'} ||= $self->{'INF'}{'ID'}; #substr $self->{'INF'}{'ID'}, 0, 4;
 #$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
     $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
     $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
@@ -327,7 +327,7 @@ sub init {
       }
       #$self->log('adcdev', 'INF8', $peerid, @_);
       #if ($sendbinf) { $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} }; }
-      $self->log('adcdev', 'INF9', $peerid, "H:$self->{parent}{hub}", @_);
+      #$self->log('adcdev', 'INF9', $peerid, "H:$self->{parent}{hub}", @_);
       if ( $self->{parent}{hub} ) {
         my $params_send = \%$params;
         delete $params_send->{PD};
@@ -384,7 +384,7 @@ sub init {
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),
           $founded, -s $founded, -e $founded, 'c=', $self->{chrarset_fs}, );
         local @_ = (
-          $peerid, {
+          {
             SI => ( -s $founded ) || -1,
             SL => $self->{INF}{SL},
             FN => $self->adc_path_encode($foundedshow),
@@ -396,15 +396,15 @@ sub init {
           $self->log(
             'dcdev', 'SCH', 'i=', $self->{'peers'}{$peerid}{INF}{I4},
             'u=', $self->{'peers'}{$peerid}{INF}{U4},
-            'T==>', 'U' . 'RES ' . $self->adc_make_string(@_)
+            'T==>', 'U' . 'RES ' . $self->adc_make_string($self->{'INF'}{'ID'}, @_)
           );
           $self->send_udp(
             $self->{'peers'}{$peerid}{INF}{I4},
             $self->{'peers'}{$peerid}{INF}{U4},
-            'U' . 'RES ' .$self->adc_make_string(@_)
+            'U' . 'RES ' .$self->adc_make_string($self->{'INF'}{'ID'}, @_) #. $self->{'cmd_aft'}
           );
         } else {
-          $self->cmd( 'D', 'RES', @_ );
+          $self->cmd( 'D', 'RES', $peerid, @_ );
         }
       }
       #$self->adc_make_string(@_);
