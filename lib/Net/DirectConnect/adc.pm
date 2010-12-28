@@ -125,6 +125,9 @@ sub init {
   $self->{SUPAD}{H}{$_} = $_ for qw(BAS0 BASE TIGR UCM0 BLO0 BZIP );
   $self->{SUPAD}{I}{$_} = $_ for qw(BASE TIGR BZIP);
   $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
+  if ( $self->{'broadcast'} ) {
+    $self->{SUPAD}{B} = $self->{SUPAD}{C};
+  }
   if ( $self->{'hub'} ) {
     $self->{'auto_connect'}         = 0;
     $self->{'auto_listen'}          = 1;
@@ -259,7 +262,7 @@ sub init {
       #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; #can answer direct
       #local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4};
       #$self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
-      $self->cmd_direct( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
+      #$self->cmd_direct( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
       return $self->{'peers'}{$peerid}{'SUP'};
     },
     'SID' => sub {
@@ -306,6 +309,10 @@ sub init {
         $params->{U4} ||= $self->{port};
         $params->{I4} ||= $self->{recv_hostip};
       }
+
+      my $first_seen;
+      $first_seen = 1 unless $self->{'peers'}{$peerid};
+      $self->log( 'adcdev',  "peer[$first_seen]: $peerid : $self->{'peers'}{$peerid}");
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
       $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
@@ -333,6 +340,13 @@ sub init {
         delete $params_send->{PD};
         $self->cmd_all( $dst, 'INF', $peerid, $self->adc_make_string($params_send) );
       }
+
+      if($first_seen and $self->{'broadcast'} and $peerid ne $self->{'INF'}{'BID'}) {
+
+            #$self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
+      $self->cmd_direct( $peerid, 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
+      }
+      
       return $params;    #$self->{'peers'}{$peerid}{'INF'};
     },
     'QUI' => sub {
@@ -404,7 +418,7 @@ sub init {
             'U' . 'RES ' .$self->adc_make_string($self->{'INF'}{'ID'}, @_) #. $self->{'cmd_aft'}
           );
         } else {
-          $self->cmd( 'D', 'RES', $peerid, @_ );
+          $self->cmd( 'D', 'RES', $self->adc_make_string($peerid, @_) );
         }
       }
       #$self->adc_make_string(@_);
