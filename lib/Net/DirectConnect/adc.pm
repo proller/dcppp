@@ -214,6 +214,8 @@ sub init {
     $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
     return $self->{'INF'};
   };
+$self->INF_generate();
+
   $self->{'parse'} ||= {
 #
 #=================
@@ -309,7 +311,14 @@ sub init {
         #$params->{U4} = $self->{recv_port};
         $params->{U4} ||= $self->{port};
         $params->{I4} ||= $self->{recv_hostip};
+		
       }
+	  if ($peerid eq $self->{'INF'}{'SID'} and !$self->{myip}) {
+	  $self->{myip} ||= $params->{I4};
+	  $self->{'INF'}{'I4'} ||= $params->{I4};
+	    $self->log( 'adcdev', "ip  detected: [$self->{myip}:$self->{myport}]");
+	  
+	  }
 
       my $first_seen;
       $first_seen = 1 unless $self->{'peers'}{$peerid};
@@ -342,7 +351,9 @@ sub init {
         $self->cmd_all( $dst, 'INF', $peerid, $self->adc_make_string($params_send) );
       }
 
-      if($first_seen and $self->{'broadcast'} and $peerid ne $self->{'INF'}{'BID'}) {
+      $self->log('adcdev', "first_seen: $first_seen,$peerid ne $self->{'INF'}{'SID'}");
+
+      if($first_seen and $self->{'broadcast'} and $peerid ne $self->{'INF'}{'SID'}) {
 
             #$self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
       $self->cmd_direct( $peerid, 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
@@ -442,7 +453,12 @@ sub init {
       }
       if ( exists $self->{'want_download'}{ $params->{'TR'} } ) {
         $self->{'want_download'}{ $params->{'TR'} }{$peerid} = $params;    #maybe not all
-      }
+        if (my ($file) = $params->{FN} =~ m{([^\\/]+)$}) {
+          ++$self->{'want_download_filename'}{ $params->{TR} }{$file};
+		}
+		        $params->{CID} = $peerid;
+        $self->{'want_download'}{ $params->{TR} }{$peerid} = $params; # _tth_from
+		}
       $params;
     },
     'MSG' => sub {
@@ -638,7 +654,7 @@ sub init {
           return;
         }
       } else {
-        $self->INF_generate();
+        #$self->INF_generate();
      #$self->{''} ||= $self->{''} || '';
      #$self->sendcmd( $dst, 'INF', $self->{'INF'}{'SID'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       }
