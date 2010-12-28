@@ -321,7 +321,7 @@ $self->INF_generate();
 	  }
 
       my $first_seen;
-      $first_seen = 1 unless $self->{'peers'}{$peerid};
+      $first_seen = 1 unless $self->{'peers'}{$peerid}{INF};
       $self->log( 'adcdev',  "peer[$first_seen]: $peerid : $self->{'peers'}{$peerid}");
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
