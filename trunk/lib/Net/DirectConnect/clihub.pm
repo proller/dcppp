@@ -600,7 +600,7 @@ sub init {
       unless $self->{'myport_http'};
 =cut
   $self->{'handler_int'}{'disconnect_bef'} = sub {
-    delete $self->{'sid'};
+    #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
   };
 }
