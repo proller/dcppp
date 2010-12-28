@@ -1327,8 +1327,9 @@ sub func {
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-      ( $self->{'broadcast'} ? $self->{'INF'}{'BID'} #$self->{'INF'}{'ID'} 
-      : $dst eq 'C' || !length $self->{'sid'} ? () : $self->{'sid'} ),
+      ( #$self->{'broadcast'} ? $self->{'INF'}{'SID'} #$self->{'INF'}{'ID'} 
+      #: 
+      $dst eq 'C' || !length $self->{'INF'}{'SID'} ? () : $self->{'INF'}{'SID'} ),
       $self->adc_make_string(@_)
         #( $dst eq 'D' || !length $self->{'sid'} ? () : $self->{'sid'} ),
     );
