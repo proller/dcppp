@@ -195,7 +195,8 @@ sub init {
     $self->{'CID'} ||= $self->hash( $self->{'PID'} );
     $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
     $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
-    $self->{'INF'}{'BID'} ||= $self->{'INF'}{'ID'}; #substr $self->{'INF'}{'ID'}, 0, 4;
+    $self->{'INF'}{'SID'} ||= $self->{broadcast} ? $self->{'INF'}{'ID'} : substr $self->{'INF'}{'ID'}, 0, 4;
+    #sid
 #$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
     $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
     $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
@@ -218,7 +219,7 @@ sub init {
 #=================
 #ADC dev
 #
-#'ISUP' => sub { }, 'ISID' => sub { $self->{'sid'} = $_[0] }, 'IINF' => sub { $self->cmd('BINF') },    'IQUI' => sub { },    'ISTA' => sub { $self->log( 'dcerr', @_ ) },
+#'ISUP' => sub { }, 'ISID' => sub { $self->{'INF'}{'SID'} = $_[0] }, 'IINF' => sub { $self->cmd('BINF') },    'IQUI' => sub { },    'ISTA' => sub { $self->log( 'dcerr', @_ ) },
     'SUP' => sub {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
@@ -267,9 +268,9 @@ sub init {
     },
     'SID' => sub {
       my $self = shift if ref $_[0];
-      $self->{'sid'} = $_[1];
-      $self->log( 'adcdev', 'SID:', $self->{'sid'} );
-      return $self->{'sid'};
+      $self->{'INF'}{'SID'} = $_[1];
+      $self->log( 'adcdev', 'SID:', $self->{'INF'}{'SID'} );
+      return $self->{'INF'}{'SID'};
     },
     'INF' => sub {
       my $self = shift if ref $_[0];
@@ -457,7 +458,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       #$self->log( 'dcdev', "( $dst, RCM, $peerid, $toid )", @_ );
-      $self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], ) if $toid eq $self->{'sid'};
+      $self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], ) if $toid eq $self->{'INF'}{'SID'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RCM', $peerid, $toid, @_ );
       }
@@ -483,7 +484,7 @@ sub init {
       my ( $dst,   $peerid, $toid )  = @{ shift() };
       my ( $proto, $port,   $token ) = @_;
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
-      $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'sid'}", );
+      $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'INF'}{'SID'}", );
       $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
       $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = __PACKAGE__->new(
         #%$self, $self->clear(),
@@ -502,7 +503,7 @@ sub init {
         'auto_connect' => 1,
         'reconnects'   => 0,
         no_listen      => 1,
-      ) if $toid eq $self->{'sid'};
+      ) if $toid eq $self->{'INF'}{'SID'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'CTM', $peerid, $toid, @_ );
       }
@@ -630,7 +631,7 @@ sub init {
         } elsif ( $dst eq 'B' ) {
           $self->cmd_adc    #sendcmd
             (
-            $dst, 'INF',    #$self->{'sid'},
+            $dst, 'INF',    #$self->{'INF'}{'SID'},
             @_,
             #map { $_ . $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) : sort keys %{ $self->{'INF'} }
             );
@@ -639,15 +640,15 @@ sub init {
       } else {
         $self->INF_generate();
      #$self->{''} ||= $self->{''} || '';
-     #$self->sendcmd( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
+     #$self->sendcmd( $dst, 'INF', $self->{'INF'}{'SID'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       }
       $self->cmd_adc        #sendcmd
         (
-        $dst, 'INF',        #$self->{'sid'},
+        $dst, 'INF',        #$self->{'INF'}{'SID'},
         map { $_ . $self->{'INF'}{$_} } grep {length $self->{'INF'}{$_}} $dst eq 'C' ? qw(ID TO) : @_ ? @_ : qw(ID I4 I6 U6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF)#sort keys %{ $self->{'INF'} }
         );
       #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
-      #$self->cmd_adc( $dst, 'INF', $self->{'sid'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
+      #$self->cmd_adc( $dst, 'INF', $self->{'INF'}{'SID'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
       #BINF UUXX IDFXC3WTTDXHP7PLCCGZ6ZKBHRVAKBQ4KUINROXXI PDP26YAWX3HUNSTEXXYRGOIAAM2ZPMLD44HCWQEDY NIïûğûî SL2 SS20025693588
       #SF30999 HN2 HR0 HO0 VE++\s0.706 US5242 SUADC0
     },
@@ -668,7 +669,7 @@ sub init {
       local %_;
       for my $w qw(SS SF) {
         #$self->log( 'dev', 'calc', $_, $w),
-        $_{$w} += $self->{'peers'}{$_}{INF}{$w} for grep { $_ and $_ ne $self->{sid} } keys %{ $self->{'peers_sid'} };
+        $_{$w} += $self->{'peers'}{$_}{INF}{$w} for grep { $_ and $_ ne $self->{'INF'}{'SID'} } keys %{ $self->{'peers_sid'} };
       }
       $_{UC} = keys %{ $self->{'peers'} };
       return \%_;
@@ -787,7 +788,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
     delete $self->{'peers'}{ $self->{'peerid'} };
     delete $self->{'peers_sid'}{ $self->{'peerid'} };
     $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'};
-    delete $self->{'sid'};
+    delete $self->{'INF'}{'SID'};
     $self->log(
       'dev',  'disconnect int',           #psmisc::caller_trace(30)
       'hub=', $self->{'parent'}{'hub'},
