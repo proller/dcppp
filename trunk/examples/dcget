@@ -117,10 +117,10 @@ my @dc;
         my ( $dst, $peercid ) = @{ $_[0] };
         my $s = pop || return;    #%{ $_[1] || return };
         #$db->insert_hash( 'results', \%s );
-        my ($file) = $s->{FN} =~ m{([^\\/]+)$};
-        ++$work{'filename'}{ $s->{TR} }{$file};
-        $s->{CID} = $peercid;
-        $work{'tthfrom'}{ $s->{TR} }{$peercid} = $s;
+        #my ($file) = $s->{FN} =~ m{([^\\/]+)$};
+        #++$work{'filename'}{ $s->{TR} }{$file}; # $self->{'want_download_filename'}
+        #$s->{CID} = $peercid;
+        #$work{'tthfrom'}{ $s->{TR} }{$peercid} = $s; # $self->{'want_download_tth_from'}
         #++$work{'stat'}{'RES'};
       },
     },
@@ -151,9 +151,9 @@ my @dc;
         [ 3600, 3600 ],
         our $hashes_cleaner_ ||= sub {
           my $min = scalar keys %{ $work{'hubs'} || {} };
-          psmisc::printlog 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} };
+          psmisc::printlog( 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} });
           delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
-          psmisc::printlog 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} };
+          psmisc::printlog( 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} });
         }
       );
       psmisc::schedule(
@@ -185,7 +185,7 @@ my @dc;
             last;
           }
         }
-      );
+      ) if 0;
       if ( $config{'auto_get_best'} ) {
         psmisc::schedule(
           $dc->{'search_every'},

@@ -782,16 +782,20 @@ sub func {
           my $file = shift @{ $self->{'queue_download'} };
           $self->search($file);
         }
-        #=todo
+        #if (!)
+		#=todo
+        $self->log('dev', 'work want:', Dumper $self->{'want_download'});
         for my $tth ( grep { keys %{ $self->{'want_download'}{$_} } } keys %{ $self->{'want_download'} } ) {
           if ( my ($from) = ( grep { $_->{slotsopen} or $_->{SL} } values %{ $self->{'want_download'}{$tth} } ) ) {
-            my $filename = $from->{FN};
+			           my ($filename) =
+              sort { $self->{'want_download_filename'}{$tth}{$a} <=> $self->{'want_download_filename'}{$tth}{$b} } keys %{ $self->{'want_download_filename'}{$tth} ||{}};
+            $filename //= $from->{FN};
             $filename =~ s{^.*[/\\]}{}g;
-            $self->log( "selected [$filename] from", Dumper $from);
+            $self->log( "selected22 [$filename] from", Dumper $from);
             my $dst = $self->{'get_dir'} . $filename;
             my $size = $from->{size} || $from->{SI};
             unless ( -e $dst and ( !$size or -s $dst == $size ) ) {
-              $self->get( $from->{nick} || $from->{NI}, 'TTH/' . $tth, $dst );
+              $self->get( $from->{nick} || $from->{CID} || $from->{NI} , 'TTH/' . $tth, $dst );
               delete $self->{'want_download'}{$tth};    #dont!
               last;
             }
@@ -932,19 +936,24 @@ sub func {
   };
   $self->{'get'} ||= sub {
     my ( $self, $nick, $file, $as, $from, $to ) = @_;
+    $self->log( 'dcdev', 'wantcall', $self, $nick, $file, $as, $from, $to);
     my ( $sid, $cid );
     $sid = $nick if $nick =~ /^[A-Z0-9]{4}$/;
     $cid = $nick if $nick =~ /^[A-Z0-9]{39}$/;
     $cid ||= $self->{peers}{$sid}{INF}{ID};
     $sid ||= $self->{peers}{$cid}{SID};
+	$sid ||= $cid if $self->{broadcast};
     local $_ = $as || $file;
+	$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
+	
     $self->log( 'warn', "file [$_] already exists size = ", -s $_ ) if -e $_;
     #todo by nick
     $self->wait_clients();
     #$self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $nick }{$file} = $as || $file || '';
-    $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $nick }{$file} =
+    $self->log( 'dcdev', "wantid: $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick");
+    $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick }{$file} =
       { 'filename' => $file, 'fileas' => $as || $file || '', 'file_recv_to' => $to, 'file_recv_from' => $from };
-    $self->log( 'dbg', "getting [$nick] $file as $as" );
+    $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]" );
     if ( $self->{'adc'} ) {
       #my $token = $self->make_token($nick);
       local @_;
@@ -1245,6 +1254,7 @@ sub func {
   $self->{'download'} ||= sub {
     my ( $self, $file ) = @_;
     push @{ $self->{'queue_download'} ||= [] }, $file;
+	$self->log("download [$file] now $self->{'want_download'}{$file} = {}");
     $self->{'want_download'}{$file} = {};
   };
   $self->{'get_peer_addr'} ||= sub () {
