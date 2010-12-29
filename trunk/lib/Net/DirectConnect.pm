@@ -797,7 +797,7 @@ sub func {
             #$self->log( "selected22 [$filename] from", Dumper $from);
             my $dst = $self->{'get_dir'} . $filename;
             my $size = $from->{size} || $from->{SI};
-            unless ( -e $dst and ( !$size or -s $dst == $size ) ) {
+            unless ( -e $dst and ( !$size or -s $dst < $size ) ) {
               $self->get( $from->{nick} || $from->{CID} || $from->{NI} , 'TTH/' . $tth, $dst );
               delete $self->{'want_download'}{$tth};    #dont!
               last;
@@ -1094,7 +1094,7 @@ sub func {
   };
   $self->{'file_send'} ||= sub {
     my $self = shift;
-    #$self->log( 'dcdev', 'file_send', Dumper \@_);
+    $self->log( 'dcdev', 'file_send', Dumper \@_);
     my ( $file, $start, $size, $as ) = @_;
     $start //= 0;
     $size  //= -s $file;
@@ -1109,6 +1109,10 @@ sub func {
       $self->{'file_send_total'}  = -s $file;
       $self->{'file_send_offset'} = $start || 0;
       $self->log( 'dev', "sendsize=$size from", $start, 'e', -e $file, $file, $self->{'file_send_total'} );
+
+#$self->{'filetotal'} = $self->{'file_send_offset'} + $self->{'file_send_left'};	  
+	  $self->file_close(), return if $start >= $self->{'file_send_total'}; 
+	  
       if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', 'file', $as || $name, $start, $size ); }
       else                  { $self->cmd( 'ADCSND', 'file', $as || $name, $start, $size ); }
       $self->{'status'} = 'transfer';

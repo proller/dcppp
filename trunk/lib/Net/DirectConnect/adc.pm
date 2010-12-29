@@ -324,7 +324,7 @@ $self->INF_generate();
 	  }
 
       my $first_seen;
-      #$first_seen = 1 unless $self->{'peers'}{$peerid}{INF};
+      $first_seen = 1 unless $self->{'peers'}{$peerid}{INF};
       $self->log( 'adcdev',  "peer[$first_seen]: $peerid : $self->{'peers'}{$peerid}");
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
@@ -356,7 +356,7 @@ $self->INF_generate();
 
       $self->log('adcdev', "first_seen: $first_seen,$peerid ne $self->{'INF'}{'SID'}");
 
-      if(#$first_seen and 
+      if($first_seen and 
 	  $self->{'broadcast'} and $peerid ne $self->{'INF'}{'SID'}) {
 
             #$self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
@@ -532,7 +532,7 @@ $self->INF_generate();
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       #CSND file files.xml.bz2 0 6117
-      $self->{'filetotal'} = $_[2] + $_[3];
+      $self->{'filetotal'} //= $_[2] + $_[3];
       return $self->file_open();
     },
     #CGET file TTH/YDIXOH7A3W233WTOQUET3JUGMHNBYNFZ4UBXGNY 637534208 6291456
