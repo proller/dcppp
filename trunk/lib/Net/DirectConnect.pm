@@ -186,6 +186,7 @@ sub new {
       #$self->{'port'},
       #$self->log( 'dev',  "send to", );
       $self->{'broadcast'} = 1;
+	  #$self->{'lis'} = 1;
     }
     if ( !$self->{'module'} and !$self->{'protocol'} and $self->{'host'} ) {
       #$self->log( 'proto0 ', $1);
@@ -784,14 +785,14 @@ sub func {
         }
         #if (!)
 		#=todo
-        $self->log('dev', 'work want:', Dumper $self->{'want_download'});
+        #$self->log('dev', 'work want:', Dumper $self->{'want_download'});
         for my $tth ( grep { keys %{ $self->{'want_download'}{$_} } } keys %{ $self->{'want_download'} } ) {
           if ( my ($from) = ( grep { $_->{slotsopen} or $_->{SL} } values %{ $self->{'want_download'}{$tth} } ) ) {
 			           my ($filename) =
               sort { $self->{'want_download_filename'}{$tth}{$a} <=> $self->{'want_download_filename'}{$tth}{$b} } keys %{ $self->{'want_download_filename'}{$tth} ||{}};
             $filename //= $from->{FN};
             $filename =~ s{^.*[/\\]}{}g;
-            $self->log( "selected22 [$filename] from", Dumper $from);
+            #$self->log( "selected22 [$filename] from", Dumper $from);
             my $dst = $self->{'get_dir'} . $filename;
             my $size = $from->{size} || $from->{SI};
             unless ( -e $dst and ( !$size or -s $dst == $size ) ) {
