@@ -89,8 +89,11 @@ sub module_load {
   local $_ = shift;
   return unless length $_;
   my $module = __PACKAGE__ . '::' . $_;
-  eval "use $module;";
+  #eval "use $module;";
+  use_try $module;
   $self->log( 'err', 'cant load', $module, $@ ), return if $@;
+  #${module}::new($self, @_) if $module->can('new');
+  #${module}::init($self, @_) if $module->can('init');
   eval "$module\::new(\$self, \@_);";    #, \@param
   $self->log( 'err', 'cant new', $module, $@ ), return if $@;
   eval "$module\::init(\$self, \@_);";    #, \@param
@@ -145,6 +148,7 @@ sub new {
     charset_console => ( $^O eq 'MSWin32' ? 'cp866'  : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
     charset_protocol => 'utf8',
     charset_internal => 'utf8',
+    #charset_nick => 'utf8',
   );
   $self->{$_} ||= $_{$_} for keys %_;
   local %_ = @_;
@@ -214,7 +218,7 @@ sub new {
   #@param
   #}
   $self->{charset_chat} ||= $self->{charset_protocol};
-  $self->protocol_init();
+  #$self->protocol_init();
   #$self->log( 'dev', $self, 'new inited', "MT:$self->{'message_type'}", 'autolisten=', $self->{'auto_listen'} );
   if ( $self->{'auto_listen'} ) {
     $self->listen();
@@ -352,7 +356,8 @@ sub func {
     $self->{'myport'} = undef if $_[0];
     return $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) );
   };
-  $self->{'protocol_init'} ||= sub {
+=del
+  $self->{'protocol_init_DELMEEEE'} ||= sub {
     my $self = shift;
     my ($p) = @_;
     $p ||= $self->{'protocol'} || 'nmdc';
@@ -371,6 +376,7 @@ sub func {
     #$self->log( 'protocol inited', $self->{'protocol'}, $self->{'cmd_bef'}, $self->{'cmd_aft'} );
     return $self->{'protocol'};
   };
+=cut
   $self->{'select_add'} ||= sub {
     my $self = shift;
 #$self->{'select'} ||= $self->{parent}{'select'}         $self->{'select_send'} ||= $self->{parent}{'select_send'}    if $self->{parent};
@@ -390,7 +396,7 @@ sub func {
       $self->{'host'} = $_[0] if $_[0];
       $self->{'host'} =~ s{^(.*?)://}{};
       my $p = lc $1;
-      $self->protocol_init($p) if $p =~ /^adc/;
+      #$self->protocol_init($p) if $p =~ /^adc/;
       $self->{'host'} =~ s{/.*}{}g;
       $self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
     }
@@ -1007,9 +1013,13 @@ sub func {
       $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
     }
     $self->{'file_recv_dest'} = ( $self->{'fileas'} || $self->{'filename'} );
+
+    #$self->{'file_recv_dest'}
+#$self->log( 'dcdev', "pre enc filename [$self->{'file_recv_dest'}] [$self->{charset_fs} ne $self->{charset_protocol}]");
     $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
-      $self->{'file_recv_dest'}
+      $self->{'file_recv_dest'}                                  
       if $self->{charset_fs} ne $self->{charset_protocol};
+#$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_dest'} . $self->{'partial_ext'};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
 #$self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'},      'from', $self->{'file_recv_from'} );

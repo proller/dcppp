@@ -104,6 +104,7 @@ sub init {
     'port'     => 412,
     'host'     => 'localhost',
     'protocol' => 'adc',
+      'adc'     => 1,
     #'Pass' => '',
     #'key'  => 'zzz',
     #'auto_wait'        => 1,
@@ -114,6 +115,10 @@ sub init {
     'incomingclass' => __PACKAGE__,                        #'Net::DirectConnect::adc',
     no_print => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
    'ID_file' => 'ID',
+
+      'cmd_bef' => undef,
+      'cmd_aft' => "\x0A",
+  
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
