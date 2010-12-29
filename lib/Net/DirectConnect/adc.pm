@@ -245,6 +245,9 @@ $self->INF_generate();
                                       #for keys %{$self->{'peers'}};
         $self->{'status'} = 'connected';
       }
+      elsif ( $dst eq 'C' ) {
+               $self->cmd( $dst, 'INF', ) unless $self->{count_sendcmd}{CINF};   
+      }
       $peerid ||= '';
       for ( $self->adc_strings_decode(@_) ) {
         if   ( (s/^(AD|RM)//)[0] eq 'RM' ) { delete $self->{'peers'}{$peerid}{'SUP'}{$_}; }
