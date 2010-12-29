@@ -25,6 +25,8 @@ sub init {
     #'myport_random' => 99,
     #'myport_tries'  => 5,
     #'HubName'       => 'Net::DirectConnect test hub',
+      'cmd_bef' => undef,
+      'cmd_aft' => "\n",
     @_
   );
   #$self->baseinit();

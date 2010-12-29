@@ -26,6 +26,8 @@ sub init {
     'port'     => 411,
     'host'     => 'localhost',
     'protocol' => 'nmdc',
+        'nmdc' => 1,
+
     #'Pass' => '',
     #'key'  => 'zzz',
     #'auto_wait'        => 1,
@@ -59,13 +61,28 @@ sub init {
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
     'lock'       => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
-    charset_chat => 'cp1251',
-    #charset_protocol => 'cp1251',
+
+          'cmd_bef' => '$',
+      'cmd_aft' => '|',
+
+  
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   #$self->log('dev', 's0',$self->{'sharesize'});
   !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
   #$self->log('dev', 's1',$self->{'sharesize'});
+
+  %_ = (
+    #charset_chat => 'cp1251',
+    #charset_nick => 'cp1251',
+    charset_protocol => 'cp1251',
+  
+  );
+   
+   $self->{$_} = $_{$_} for keys %_;
+
+  #$self->log('dev', 'chPROTO:',$self->{'charset_protocol'});
+  
   #print 'adc init now=',Dumper $self;
   #$self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #http://www.dcpp.net/wiki/index.php/LockToKey :
