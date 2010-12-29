@@ -324,7 +324,7 @@ $self->INF_generate();
 	  }
 
       my $first_seen;
-      $first_seen = 1 unless $self->{'peers'}{$peerid}{INF};
+      #$first_seen = 1 unless $self->{'peers'}{$peerid}{INF};
       $self->log( 'adcdev',  "peer[$first_seen]: $peerid : $self->{'peers'}{$peerid}");
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
@@ -339,7 +339,7 @@ $self->INF_generate();
         $self->{'status'} = 'connected';    #clihub
       } elsif ( $dst eq 'C' ) {
         $self->{'status'} = 'connected';    #clicli
-        $self->cmd( $dst, 'INF' );
+        $self->cmd( $dst, 'INF' )unless $self->{count_sendcmd}{CINF};
         if   ( $params->{TO} ) { }
         else                   { }
         $self->cmd('file_select');
@@ -356,7 +356,8 @@ $self->INF_generate();
 
       $self->log('adcdev', "first_seen: $first_seen,$peerid ne $self->{'INF'}{'SID'}");
 
-      if($first_seen and $self->{'broadcast'} and $peerid ne $self->{'INF'}{'SID'}) {
+      if(#$first_seen and 
+	  $self->{'broadcast'} and $peerid ne $self->{'INF'}{'SID'}) {
 
             #$self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
       $self->cmd_direct( $peerid, 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};

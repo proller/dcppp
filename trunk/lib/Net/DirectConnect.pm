@@ -616,6 +616,7 @@ sub func {
       $self->{activity} = time;
       #$self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
     }
+#$self->log( 'dcdmp', "0rawrawrcv [fh:$self->{'filehandle'}]:", $self->{'databuf'} );
     if ( $self->{'filehandle'} ) { $self->file_write( \$self->{'databuf'} ); }
     else {
 #$self->log( 'dcdmp', "rawrawrcv:", $self->{'databuf'} );
@@ -634,6 +635,7 @@ sub func {
         next unless length;
         $self->get_peer_addr_recv() if $self->{'broadcast'};
         $self->parser($_);
+        #$self->log( 'dcdbg', "[$self->{'number'}]", "left to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}] now was [$_]" );
         last if ( $self->{'filehandle'} );
       }
       $self->file_write( \$self->{'recv_buf'} ), $self->{'recv_buf'} = ''
@@ -1058,11 +1060,13 @@ sub func {
     if ( $self->{'filehandle'} ) {
       #$self->log( 'dcerr', 'file_close',2);
       close( $self->{'filehandle'} ), delete $self->{'filehandle'};
-      if ( length $self->{'partial_ext'} and $self->{'filebytes'} == $self->{'filetotal'} ) {
+      if ($self->{'filebytes'} == $self->{'filetotal'} ) {
+      if ( length $self->{'partial_ext'}) {
         #$self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
         $self->log( 'dcerr', 'cant move finished file' ) if !rename $self->{'file_recv_partial'}, $self->{'file_recv_dest'};
       }
       ( $self->{parent} || $self )->handler( 'file_recieved', $self->{'file_recv_dest'}, $self->{'filename'} );
+      }
     }
     $self->{'select_send'}->remove( $self->{'socket'} ), close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
       #$self->{'socket'}->flush(),
