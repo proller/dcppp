@@ -712,11 +712,14 @@ $self->INF_generate();
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
-  #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
+  $self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
   unless ( $self->{'no_listen'} ) {
-      #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}");
-    if ( ( $self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'} ) {
-      $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
+      $self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}");
+    if ( ( $self->{'M'} eq 'A' or !$self->{'M'} )  and !$self->{'incoming'} ) {
+if (!$self->{'auto_listen'} or #$self->{'Proto'} ne 'tcp'
+$self->{broadcast}
+) {     
+	 $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
       $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
         #%$self, $self->clear(),
         #'want' => $self->{'want'},
@@ -730,6 +733,10 @@ $self->INF_generate();
       );
       $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
       $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
+	  }
+if (!$self->{'auto_listen'} 
+#and $self->{'Proto'} ne 'udp'
+){
       $self->log( 'dev', "making listeners: udp" );
       $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
         #%$self, $self->clear(),
@@ -760,6 +767,7 @@ $self->INF_generate();
       $self->log( 'dev', 'nyportgen',$self->{'myport_udp'});
       $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
     }
+	}
     #DEV=z
 
 =no
