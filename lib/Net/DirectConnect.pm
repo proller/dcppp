@@ -799,14 +799,16 @@ sub func {
               sort { $self->{'want_download_filename'}{$tth}{$a} <=> $self->{'want_download_filename'}{$tth}{$b} } keys %{ $self->{'want_download_filename'}{$tth} ||{}};
             $filename //= $from->{FN};
             $filename =~ s{^.*[/\\]}{}g;
-            #$self->log( "selected22 [$filename] from", Dumper $from);
+            $self->log( "selected22 [$filename] from", Dumper $from);
             my $dst = $self->{'get_dir'} . $filename;
-            my $size = $from->{size} || $from->{SI};
-            unless ( -e $dst and ( !$size or -s $dst < $size ) ) {
-              $self->get( $from->{nick} || $from->{CID} || $from->{NI} , 'TTH/' . $tth, $dst );
+            my $size = $from->{size} || $from->{SI} || 0;
+            #my $sizenow = -s $dst || 0;
+            #$self->log( 'dcdev', "selected23 -e $dst and ( !$size or $sizenow < $size" );
+            #if ( !-e $dst or ( !$size or $sizenow < $size ) ) {
+              $self->get( $from->{nick} || $from->{CID} || $from->{NI} , 'TTH/' . $tth, $dst, undef, undef, $size );
               delete $self->{'want_download'}{$tth};    #dont!
               last;
-            }
+            #}
             #$work{'tthfrom'}{$s{tth}}
           }
         }
@@ -945,8 +947,11 @@ sub func {
     };
   };
   $self->{'get'} ||= sub {
-    my ( $self, $nick, $file, $as, $from, $to ) = @_;
-    $self->log( 'dcdev', 'wantcall', $self, $nick, $file, $as, $from, $to);
+    my ( $self, $nick, $file, $as, $from, $to, $size ) = @_;
+    $self->log( 'dcdev', 'wantcall', $self, $nick, $file, $as, $from, $to, $size);
+    #my $size;
+    #$size = $to unless $from;
+    #$from, $to
     my ( $sid, $cid );
     $sid = $nick if $nick =~ /^[A-Z0-9]{4}$/;
     $cid = $nick if $nick =~ /^[A-Z0-9]{39}$/;
@@ -955,15 +960,21 @@ sub func {
 	$sid ||= $cid if $self->{broadcast};
     local $_ = $as || $file;
 	$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
-	
-    $self->log( 'warn', "file [$_] already exists size = ", -s $_ ) if -e $_;
+
+my $sizenow = -e $_;	
+ if ($sizenow) {	
+    #$self->log( 'warn', "file [$_] already exists size = ", -s $_ , " must be=$size");
+    return if $size and $size == $sizenow;
+ $from = $sizenow  if $sizenow < $size;  
+ }
     #todo by nick
     $self->wait_clients();
     #$self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $nick }{$file} = $as || $file || '';
     $self->log( 'dcdev', "wantid: $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick");
     $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick }{$file} =
       { 'filename' => $file, 'fileas' => $as || $file || '', 'file_recv_to' => $to, 'file_recv_from' => $from };
-    $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]" );
+    my $peer = $self->{peers}{$cid} || $self->{peers}{$sid} || $self->{peers}{$nick} || {};
+    $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]"); #, Dumper $peer->{INF});
     if ( $self->{'adc'} ) {
       #my $token = $self->make_token($nick);
       local @_;
@@ -1354,7 +1365,7 @@ sub func {
   $self->{'cmd_adc'} ||= sub {
     my ( $self, $dst, $cmd ) = ( shift, shift, shift );
     #$self->sendcmd( $dst, $cmd,map {ref $_ eq 'HASH'}@_);
-    $self->log( 'cmd_adc', $dst, $cmd, "SI[$self->{'INF'}{'SID'}]",Dumper \@_ );
+    #$self->log( 'cmd_adc', $dst, $cmd, "SI[$self->{'INF'}{'SID'}]",Dumper \@_ );
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
