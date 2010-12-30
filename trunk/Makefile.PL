@@ -43,6 +43,7 @@ sub MY::postamble {
 
 fullclean: distclean veryclean
 	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old *.core MANIFEST README
+	rm -Rf p5-Net-DirectConnect TigerHash 
 
 prerelease:
 
