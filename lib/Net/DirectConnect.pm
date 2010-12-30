@@ -11,7 +11,7 @@ use IO::Select;
 use POSIX;
 use Time::HiRes qw(time);
 use Data::Dumper;
-$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = $Data::Dumper::Terse = 1;
 our $AUTOLOAD;
 our %global;
 
@@ -47,7 +47,7 @@ sub send_udp ($$;@) {
     )
     )
   {
-    $s->send( $_[0] );
+    $s->send( Encode::encode $self->{charset_protocol}, $_[0] );
     $self->{bytes_send} += length $_[0];
     #$s->shutdown(2);
     $s->close();
@@ -119,7 +119,9 @@ sub new {
     'log'           => sub (@) {
       my $self = ref $_[0] ? shift() : {};
       if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
+#utf8::valid(join '', @_) and
       print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
+      #Dumper \
     },
     #'auto_recv'          => 1,
     'max_reads'          => 20,
@@ -220,6 +222,13 @@ sub new {
   $self->{charset_chat} ||= $self->{charset_protocol};
   #$self->protocol_init();
   #$self->log( 'dev', $self, 'new inited', "MT:$self->{'message_type'}", 'autolisten=', $self->{'auto_listen'} );
+#$self->{charset_console} = 'utf8';
+   # $self->log( 'dev', "set console encoding  [$self->{charset_console}]");
+  #eval qq{use encoding $self->{charset_console}};
+   eval qq{use encoding '$self->{charset_internal}', STDOUT=> '$self->{charset_console}', STDIN => '$self->{charset_console}'};
+
+#$self->log( 'dev', 'utf8: УТф восемь');
+   
   if ( $self->{'auto_listen'} ) {
     $self->listen();
     $self->cmd('connect_aft') if $self->{'broadcast'};
@@ -403,7 +412,16 @@ sub func {
       ),
       %{ $self->{'sockopts'} || {} },
     );
-    $self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
+    
+    $self->log( 'err', "connect socket  error: $@,", Encode::decode($self->{charset_fs},$!),"[$self->{'socket'}]" ), return 1 if !$self->{'socket'};
+    #$self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
+#$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
+#$self->{charset_protocol} = 'utf8';
+#$self->log( 'dev', "set encoding of socket to [$self->{charset_protocol}]");
+#    binmode($self->{'socket'}, ":encoding($self->{charset_protocol})");
+#    binmode($self->{'socket'}, ":raw:encoding($self->{charset_protocol})");
+#    binmode($self->{'socket'}, ":encoding($self->{charset_protocol}):bytes");
+#    binmode($self->{'socket'}, ":$self->{charset_protocol}");
     $self->{time_start} = time;
     $self->select_add();
     #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
@@ -619,6 +637,8 @@ sub func {
         last unless length $_ and length $self->{'cmd_aft'};
         next unless length;
         $self->get_peer_addr_recv() if $self->{'broadcast'};
+        $_ = Encode::decode $self->{charset_protocol}, $_;
+#        $Encode::encode $self->{charset_console},
         $self->parser($_);
         #$self->log( 'dcdbg', "[$self->{'number'}]", "left to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}] now was [$_]" );
         last if ( $self->{'filehandle'} );
@@ -704,7 +724,7 @@ sub func {
   $self->{'wait_clients'} ||= sub {
     my $self = shift;
     for my $n ( 0 .. $self->{'wait_clients_tries'} ) {
-      last if $self->{'clients_max'} > ( scalar $self->clients_my() );    #keys %{ $self->{'clients'} };
+      last if !$self->{'clients_max'} or $self->{'clients_max'} >  scalar( $self->clients_my() );    #keys %{ $self->{'clients'} };
       $self->info() unless $_;
       $self->log(
         'info',
@@ -834,7 +854,7 @@ sub func {
       if ( $cmd eq 'chatline' or $cmd eq 'welcome' or $cmd eq 'To' ) {
         #$self->log( 'dev', 'RCV pre encode', ($self->{charset_chat} ), @param, Dumper \@param);
         #$_ =  Encode::decode(($self->{charset_chat} ), $_) for @param;
-        $_ = Encode::encode $self->{charset_internal}, Encode::decode $self->{charset_chat}, $_ for @param;
+#!        $_ = Encode::encode $self->{charset_internal}, Encode::decode $self->{charset_chat}, $_ for @param;
         #$self->log( 'dev', 'RCV postencode', @param, Dumper \@param);
         #Encode::encode $self->{charset_console},;
       } else {
@@ -898,7 +918,9 @@ sub func {
         $self->send_udp( $self->{'host'}, $self->{'port'}, join( '', @{ $self->{'send_buffer'} }, ) ),;
       } else {
         $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
-        $self->send( join( '', @{ $self->{'send_buffer'} }, ) );
+        $self->send( 
+                Encode::encode $self->{charset_protocol},
+                join( '', @{ $self->{'send_buffer'} }, ) );
         #local $_;
         #eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };
         #$self->log( 'err', 'send error', $@ ) if $@;
@@ -995,9 +1017,9 @@ sub func {
 
     #$self->{'file_recv_dest'}
 #$self->log( 'dcdev', "pre enc filename [$self->{'file_recv_dest'}] [$self->{charset_fs} ne $self->{charset_protocol}]");
-    $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
-      $self->{'file_recv_dest'}                                  
-      if $self->{charset_fs} ne $self->{charset_protocol};
+    #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
+    $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_dest'}                                  
+      if $self->{charset_fs};# ne $self->{charset_protocol};
 #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_dest'} . $self->{'partial_ext'};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
@@ -1013,6 +1035,7 @@ sub func {
       'dbg',             "file_open pre", $oparam, 'want bytes', $self->{'filetotal'}, 'as=',
       $self->{'fileas'}, 'f=',            $self->{'filename'}
     );
+    #$self->log( 'dcdev', "open [$oparam]" );
     open( $self->{'filehandle'}, $oparam )
       or $self->log( 'dcerr', "file_open error", $!, $oparam ), $self->handler( 'file_open_error', $!, $oparam ), return 1;
     binmode( $self->{'filehandle'} );
@@ -1408,7 +1431,7 @@ sub func {
     @_ = $_[2] if $_[0] eq 'MSG';
     #$self->log("SAY charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}==== @_" , Dumper \@_);
     #local $_ = Encode::encode $self->{charset_console} , join ' ', @_;
-    local $_ = Encode::encode $self->{charset_console}, Encode::decode $self->{charset_internal}, join ' ', @_;
+    #!local $_ = Encode::encode $self->{charset_console}, Encode::decode $self->{charset_internal}, join ' ', @_;
     #}
     #$self->log("SAY after === $_", Dumper $_);
     print $_, "\n";

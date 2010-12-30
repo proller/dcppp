@@ -2,6 +2,7 @@
 package    #hide from cpan
   Net::DirectConnect::clihub;
 use strict;
+use utf8;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Indent = 1;
@@ -75,6 +76,7 @@ sub init {
   $self->{'parse'} ||= {
     'chatline' => sub {
       my $self = shift if ref $_[0];
+      #$self->log( 'dev', Dumper \@_);
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
       #$self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
       $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->cmd('nick_generate'),
@@ -83,7 +85,7 @@ sub init {
         and $text eq 'You are already in the hub.' );
       if ( $self->{'NickList'}{$nick}{'oper'} or $self->{'NickList'}{$nick}{'hubbot'} or $nick eq 'Hub-Security' ) {
         if (
-             $text =~ /^(?:Minimum search interval is|Ìèíèìàëüíûé èíòåðâàë ïîèñêà):(\d+)s/
+             $text =~ /^(?:Minimum search interval is|ÐœÐ¸Ð½Ð¸Ð¼Ð°Ð»ÑŒÐ½Ñ‹Ð¹ Ð¸Ð½Ñ‚ÐµÑ€Ð²Ð°Ð» Ð¿Ð¾Ð¸ÑÐºÐ°):(\d+)s/
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
           )
         {
@@ -91,9 +93,9 @@ sub init {
           $self->log( 'warn', "[$nick] oper: set min interval = $self->{'search_every'}" );
           $self->search_retry();
         }
-        if ( $text =~ /(?:Ïîæàëóéñòà )?ïîäîæäèòå (\d+) ñåêóíä ïåðåä ñëåäóþùèì ïîèñêîì\./i
+        if ( $text =~ /(?:ÐŸÐ¾Ð¶Ð°Ð»ÑƒÐ¹ÑÑ‚Ð° )?Ð¿Ð¾Ð´Ð¾Ð¶Ð´Ð¸Ñ‚Ðµ (\d+) ÑÐµÐºÑƒÐ½Ð´ Ð¿ÐµÑ€ÐµÐ´ ÑÐ»ÐµÐ´ÑƒÑŽÑ‰Ð¸Ð¼ Ð¿Ð¾Ð¸ÑÐºÐ¾Ð¼\./i
           or $text =~ /(?:Please )?wait (\d+) seconds before next search\./i
-          or $text eq 'Ïîæàëóéñòà íå èñïîëüçóéòå ïîèñê òàê ÷àñòî!'
+          or $text eq 'ÐŸÐ¾Ð¶Ð°Ð»ÑƒÐ¹ÑÑ‚Ð° Ð½Ðµ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ Ð¿Ð¾Ð¸ÑÐº Ñ‚Ð°Ðº Ñ‡Ð°ÑÑ‚Ð¾!'
           or $text eq "Please don't flood with searches!" )
         {
           $self->{'search_every'} += int( rand(5) + $1 || $self->{'search_every_min'} );
@@ -120,7 +122,7 @@ sub init {
           $self->log( 'warn', "CHNICK $self->{'Nick'} -> $try" );
           $self->{'Nick'} = $try if length $try;
         } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i
-          or $text =~ /Ïîæàëóéñòà ïîäîæäèòå (\d+) ñåêóíä äî ïîâòîðíîãî ïîäêëþ÷åíèÿ\./ )
+          or $text =~ /ÐŸÐ¾Ð¶Ð°Ð»ÑƒÐ¹ÑÑ‚Ð° Ð¿Ð¾Ð´Ð¾Ð¶Ð´Ð¸Ñ‚Ðµ (\d+) ÑÐµÐºÑƒÐ½Ð´ Ð´Ð¾ Ð¿Ð¾Ð²Ñ‚Ð¾Ñ€Ð½Ð¾Ð³Ð¾ Ð¿Ð¾Ð´ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ñ\./ )
         {
           sleep $1 + 1;
         } elsif ( $self->{'auto_bug'} and $nick eq 'VerliHub' and $text =~ /^This Hub Is Running Version 0.9.8d/i ) {    #_RC1
@@ -319,16 +321,16 @@ sub init {
 #Hub:	[Outgoing][80.240.208.42:4111]	 	$SR prrrrroo0 distr\s60\games\10598_paintball2.zip621237 1/2TTH:3TFVOXE2DS6W62RWL2QBEKZBQLK3WRSLG556ZCA (80.240.208.42:4111)breathe|
 #$SR prrrrroo0 distr\moscow\mom\Mo\P\Paintball.htm1506 1/2TTH:NRRZNA5MYJSZGMPQ634CPGCPX3ZBRLKHAACPAFQ (80.240.208.42:4111)breathe|
 #$SR prrrrroo0 distr\moscow\mom\Map\P\Paintball.htm3966 1/2TTH:QLRRMET6MSNJTIRKBDLQYU6RMI5QVZDZOGAXEXA (80.240.208.42:4111)breathe|
-#$SR ILICH ÅÃÒÑ_07_2007\bases\sidhouse.DBF120923801 6/8TTH:4BAKR7LLXE65I6S4HASIXWIZONBEFS7VVZ7QQ2Y (80.240.211.183:411)
+#$SR ILICH Ð•Ð“Ð¢Ð¡_07_2007\bases\sidhouse.DBF120923801 6/8TTH:4BAKR7LLXE65I6S4HASIXWIZONBEFS7VVZ7QQ2Y (80.240.211.183:411)
 #$SR gellarion7119 MuZonnO\Mark Knopfler - Get Lucky (2009)\mark_knopfler_-_you_cant_beat_the_house.mp36599140 7/7TTH:IDPHZ4AJIIWDYOFEKCCVJUNVIPGSGTYFW5CGEQQ (80.240.211.183:411)
-#$SR 13th_day Êàðòèíêè\åùå äåâêè\sacrifice_penthouse02.jpg62412 0/20TTH:GHMWHVBKRLF52V26VFO4M4RUQ65NC3YKWIW7FPI (80.240.211.183:411)
+#$SR 13th_day ÐšÐ°Ñ€Ñ‚Ð¸Ð½ÐºÐ¸\ÐµÑ‰Ðµ Ð´ÐµÐ²ÐºÐ¸\sacrifice_penthouse02.jpg62412 0/20TTH:GHMWHVBKRLF52V26VFO4M4RUQ65NC3YKWIW7FPI (80.240.211.183:411)
 #DIRECT:
 #$SR server1 server\Unsorted\Desperate.Housewives.S04.720p.HDTV.x264\desperate.housewives.s04e03.720p.hdtv.x264.Rus.Eng.mkv1194423977 2/2TTH:6YWRGDXNQJEOGSB4Q7Y3Y7XRM7EXPLUK7GBRJ3A (80.240.211.183:411)
-#$SR MikMEBX Deep purple\1980-1988\08-The House Of Blue Light.1987 10/10[ f12p.ru ][ F12P-HUB ] - äåíü åäèíñòâà... âñïîìíèòå õîðîøåå è óëûáíèòåñü äðóã äðóãó.. ïóñòü ýòî áóäåò äíåì ãàðìîíèè (80.240.211.183)
+#$SR MikMEBX Deep purple\1980-1988\08-The House Of Blue Light.1987 10/10[ f12p.ru ][ F12P-HUB ] - Ð´ÐµÐ½ÑŒ ÐµÐ´Ð¸Ð½ÑÑ‚Ð²Ð°... Ð²ÑÐ¿Ð¾Ð¼Ð½Ð¸Ñ‚Ðµ Ñ…Ð¾Ñ€Ð¾ÑˆÐµÐµ Ð¸ ÑƒÐ»Ñ‹Ð±Ð½Ð¸Ñ‚ÐµÑÑŒ Ð´Ñ€ÑƒÐ³ Ð´Ñ€ÑƒÐ³Ñƒ.. Ð¿ÑƒÑÑ‚ÑŒ ÑÑ‚Ð¾ Ð±ÑƒÐ´ÐµÑ‚ Ð´Ð½ÐµÐ¼ Ð³Ð°Ñ€Ð¼Ð¾Ð½Ð¸Ð¸ (80.240.211.183)
 #PASSIVE
-#$SR ILICH ÅÃÒÑ_07_2007\bases\sidhouse.DBF120923801 6/8TTH:4BAKR7LLXE65I6S4HASIXWIZONBEFS7VVZ7QQ2Y (80.240.211.183:411)
+#$SR ILICH Ð•Ð“Ð¢Ð¡_07_2007\bases\sidhouse.DBF120923801 6/8TTH:4BAKR7LLXE65I6S4HASIXWIZONBEFS7VVZ7QQ2Y (80.240.211.183:411)
 #$SR gellarion7119 MuZonnO\Mark Knopfler - Get Lucky (2009)\mark_knopfler_-_you_cant_beat_the_house.mp36599140 7/7TTH:IDPHZ4AJIIWDYOFEKCCVJUNVIPGSGTYFW5CGEQQ (80.240.211.183:411)
-#$SR SALAGA Âèäåî\Ôèëüìû\XXX\xxx Penthouse.avi732665856 0/5TTH:3OFCM6GPQZNBNAMV6SRDFHFPK2X76EO6UCIO7ZQ (80.240.211.183:411)
+#$SR SALAGA Ð’Ð¸Ð´ÐµÐ¾\Ð¤Ð¸Ð»ÑŒÐ¼Ñ‹\XXX\xxx Penthouse.avi732665856 0/5TTH:3OFCM6GPQZNBNAMV6SRDFHFPK2X76EO6UCIO7ZQ (80.240.211.183:411)
       return \%s;
     },
     'SR' => sub {

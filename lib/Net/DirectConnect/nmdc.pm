@@ -3,6 +3,7 @@
 package    #hide from cpan
   Net::DirectConnect::nmdc;
 use strict;
+use utf8;
 #use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
@@ -88,6 +89,7 @@ sub init {
   #http://www.dcpp.net/wiki/index.php/LockToKey :
   $self->{'lock2key'} ||= sub {
     my $self = shift if ref $_[0];
+    #return $self->{lock};
     my ($lock) = @_;
     #$self->{'log'}->( 'dev', 'making lock from', $lock );
     my @lock = split( //, $lock );
