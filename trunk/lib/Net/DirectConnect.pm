@@ -356,27 +356,6 @@ sub func {
     $self->{'myport'} = undef if $_[0];
     return $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) );
   };
-=del
-  $self->{'protocol_init_DELMEEEE'} ||= sub {
-    my $self = shift;
-    my ($p) = @_;
-    $p ||= $self->{'protocol'} || 'nmdc';
-    if ( $p =~ /^adc/i ) {
-      $self->{'cmd_bef'} = undef;
-      $self->{'cmd_aft'} = "\x0A";
-      $self->{'adc'}     = 1;
-    } elsif ( $p =~ /http/i ) {
-      $self->{'cmd_bef'} = undef;
-      $self->{'cmd_aft'} = "\n";
-    } elsif ($p) {    #$p =~ /nmdc/i
-      $self->{'cmd_bef'} = '$';
-      $self->{'cmd_aft'} = '|';
-    }
-    $self->{'protocol'} = $p, $self->{$p} = 1, if $p;
-    #$self->log( 'protocol inited', $self->{'protocol'}, $self->{'cmd_bef'}, $self->{'cmd_aft'} );
-    return $self->{'protocol'};
-  };
-=cut
   $self->{'select_add'} ||= sub {
     my $self = shift;
 #$self->{'select'} ||= $self->{parent}{'select'}         $self->{'select_send'} ||= $self->{parent}{'select_send'}    if $self->{parent};
