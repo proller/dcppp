@@ -203,7 +203,7 @@ for my $query ( sort keys %makegraph ) {
   my $yl = 700;
   my $xs = int( $xl / ( scalar keys(%dates) - 1 or 1 ) );
   #my $yn = 10;
-  my $yn = $maxy;
+  my $yn = $maxy || 1;
   my $ys = $yl / $yn;
   for my $date (%date_max) {
     $date_step{$date} = $date_max{$date} ? $yl / $date_max{$date} : 1;

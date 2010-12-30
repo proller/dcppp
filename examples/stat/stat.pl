@@ -14,6 +14,7 @@ psmisc->import qw(:log);
 #use lib $root_path. '../../lib';
 #use lib $root_path. './';
 use Net::DirectConnect;
+#use Net::DirectConnect::filelist;
 #psmisc::configure();
 use statlib;
 #warn Dumper \%config, \%psmisc::config, \%statlib::config, \%statpl::config, \%main::config, \%pssql::config,;
@@ -30,6 +31,14 @@ print(
   if !$ARGV[0];
 my $n = -1;
 my ( $tq, $rq, $vq ) = $db->quotes();
+
+#my @dirs = grep { -d } @ARGV;
+##printlog('dev', 'started', @ARGV),
+#my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
+#@ARGV = grep { !-d } @ARGV;
+#Net::DirectConnect::filelist->new(  %{ $config{dc} || {} } )->filelist_make(@dirs), exit
+#  if ($filelist and !caller); # or (!@ARGV and !$config{dc}{host});
+
 for my $arg (@ARGV) {
   ++$n;
   #print "ar[$arg]";
@@ -201,7 +210,7 @@ for ( grep { length $_ } @ARGV ) {
     my $hub = $_;
     ++$work{'hubs'}{$hub};
     my $dc = Net::DirectConnect->new(
-      #modules            => ['filelist'],
+      modules            => {'filelist' => 1},
       'host'      => $hub,
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
@@ -429,6 +438,7 @@ for ( grep { length $_ } @ARGV ) {
         },
       },
       %config,
+      %{ $config{dc} || {} }
     );
     #$dc->connect($hub);
     #$dc->{'handler'}{'SCH_parse_aft'} = $dc->{'handler'}{'Search_parse_aft'};
