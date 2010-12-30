@@ -359,10 +359,10 @@ $self->INF_generate();
         $self->cmd_all( $dst, 'INF', $peerid, $self->adc_make_string($params_send) );
       }
 
-      $self->log('adcdev', "first_seen: $first_seen,$peerid ne $self->{'INF'}{'SID'}");
+      $self->log('adcdev', "first_seen: $first_seen,$peerid ne $self->{'INF'}{'SID'} dst: $dst");
 
-      if($first_seen and 
-	  $self->{'broadcast'} and $peerid ne $self->{'INF'}{'SID'}) {
+      if(#$first_seen and 
+	  $self->{'broadcast'} and $peerid ne $self->{'INF'}{'SID'} and $dst eq 'B') {
 
             #$self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
       $self->cmd_direct( $peerid, 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
@@ -638,6 +638,7 @@ $self->INF_generate();
 #$self->{SUP} ||= { ( map { $_ => 1 } @{ $self->{'SUPADS'} } ), ( map { $_ => 0 } @{ $self->{'SUPRMS'} } ) };
 #$self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
 #$self->cmd_adc( $dst, 'SUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
+      local $self->{'INF'}{'SID'} = undef unless $self->{'broadcast'};
       $self->cmd_adc(
         $dst, 'SUP',
         ( map { 'AD' . $_ } sort keys %{ $self->{SUPAD}{$dst} } ),
@@ -667,10 +668,13 @@ $self->INF_generate();
      #$self->{''} ||= $self->{''} || '';
      #$self->sendcmd( $dst, 'INF', $self->{'INF'}{'SID'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       }
+      #$self->log(Dumper $self);
       $self->cmd_adc        #sendcmd
         (
         $dst, 'INF',        #$self->{'INF'}{'SID'},
-        map { $_ . $self->{'INF'}{$_} } grep {length $self->{'INF'}{$_}} $dst eq 'C' ? qw(ID TO) : @_ ? @_ : qw(ID I4 I6 U6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF)#sort keys %{ $self->{'INF'} }
+        map { $_ . $self->{'INF'}{$_} } grep {length $self->{'INF'}{$_}} $dst eq 'C' ? qw(ID TO) : @_ ? @_ : (qw(ID I4 I6 U6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF)
+        , ($self->{'message_type'} eq 'H' ? 'PD' : ())
+        )#sort keys %{ $self->{'INF'} }
         );
       #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       #$self->cmd_adc( $dst, 'INF', $self->{'INF'}{'SID'}, map { $_ . $self->{$_} } grep { $self->{$_} } @{ $self->{'BINFS'} } );
