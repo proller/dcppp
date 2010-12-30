@@ -3,11 +3,11 @@
 
 =head1 NAME
 
- UNFINISHED!!! auto get popular files
+ UNFINISHED!!! [auto] get [popular] files
 
 =head1 SYNOPSIS
 
- ./get.pl hub [hub]
+ ./dcget hub [hub] [tth]
 
  #NONE!file ... file:  topath/name:TTH:size
 
@@ -156,36 +156,6 @@ my @dc;
           psmisc::printlog( 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} });
         }
       );
-      psmisc::schedule(
-        $config{'get_every'},
-        our $get_every_sub__ ||= sub {
-          psmisc::printlog( 'selecting file from', grep { exists $work{'ask'}{$_} } keys %{ $work{'filename'} } );
-          for
-            my $tth #( sort { keys %{ $work{'filename'}{$a} } <=> keys %{ $work{'filename'}{$b} } } keys %{ $work{'filename'} } )
-            ( sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
-            grep { exists $work{'ask'}{$_} and !exists $dc->{share_full}{$_} } keys %{ $work{'filename'} } )
-          {
-            #++$work{'filename'}{$s{tth}}{$s{filename}};
-            my ($filename) =
-              sort { $work{'filename'}{$tth}{$a} <=> $work{'filename'}{$tth}{$b} } keys %{ $work{'filename'}{$tth} };
-            psmisc::printlog(
-              'selected tth', $tth, $work{'ask'}{$tth},
-              'names=', keys %{ $work{'filename'}{$tth} },
-              'filename=', $filename, $work{'filename'}{$tth}{$filename},
-              'nicks=', keys %{ $work{'tthfrom'}{$tth} }
-            );
-            my ($from) = ( grep { $_->{slotsopen} or $_->{SL} } values %{ $work{'tthfrom'}{$tth} } ) or next;
-            psmisc::printlog( 'selected from', Dumper $from);
-            my $dst = $config{'get_dir'} . $filename;
-            delete $work{'filename'}{$tth};
-            my $size = $from->{size} || $from->{SI};
-            next if ( -e $dst and ( !$size or -s $dst == $size ) );
-            $dc->get( $from->{nick} || $from->{CID}, 'TTH/' . $tth, $dst );
-            #$work{'tthfrom'}{$s{tth}}
-            last;
-          }
-        }
-      ) if 0;
       if ( $config{'auto_get_best'} ) {
         psmisc::schedule(
           $dc->{'search_every'},

@@ -1510,11 +1510,9 @@ look at examples for handlers
 =head1 DESCRIPTION
 
  Currently NOT supported:
- self filelist making 
  segmented, multisource download;
  async connect;
 
-  BROKEN: in freebsd8 tigerhash compile
 
 =head1 INSTALLATION
 
@@ -1525,8 +1523,8 @@ look at examples for handlers
 
 =head1 SEE ALSO
 
-#pro http://pro.setun.net/dcppp/
-      http://sourceforge.net/projects/dcppp
+ http://pro.setun.net/dcppp/
+ http://sourceforge.net/projects/dcppp
 
  http://svn.setun.net/dcppp/timeline/browser/trunk
 
@@ -1553,14 +1551,13 @@ look at examples for handlers
 
  Rewrite better
 
-
 =head1 AUTHOR
 
 Oleg Alexeenkov, E<lt>pro@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2005-2009 Oleg Alexeenkov
+Copyright (C) 2005-2010 Oleg Alexeenkov
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
