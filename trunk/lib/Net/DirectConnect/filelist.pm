@@ -73,6 +73,10 @@ sub new {
   $self->{skip_dir} //= [ qr'(?:^|/)Incomplete(?:/|$)', ( !$self->{skip_hidden} ? () : qr{(?:^|/)\.} ), ];
   $self->{skip_file} //=
     [ qr/\.(?:partial|(?:dc)tmp)$/i, qr/^~uTorrentPartFile_/i, ( !$self->{skip_hidden} ? () : qr{(?:^|/)\.} ), ];
+  # $self->{sharesize_mul}  //= 3; # make share bigger * sharefiles_mul
+  # $self->{sharesize_add}  //= 10_000_000_000; #add to share size virtual bytes
+  # $self->{sharefiles_mul} //=3; #same for files for keeping size/files rate
+  # $self->{sharefiles_add} //= 10_000;
   #
   # ==========
   #
@@ -405,6 +409,10 @@ sub new {
     psmisc::unlock('sharescan');
     #$_[0]->( $sharesize, $sharefiles ) if ref $_[0] ~~ 'CODE';
     #( $self->{share_size} , $self->{share_files} ) = ( $sharesize, $sharefiles );
+    $sharefiles *= $self->{sharefiles_mul} if $self->{sharefiles_mul};
+    $sharefiles += $self->{sharefiles_add};
+    $sharesize *= $self->{sharesize_mul} if $self->{sharesize_mul};
+    $sharesize += $self->{sharesize_add};
     $self->{sharefiles} = $self->{INF}{SF} = $sharefiles, $self->{INF}{SS} = $self->{sharesize} = $sharesize, if $sharesize;
     $self->share_changed();
     return ( $sharesize, $sharefiles );
