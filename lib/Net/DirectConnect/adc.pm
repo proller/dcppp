@@ -293,11 +293,12 @@ $self->INF_generate();
       #for (@_) {
       #s/^(\w\w)//;
       #my ($code)= $1;
-      #$self->log('adcdev', 'INF:', $peerid,  Dumper $params);
+      $self->log('adcdev', 'INF:', $dst, $peerid,  Dumper $params);
       #$self->{'peers'}{$peerid}{'INF'}{$code} = $_;
       #}
       my $peersid = $peerid;
       if ( $dst ne 'B' and $peerid ||= $params->{ID} ) {
+        $self->log('adcdev', 'INF:', "moving peer '' to $peerid");
         $self->{'peerid'} ||= $peerid;
         $self->{'peers'}{$peerid}{$_} = $self->{'peers'}{''}{$_} for keys %{ $self->{'peers'}{''} || {} };
         delete $self->{'peers'}{''};
@@ -364,8 +365,8 @@ $self->INF_generate();
       if(#$first_seen and 
 	  $self->{'broadcast'} and $peerid ne $self->{'INF'}{'SID'} and $dst eq 'B') {
 
-            #$self->cmd( 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
-      $self->cmd_direct( $peerid, 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
+            $self->cmd( 'D', 'INF', ) if $self->{'broadcast'}; # and $self->{'broadcast_INF'};
+      #$self->cmd_direct( $peerid, 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
       }
       
       return $params;    #$self->{'peers'}{$peerid}{'INF'};
