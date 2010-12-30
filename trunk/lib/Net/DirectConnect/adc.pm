@@ -278,7 +278,9 @@ $self->INF_generate();
     },
     'SID' => sub {
       my $self = shift if ref $_[0];
-      $self->{'INF'}{'SID'} = $_[1];
+      my ( $dst, $peerid, $toid ) = @{ shift() };
+      return $self->{'INF'}{'SID'} unless $dst eq 'I';
+      $self->{'INF'}{'SID'} = $_[0];
       $self->log( 'adcdev', 'SID:', $self->{'INF'}{'SID'} );
       return $self->{'INF'}{'SID'};
     },
@@ -298,7 +300,7 @@ $self->INF_generate();
       #}
       my $peersid = $peerid;
       if ( $dst ne 'B' and $peerid ||= $params->{ID} ) {
-        $self->log('adcdev', 'INF:', "moving peer '' to $peerid");
+        #$self->log('adcdev', 'INF:', "moving peer '' to $peerid");
         $self->{'peerid'} ||= $peerid;
         $self->{'peers'}{$peerid}{$_} = $self->{'peers'}{''}{$_} for keys %{ $self->{'peers'}{''} || {} };
         delete $self->{'peers'}{''};
@@ -329,9 +331,9 @@ $self->INF_generate();
 	  
 	  }
 
-      my $first_seen;
-      $first_seen = 1 unless $self->{'peers'}{$peerid}{INF};
-      $self->log( 'adcdev',  "peer[$first_seen]: $peerid : $self->{'peers'}{$peerid}");
+      #my $first_seen;
+      #$first_seen = 1 unless $self->{'peers'}{$peerid}{INF};
+      #$self->log( 'adcdev',  "peer[$first_seen]: $peerid : $self->{'peers'}{$peerid}");
       $self->{'peers'}{$peerid}{'INF'}{$_} = $params->{$_} for keys %$params;
       $self->{'peers'}{$peerid}{'object'} = $self;
       $self->{'peers'}{ $params->{ID} }                              ||= $self->{'peers'}{$peerid};
@@ -360,7 +362,7 @@ $self->INF_generate();
         $self->cmd_all( $dst, 'INF', $peerid, $self->adc_make_string($params_send) );
       }
 
-      $self->log('adcdev', "first_seen: $first_seen,$peerid ne $self->{'INF'}{'SID'} dst: $dst");
+      #$self->log('adcdev', "first_seen: $first_seen,$peerid ne $self->{'INF'}{'SID'} dst: $dst");
 
       if(#$first_seen and 
 	  $self->{'broadcast'} and $peerid ne $self->{'INF'}{'SID'} and $dst eq 'B') {
@@ -509,6 +511,7 @@ $self->INF_generate();
     'CTM' => sub {
       my $self = shift if ref $_[0];
       my ( $dst,   $peerid, $toid )  = @{ shift() };
+      $toid ||= shift;
       my ( $proto, $port,   $token ) = @_;
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
       $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'INF'}{'SID'}", );
@@ -640,12 +643,16 @@ $self->INF_generate();
 #$self->{SUP} ||= { ( map { $_ => 1 } @{ $self->{'SUPADS'} } ), ( map { $_ => 0 } @{ $self->{'SUPRMS'} } ) };
 #$self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
 #$self->cmd_adc( $dst, 'SUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
+      #$self->log( 'SUP', "sidp=[$self->{'INF'}{'SID'}]");
+      {
       local $self->{'INF'}{'SID'} = undef unless $self->{'broadcast'};
       $self->cmd_adc(
         $dst, 'SUP',
         ( map { 'AD' . $_ } sort keys %{ $self->{SUPAD}{$dst} } ),
         ( map { 'RM' . $_ } sort keys %{ $self->{SUPRM}{$dst} } ),
       );
+      }
+      #$self->log( 'SUP', "sida=[$self->{'INF'}{'SID'}]");
       #ADBAS0 ADBASE ADTIGR ADUCM0 ADBLO0
     },
     'INF' => sub {
@@ -827,7 +834,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
     delete $self->{'peers'}{ $self->{'peerid'} };
     delete $self->{'peers_sid'}{ $self->{'peerid'} };
     $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'};
-    delete $self->{'INF'}{'SID'};
+    delete $self->{'INF'}{'SID'} unless $self->{'parent'};
     $self->log(
       'dev',  'disconnect int',           #psmisc::caller_trace(30)
       'hub=', $self->{'parent'}{'hub'},
