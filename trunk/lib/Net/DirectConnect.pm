@@ -828,7 +828,7 @@ sub func {
       if ( $self->{'adc'} ) {
         $cmd =~ s/^([BCDEFHIU])//, $dst = $1;
         @param = ( [$dst], split / / );
-        if ( $dst eq 'B' or $dst eq 'F' or $dst eq 'U' ) {
+        if ( $dst eq 'B' or $dst eq 'F' or $dst eq 'U' or $self->{broadcast}) {
           #$self->log( 'dcdmp', "P0 $dst$cmd p=",(Dumper \@param));
           #push @{ $param[0] }, shift@param;
           push @{ $param[0] }, splice @param, 1, 1;
@@ -1404,12 +1404,14 @@ sub func {
     my $self = shift;
     #sub adc_parse_named (@) {
     #my ($dst,$peerid) = @{ shift() };
+    #$self->log('dev', "p0:", @_);
     local %_;
     for ( local @_ = @_ ) {
       s/^([A-Z][A-Z0-9])//;
       #my $name=
       #print "PARSE[$1=$_]\n",
       $_{$1} = $self->adc_string_decode($_);
+    #$self->log('dev', "p1:$1=$_{$1}");
     }
     return \%_;
     #return ($dst,$peerid)

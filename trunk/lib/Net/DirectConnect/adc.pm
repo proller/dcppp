@@ -284,7 +284,7 @@ $self->INF_generate();
     },
     'INF' => sub {
       my $self = shift if ref $_[0];
-      my ( $dst, $peerid ) = @{ shift() };
+      my ( $dst, $peerid, $toid ) = @{ shift() };
       #test $_[1] eq 'I'!
       #$self->log('adcdev', '0INF:', "[d=$dst,p=$peerid]", join ':', @_);
       #$self->log('adcdev', 'INF1', $peerid, @_);
@@ -293,7 +293,7 @@ $self->INF_generate();
       #for (@_) {
       #s/^(\w\w)//;
       #my ($code)= $1;
-      $self->log('adcdev', 'INF:', $dst, $peerid,  Dumper $params);
+      #$self->log('adcdev', 'INF:', $dst, $peerid, $toid, Dumper $params);
       #$self->{'peers'}{$peerid}{'INF'}{$code} = $_;
       #}
       my $peersid = $peerid;
