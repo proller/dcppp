@@ -15,4 +15,7 @@
 #$config{'no_print'} = { map { $_ => 1 } qw(Quit Hello UserCommand) };    #SR Search MyINFO
 #
 #$config{'purge'}          = 7 * 86400;.# for big hub[s]
+#
+# $config{dc}{'share'} = [qw(/usr/ports/distfiles /usr/ports/packages c:\dist c:\distr c:\pub )];
+
 1;
