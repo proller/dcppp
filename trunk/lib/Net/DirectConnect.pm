@@ -1120,18 +1120,18 @@ my $sizenow = -e $_;
     $self->log( 'dcdev', 'file_send', Dumper \@_);
     my ( $file, $start, $size, $as ) = @_;
     $start //= 0;
-    $size  //= -s $file;
+    my $filesize = -s $file;
+    $size =  $filesize - $start if $size <= 0;
     $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return if !-e $file or -d $file;
-    $size = -s $file if $size < 0;
     if ( open $self->{'filehandle_send'}, '<', $file ) {
       binmode( $self->{'filehandle_send'} );
       seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
       my $name = $file;
       $name =~ s{^.*[\\/]}{}g;
-      $self->{'file_send_left'}   = $size;
-      $self->{'file_send_total'}  = -s $file;
+      $self->{'file_send_total'}  = $filesize;
       $self->{'file_send_offset'} = $start || 0;
-      $self->log( 'dev', "sendsize=$size from", $start, 'e', -e $file, $file, $self->{'file_send_total'} );
+      $self->{'file_send_left'}   = $size;
+      $self->log( 'dev', "sendsize=$size filesize=$filesize from", $start, 'e', -e $file, $file, $self->{'file_send_total'} );
 
 #$self->{'filetotal'} = $self->{'file_send_offset'} + $self->{'file_send_left'};	  
 	  $self->file_close(), return if $start >= $self->{'file_send_total'}; 
