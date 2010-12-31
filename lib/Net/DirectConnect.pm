@@ -58,6 +58,17 @@ sub send_udp ($$;@) {
   }
 }
 
+  sub socket_addr ($){
+      my ($socket) = @_;
+      local @_;
+      eval { @_ = unpack_sockaddr_in( getpeername( $socket ) || return ) };
+    return unless $_[1];
+    return unless $_[1] = inet_ntoa( $_[1] );
+    return @_;
+
+  }
+
+
 sub schedule($$;@)
 {    #$Id$ $URL$
   our %schedule;
@@ -167,6 +178,10 @@ sub new {
   $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
   $self->{activity} = time;
+
+    $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth want_download);
+    $self->{$_} ||= $self->{'parent'}{$_} ||= [] for qw(queue_download); 
+  
   #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
   #(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
   $self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
@@ -571,6 +586,15 @@ sub func {
       if ( local $_ = $self->{'socket'}->accept() ) {
         #$self->log( 'traceDEV', 'DC::recv', 'accept', $self->{'incomingclass'} );
         $self->log( 'err', 'cant accept, no incomingclass' ), return, unless $self->{'incomingclass'};
+                my (undef, $host )= socket_addr $_;
+        ;# || $self->{parent}{'allow'};
+        #$self->log( 'warn', "$host eq $allow ");
+        if (my $allow = $self->{'allow'}) {
+        my (undef, $host )= socket_addr $_;
+        $self->log( 'warn', "disallowed connect from $host"),
+        return unless $host eq $allow;
+        }
+        
         $_ = $self->{'incomingclass'}->new(
           #%$self,                                clear(),
           'socket' => $_, 'LocalPort' => $self->{'myport'}, 'incoming' => 1,
@@ -792,7 +816,7 @@ sub func {
         }
         #if (!)
 		#=todo
-        $self->log('dev', 'work want:', Dumper $self->{'want_download'});
+        #$self->log('dev', 'work want:', Dumper $self->{'want_download'});
         for my $tth ( grep { keys %{ $self->{'want_download'}{$_} } } keys %{ $self->{'want_download'} } ) {
           if ( my ($from) = ( grep { $_->{slotsopen} or $_->{SL} } values %{ $self->{'want_download'}{$tth} } ) ) {
 			           my ($filename) =
@@ -1285,18 +1309,21 @@ my $sizenow = -s $_;
     }
     };
   $self->{'download'} ||= sub {
-    my ( $self, $file ) = @_;
+    my $self = shift;
+    my ( $file ) = @_;
+	#$self->log('dev', "0s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
     push @{ $self->{'queue_download'} ||= [] }, $file;
-	$self->log("download [$file] now $self->{'want_download'}{$file} = {}");
-    $self->{'want_download'}{$file} = {};
+	#$self->log('dev', "1s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
+    $self->{'want_download'}{$file} ||= {};
   };
+
   $self->{'get_peer_addr'} ||= sub () {
     my ( $self, $recv ) = @_;
     return unless $self->{'socket'};
-    local @_;
-    eval { @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) || return ) };
-    return unless $_[1];
-    return unless $_[1] = inet_ntoa( $_[1] );
+    local @_ = socket_addr $self->{'socket'};
+    #eval { @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) || return ) };
+    #return unless $_[1];
+    #return unless $_[1] = inet_ntoa( $_[1] );
     $self->{'port'} = $_[0] if $_[0];    #;and !$self->{'incoming'};
     $self->{'hostip'} = $_[1], $self->{'host'} ||= $self->{'hostip'} if $_[1];
     return $self->{'hostip'};
