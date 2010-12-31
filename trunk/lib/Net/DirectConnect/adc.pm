@@ -120,8 +120,8 @@ sub init {
       'cmd_aft' => "\x0A",
   
   );
-  #$self->{$_} ||= $_{$_} for keys %_;
-  !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
+  $self->{$_} //= $_{$_} for keys %_;
+  #!exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
   #print 'adc init now=',Dumper $self;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
@@ -139,7 +139,7 @@ sub init {
     $self->{'status'}               = 'working';
     $self->{'disconnect_recursive'} = 1;
   }
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
+  #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{message_type} = 'B' if $self->{'broadcast'};
   if ( Net::DirectConnect::use_try( 'MIME::Base32', 'RFC' ) ) {
@@ -830,6 +830,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
         #'HubName'       => 'Net::DirectConnect test hub',
         #'myport'        => 80,
         'myport' => 8000, 'myport_base' => 8000, 'myport_random' => 99, 'myport_tries' => 5, 'parent' => $self,
+        'allow'=> ($self->{http_allow} || '127.0.0.1'),
         #'auto_listen' => 0,
       );
       $self->{'myport_http'} = $self->{'clients'}{'listener_http'}{'myport'};
