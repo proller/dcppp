@@ -462,15 +462,22 @@ $self->INF_generate();
       #$self->log('adcdev', 'RES:',"[d=$dst,p=$peerid]",Dumper $params);
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RES', $peerid, $toid, @_ );
-      }
-      if ( exists $self->{'want_download'}{ $params->{'TR'} } ) {
-        $self->{'want_download'}{ $params->{'TR'} }{$peerid} = $params;    #maybe not all
-        if (my ($file) = $params->{FN} =~ m{([^\\/]+)$}) {
-          ++$self->{'want_download_filename'}{ $params->{TR} }{$file};
-		}
+      } else {
+	   #= $1 if
+	  #$params->{'FN'} =~ m{([^/\\]+)$};
 		        $params->{CID} = $peerid;
-        $self->{'want_download'}{ $params->{TR} }{$peerid} = $params; # _tth_from
+
+	  ($params->{'file'}) = $params->{FN} =~ m{([^\\/]+)$};
+my $wdl = $self->{'want_download'}{ $params->{'TR'} } || $self->{'want_download'}{ $params->{'file'} };	  
+      if ( $wdl ){#exists $self->{'want_download'}{ $params->{'TR'} } ) {
+        #$self->{'want_download'}{ $params->{'TR'} }
+		$wdl->{$peerid} = $params;    #maybe not all
+        if ($params->{'file'}) {
+          ++$self->{'want_download_filename'}{ $params->{TR} }{$params->{'file'}};
 		}
+        #$self->{'want_download'}{ $params->{TR} }{$peerid} = $params; # _tth_from
+		}
+	   }
       $params;
     },
     'MSG' => sub {

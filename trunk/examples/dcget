@@ -7,9 +7,9 @@
 
 =head1 SYNOPSIS
 
- ./dcget hub [hub] [tth]
+ ./dcget hub [hub] [tth] [-file] ...
 
- #NONE!file ... file:  topath/name:TTH:size
+ TODO:topath/name:TTH:size
 
 =head1 CONFIGURE 
 
@@ -52,8 +52,9 @@ psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 mkdir $config{'get_dir'};
 #exit;
 #use Net::DirectConnect::adc;
-my @todl = grep { /^[A-Z0-9]{39}$/ } @ARGV;
-@ARGV = grep { !/^[A-Z0-9]{39}$/ } @ARGV;
+my @todl = grep { /^[A-Z0-9]{39}$/ or /^-/ } @ARGV;
+s/^-// for @todl;
+@ARGV = grep { !(/^[A-Z0-9]{39}$/ or /^-/) } @ARGV;
 my @dc;
 @dc = map {
   Net::DirectConnect->new(
