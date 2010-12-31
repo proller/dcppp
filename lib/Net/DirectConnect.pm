@@ -792,7 +792,7 @@ sub func {
         }
         #if (!)
 		#=todo
-        #$self->log('dev', 'work want:', Dumper $self->{'want_download'});
+        $self->log('dev', 'work want:', Dumper $self->{'want_download'});
         for my $tth ( grep { keys %{ $self->{'want_download'}{$_} } } keys %{ $self->{'want_download'} } ) {
           if ( my ($from) = ( grep { $_->{slotsopen} or $_->{SL} } values %{ $self->{'want_download'}{$tth} } ) ) {
 			           my ($filename) =
@@ -959,13 +959,14 @@ sub func {
     $sid ||= $self->{peers}{$cid}{SID};
 	$sid ||= $cid if $self->{broadcast};
     local $_ = $as || $file;
-	$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
+	#$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
 
-my $sizenow = -e $_;	
- if ($sizenow) {	
+my $sizenow = -s $_;	
+ if ($sizenow) {
+ 	return;	
     #$self->log( 'warn', "file [$_] already exists size = ", -s $_ , " must be=$size");
-    return if $size and $size == $sizenow;
- $from = $sizenow  if $sizenow < $size;  
+    #return if $size and $size == $sizenow;
+ #$from = $sizenow  if $sizenow < $size;  
  }
     #todo by nick
     $self->wait_clients();
