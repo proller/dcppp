@@ -55,6 +55,7 @@ mkdir $config{'get_dir'};
 my @todl = grep { /^[A-Z0-9]{39}$/ or /^-/ } @ARGV;
 s/^-// for @todl;
 @ARGV = grep { !(/^[A-Z0-9]{39}$/ or /^-/) } @ARGV;
+my @hosts = grep { m{^\w+://} } @ARGV;
 my @dc;
 @dc = map {
   Net::DirectConnect->new(
@@ -215,8 +216,9 @@ my @dc;
   } (
   grep {
     $_
-    } psmisc::array($config{dc}{host}) #ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
-  @ARGV
+    } #psmisc::array($config{dc}{host}), #ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
+  #@ARGV
+  @hosts ? @hosts : psmisc::array($config{dc}{host})
   );
 while ( @dc = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dc;
