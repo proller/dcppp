@@ -201,7 +201,8 @@ local $SIG{__DIE__} = sub {
   #printlog( 'die', 'caller', $_, caller($_) ) for ( 0 .. 15 );
   psmisc::caller_trace(5);
 };
-for ( grep { length $_ } psmisc::array($config{dc}{host}), @ARGV ) {
+my @hosts = grep { m{^\w+://} } @ARGV;
+for ( grep { length $_ } @hosts ? @hosts : psmisc::array($config{dc}{host}) ) {
   local @_;
   if ( /^-/ and @_ = split '=', $_ ) {
     $config{config_file} = $_[1], psmisc::config() if $_[0] eq '--config';

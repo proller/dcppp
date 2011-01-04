@@ -118,8 +118,10 @@ my @dirs = grep { -d } @ARGV;
 #printlog('dev', 'started', @ARGV),
 my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
 @ARGV = grep { !-d } @ARGV;
+my @hosts = grep { m{^\w+://} } @ARGV;
+
 Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
-  if ($filelist and !caller) or (!@ARGV and !$config{dc}{host});
+  if ($filelist and !caller) or (!@hosts and !$config{dc}{host});
 #use Net::DirectConnect::adc;
 #my $dc =
 my @dc;
@@ -157,7 +159,7 @@ my @dc;
   } (
   grep {
     $_
-    } @ARGV ? @ARGV : ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
+    } @hosts ? @hosts : psmisc::array($config{dc}{host}),#ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
   
   );
 while ( @dc = grep { $_ and $_->active() } @dc ) {
