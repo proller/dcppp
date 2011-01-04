@@ -215,7 +215,7 @@ my @dc;
   } (
   grep {
     $_
-    } ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
+    } psmisc::array($config{dc}{host}) #ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
   @ARGV
   );
 while ( @dc = grep { $_ and $_->active() } @dc ) {
