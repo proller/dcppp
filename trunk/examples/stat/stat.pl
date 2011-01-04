@@ -28,7 +28,7 @@ print(
 "
   ),
   exit
-  if !$ARGV[0];
+  if !$ARGV[0] and !$config{dc}{host};
 my $n = -1;
 my ( $tq, $rq, $vq ) = $db->quotes();
 
@@ -211,7 +211,6 @@ for ( grep { length $_ } psmisc::array($config{dc}{host}), @ARGV ) {
     ++$work{'hubs'}{$hub};
     my $dc = Net::DirectConnect->new(
       modules            => {'filelist' => 1},
-      'host'      => $hub,
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
       #'log'		=>	sub {},	# no logging
@@ -438,7 +437,9 @@ for ( grep { length $_ } psmisc::array($config{dc}{host}), @ARGV ) {
         },
       },
       %config,
-      %{ $config{dc} || {} }
+      %{ $config{dc} || {} },
+      'host'      => $hub,
+
     );
     #$dc->connect($hub);
     #$dc->{'handler'}{'SCH_parse_aft'} = $dc->{'handler'}{'Search_parse_aft'};
