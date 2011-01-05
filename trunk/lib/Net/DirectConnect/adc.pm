@@ -744,10 +744,16 @@ my $wdl = $self->{'want_download'}{ $params->{'TR'} } || $self->{'want_download'
   $self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
   unless ( $self->{'no_listen'} ) {
       $self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}");
-    if ( ( $self->{'M'} eq 'A' or !$self->{'M'} )  and !$self->{'incoming'} ) {
+    if ( 
+    #( $self->{'M'} eq 'A' or !$self->{'M'} )  and 
+    !$self->{'incoming'} ) {
+
+#$self->log( 'dev', __FILE__, __LINE__, "  myptr");
+
 if (!$self->{'auto_listen'} or #$self->{'Proto'} ne 'tcp'
 $self->{broadcast}
 ) {     
+#$self->log( 'dev', __FILE__, __LINE__, "  myptr");
 	 $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
       $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
         #%$self, $self->clear(),
@@ -760,6 +766,9 @@ $self->{broadcast}
         #'myport'        => $self->{'myport'},
         #( map { $_ => $self->{$_} } qw(myport want peers ) ),
       );
+
+#$self->log( 'dev', __FILE__, __LINE__, "  myptr");
+      
       $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
       $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
 	  }

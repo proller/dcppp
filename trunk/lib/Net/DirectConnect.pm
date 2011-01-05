@@ -372,10 +372,10 @@ sub handler {
 #}
 sub func {
   my $self = shift;
-  #$self->{'log'}->( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
+ #$self->log( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
   $self->{'myport_generate'} ||= sub {
     my $self = shift;
-    $self->{'log'}->( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}");
+    $self->log( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}");
     return $self->{'myport'} unless $self->{'myport_base'} or $self->{'myport_random'};
     $self->{'myport'} = undef if $_[0];
     return $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) );
@@ -1147,7 +1147,7 @@ my $sizenow = -s $_;
     $start //= 0;
     my $filesize = -s $file;
     $size =  $filesize - $start if $size <= 0;
-    $self->{'log'}->( 'dcerr', "cant find [$file]" ), $self->disconnect(), return if !-e $file or -d $file;
+    $self->log( 'dcerr', "cant find [$file]" ), $self->disconnect(), return if !-e $file or -d $file;
     if ( open $self->{'filehandle_send'}, '<', $file ) {
       binmode( $self->{'filehandle_send'} );
       seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
@@ -1260,7 +1260,7 @@ my $sizenow = -s $_;
 #if (length $self->{'file_send_buf'}) {         $self->log( 'info', 'sended small', $sended, 'todo', length $self->{'file_send_buf'});    }
 #$readed;
     if ( $self->{'file_send_left'} < 0 ) {
-      $self->{'log'}->( 'err', "oversend [$self->{'file_send_left'}]" );
+      $self->log( 'err', "oversend [$self->{'file_send_left'}]" );
       $self->{'file_send_left'} = 0;
     }
     if (
@@ -1268,7 +1268,7 @@ my $sizenow = -s $_;
       $self->{'file_send_left'} <= 0
       )
     {
-      $self->{'log'}->(
+      $self->log(
         'dev', 'file completed', "r:", length $self->{'file_send_buf'},
         " by:$self->{'file_send_by'} left:$self->{'file_send_left'} total:$self->{'file_send_total'}",
         #caller 2
