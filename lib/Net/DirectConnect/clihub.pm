@@ -67,7 +67,7 @@ sub init {
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(  NickList IpList PortList );    #handler
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( NickList IpList PortList );    #handler
                                                                                        #$self->{'NickList'} ||= {};
                                                                                        #$self->{'IpList'}   ||= {};
                                                                                        #$self->{'PortList'} ||= {};
@@ -536,13 +536,16 @@ sub init {
       #'PortList'    => \%{ $self->{'PortList'} },
       #'handler'     => \%{ $self->{'handler'} },
       #'share_tth'      => $self->{'share_tth'},
-      'myport'      => $self->{myport},
+      'myport'      => $self->{'myport'},
       'auto_listen' => 1,
       'parent'      => $self,
     );
+
+    
+    
     $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
     $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
-    $self->log( 'dev', "making listeners: udp" );
+    $self->log( 'dev', "making listeners: udp");
     $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
       #%$self, $self->clear(),
       'parent' => $self, 'Proto' => 'udp', 'myport' => $self->{myport_udp},
@@ -580,6 +583,7 @@ sub init {
       'auto_listen' => 1,
       'parent'      => $self,
     );
+
     $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
     $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
   }
