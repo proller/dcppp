@@ -240,7 +240,7 @@ sub new {
 #$self->{charset_console} = 'utf8';
    # $self->log( 'dev', "set console encoding  [$self->{charset_console}]");
   #eval qq{use encoding $self->{charset_console}};
-   eval qq{use encoding '$self->{charset_internal}', STDOUT=> '$self->{charset_console}', STDIN => '$self->{charset_console}'};
+   eval qq{use encoding '$self->{charset_internal}', STDOUT=> '$self->{charset_console}', STDIN => '$self->{charset_console}'} if !$self->{parent} and !$self->{no_charset_console};
 
 #$self->log( 'dev', 'utf8: УТф восемь');
    
@@ -972,7 +972,7 @@ sub func {
   };
   $self->{'get'} ||= sub {
     my ( $self, $nick, $file, $as, $from, $to, $size ) = @_;
-    $self->log( 'dcdev', 'wantcall', $self, $nick, $file, $as, $from, $to, $size);
+    #$self->log( 'dcdev', 'wantcall', $self, $nick, $file, $as, $from, $to, $size);
     #my $size;
     #$size = $to unless $from;
     #$from, $to
@@ -995,7 +995,7 @@ my $sizenow = -s $_;
     #todo by nick
     $self->wait_clients();
     #$self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $nick }{$file} = $as || $file || '';
-    $self->log( 'dcdev', "wantid: $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick");
+    #$self->log( 'dcdev', "wantid: $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick");
     $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick }{$file} =
       { 'filename' => $file, 'fileas' => $as || $file || '', 'file_recv_to' => $to, 'file_recv_from' => $from };
     my $peer = $self->{peers}{$cid} || $self->{peers}{$sid} || $self->{peers}{$nick} || {};
