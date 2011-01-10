@@ -114,60 +114,13 @@ sub module_load {
 }
 
 sub new {
+  #print Dumper \@_;
   my $class = shift;
   my $self  = {};
   if ( ref $class eq __PACKAGE__ ) { $self = $class; }
   else                             { bless( $self, $class ) unless ref $class; }
-  local %_ = (
-    'Listen'        => 10,
-    'Timeout'       => 5,
-    'myport'        => 412,                                                               #first try
-    'myport_base'   => 40000,
-    'myport_random' => 1000,
-    'myport_tries'  => 5,
-    'cmd_sep'       => ' ',
-    'no_print'      => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
-    'log'           => sub (@) {
-      my $self = ref $_[0] ? shift() : {};
-      if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
-#utf8::valid(join '', @_) and
-      print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
-      #Dumper \
-    },
-    #'auto_recv'          => 1,
-    'max_reads'          => 20,
-    'wait_once'          => 0.1,
-    'waits'              => 100,
-    'wait_finish_tries'  => 600,
-    'wait_finish_by'     => 1,
-    'wait_connect_tries' => 600,
-    'clients_max'        => 50,
-    'wait_clients_tries' => 200,
-    #del    'wait_clients_by'    => 0.01,
-    'work_sleep' => 0.01, 'select_timeout' => 1, 'cmd_recurse_sleep' => 0,
-    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
-    'nonblocking' => 1,
-    'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
-    'informative_hash' => [qw(clients)],                                                    #NickList IpList PortList
-                                                                                            #'disconnect_recursive' => 1,
-    'reconnect_sleep'  => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
-    'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', time_start => time,
-    #'peers' => {},
-    #'partial_prefix' => './partial/',
-    #ADC
-    #number => ++$global{'total'},
-    #};
-    charset_fs      => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
-    charset_console => ( $^O eq 'MSWin32' ? 'cp866'  : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
-    charset_protocol => 'utf8',
-    charset_internal => 'utf8',
-    #charset_nick => 'utf8',
-  );
-  $self->{$_} ||= $_{$_} for keys %_;
-  local %_ = @_;
-  $self->{$_} = $_{$_} for keys %_;
-  #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
-  #psmisc::printlog('dev', 'init0', Dumper $self);
+#print ref $self;
+  #$self-
   #psmisc::printlog('dev', 'func');
   $self->func();    #@param
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
@@ -373,6 +326,73 @@ sub handler {
 sub func {
   my $self = shift;
  #$self->log( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
+
+  
+  $self->{'init'} ||= sub {
+    my $self = shift;
+  
+  
+    local %_ = (
+    'Listen'        => 10,
+    'Timeout'       => 5,
+    'myport'        => 412,                                                               #first try
+    'myport_base'   => 40000,
+    'myport_random' => 1000,
+    'myport_tries'  => 5,
+    'cmd_sep'       => ' ',
+    'no_print'      => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
+    'log'           => sub (@) {
+      my $self = ref $_[0] ? shift() : {};
+      if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
+#utf8::valid(join '', @_) and
+      print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
+      #Dumper \
+    },
+    #'auto_recv'          => 1,
+    'max_reads'          => 20,
+    'wait_once'          => 0.1,
+    'waits'              => 100,
+    'wait_finish_tries'  => 600,
+    'wait_finish_by'     => 1,
+    'wait_connect_tries' => 600,
+    'clients_max'        => 50,
+    'wait_clients_tries' => 200,
+    #del    'wait_clients_by'    => 0.01,
+    'work_sleep' => 0.01, 'select_timeout' => 1, 'cmd_recurse_sleep' => 0,
+    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
+    'nonblocking' => 1,
+    'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
+    'informative_hash' => [qw(clients)],                                                    #NickList IpList PortList
+                                                                                            #'disconnect_recursive' => 1,
+    'reconnect_sleep'  => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
+    'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', time_start => time,
+    #'peers' => {},
+    #'partial_prefix' => './partial/',
+    #ADC
+    #number => ++$global{'total'},
+    #};
+    charset_fs      => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+    charset_console => ( $^O eq 'MSWin32' ? 'cp866'  : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+    charset_protocol => 'utf8',
+    charset_internal => 'utf8',
+    #charset_nick => 'utf8',
+  );
+  $self->{$_} ||= $_{$_} for keys %_;
+  local %_ = @_;
+  $self->{$_} = $_{$_} for keys %_;
+#$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
+  #psmisc::printlog('dev', 'init0', Dumper $self);
+             };
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   $self->{'myport_generate'} ||= sub {
     my $self = shift;
     $self->log( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}");
