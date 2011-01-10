@@ -53,16 +53,10 @@ sub init {
     'reconnects'       => 5,
     'NoGetINFO'        => 1,    #test
     'NoHello' => 1, 'UserIP2' => 1, 'TTHSearch' => 1, 'Version' => '1,0091', 'auto_GetNickList' => 1, 'follow_forcemove' => 1,
-    #ADC
-    #'connect_protocol' => 'ADC/0.10',
-    #'message_type'     => 'H',
-    #@_,
     'incomingclass' => 'Net::DirectConnect::clicli',
-    #'periodic'      =>
     'disconnect_recursive' => 1, 
-    #charset_protocol => 'cp1251',    #'utf8'
   );
-  !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
+  $self->{$_} //= $_{$_} for keys %_;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();

@@ -139,6 +139,9 @@ sub init {
     $self->{'status'}               = 'working';
     $self->{'disconnect_recursive'} = 1;
   }
+  #if ($self->{'message_type'} eq 'H') {
+  #  $self->{'disconnect_recursive'} = 1;
+  #}
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{message_type} = 'B' if $self->{'broadcast'};
@@ -762,7 +765,7 @@ $self->{broadcast}
         #'IpList'      => \%{ $self->{'IpList'} },
         #'PortList'    => \%{ $self->{'PortList'} },
         #'handler'     => \%{ $self->{'handler'} },
-        'parent' => $self, 'auto_listen' => 1,
+        'parent' => $self, 'auto_listen' => 1, #'disconnect_recursive'=>1,
         #'myport'        => $self->{'myport'},
         #( map { $_ => $self->{$_} } qw(myport want peers ) ),
       );
