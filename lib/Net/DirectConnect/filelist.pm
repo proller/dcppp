@@ -11,6 +11,7 @@ package # no cpan
 Net::DirectConnect::filelist;
 use 5.10.0;
 use strict;
+use utf8;
 use Encode;
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
@@ -51,8 +52,12 @@ sub new {
   my $standalone = !ref $_[0];
   my $self = ref $_[0] ? shift() : bless {}, $_[0];
   shift if $_[0] eq __PACKAGE__;
-  local %_ = @_;
-  $self->{$_} = $_{$_} for keys %_;
+  #local %_ = @_;
+  #$self->{$_} = $_{$_} for keys %_;
+
+  $self->func(@_);
+  $self->init(@_);
+  
   $self->{log} ||= sub (@) {
     my $dc = ref $_[0] ? shift : $self || {};
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
@@ -166,7 +171,9 @@ sub new {
         #$self->log( 'dev','sd', __LINE__,$dh);
         #@dots =
         ( my $dirname = $dir );
-        $dirname = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
+        $dirname = 
+        #Encode::encode 'utf8', 
+        Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
         #$self->log( 'dev','sd', __LINE__,$dh);
         next if skip( $dirname, $self->{skip_dir} ) or ( $self->{skip_symlink} and -l $dirname );
         unless ($level) {
@@ -186,7 +193,7 @@ sub new {
         psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { $printinfo->() } );
         #$self->log( 'readdir', );
       FILE: for my $file ( readdir($dh) ) {
-          #$self->log( 'scanfile', $file, );
+#$self->log( 'scanfile', $file, );
           #$self->log( 'warn', 'stopscan', $stopscan),
           last if $stopscan;
           next if $file =~ /^\.\.?$/;
@@ -203,9 +210,13 @@ sub new {
           }
           $f->{size} = -s $f->{full_local} if -f $f->{full_local};
           next if $f->{size} < $self->{file_min};
-          $f->{file} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
-          $f->{path} = Encode::encode 'utf8', Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
+          $f->{file} = #Encode::encode 'utf8', 
+          Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
+          $f->{path} = #Encode::encode 'utf8', 
+          Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
           next FILE if skip( $f->{file}, $self->{skip_file} ) or ( $self->{skip_symlink} and -l $f->{file} );
+         #$self->log( 'encfile', $f->{file} , "chs:$self->{charset_fs}");
+
           $f->{full} = "$f->{path}/$f->{file}";
           $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
 #$self->log 'timed', $f->{time}, psmisc::human('date_time', $f->{time}), -M $f->{full_local}, int (86400 * -M $f->{full_local}), $^T;
@@ -366,7 +377,7 @@ sub new {
         or $Net::DirectConnect::global{shareloaded} == -s $self->{files}
         or
         ( $Net::DirectConnect::global{shareloaded} and !psmisc::lock( 'sharescan', readonly => 1, timeout => 0, old => 86400 ) )
-        or !open my $f, '<', $self->{files};
+        or !open my $f, '<:encoding(utf8)', $self->{files};
     my ( $sharesize, $sharefiles );
     $self->log( 'info', "loading filelist", -s $f );
     $Net::DirectConnect::global{shareloaded} = -s $f;
@@ -381,7 +392,9 @@ sub new {
         my $full_local = ( my $full = "$dir/$file" );
         #$self->log 'loaded', $dir, $file  , $full;
         #$full_local = Encode::encode $self->{charset_fs}, $full if $self->{charset_fs};
-        $full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
+        $full_local = Encode::encode $self->{charset_fs}, 
+        #Encode::decode 'utf8', 
+        $full_local;
         $self->share_add_file( $full_local, $tth, $file );
         ++$sharefiles;
         $sharesize += $size;
