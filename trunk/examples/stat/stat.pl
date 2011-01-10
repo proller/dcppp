@@ -202,7 +202,7 @@ local $SIG{__DIE__} = sub {
   psmisc::caller_trace(5);
 };
 my @hosts = grep { m{^\w+://} } @ARGV;
-for ( grep { length $_ } @hosts ? @hosts : psmisc::array($config{dc}{host}) ) {
+for ( grep { length $_ } @ARGV ? @hosts : psmisc::array($config{dc}{host}) ) {
   local @_;
   if ( /^-/ and @_ = split '=', $_ ) {
     $config{config_file} = $_[1], psmisc::config() if $_[0] eq '--config';
@@ -325,7 +325,8 @@ for ( grep { length $_ } @hosts ? @hosts : psmisc::array($config{dc}{host}) ) {
         'chatline' => sub {
           my $dc = shift;
           #psmisc::printlog( 'chatline', @_ );
-          $dc->say( 'chatline', @_ );
+#my $s = join ' ', @_;          $dc->say( 'chatline', $s ) if utf8::valid $s;  
+$dc->say( 'chatline', @_);
           my %s;
           ( $s{nick}, $s{string} ) = $_[0] =~
             #/^<([^>]+)> (.+)$/s;
