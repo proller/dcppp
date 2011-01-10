@@ -136,7 +136,7 @@ sub new {
     #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
     $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download); 
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {}, for qw(sockets share_full share_tth want want_download want_download_filename);
-    $self->{$_} //= $self->{'parent'}{$_} for qw(log); 
+    $self->{$_} //= $self->{'parent'}{$_} for qw(log disconnect_recursive); 
   
   #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
   #(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
@@ -199,6 +199,8 @@ sub new {
 #$self->log( 'dev', 'utf8: УТф восемь');
 #$self->log( 'dev', Dumper $self);   
   if ( $self->{'auto_listen'} ) {
+    #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
+
     $self->listen();
     $self->cmd('connect_aft') if $self->{'broadcast'};
   } elsif ( $self->{'auto_connect'} ) {
@@ -332,7 +334,7 @@ sub func {
   $self->{'init_main'} ||= sub {
     my $self = shift;
 
-    $self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ );
+    #$self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ );
  
   
     local %_ = (
