@@ -406,26 +406,26 @@ $self->INF_generate();
       $self->cmd_all( $dst, 'SCH', $peerid, @feature, @_ );
       my $params = $self->adc_parse_named(@_);
       #DRES J3F4 KULX SI0 SL57 FN/Joculete/logs/stderr.txt TRLWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ TOauto
-      my $founded = $self->{'share_full'}{ $params->{TR} } || $self->{'share_full'}{ $params->{AN} };
-      my $tth = $self->{'share_tth'}{$founded};
+      my $found = $self->{'share_full'}{ $params->{TR} } || $self->{'share_full'}{ $params->{AN} };
+      my $tth = $self->{'share_tth'}{$found};
       if (
 #$self->{'share_full'}        and $params->{TR}        and exists $self->{'share_full'}{ $params->{TR} }        and -s $self->{'share_full'}{ $params->{TR} }
-        $founded
+        $found
         )
       {
-        my $foundedshow = ( $founded =~ m{^/} ? () : '/' ) . (
+        my $foundshow = ( $found =~ m{^/} ? () : '/' ) . (
           #$self->{chrarset_fs}          ?
           #$self->{charset_fs} ne $self->{charset_protocol} ?
-          Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $founded
-            #: $founded
+          Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $found
+            #: $found
         );
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),
-          $founded, -s $founded, -e $founded, 'c=', $self->{chrarset_fs}, );
+          $found, -s $found, -e $found, 'c=', $self->{chrarset_fs}, );
         local @_ = (
           {
-            SI => ( -s $founded ) || -1,
+            SI => ( -s $found ) || -1,
             SL => $self->{INF}{SL},
-            FN => $self->adc_path_encode($foundedshow),
+            FN => $self->adc_path_encode($foundshow),
             TO => $params->{TO}   || $self->make_token($peerid),
             TR => $params->{TR}   || $tth,
           }

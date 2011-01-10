@@ -1,12 +1,7 @@
 # $Id$ $URL$
 
-0.07:
 
-all codepages-> utf8
-
-
-other:
-
+dont add to share downloaded filelists
 
 better nick-port-ip-lists
 udp UPSR
@@ -37,18 +32,12 @@ examples/stat : finish adc
 
 lang:
 founded -> found
-sended -> sent
 
 tigerhash: mmap, speed limit, ttfile raw,
 
 filelist.pm: 
  standalone @ARGV -> config parse
  file mask
-
-
-remove  psmisc and pssql
-
-
 
 downloader:
  files 

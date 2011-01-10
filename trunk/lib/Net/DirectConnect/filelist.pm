@@ -88,7 +88,7 @@ sub new {
   #$self->{'sql'} //= {
   local %_ = (
     'driver' => 'sqlite',
-    'dbname' => 'files.sqlite',
+    'dbname' => 'files',
     #'auto_connect'        => 1,
     'log' => sub { shift if ref $_[0]; $self->log(@_) if $self },
     #'cp_in'               => 'cp1251',
@@ -139,7 +139,7 @@ sub new {
         $sharesize += $f->{size};
         ++$sharefiles if $f->{size};
         #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
-        psmisc::file_append $self->{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}"/>\n};
+        psmisc::file_append $self->{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
         #$self->{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $self->{share_full}{ $f->{file} } ||= $f->{full};
         $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
 
@@ -375,7 +375,7 @@ sub new {
     while (<$f>) {
       #<Directory Name="distr">
       #<File Name="3470_2.x.rar" Size="18824575" TTH="CL3SVS5UWWSAFGKCQZTMGDD355WUV2QVLNNADIA"/>
-      if ( my ( $file, $size, $tth ) = m{^File Name="([^"]+)" Size="(\d+)" TTH="([^"]+)"}i ) {
+      if ( my ( $file, $size, $tth, $ts ) = m{^File Name="([^"]+)" Size="(\d+)" TTH="([^"]+)"}i ) {
         my $full_local = ( my $full = "$dir/$file" );
         #$self->log 'loaded', $dir, $file  , $full;
         #$full_local = Encode::encode $self->{charset_fs}, $full if $self->{charset_fs};
@@ -404,7 +404,8 @@ sub new {
       $Net::DirectConnect::global{shareloaded},
       ' : files=', $sharefiles, 'bytes=',
       psmisc::human( 'size', $sharesize ),
-      scalar keys %{ $self->{share_full} }
+      scalar keys %{ $self->{share_full} },
+      "bzsize=", -s $self->{files} . '.bz2',
     );
     psmisc::unlock('sharescan');
     #$_[0]->( $sharesize, $sharefiles ) if ref $_[0] ~~ 'CODE';
