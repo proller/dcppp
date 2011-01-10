@@ -121,25 +121,26 @@ sub new {
   else                             { bless( $self, $class ) unless ref $class; }
 #print ref $self;
   #$self-
-  #psmisc::printlog('dev', 'func');
+ #psmisc::printlog('dev', 'func');
   $self->func();    #@param
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
-  #psmisc::printlog('dev', 'init');
-  $self->init();    #@param
+#psmisc::printlog('dev', 'init');
+  $self->init_main(@_);    #@param
                     #}
   $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
   $self->{activity} = time;
 
-    $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients); #want share_full share_tth 
+    $self->{$_} //= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients); #want share_full share_tth 
     #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
-    $self->{$_} ||= $self->{'parent'}{$_} ||= [] for qw(queue_download); 
-  $self->{$_} ||= $self->{'parent'}{$_} ||= $global{$_} ||= {}, for qw(sockets share_full share_tth want want_download want_download_filename);
+    $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download); 
+  $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {}, for qw(sockets share_full share_tth want want_download want_download_filename);
+    $self->{$_} //= $self->{'parent'}{$_} for qw(log); 
   
   #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
   #(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
-  $self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
+  #$self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
 #$self->{$_} ||= $self->{'parent'}{$_} ||= {}
 #$self->log( 'dev', '1uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
 #$self->{'parent'}{$_} ||= {} ,  $self->{$_} ||= $self->{'parent'}{$_},
@@ -196,7 +197,7 @@ sub new {
    eval qq{use encoding '$self->{charset_internal}', STDOUT=> '$self->{charset_console}', STDIN => '$self->{charset_console}'} if !$self->{parent} and !$self->{no_charset_console};
 
 #$self->log( 'dev', 'utf8: УТф восемь');
-   
+#$self->log( 'dev', Dumper $self);   
   if ( $self->{'auto_listen'} ) {
     $self->listen();
     $self->cmd('connect_aft') if $self->{'broadcast'};
@@ -328,9 +329,11 @@ sub func {
  #$self->log( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
 
   
-  $self->{'init'} ||= sub {
+  $self->{'init_main'} ||= sub {
     my $self = shift;
-  
+
+    $self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ );
+ 
   
     local %_ = (
     'Listen'        => 10,
@@ -365,16 +368,16 @@ sub func {
     'informative_hash' => [qw(clients)],                                                    #NickList IpList PortList
                                                                                             #'disconnect_recursive' => 1,
     'reconnect_sleep'  => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
-    'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', time_start => time,
+    'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', 'time_start' => time,
     #'peers' => {},
     #'partial_prefix' => './partial/',
     #ADC
     #number => ++$global{'total'},
     #};
-    charset_fs      => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
-    charset_console => ( $^O eq 'MSWin32' ? 'cp866'  : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
-    charset_protocol => 'utf8',
-    charset_internal => 'utf8',
+    'charset_fs'      => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+    'charset_console' => ( $^O eq 'MSWin32' ? 'cp866'  : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+    'charset_protocol' => 'utf8',
+    'charset_internal' => 'utf8',
     #charset_nick => 'utf8',
   );
   $self->{$_} ||= $_{$_} for keys %_;

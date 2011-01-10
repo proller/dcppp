@@ -56,7 +56,7 @@ sub new {
   #$self->{$_} = $_{$_} for keys %_;
 
   $self->func(@_);
-  $self->init(@_);
+  $self->init_main(@_);
   
   $self->{log} ||= sub (@) {
     my $dc = ref $_[0] ? shift : $self || {};
