@@ -88,7 +88,8 @@ sub new {
   #$self->{'sql'} //= {
   local %_ = (
     'driver' => 'sqlite',
-    'dbname' => 'files',
+    #'dbname' => 'files',
+    'database' => 'files',
     #'auto_connect'        => 1,
     'log' => sub { shift if ref $_[0]; $self->log(@_) if $self },
     #'cp_in'               => 'cp1251',
@@ -295,7 +296,8 @@ sub new {
       grep { -d } @_,
       @{ $self->{'share'} || [] },
     );
-    $self->{db}->do('ANALYZE') unless $self->{no_sql};
+    #$self->{db}->do('ANALYZE filelist') unless $self->{no_sql};
+    $self->{db}->analyze('filelist') unless $self->{no_sql};
     local %_;
     $scandir->($_) for ( grep { !$_{$_}++ and -d } @_, @{ $self->{'share'} || [] }, );
     #undef $SIG{INT};
