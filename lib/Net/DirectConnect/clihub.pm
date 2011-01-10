@@ -262,10 +262,10 @@ sub init {
       $s{'string'} =~ tr/$/ /;
       #$self->cmd('make_hub');
       #r$self->{'share_tth'}
-      my $founded = $self->{'share_full'}{ $s{'tth'} } || $self->{'share_full'}{ $s{'string'} };
-      my $tth = $self->{'share_tth'}{$founded};
+      my $found = $self->{'share_full'}{ $s{'tth'} } || $self->{'share_full'}{ $s{'string'} };
+      my $tth = $self->{'share_tth'}{$found};
       if (
-            $founded
+            $found
         and $tth
         #$s{'tth'} and $self->{'share_tth'}{ $s{'tth'} }
         )
@@ -273,18 +273,18 @@ sub init {
         $self->log(
           'adcdev', 'Search', $s{'who'},
           #$self->{'share_tth'}{ $s{'tth'} },
-          $founded, -s $founded, -e $founded,
+          $found, -s $found, -e $found,
           ),
           #$self->{'share_tth'}{ $s{'tth'} } =~ tr{\\}{/};
           #$self->{'share_tth'}{ $s{'tth'} } =~ s{^/+}{};
           my $path;
         if ( $self->{'adc'} ) {
           $path = $self->adc_path_encode(
-            $founded
+            $found
               #$self->{'share_tth'}{ $s{'tth'} }
           );
         } else {
-          $path = $founded;    #$self->{'share_tth'}{ $s{'tth'} };
+          $path = $found;    #$self->{'share_tth'}{ $s{'tth'} };
           $path =~ s{^\w:}{};
           $path =~ s{^\W+}{};
           $path =~ tr{/}{\\};
@@ -297,7 +297,7 @@ sub init {
             $self->{'Nick'}
               #: $self->{'myip'} . ':' . $self->{'myport_tcp'}
           ),
-          $path . "\x05" . ( -s $founded or -1 ),
+          $path . "\x05" . ( -s $found or -1 ),
           $self->{'S'} . '/'
             . $self->{'S'} . "\x05"
             .

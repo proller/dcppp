@@ -52,7 +52,7 @@ sub send_udp ($$;@) {
     #$s->shutdown(2);
     $s->close();
     #close($s);
-    #$self->log( 'dcdev', "sended ",length $_[0]," closed [$s],");
+    #$self->log( 'dcdev', "sent ",length $_[0]," closed [$s],");
   } else {
     $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
   }
@@ -179,8 +179,10 @@ sub new {
   ++$global{'count'};
   $self->{activity} = time;
 
-    $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth want_download);
+    $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients); #want share_full share_tth 
+    #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
     $self->{$_} ||= $self->{'parent'}{$_} ||= [] for qw(queue_download); 
+  $self->{$_} ||= $self->{'parent'}{$_} ||= $global{$_} ||= {}, for qw(sockets share_full share_tth want want_download want_download_filename);
   
   #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
   #(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
@@ -188,8 +190,6 @@ sub new {
 #$self->{$_} ||= $self->{'parent'}{$_} ||= {}
 #$self->log( 'dev', '1uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
 #$self->{'parent'}{$_} ||= {} ,  $self->{$_} ||= $self->{'parent'}{$_},
-  $self->{$_} ||= $self->{'parent'}{$_} ||= $global{$_} ||= {}, for qw(sockets share_full share_tth want);
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   handler clients);
 #$self->log( 'dev', '2uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
 #$self->log( 'dev', "my number=$self->{'number'} total=$global{'total'} count=$global{'count'}" );
   if ( $class eq __PACKAGE__ ) {
@@ -1185,40 +1185,40 @@ my $sizenow = -s $_;
     my $read = $self->{'file_send_left'};
     $read = $self->{'file_send_by'} if $self->{'file_send_by'} < $self->{'file_send_left'};
     #my $readed =
-    my $sended;
+    my $sent;
     if ( $INC{'Sys/Sendfile.pm'} ) {    #works
           #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
-      $self->{'file_send_offset'} += $sended =
+      $self->{'file_send_offset'} += $sent =
         Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
  #);
- #$self->log( 'dev', 'ssendfile0', "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sended=$sended" );
- #$self->{'file_send_offset'} += $sended;
+ #$self->log( 'dev', 'ssendfile0', "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sent=$sent" );
+ #$self->{'file_send_offset'} += $sent;
     }
 #sux
 #elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
 #use Sys::Sendfile::FreeBSD qw(sendfile);
 #use Errno qw(EINTR EIO :POSIX);
-#$self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended, 'ff=', fileno($self->{'filehandle_send'}), fileno($self->{'socket'}));
-#my $result = sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sended);
-#my $result = sendfile( fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read, $sended);
-#$self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, 's=', $sended, 'r=',  $result, $!,
+#$self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sent, 'ff=', fileno($self->{'filehandle_send'}), fileno($self->{'socket'}));
+#my $result = sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sent);
+#my $result = sendfile( fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read, $sent);
+#$self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, 's=', $sent, 'r=',  $result, $!,
 ##Dumper \%!
 #grep {$!{$_}} keys %!
 #);
 #}
 #sux
 #elsif ($INC{'IO/AIO.pm'}) {
-#$self->log(      'dev','sendfile0',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended);
+#$self->log(      'dev','sendfile0',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sent);
 #use IO::AIO;
-#$sended = IO::AIO::sendfile(  fileno($self->{'filehandle_send'}), $self->{'socket'}->fileno(),$self->{'file_send_offset'}, $read );
-#$sended = IO::AIO::sendfile(   $self->{'socket'}->fileno(), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
-#$sended = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
-#$sended = IO::AIO::sendfile(   $self->{'socket'}, $self->{'filehandle_send'},$self->{'file_send_offset'}, $read );
+#$sent = IO::AIO::sendfile(  fileno($self->{'filehandle_send'}), $self->{'socket'}->fileno(),$self->{'file_send_offset'}, $read );
+#$sent = IO::AIO::sendfile(   $self->{'socket'}->fileno(), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
+#$sent = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
+#$sent = IO::AIO::sendfile(   $self->{'socket'}, $self->{'filehandle_send'},$self->{'file_send_offset'}, $read );
 ##$self->{'file_send_left'}
     #
-    #$self->log(      'dev','sendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sended);
-    #$self->{'file_send_offset'} += $sended;
-    #$self->{'file_send_offset'} += $read, $sended = $read,if $sended == 12;
+    #$self->log(      'dev','sendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sent);
+    #$self->{'file_send_offset'} += $sent;
+    #$self->{'file_send_offset'} += $read, $sent = $read,if $sent == 12;
     #}
     else {
       read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
@@ -1226,14 +1226,14 @@ my $sizenow = -s $_;
         unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
                                                    #send $self->{'socket'},
                                                    #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-                                                   #my $sended;
+                                                   #my $sent;
                                                    #$self->log(      'snd',      length $self->{'file_send_buf'},
-      $sended = $self->send( $self->{'file_send_buf'} );
+      $sent = $self->send( $self->{'file_send_buf'} );
       #eval {
-      #$sended = $self->{'socket'}->send( $self->{'file_send_buf'} );
+      #$sent = $self->{'socket'}->send( $self->{'file_send_buf'} );
       #$_;
       #length $buf;
-      #$sended;
+      #$sent;
       #};                                           # if $self->{'socket'};
       #$!    );
       #$self->log( 'err', 'send error', $@ ) if $@;
@@ -1243,8 +1243,8 @@ my $sizenow = -s $_;
       $self->{__stat_} ||= sub {
         our ( $lastmark, $lasttime );
         $self->log(
-          'dev',                       "sended bytes",                    #length $self->{'file_send_buf'},
-          "sended=[$sended] of buf [", length $self->{'file_send_buf'},
+          'dev',                       "sent bytes",                    #length $self->{'file_send_buf'},
+          "sent=[$sent] of buf [", length $self->{'file_send_buf'},
           "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now", $self->{'file_send_offset'}, 'of',
           $self->{'file_send_total'}, 's=', ( $self->{'file_send_offset'} - $lastmark ) / ( time - $lasttime or 1 ),
           "status=[$self->{'status'}]",
@@ -1253,11 +1253,11 @@ my $sizenow = -s $_;
           #if time - $lasttime > 1;
       }
     );
-    #$self->{activity} = time if $sended;
-    #$self->{bytes_send} += $sended;
-    $self->{'file_send_left'} -= $sended;
-    substr( $self->{'file_send_buf'}, 0, $sended ) = undef;
-#if (length $self->{'file_send_buf'}) {         $self->log( 'info', 'sended small', $sended, 'todo', length $self->{'file_send_buf'});    }
+    #$self->{activity} = time if $sent;
+    #$self->{bytes_send} += $sent;
+    $self->{'file_send_left'} -= $sent;
+    substr( $self->{'file_send_buf'}, 0, $sent ) = undef;
+#if (length $self->{'file_send_buf'}) {         $self->log( 'info', 'sent small', $sent, 'todo', length $self->{'file_send_buf'});    }
 #$readed;
     if ( $self->{'file_send_left'} < 0 ) {
       $self->log( 'err', "oversend [$self->{'file_send_left'}]" );
