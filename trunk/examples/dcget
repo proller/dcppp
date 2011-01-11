@@ -7,7 +7,7 @@
 
 =head1 SYNOPSIS
 
- ./dcget hub [hub] [tth] [-file] ...
+ ./dcget dchub://hub [adc://hub] [tth] [-file] ...
 
  TODO:topath/name:TTH:size
 
