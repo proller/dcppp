@@ -67,7 +67,9 @@ sub init {
                                                                                        #$self->{'PortList'} ||= {};
          #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
          #You are already in the hub.
-  $self->{'parse'} ||= {
+#  $self->{'parse'} ||= {
+  local %_ = (
+
     'chatline' => sub {
       my $self = shift if ref $_[0];
       #$self->log( 'dev', Dumper \@_);
@@ -355,7 +357,10 @@ sub init {
     'UserCommand' => sub {
       my $self = shift if ref $_[0];
     },
-  };
+  #};
+    );
+      $self->{'parse'}{$_} ||= $_{$_} for keys %_;
+
 
 =COMMANDS
 
@@ -367,7 +372,12 @@ sub init {
 
 
 =cut  
-  $self->{'cmd'} = {
+  #$self->{'cmd'} = {
+    local %_ = (
+    'connect_aft' => sub {
+      my $self = shift if ref $_[0];
+      #$self->log( 'dbg', "nothing to do after connect");
+    },
     'chatline' => sub {
       my $self = shift if ref $_[0];
       for (@_) {
@@ -518,7 +528,10 @@ sub init {
       $_{UC} = @_;
       return \%_;
     },
-  };
+  #};
+    );
+    $self->{'cmd'}{$_} ||= $_{$_} for keys %_;
+
   #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
   if ( $self->{'M'} eq 'A' or !$self->{'M'} ) {
     $self->log( 'dev', "making listeners: tcp, class=", $self->{'incomingclass'} );

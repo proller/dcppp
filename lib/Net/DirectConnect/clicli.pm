@@ -43,7 +43,8 @@ sub init {
     #charset_protocol => 'cp1251',    #'utf8'
   );
   #$self->{$_} ||= $_{$_} for keys %_;
-  !exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
+  #!exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
+  $self->{$_} //= $_{$_} for keys %_;
   $self->{'modules'}{'nmdc'} = 1;
   $self->{'auto_connect'} = 1 if !$self->{'incoming'} and !defined $self->{'auto_connect'};
   #$self->log($self, 'inited1',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
@@ -61,8 +62,9 @@ sub init {
   #$self->{'IpList'}   ||= {};
   #$self->{'PortList'} ||= {};
   $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
-  $self->{'parse'} = undef if $self->{'parse'} and !keys %{ $self->{'parse'} };
-  $self->{'parse'} ||= {
+  #$self->{'parse'} = undef if $self->{'parse'} and !keys %{ $self->{'parse'} };
+  #$self->{'parse'} ||= {
+  local %_ = (
     'Lock' => sub {
       my $self = shift if ref $_[0];
       #$self->log('dev', 'LOCK:incoming', $self->{'incoming'});
@@ -170,11 +172,15 @@ sub init {
       #$self->log('dev', 'ADCGET', @_);
       $self->file_send_parse( map { split /\s/, $_ } @_ );
     },
-  };
+  #};
+  );
+      $self->{'parse'}{$_} ||= $_{$_} for keys %_;
+
   #$self->log ( 'dev', "del empty cmd", ),
-  $self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
+  #$self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
   #$self->log('PRECMD',Dumper $self->{'cmd'});
-  $self->{'cmd'} ||= {
+  #$self->{'cmd'} ||= {
+  local %_ = (
     'connect_aft' => sub {
       my $self = shift if ref $_[0];
       #my $self = shift if ref $_[0];
@@ -228,6 +234,10 @@ sub init {
       my $self = shift if ref $_[0];
       $self->sendcmd( 'ADCSND', @_ );
     },
-  };
+  #};
+  );
+    $self->{'cmd'}{$_} ||= $_{$_} for keys %_;
+
+
 }
 1;
