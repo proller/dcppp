@@ -144,13 +144,6 @@ my @dc;
     #auto_work    => 1,
     worker => sub {
       my $dc = shift;
-      psmisc::schedule(
-        [ 20, 100 ],
-        our $dump_sub__ ||= sub {
-          psmisc::printlog "Writing dump";
-          psmisc::file_rewrite( $0 . '.dump', Dumper @dc );
-        }
-      ) if $config{debug};
     },
     %{ $config{dc} || {} },
     #( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),

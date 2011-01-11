@@ -115,7 +115,7 @@ my @dc;
       },
       'RES' => sub {     #_parse_aft
         my $dc = shift;
-        psmisc::printlog 'RESparsed:', Dumper( \@_ );
+        #psmisc::printlog 'RESparsed:', Dumper( \@_ );
         my ( $dst, $peercid ) = @{ $_[0] };
         my $s = pop || return;    #%{ $_[1] || return };
         #$db->insert_hash( 'results', \%s );
@@ -199,14 +199,6 @@ my @dc;
           $dc->download( shift @todl );
         }
       );
-      psmisc::schedule(
-        [ 60, 3600 ],
-        our $dump_sub__ ||= sub {
-          $dc->{__work} ||= \%work;    #for dumper
-          psmisc::printlog "Writing dump";
-          psmisc::file_rewrite( $0 . '.dump', Dumper @dc );
-        }
-      ) if $config{debug};
     },
     %{ $config{dc} || {} },
     #( $_ ? ( 'host' => $_ ) : () ),
@@ -220,6 +212,9 @@ my @dc;
   #@ARGV
   @hosts ? @hosts : psmisc::array($config{dc}{host})
   );
+          $_->{__work} ||= \%work for     #for dumper
+      grep{ $_->{dev_auto_dump}} @dc;
+
 while ( @dc = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dc;
 }
