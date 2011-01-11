@@ -200,7 +200,7 @@ sub new {
 #$self->log( 'dev', Dumper $self);   
   if ( $self->{'auto_listen'} ) {
     #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
-
+    $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};
     $self->listen();
     $self->cmd('connect_aft') if $self->{'broadcast'};
   } elsif ( $self->{'auto_connect'} ) {
@@ -855,7 +855,7 @@ sub func {
             #$self->log( 'dcdev', "selected23 -e $dst and ( !$size or $sizenow < $size" );
             #if ( !-e $dst or ( !$size or $sizenow < $size ) ) {
               $self->get( $from->{nick} || $from->{CID} || $from->{NI} , 'TTH/' . $tth, $dst, undef, undef, $size );
-              delete $self->{'want_download'}{$tth};    #dont!
+              delete $self->{'want_download'}{$tth};    #dont!                                                                                '''
               last;
             #}
             #$work{'tthfrom'}{$s{tth}}
@@ -864,6 +864,17 @@ sub func {
         #=cut
       }
     );
+      schedule(
+        [ $self->{dev_auto_dump_first} || 20, $self->{dev_auto_dump_every} || 100 ],
+        our $dump_sub__ ||= sub {
+          $self->log('dev', "Writing dump");
+          open my $fh, '>', $self->{dev_auto_dump_file} || $0 . '.dump' or return;
+          print $fh Dumper $self;
+          close $fh;
+        }
+      ) if $self->{dev_auto_dump};
+
+
     return $self->wait_sleep(@params) if @params;
     return $self->recv_try( $self->{'work_sleep'} );
   };
