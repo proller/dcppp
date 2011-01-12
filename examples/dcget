@@ -174,8 +174,8 @@ my @dc;
             if ( !$dc->{'search_todo'} ) {
               $work{'asked'}{$q} = int time;
               psmisc::printlog( 'info', "search", $q, 'on', $dc->{'host'} );
-              #$dc->search($q);
-              $dc->download($q);
+              $dc->search($q);
+              #$dc->download($q);
             } else {
               unshift @{ $work{'toask'} }, $q;
             }

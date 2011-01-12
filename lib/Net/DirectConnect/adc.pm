@@ -470,15 +470,15 @@ $self->INF_generate();
 	  #$params->{'FN'} =~ m{([^/\\]+)$};
 		        $params->{CID} = $peerid;
 
-	  ($params->{'file'}) = $params->{FN} =~ m{([^\\/]+)$};
-my $wdl = $self->{'want_download'}{ $params->{'TR'} } || $self->{'want_download'}{ $params->{'file'} };	  
+	  ($params->{'filename'}) = $params->{FN} =~ m{([^\\/]+)$};
+my $wdl = $self->{'want_download'}{ $params->{'TR'} } || $self->{'want_download'}{ $params->{'filename'} };	  
       if ( $wdl ){#exists $self->{'want_download'}{ $params->{'TR'} } ) {
         #$self->{'want_download'}{ $params->{'TR'} }
 		$wdl->{$peerid} = $params;    #maybe not all
-        if ($params->{'file'}) {
-          ++$self->{'want_download_filename'}{ $params->{TR} }{$params->{'file'}};
+        if ($params->{'filename'}) {
+          ++$self->{'want_download_filename'}{ $params->{TR} }{$params->{'filename'}};
 		}
-        #$self->{'want_download'}{ $params->{TR} }{$peerid} = $params; # _tth_from
+        $self->{'want_download'}{ $params->{TR} }{$peerid} = $params; # _tth_from
 		}
 	   }
       $params;
