@@ -117,7 +117,7 @@ for my $arg (@ARGV) {
       next unless $col;
       my $purge = $config{'sql'}{'table'}{$table}{$col}{'purge'};
       #print "t $table c$col p$purge \n";
-      $purge = $config{'purge'} if $purge and $purge <= 1;
+      $purge *= $config{'purge'} if $purge and $purge <= 10000;
       psmisc::printlog 'info', "purge $table $col $purge =",
         $db->do( "DELETE FROM $tq$table$tq WHERE $col < " . int( time - $purge ) );
     }
