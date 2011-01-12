@@ -126,10 +126,13 @@ sub new {
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
 #psmisc::printlog('dev', 'init');
-  $self->init_main(@_);    #@param
-                    #}
-  $self->{'number'} ||= ++$global{'total'};
+
+    $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
+
+  $self->init_main(@_);    #@param
+  $self->init(@_);    #@param
+                    #}
   $self->{activity} = time;
 
     $self->{$_} //= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients); #want share_full share_tth 
