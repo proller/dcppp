@@ -333,26 +333,49 @@ sub init {
       my $self = shift if ref $_[0];
 #$self->log( 'dev', "SR", @_ , 'parent=>', $self->{parent}, 'h=', $self->{handler}, Dumper($self->{handler}), 'ph=', $self->{parent}{handler}, Dumper($self->{parent}{handler}), ) if $self;
       $self->cmd('make_hub');
-      my %s = ( 'time' => int( time() ), 'hub' => $self->{'hub_name'}, );
-      ( $s{'nick'}, $s{'str'} ) = split / /, $_[0], 2;
-      $s{'str'} = [ split /\x05/, $s{'str'} ];
-      $s{'file'} = shift @{ $s{'str'} };
-      ( $s{'filename'} ) = $s{'file'}     =~ m{([^\\]+)$};
-      ( $s{'ext'} )      = $s{'filename'} =~ m{[^.]+\.([^.]+)$};
-      ( $s{'size'}, $s{'slots'} )  = split / /, shift @{ $s{'str'} };
-      ( $s{'tth'},  $s{'ipport'} ) = split / /, shift @{ $s{'str'} };
-      ( $s{'tth'}, $s{'ipport'} ) = ( $s{'size'}, $s{'slots'} ) unless $s{'tth'};
-      ( $s{'target'} ) = shift @{ $s{'str'} };
-      $s{'tth'} =~ s/^TTH://;
-      ( $s{'ipport'}, $s{'ip'}, $s{'port'} ) = $s{'ipport'} =~ /\(((\S+):(\d+))\)/;
-      delete $s{'str'};
-      ( $s{'slotsopen'}, $s{'S'} ) = split /\//, $s{'slots'};
-      $s{'slotsfree'} = $s{'S'} - $s{'slotsopen'};
-      $s{'string'}    = $self->{'search_last_string'};
-      $self->{'NickList'}{ $s{'nick'} }{$_} = $s{$_} for qw(S ip port);
-      $self->{'PortList'}->{ $s{'ip'} }     = $s{'port'};
-      $self->{'IpList'}->{ $s{'ip'} }       = $self->{'NickList'}{ $s{'nick'} };
-      return \%s;
+      my $params = { 'time' => int( time() ), 'hub' => $self->{'hub_name'}, };
+      ( $params->{'nick'}, $params->{'str'} ) = split / /, $_[0], 2;
+      $params->{'str'} = [ split /\x05/, $params->{'str'} ];
+      $params->{'file'} = shift @{ $params->{'str'} };
+      ( $params->{'filename'} ) = $params->{'file'}     =~ m{([^\\]+)$};
+      ( $params->{'ext'} )      = $params->{'filename'} =~ m{[^.]+\.([^.]+)$};
+      ( $params->{'size'}, $params->{'slots'} )  = split / /, shift @{ $params->{'str'} };
+      ( $params->{'tth'},  $params->{'ipport'} ) = split / /, shift @{ $params->{'str'} };
+      ( $params->{'tth'}, $params->{'ipport'} ) = ( $params->{'size'}, $params->{'slots'} ) unless $params->{'tth'};
+      ( $params->{'target'} ) = shift @{ $params->{'str'} };
+      $params->{'tth'} =~ s/^TTH://;
+      ( $params->{'ipport'}, $params->{'ip'}, $params->{'port'} ) = $params->{'ipport'} =~ /\(((\S+):(\d+))\)/;
+      delete $params->{'str'};
+      ( $params->{'slotsopen'}, $params->{'S'} ) = split /\//, $params->{'slots'};
+      $params->{'slotsfree'} = $params->{'S'} - $params->{'slotsopen'};
+      $params->{'string'}    = $self->{'search_last_string'};
+      $self->{'NickList'}{ $params->{'nick'} }{$_} = $params->{$_} for qw(S ip port);
+      $self->{'PortList'}->{ $params->{'ip'} }     = $params->{'port'};
+      $self->{'IpList'}->{ $params->{'ip'} }       = $self->{'NickList'}{ $params->{'nick'} };
+
+      $params->{'TR'} = $params->{'tth'};
+      $params->{FN} = $params->{'filename'};
+      
+
+my $peerid = $params->{'nick'};
+$params->{CID} = $peerid;
+
+	  #($params->{'file'}) = $params->{FN} =~ m{([^\\/]+)$};
+
+my $wdl = $self->{'want_download'}{ $params->{'TR'} } || $self->{'want_download'}{ $params->{'filename'} };	  
+      if ( $wdl ){#exists $self->{'want_download'}{ $params->{'TR'} } ) {
+        #$self->{'want_download'}{ $params->{'TR'} }
+		$wdl->{$peerid} = $params;    #maybe not all
+        if ($params->{'filename'}) {
+          ++$self->{'want_download_filename'}{ $params->{TR} }{$params->{'filename'}};
+		}
+        $self->{'want_download'}{ $params->{TR} }{$peerid} = $params; # _tth_from
+      }
+	   
+
+
+      
+      return $params;
     },
     'UserCommand' => sub {
       my $self = shift if ref $_[0];

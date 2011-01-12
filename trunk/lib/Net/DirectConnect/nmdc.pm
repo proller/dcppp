@@ -126,7 +126,7 @@ sub init {
     my $self = shift;
     return join ' ', grep $self->{$_}, @{ $self->{'supports_avail'} };
   };
-  $self->{'supports_parse'} ||= sub {
+  $self->{'supports_parse'} ||= sub {                                                                                                                            
     my $self = shift;
     my ( $str, $save ) = @_;
     $save->{$_} = 1 for split /\s+/, $str;

@@ -36,7 +36,7 @@ use base 'Net::DirectConnect';
 use lib::abs('pslib');
 use psmisc;    # REMOVE
 use pssql;     # REMOVE
-Net::DirectConnect::use_try 'Sys::Sendfile';
+Net::DirectConnect::use_try 'Sys::Sendfile' unless $^O =~ /win/i;
 my ( $tq, $rq, $vq );
 
 sub skip ($$) {
