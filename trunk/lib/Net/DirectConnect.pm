@@ -138,7 +138,7 @@ sub new {
     $self->{$_} //= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients); #want share_full share_tth 
     #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
     $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download); 
-  $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {}, for qw(sockets share_full share_tth want want_download want_download_filename);
+  $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {}, for qw(sockets share_full share_tth want want_download want_download_filename downloading);
     $self->{$_} //= $self->{'parent'}{$_} for qw(log disconnect_recursive); 
   
   #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
@@ -587,7 +587,7 @@ sub func {
         delete( $self->{'clients'}{$client} );
       }
     }
-    delete $self->{$_} for qw(NickList IpList PortList peers);
+    delete $self->{$_} for qw(NickList IpList PortList PortList_udp peers);
     #$self->log( 'info', "disconnected", __FILE__, __LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
   };
@@ -846,19 +846,29 @@ sub func {
 		#=todo
         #$self->log('dev', 'work want:', Dumper $self->{'want_download'});
         for my $tth ( grep { keys %{ $self->{'want_download'}{$_} } } keys %{ $self->{'want_download'} } ) {
-          if ( my ($from) = ( grep { $_->{slotsopen} or $_->{SL} } values %{ $self->{'want_download'}{$tth} } ) ) {
+        my $wdls = $self->{'want_download'}{$tth}||{};
+          if ( my ($fromk) = 
+          ( grep { $wdls->{$_}{slotsopen} or $wdls->{$_}{SL} } sort {$wdls->{$b}{tries} <=> $wdls->{$a}{tries} }keys %$wdls  )
+           ) {
+                                   my $from  = $wdls->{$fromk} ;
+			           
 			           my ($filename) =
               sort { $self->{'want_download_filename'}{$tth}{$a} <=> $self->{'want_download_filename'}{$tth}{$b} } keys %{ $self->{'want_download_filename'}{$tth} ||{}};
             $filename //= $from->{FN};
             $filename =~ s{^.*[/\\]}{}g;
-            $self->log( "selected22 [$filename] from", Dumper $from);
+           #!$self->log( "selected22 [$filename] keys",( grep { $wdls->{$_}{slotsopen} or $wdls->{$_}{SL} } sort {$wdls->{$b}{tries} <=> $wdls->{$a}{tries} }keys %$wdls  ),"    from", Dumper $from,);
             my $dst = $self->{'get_dir'} . $filename;
             my $size = $from->{size} || $from->{SI} || 0;
             #my $sizenow = -s $dst || 0;
             #$self->log( 'dcdev', "selected23 -e $dst and ( !$size or $sizenow < $size" );
             #if ( !-e $dst or ( !$size or $sizenow < $size ) ) {
-              $self->get( $from->{nick} || $from->{CID} || $from->{NI} , 'TTH/' . $tth, $dst, undef, undef, $size );
-              delete $self->{'want_download'}{$tth};    #dont!                                                                                '''
+            ++$self->{'want_download'}{$tth}{$fromk}{tries};
+              $self->get( $from->{nick} || $from->{CID} || $from->{NI} , 
+              #'TTH/' . $tth,
+               undef,
+               $dst, undef, undef, $size, $tth );
+              $self->{'downloading'}{$tth} = $self->{'want_download'}{$tth};
+              delete $self->{'want_download'}{$tth};
               last;
             #}
             #$work{'tthfrom'}{$s{tth}}
@@ -1010,7 +1020,7 @@ sub func {
     };
   };
   $self->{'get'} ||= sub {
-    my ( $self, $nick, $file, $as, $from, $to, $size ) = @_;
+    my ( $self, $nick, $file, $as, $from, $to, $size, $tth ) = @_;
     #$self->log( 'dcdev', 'wantcall', $self, $nick, $file, $as, $from, $to, $size);
     #my $size;
     #$size = $to unless $from;
@@ -1021,6 +1031,7 @@ sub func {
     $cid ||= $self->{peers}{$sid}{INF}{ID};
     $sid ||= $self->{peers}{$cid}{SID};
 	$sid ||= $cid if $self->{broadcast};
+$file //= 'TTH/' . $tth if $tth;	
     local $_ = $as || $file;
 	#$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
 
@@ -1031,12 +1042,15 @@ my $sizenow = -s $_;
     #return if $size and $size == $sizenow;
  #$from = $sizenow  if $sizenow < $size;  
  }
+    #$to ||= $size - $from; 
     #todo by nick
     $self->wait_clients();
     #$self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $nick }{$file} = $as || $file || '';
     #$self->log( 'dcdev', "wantid: $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick");
     $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick }{$file} =
-      { 'filename' => $file, 'fileas' => $as || $file || '', 'file_recv_to' => $to, 'file_recv_from' => $from };
+      { 'filename' => $file, 'fileas' => $as || $file || '', 'file_recv_to' => $to, 'file_recv_from' => $from, 
+      'file_recv_size' => $size, 
+      'file_recv_tth'=>$tth };
     my $peer = $self->{peers}{$cid} || $self->{peers}{$sid} || $self->{peers}{$nick} || {};
     $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]"); #, Dumper $peer->{INF});
     if ( $self->{'adc'} ) {
@@ -1058,7 +1072,7 @@ my $sizenow = -s $_;
     my $self = shift;
     return if length $self->{'filename'};
     my $peerid = $self->{'peerid'} || $self->{'peernick'};
-    #$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
+  #$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
     for my $file ( keys %{ $self->{'want'}{$peerid} } ) {
       #( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}{$peerid}{$_} );
       $self->{$_} = $self->{'want'}{$peerid}{$file}{$_} for keys %{ $self->{'want'}{$peerid}{$file} };
@@ -1098,12 +1112,15 @@ my $sizenow = -s $_;
 #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_dest'} . $self->{'partial_ext'};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
+    $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'} if  $self->{'file_recv_size'};
 #$self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'},      'from', $self->{'file_recv_from'} );
   };
   $self->{'file_open'} ||= sub {
     my $self = shift;
     #$self->{'fileas'}=$_[0] if !length $self->{'fileas'} or length $_[0];
     #$self->{'filetotal'} = $_[1]if ! $self->{'filetotal'} or $_[1];
+
+    #$self->{'filetotal'} //= $self->{'file_recv_size'}
     my $oparam = $self->{'fileas'} eq '-' ? '>-' : '>>' . $self->{'file_recv_partial'};
     $self->handler( 'file_open_bef', $oparam );
     $self->log(
@@ -1152,9 +1169,21 @@ my $sizenow = -s $_;
         #$self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
         $self->log( 'dcerr', 'cant move finished file' ) if !rename $self->{'file_recv_partial'}, $self->{'file_recv_dest'};
       }
+      delete $self->{'downloading'}{$self->{'file_recv_tth'}};
       ( $self->{parent} || $self )->handler( 'file_recieved', $self->{'file_recv_dest'}, $self->{'filename'} );
       }
     }
+
+      if ($self->{'downloading'}{$self->{'file_recv_tth'}}) {
+#$self->log( 'dev', "onclose: downloading [$self->{'file_recv_tth'}], b$self->{'filebytes'} <= t$self->{'filetotal'} || $self->{'file_recv_size'}" );
+          if ($self->{'filebytes'} <= $self->{'filetotal'}||$self->{'file_recv_size'}){
+         $self->{'want_download'}{$self->{'file_recv_tth'}} = $self->{'downloading'}{$self->{'file_recv_tth'}};
+        } #else {                }
+              delete      $self->{'downloading'}{$self->{'file_recv_tth'}};
+      
+      }
+
+    
     $self->{'select_send'}->remove( $self->{'socket'} ), close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
       #$self->{'socket'}->flush(),
       if $self->{'filehandle_send'};

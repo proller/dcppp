@@ -61,7 +61,7 @@ sub init {
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( NickList IpList PortList );    #handler
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( NickList IpList PortList PortList_udp);    #handler
                                                                                        #$self->{'NickList'} ||= {};
                                                                                        #$self->{'IpList'}   ||= {};
                                                                                        #$self->{'PortList'} ||= {};
@@ -248,39 +248,41 @@ sub init {
       my $self = shift if ref $_[0];
       my $search = $_[0];
       $self->cmd('make_hub');
-      my %s = ( 'time' => int( time() ), 'hub' => $self->{'hub_name'}, );
-      ( $s{'who'}, $s{'cmds'} ) = split /\s+/, $search;
-      $s{'cmd'} = [ split /\?/, $s{'cmds'} ];
-      if ( $s{'who'} =~ /^Hub:(.+)$/ ) { $s{'nick'} = $1; }
-      else                             { ( $s{'ip'}, $s{'port'} ) = split /:/, $s{'who'}; }
-      if   ( $s{'cmd'}[4] =~ /^TTH:([0-9A-Z]{39})$/ ) { $s{'tth'}    = $1; }
-      else                                            { $s{'string'} = $s{'cmd'}[4]; }
-      $s{'string'} =~ tr/$/ /;
+      my $params = {'time' => int( time() ), 'hub' => $self->{'hub_name'}, };
+      ( $params->{'who'}, $params->{'cmds'} ) = split /\s+/, $search;
+      $params->{'cmd'} = [ split /\?/, $params->{'cmds'} ];
+      if ( $params->{'who'} =~ /^Hub:(.+)$/ ) { $params->{'nick'} = $1; }
+      else                             { ( $params->{'ip'}, $params->{'udp'} ) = split /:/, $params->{'who'}; }
+      if   ( $params->{'cmd'}[4] =~ /^TTH:([0-9A-Z]{39})$/ ) { $params->{'tth'}    = $1; }
+      else                                            { $params->{'string'} = $params->{'cmd'}[4]; }
+      $self->{'PortList_udp'}->{ $params->{'ip'} }     = $params->{'udp'} if $params->{'udp'};
+
+      $params->{'string'} =~ tr/$/ /;
       #$self->cmd('make_hub');
       #r$self->{'share_tth'}
-      my $found = $self->{'share_full'}{ $s{'tth'} } || $self->{'share_full'}{ $s{'string'} };
+      my $found = $self->{'share_full'}{ $params->{'tth'} } || $self->{'share_full'}{ $params->{'string'} };
       my $tth = $self->{'share_tth'}{$found};
       if (
             $found
         and $tth
-        #$s{'tth'} and $self->{'share_tth'}{ $s{'tth'} }
+        #$params->{'tth'} and $self->{'share_tth'}{ $params->{'tth'} }
         )
       {
         $self->log(
-          'adcdev', 'Search', $s{'who'},
-          #$self->{'share_tth'}{ $s{'tth'} },
+          'adcdev', 'Search', $params->{'who'},
+          #$self->{'share_tth'}{ $params->{'tth'} },
           $found, -s $found, -e $found,
           ),
-          #$self->{'share_tth'}{ $s{'tth'} } =~ tr{\\}{/};
-          #$self->{'share_tth'}{ $s{'tth'} } =~ s{^/+}{};
+          #$self->{'share_tth'}{ $params->{'tth'} } =~ tr{\\}{/};
+          #$self->{'share_tth'}{ $params->{'tth'} } =~ s{^/+}{};
           my $path;
         if ( $self->{'adc'} ) {
           $path = $self->adc_path_encode(
             $found
-              #$self->{'share_tth'}{ $s{'tth'} }
+              #$self->{'share_tth'}{ $params->{'tth'} }
           );
         } else {
-          $path = $found;    #$self->{'share_tth'}{ $s{'tth'} };
+          $path = $found;    #$self->{'share_tth'}{ $params->{'tth'} };
           $path =~ s{^\w:}{};
           $path =~ s{^\W+}{};
           $path =~ tr{/}{\\};
@@ -297,20 +299,20 @@ sub init {
           $self->{'S'} . '/'
             . $self->{'S'} . "\x05"
             .
-            #"TTH:"            . $s{'tth'}
-            ( $s{'tth'} ? $s{'cmd'}[4] : "TTH:" . $tth )
+            #"TTH:"            . $params->{'tth'}
+            ( $params->{'tth'} ? $params->{'cmd'}[4] : "TTH:" . $tth )
             #. ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})" : '' ),
-            #. (  " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}"  ),
+            #. (  " ($self->{'host'}:$self->{'port'})\x05$params->{'nick'}"  ),
             . (
             #" ($self->{'host'}:$self->{'port'})"
             #" (".name_to_ip($self->{'host'}).":$self->{'port'})"
             #" (".inet_ntoa(gethostbyname ($self->{'host'})).":$self->{'port'})"
-            " ($self->{'hostip'}:$self->{'port'})" . ( ( $s{'ip'} and $s{'port'} ) ? '' : "\x05$s{'nick'}" )
+            " ($self->{'hostip'}:$self->{'port'})" . ( ( $params->{'ip'} and $params->{'udp'} ) ? '' : "\x05$params->{'nick'}" )
             ),
-#. ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})\x05$s{'nick'}" : '' ),
+#. ( $self->{'M'} eq 'P' ? " ($self->{'host'}:$self->{'port'})\x05$params->{'nick'}" : '' ),
 #{ SI => -s $self->{'share_tth'}{ $params->{TR} },SL => $self->{INF}{SL},FN => $self->adc_path_encode( $self->{'share_tth'}{ $params->{TR} } ),=> $params->{TO} || $self->make_token($peerid),TR => $params->{TR}}
         );
-        if ( $s{'ip'} and $s{'port'} ) { $self->send_udp( $s{'ip'}, $s{'port'}, $self->{'cmd_bef'} . join ' ', @_ ); }
+        if ( $params->{'ip'} and $params->{'udp'} ) { $self->send_udp( $params->{'ip'}, $params->{'udp'}, $self->{'cmd_bef'} . join ' ', @_ ); }
         else                           { $self->cmd(@_); }
       }
 #'SR', ( $self->{'M'} eq 'P' ? "Hub:$self->{'Nick'}" : "$self->{'myip'}:$self->{'myport_udp'}" ),        join '?',
@@ -327,7 +329,7 @@ sub init {
 #$SR ILICH ЕГТС_07_2007\bases\sidhouse.DBF120923801 6/8TTH:4BAKR7LLXE65I6S4HASIXWIZONBEFS7VVZ7QQ2Y (80.240.211.183:411)
 #$SR gellarion7119 MuZonnO\Mark Knopfler - Get Lucky (2009)\mark_knopfler_-_you_cant_beat_the_house.mp36599140 7/7TTH:IDPHZ4AJIIWDYOFEKCCVJUNVIPGSGTYFW5CGEQQ (80.240.211.183:411)
 #$SR SALAGA Видео\Фильмы\XXX\xxx Penthouse.avi732665856 0/5TTH:3OFCM6GPQZNBNAMV6SRDFHFPK2X76EO6UCIO7ZQ (80.240.211.183:411)
-      return \%s;
+      return $params;
     },
     'SR' => sub {
       my $self = shift if ref $_[0];
@@ -344,13 +346,13 @@ sub init {
       ( $params->{'tth'}, $params->{'ipport'} ) = ( $params->{'size'}, $params->{'slots'} ) unless $params->{'tth'};
       ( $params->{'target'} ) = shift @{ $params->{'str'} };
       $params->{'tth'} =~ s/^TTH://;
-      ( $params->{'ipport'}, $params->{'ip'}, $params->{'port'} ) = $params->{'ipport'} =~ /\(((\S+):(\d+))\)/;
+      ( $params->{'ipport'}, $params->{'ip'}, $params->{'tcp'} ) = $params->{'ipport'} =~ /\(((\S+):(\d+))\)/;
       delete $params->{'str'};
       ( $params->{'slotsopen'}, $params->{'S'} ) = split /\//, $params->{'slots'};
       $params->{'slotsfree'} = $params->{'S'} - $params->{'slotsopen'};
       $params->{'string'}    = $self->{'search_last_string'};
-      $self->{'NickList'}{ $params->{'nick'} }{$_} = $params->{$_} for qw(S ip port);
-      $self->{'PortList'}->{ $params->{'ip'} }     = $params->{'port'};
+      $self->{'NickList'}{ $params->{'nick'} }{$_} = $params->{$_} for qw(S ip tcp);
+      $self->{'PortList'}->{ $params->{'ip'} }     = $params->{'tcp'};
       $self->{'IpList'}->{ $params->{'ip'} }       = $self->{'NickList'}{ $params->{'nick'} };
 
       $params->{'TR'} = $params->{'tth'};
