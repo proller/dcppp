@@ -56,7 +56,7 @@ sub init {
   #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};
   #$self->{'share_full'} ||=$self->{'parent'}{'share_tth'};
   #share_full share_tth want
-  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( NickList IpList PortList);    #handler
+  $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( NickList IpList PortList PortList_udp);    #handler
   $self->{$_} ||= $self->{'parent'}{$_} for qw(  Nick  );
   #$self->{'NickList'} ||= {};
   #$self->{'IpList'}   ||= {};
