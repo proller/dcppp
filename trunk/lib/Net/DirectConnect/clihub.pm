@@ -211,7 +211,7 @@ sub init {
     'ConnectToMe' => sub {
       my $self = shift if ref $_[0];
       my ( $nick, $host, $port ) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
-      $self->{'PortList'}->{$host} = $port;
+      $self->{'IpList'}{$host}{'port'} = $self->{'PortList'}->{$host} = $port;
       #$self->log('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
       return if $self->{'clients'}{ $host . ':' . $port }->{'socket'};
       $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
@@ -231,8 +231,9 @@ sub init {
     'RevConnectToMe' => sub {
       my $self = shift if ref $_[0];
       my ( $to, $from ) = split /\s+/, $_[0];
-      $self->log( 'dev', "[$from eq $self->{'Nick'}] ($_[0])" );
-      $self->log( 'dev', 'go ctm' ), $self->cmd( 'ConnectToMe', $to ) if $from eq $self->{'Nick'};
+      #$self->log( 'dev', "[$from eq $self->{'Nick'}] ($_[0])" );
+      #$self->log( 'dev', 'go ctm' ), 
+      $self->cmd( 'ConnectToMe', $to ) if $from eq $self->{'Nick'};
     },
     'GetPass' => sub {
       my $self = shift if ref $_[0];
@@ -348,8 +349,10 @@ sub init {
       $params->{'tth'} =~ s/^TTH://;
       ( $params->{'ipport'}, $params->{'ip'}, $params->{'tcp'} ) = $params->{'ipport'} =~ /\(((\S+):(\d+))\)/;
       delete $params->{'str'};
-      ( $params->{'slotsopen'}, $params->{'S'} ) = split /\//, $params->{'slots'};
-      $params->{'slotsfree'} = $params->{'S'} - $params->{'slotsopen'};
+      #( $params->{'slotsopen'}, $params->{'S'} ) = split /\//, $params->{'slots'};
+      #$params->{'slotsfree'} = $params->{'S'} - $params->{'slotsopen'};
+      ( $params->{'slotsfree'}, $params->{'S'} ) = split /\//, $params->{'slots'};
+      #$params->{'slotsfree'} = $params->{'S'} - $params->{'slotsopen'};
       $params->{'string'}    = $self->{'search_last_string'};
       $self->{'NickList'}{ $params->{'nick'} }{$_} = $params->{$_} for qw(S ip tcp);
       $self->{'PortList'}->{ $params->{'ip'} }     = $params->{'tcp'};
