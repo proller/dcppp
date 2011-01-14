@@ -25,24 +25,22 @@ sub init {
     #'myport_random' => 99,
     #'myport_tries'  => 5,
     #'HubName'       => 'Net::DirectConnect test hub',
-    'allow' => '127.0.0.1',
-      'cmd_bef' => undef,
-      'cmd_aft' => "\n",
+    'allow'   => '127.0.0.1',
+    'cmd_bef' => undef,
+    'cmd_aft' => "\n",
   );
-    $self->{$_} //= $_{$_} for keys %_;
-  local %_ =  @_;
-    $self->{$_} = $_{$_} for keys %_;
-
+  $self->{$_} //= $_{$_} for keys %_;
+  local %_ = @_;
+  $self->{$_} = $_{$_} for keys %_;
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   #$self->{$_} ||= $self->{'parent'}{$_}  for qw(allow);
-
   #$self->baseinit();
   #$self->{'parse'} ||= $self->{'parent'}{'parse'};
   #$self->{'cmd'}   ||= $self->{'parent'}{'cmd'};
   $self->{'handler_int'}{'unknown'} ||= sub {
     my $self = shift if ref $_[0];
     #$self->log( 'dev', "unknown1", Dumper \@_ );
-    ($self->{http_headers}{$_[0]} = $_[1] ) =~ s/^: |\s+$//g;
+    ( $self->{http_headers}{ $_[0] } = $_[1] ) =~ s/^: |\s+$//g;
     #};
   };
   #$self->{'handler'}{  'unknown'}||=sub {
@@ -63,23 +61,34 @@ sub init {
       my $self = shift if ref $_[0];
       #$self->log( 'dev', 'can send2', Dumper $self->{'handler_int'} );
       my $c = "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
-        ($self->{'http_geturl'}) = split ' ', $self->{http_headers}{GET};
-        
-        if ($self->{'http_geturl'} eq '/') {
-      $c .= "<html><body>".
-      "clients:<br/>". (join ', ', map {"$_($self->{clients}{$_}{status}".(!$self->{clients}{$_}{'filebytes'} ? () :":$self->{clients}{$_}{'filebytes'}/$self->{clients}{$_}{'filetotal'}").")"}sort keys %{$self->{clients}})
-      ."<hr/>peers:<br/>". (join '<br/> ', map {join ' ',$_->{INF}{NI},$_->{INF}{SS},$_->{INF}{I4}, } sort {$b->{INF}{SS}<=>$a->{INF}{SS}} values %{$self->{peers_cid}})
-      ."<pre>"  #.Dumper($self->{peers}) 
-      #."<pre>" . Dumper($self)
-      . "</html>";
-      }
-        elsif ($self->{'http_geturl'} =~ m{^/dl/(.+)$}) {
-$self->{parent}{parent}->download($1);
+      ( $self->{'http_geturl'} ) = split ' ', $self->{http_headers}{GET};
+      if ( $self->{'http_geturl'} eq '/' ) {
+        $c .= "<html><body>" . "clients:<br/>" . (
+          join ', ',
+          map {
+            "$_($self->{clients}{$_}{status}"
+              . (
+              !$self->{clients}{$_}{'filebytes'} ? () : ":$self->{clients}{$_}{'filebytes'}/$self->{clients}{$_}{'filetotal'}" )
+              . ")"
+            } sort keys %{ $self->{clients} }
+          )
+          . "<hr/>peers:<br/>"
+          . (
+          join '<br/> ',
+          map {
+            join ' ', $_->{INF}{NI}, $_->{INF}{SS}, $_->{INF}{I4},
+            } sort {
+            $b->{INF}{SS} <=> $a->{INF}{SS}
+            } values %{ $self->{peers_cid} }
+          )
+          . "<pre>"    #.Dumper($self->{peers})
+                       #."<pre>" . Dumper($self)
+          . "</html>";
+      } elsif ( $self->{'http_geturl'} =~ m{^/dl/(.+)$} ) {
+        $self->{parent}{parent}->download($1);
         $c .= "try dl [$1]";
-        }
-
-$c            .="<hr/><pre>" . Dumper($self->{http_headers} ); 
-
+      }
+      $c .= "<hr/><pre>" . Dumper( $self->{http_headers} );
       $self->send( Encode::encode 'utf8', $c );
       $self->destroy();
     },

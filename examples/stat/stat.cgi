@@ -47,7 +47,7 @@ $param->{'period'} ||= $config{'default_period'};
 print '<a href="?">home</a>';
 print ' days ', (
   map {
-        '<a '
+    '<a '
       . ( $param->{'period'} eq $_ ? '' : qq{href="?period=$_"} )
       . qq{ onclick="createCookie('period', '$_');window.location.reload(false);">}
       . psmisc::human( 'time_period', $config{'periods'}{$_} ) . '</a> '
@@ -96,10 +96,8 @@ $config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
 my %makegraph;
 my %graphcolors;
 
-for my $query (
-  @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
-  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} }
-  )
+for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
+  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
 {
   my $q = { %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
@@ -134,18 +132,17 @@ for my $query (
       my ($v) = map { $row->{'orig'}{$_} } grep { $by eq $_ } @{ $q->{'show'} };
       $makegraph{$query}{$v} = $by;
       $graphcolor = $graphcolors{$v} = $colors[ $n - 1 ];    #if length $query;
-                                                             #my $id = $query;
-                                                             #$id =~ tr/ /_/;
+      #my $id = $query;
+      #$id =~ tr/ /_/;
     }
-    $row->{$_} = (
-      $param->{$_}
+    $row->{$_} =
+      ( $param->{$_}
       ? ''
       : qq{<a class="$_" title="}
         . psmisc::html_chars( $row->{$_} )
         . qq{" href="?$_=}
         . psmisc::encode_url( $row->{$_} )
-        . qq{">$row->{$_}</a>}
-      )
+        . qq{">$row->{$_}</a>} )
       . psmisc::human( 'magnet-dl', $row->{'orig'} )
       for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } }
       grep { $config{'queries'}{$_} } @{ $q->{'show'} };    #qw(string tth);
@@ -207,7 +204,7 @@ for my $query ( sort keys %makegraph ) {
   my $ys = $yl / $yn;
   for my $date (%date_max) {
     $date_step{$date} = $date_max{$date} ? $yl / $date_max{$date} : 1;
-  psmisc::printlog 'dev', "$date: [$date_step{$date}] yn=$yn; ys=$ys $yl<br\n/>";
+    psmisc::printlog 'dev', "$date: [$date_step{$date}] yn=$yn; ys=$ys $yl<br\n/>";
   }
   #my $ys = int $yl / $maxy;
   #$ys = 1;
@@ -234,13 +231,8 @@ for my $query ( sort keys %makegraph ) {
     my $n;
     #$colors[$color] <!-- $line : -->
     $img .= qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="};    #. #( #"mc
-                                                                                                  # join ' ',
-    for (
-      sort
-      grep {$graph{$line}{$_}}
-      keys %dates
-      )
-    {
+    # join ' ',
+    for ( sort grep { $graph{$line}{$_} } keys %dates ) {
       #      map {
       if ( $graph{$line}{$_} ) {                                                                  # ? () : (
         $img .= int( $n * $xs ) . ',' . int(

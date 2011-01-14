@@ -7,8 +7,9 @@ generate dc++ xml filelist
 perl filelist.pm /path/to/dir
 
 =cut
-package # no cpan 
-Net::DirectConnect::filelist;
+
+package    # no cpan
+  Net::DirectConnect::filelist;
 use 5.10.0;
 use strict;
 use utf8;
@@ -30,6 +31,7 @@ use base 'Net::DirectConnect';
       "; #use Net::DirectConnect; 
       #psmisc::use_try ('Net::DirectConnect');
 =cut
+
 use base 'Net::DirectConnect';
 #use lib '../../../examples/stat/pslib';    # REMOVE
 #use lib 'stat/pslib';                      # REMOVE
@@ -48,16 +50,15 @@ sub skip ($$) {
     return 1 if !ref $m and $file eq $m;
   }
 }
+
 sub new {
   my $standalone = !ref $_[0];
   my $self = ref $_[0] ? shift() : bless {}, $_[0];
   shift if $_[0] eq __PACKAGE__;
   #local %_ = @_;
   #$self->{$_} = $_{$_} for keys %_;
-
   $self->func(@_);
   $self->init_main(@_);
-  
   $self->{log} ||= sub (@) {
     my $dc = ref $_[0] ? shift : $self || {};
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
@@ -108,8 +109,8 @@ sub new {
         'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
         'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
         'time' => pssql::row( 'time', ),    #'index' => 1,
-                                            #'added'  => pssql::row( 'added', ),
-                                            #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
+        #'added'  => pssql::row( 'added', ),
+        #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
       },
       }
       #},
@@ -123,7 +124,7 @@ sub new {
     return unless psmisc::lock( 'sharescan', timeout => 0, old => 86400 );
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
       unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
-                                                                             #$self->log( 'info',"ntth=[$notth]");    exit;
+    #$self->log( 'info',"ntth=[$notth]");    exit;
     my $stopscan;
     my $level     = 0;
     my $levelreal = 0;
@@ -145,7 +146,8 @@ sub new {
         $sharesize += $f->{size};
         ++$sharefiles if $f->{size};
         #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
-        psmisc::file_append $self->{files}, "\t" x $level, qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
+        psmisc::file_append $self->{files}, "\t" x $level,
+          qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
         #$self->{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $self->{share_full}{ $f->{file} } ||= $f->{full};
         $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
 
@@ -155,6 +157,7 @@ sub new {
         if $f->{'tth'};
       $self->{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
 =cut
+
   #$self->log 'set share', "[$f->{file}], [$f->{tth}] = [$self->{share_full}{ $f->{tth} }],[$self->{share_full}{ $f->{file} }]";
   #$self->log Dumper $self->{share_full};
       }
@@ -171,9 +174,9 @@ sub new {
         #$self->log( 'dev','sd', __LINE__,$dh);
         #@dots =
         ( my $dirname = $dir );
-        $dirname = 
-        #Encode::encode 'utf8', 
-        Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
+        $dirname =
+          #Encode::encode 'utf8',
+          Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
         #$self->log( 'dev','sd', __LINE__,$dh);
         next if skip( $dirname, $self->{skip_dir} ) or ( $self->{skip_symlink} and -l $dirname );
         unless ($level) {
@@ -193,7 +196,7 @@ sub new {
         psmisc::schedule( [ 10, 10 ], our $my_every_10sec_sub__ ||= sub { $printinfo->() } );
         #$self->log( 'readdir', );
       FILE: for my $file ( readdir($dh) ) {
-#$self->log( 'scanfile', $file, );
+          #$self->log( 'scanfile', $file, );
           #$self->log( 'warn', 'stopscan', $stopscan),
           last if $stopscan;
           next if $file =~ /^\.\.?$/;
@@ -210,13 +213,12 @@ sub new {
           }
           $f->{size} = -s $f->{full_local} if -f $f->{full_local};
           next if $f->{size} < $self->{file_min};
-          $f->{file} = #Encode::encode 'utf8', 
-          Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
-          $f->{path} = #Encode::encode 'utf8', 
-          Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
+          $f->{file} =    #Encode::encode 'utf8',
+            Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
+          $f->{path} =    #Encode::encode 'utf8',
+            Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
           next FILE if skip( $f->{file}, $self->{skip_file} ) or ( $self->{skip_symlink} and -l $f->{file} );
-         #$self->log( 'encfile', $f->{file} , "chs:$self->{charset_fs}");
-
+          #$self->log( 'encfile', $f->{file} , "chs:$self->{charset_fs}");
           $f->{full} = "$f->{path}/$f->{file}";
           $f->{time} = int( $^T - 86400 * -M $f->{full_local} );    #time() -
 #$self->log 'timed', $f->{time}, psmisc::human('date_time', $f->{time}), -M $f->{full_local}, int (86400 * -M $f->{full_local}), $^T;
@@ -337,18 +339,15 @@ sub new {
     my ( $full_local, $tth, $file ) = @_;
     $full_local =~ m{([^/\\]+)$} unless $file;
     $file //= $1;    # unless length $file;
-                     #$full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
+    #$full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
     $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth, if $tth;
     $self->{share_full}{$file} ||= $full_local if $file;
     #$self->share_changed();
   };
   $self->{share_changed} //= sub {
     if ( $self->{'status'} eq 'connected' ) {
-      if ( $self->{adc} ) {
-        $self->cmd( 'I', 'INF', undef, 'SS', 'SF' );
-      } else {
-        $self->cmd('MyINFO');
-      }
+      if ( $self->{adc} ) { $self->cmd( 'I', 'INF', undef, 'SS', 'SF' ); }
+      else                { $self->cmd('MyINFO'); }
     }
   };
   $self->{filelist_load} //= sub {    #{'cmd'}
@@ -371,6 +370,7 @@ sub new {
     $self->log ".done:", ( scalar keys %{ $self->{share_full} } ), "\n";
   }
 =cut
+
     #$self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
@@ -392,9 +392,9 @@ sub new {
         my $full_local = ( my $full = "$dir/$file" );
         #$self->log 'loaded', $dir, $file  , $full;
         #$full_local = Encode::encode $self->{charset_fs}, $full if $self->{charset_fs};
-        $full_local = Encode::encode $self->{charset_fs}, 
-        #Encode::decode 'utf8', 
-        $full_local;
+        $full_local = Encode::encode $self->{charset_fs},
+          #Encode::decode 'utf8',
+          $full_local;
         $self->share_add_file( $full_local, $tth, $file );
         ++$sharefiles;
         $sharesize += $size;
@@ -488,13 +488,14 @@ return unless $name;
           if $tth;
         $self->{share_full}{$file} ||= $full_local;
 =cut
+
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth );
     $self->share_add_file( $full, $tth );
     #TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
     $self->share_changed();
     };
   $self->filelist_load() unless $standalone;    # (caller)[0] ~~ __PACKAGE__;
-                                                #$self->log('initok');
+  #$self->log('initok');
   return $self;
 }
 eval q{ #do
