@@ -43,13 +43,13 @@ $config{'auto_get_best'}      //= 1;
 $config{'hit_to_ask'}         //= 5;
 $config{'queue_recalc_every'} //= 100;
 $config{'get_every'}          //= 60;
-$config{'get_dir'}            //= './downloads/';
+#$config{'get_dir'}            //= './downloads/';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 psmisc::printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit if !$ARGV[0] and !$config{dc}{host};  # and !$config{dc}{hosts};
 psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
 #printlog 'dev', 'mkdir', $config{'get_dir'},
-mkdir $config{'get_dir'};
+#mkdir $config{'get_dir'};
 #exit;
 #use Net::DirectConnect::adc;
 my @todl = grep { /^[A-Z0-9]{39}$/ or /^-/ } @ARGV;

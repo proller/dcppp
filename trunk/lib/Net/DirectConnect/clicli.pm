@@ -39,7 +39,7 @@ sub init {
     #@_,
     'direction' => 'Download',
     #'Direction' => 'Upload', #rand here
-    'incomingclass' => __PACKAGE__, 'reconnects' => 0, inactive_timeout => 60, 
+    'incomingclass' => __PACKAGE__, 'reconnects' => 0, inactive_timeout => 60,
     #charset_protocol => 'cp1251',    #'utf8'
   );
   #$self->{$_} ||= $_{$_} for keys %_;
@@ -172,10 +172,9 @@ sub init {
       #$self->log('dev', 'ADCGET', @_);
       $self->file_send_parse( map { split /\s/, $_ } @_ );
     },
-  #};
+    #};
   );
-      $self->{'parse'}{$_} ||= $_{$_} for keys %_;
-
+  $self->{'parse'}{$_} ||= $_{$_} for keys %_;
   #$self->log ( 'dev', "del empty cmd", ),
   #$self->{'cmd'} = undef if $self->{'cmd'} and !keys %{ $self->{'cmd'} };
   #$self->log('PRECMD',Dumper $self->{'cmd'});
@@ -234,10 +233,8 @@ sub init {
       my $self = shift if ref $_[0];
       $self->sendcmd( 'ADCSND', @_ );
     },
-  #};
+    #};
   );
-    $self->{'cmd'}{$_} ||= $_{$_} for keys %_;
-
-
+  $self->{'cmd'}{$_} ||= $_{$_} for keys %_;
 }
 1;

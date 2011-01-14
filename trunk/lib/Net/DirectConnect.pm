@@ -28,7 +28,6 @@ sub mkdir_rec(;$$) {
   while (m{/}g) { @_ ? mkdir $`, $_[0] : mkdir $` if length $` }
 }
 
-
 sub send_udp ($$;@) {
   my $self = shift if ref $_[0];
   my $host = shift;
@@ -45,7 +44,7 @@ sub send_udp ($$;@) {
       'Timeout'  => $opt->{'Timeout'}, (
         $opt->{'nonblocking'}
         ? (
-          'Blocking'   => 0,
+          'Blocking' => 0,
           #'MultiHomed' => 1,    #del
           )
         : ()
@@ -65,16 +64,14 @@ sub send_udp ($$;@) {
   }
 }
 
-  sub socket_addr ($){
-      my ($socket) = @_;
-      local @_;
-      eval { @_ = unpack_sockaddr_in( getpeername( $socket ) || return ) };
-    return unless $_[1];
-    return unless $_[1] = inet_ntoa( $_[1] );
-    return @_;
-
-  }
-
+sub socket_addr ($) {
+  my ($socket) = @_;
+  local @_;
+  eval { @_ = unpack_sockaddr_in( getpeername($socket) || return ) };
+  return unless $_[1];
+  return unless $_[1] = inet_ntoa( $_[1] );
+  return @_;
+}
 
 sub schedule($$;@)
 {    #$Id$ $URL$
@@ -126,26 +123,22 @@ sub new {
   my $self  = {};
   if ( ref $class eq __PACKAGE__ ) { $self = $class; }
   else                             { bless( $self, $class ) unless ref $class; }
-#print ref $self;
+  #print ref $self;
   #$self-
- #psmisc::printlog('dev', 'func');
+  #psmisc::printlog('dev', 'func');
   $self->func();    #@param
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
-#psmisc::printlog('dev', 'init');
-
-    $self->{'number'} ||= ++$global{'total'};
+  #psmisc::printlog('dev', 'init');
+  $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
-
   $self->init_main(@_);    #@param
-  $self->init(@_);    #@param
-                    #}
+  $self->init(@_);         #@param
+  #}
   $self->{activity} = time;
-
-  
-  #$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
-  #(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
-  #$self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
+#$self->{$_} ||= $self->{'parent'}{$_} for grep { exists $self->{'parent'}{$_} } qw(log sockets select select_send);
+#(!$self->{'parent'}{$_} ? () :  $self->{$_} = $self->{'parent'}{$_} ) for qw(log );
+#$self->{'log'} = $self->{'parent'}{'log'} if $self->{'parent'}{'log'};
 #$self->{$_} ||= $self->{'parent'}{$_} ||= {}
 #$self->log( 'dev', '1uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
 #$self->{'parent'}{$_} ||= {} ,  $self->{$_} ||= $self->{'parent'}{$_},
@@ -166,7 +159,7 @@ sub new {
       #$self->{'port'},
       #$self->log( 'dev',  "send to", );
       $self->{'broadcast'} = 1;
-	  #$self->{'lis'} = 1;
+      #$self->{'lis'} = 1;
     }
     if ( !$self->{'module'} and !$self->{'protocol'} and $self->{'host'} ) {
       #$self->log( 'proto0 ', $1);
@@ -196,13 +189,13 @@ sub new {
   $self->{charset_chat} ||= $self->{charset_protocol};
   #$self->protocol_init();
   #$self->log( 'dev', $self, 'new inited', "MT:$self->{'message_type'}", 'autolisten=', $self->{'auto_listen'} );
-#$self->{charset_console} = 'utf8';
-   # $self->log( 'dev', "set console encoding  [$self->{charset_console}]");
+  #$self->{charset_console} = 'utf8';
+  # $self->log( 'dev', "set console encoding  [$self->{charset_console}]");
   #eval qq{use encoding $self->{charset_console}};
-   eval qq{use encoding '$self->{charset_internal}', STDOUT=> '$self->{charset_console}', STDIN => '$self->{charset_console}'} if !$self->{parent} and !$self->{no_charset_console};
-
-#$self->log( 'dev', 'utf8: УТф восемь');
-#$self->log( 'dev', Dumper $self);   
+  eval qq{use encoding '$self->{charset_internal}', STDOUT=> '$self->{charset_console}', STDIN => '$self->{charset_console}'}
+    if !$self->{parent} and !$self->{no_charset_console};
+  #$self->log( 'dev', 'utf8: УТф восемь');
+  #$self->log( 'dev', Dumper $self);
   if ( $self->{'auto_listen'} ) {
     #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
     $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};
@@ -221,7 +214,7 @@ sub new {
     #$self->log( $self, '', "auto_work ", $self->active() );
     while ( $self->active() ) {
       $self->work();    #forever
-                        #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
+      #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
     }
     $self->disconnect();
   }
@@ -273,8 +266,7 @@ sub cmd {
     @ret = $self->cmd_adc( $dst, $cmd, @_ );
   } else {
     $self->log(
-      'info',  "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
-      "self=", ref $self,
+      'info', "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };", "self=", ref $self,
       #Dumper $self->{'cmd'},
       $self->{'parse'}
     );
@@ -333,89 +325,73 @@ sub handler {
 #}
 sub func {
   my $self = shift;
- #$self->log( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
-
-  
+  #$self->log( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
   $self->{'init_main'} ||= sub {
     my $self = shift;
-
     #$self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ );
- 
-  local %_ = @_;
-  $self->{$_} = $_{$_} for keys %_;
-  
+    local %_ = @_;
+    $self->{$_} = $_{$_} for keys %_;
     local %_ = (
-    'Listen'        => 10,
-    'Timeout'       => 5,
-    'myport'        => 412,                                                               #first try
-    'myport_base'   => 40000,
-    'myport_random' => 1000,
-    'myport_tries'  => 5,
-    'cmd_sep'       => ' ',
-    'no_print'      => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
-    'log'           => sub (@) {
-      my $self = ref $_[0] ? shift() : {};
-      if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
-#utf8::valid(join '', @_) and
-      print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
-      #Dumper \
-    },
-    #'auto_recv'          => 1,
-    'max_reads'          => 20,
-    'wait_once'          => 0.1,
-    'waits'              => 100,
-    'wait_finish_tries'  => 600,
-    'wait_finish_by'     => 1,
-    'wait_connect_tries' => 600,
-    'clients_max'        => 50,
-    'wait_clients_tries' => 200,
-    #del    'wait_clients_by'    => 0.01,
-    'work_sleep' => 0.01, 'select_timeout' => 1, 'cmd_recurse_sleep' => 0,
-    ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
-    'nonblocking' => 1,
-    'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
-    'informative_hash' => [qw(clients)],                                                    #NickList IpList PortList
-                                                                                            #'disconnect_recursive' => 1,
-    'reconnect_sleep'  => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
-    'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', 'time_start' => time,
-    #'peers' => {},
-    'download_to' => './downloads/',
-    'partial_prefix' => './downloads/Incomplete/',
-    #ADC
-    #number => ++$global{'total'},
-    #};
-    'charset_fs'      => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
-    'charset_console' => ( $^O eq 'MSWin32' ? 'cp866'  : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
-    'charset_protocol' => 'utf8',
-    'charset_internal' => 'utf8',
-    #charset_nick => 'utf8',
-  );
-  $self->{$_} //= $_{$_} for keys %_;
-
-    $self->{$_} //= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients); #want share_full share_tth 
+      'Listen'        => 10,
+      'Timeout'       => 5,
+      'myport'        => 412,                                                               #first try
+      'myport_base'   => 40000,
+      'myport_random' => 1000,
+      'myport_tries'  => 5,
+      'cmd_sep'       => ' ',
+      'no_print'      => { map { $_ => 1 } qw(Search Quit MyINFO Hello SR UserCommand) },
+      'log'           => sub (@) {
+        my $self = ref $_[0] ? shift() : {};
+        if ( ref $self->{'parent'}{'log'} eq 'CODE' ) { return $self->{'parent'}->log( "[$self->{'number'}]", @_ ); }
+        #utf8::valid(join '', @_) and
+        print( join( ' ', "[$self->{'number'}]", @_ ), "\n" );
+        #Dumper \
+      },
+      #'auto_recv'          => 1,
+      'max_reads'          => 20,
+      'wait_once'          => 0.1,
+      'waits'              => 100,
+      'wait_finish_tries'  => 600,
+      'wait_finish_by'     => 1,
+      'wait_connect_tries' => 600,
+      'clients_max'        => 50,
+      'wait_clients_tries' => 200,
+      #del    'wait_clients_by'    => 0.01,
+      'work_sleep'        => 0.01,
+      'select_timeout'    => 1,
+      'cmd_recurse_sleep' => 0,
+      ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
+      'nonblocking' => 1,
+      'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
+      'informative_hash' => [qw(clients)],    #NickList IpList PortList
+      #'disconnect_recursive' => 1,
+      'reconnect_sleep' => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
+      'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', 'time_start' => time,
+      #'peers' => {},
+      'download_to' => './downloads/', 'partial_prefix' => './downloads/Incomplete/',
+      #ADC
+      #number => ++$global{'total'},
+      #};
+      'charset_fs'      => ( $^O eq 'MSWin32' ? 'cp1251' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+      'charset_console' => ( $^O eq 'MSWin32' ? 'cp866'  : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+      'charset_protocol' => 'utf8',
+      'charset_internal' => 'utf8',
+      #charset_nick => 'utf8',
+    );
+    $self->{$_} //= $_{$_} for keys %_;
+    $self->{$_} //= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients);   #want share_full share_tth
     #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
-    $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download); 
-  $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {}, for qw(sockets share_full share_tth want want_download want_download_filename downloading);
-    $self->{'parent'}{$_} ? $self->{$_} = $self->{'parent'}{$_} : () for qw(log disconnect_recursive  partial_prefix partial_ext download_to); 
-  
-  
-  
-#$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
-  #psmisc::printlog('dev', 'init0', Dumper $self);
-             };
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+    $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download);
+    $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {},
+      for qw(sockets share_full share_tth want want_download want_download_filename downloading);
+    $self->{'parent'}{$_} ? $self->{$_} = $self->{'parent'}{$_} : ()
+      for qw(log disconnect_recursive  partial_prefix partial_ext download_to);
+    #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
+    #psmisc::printlog('dev', 'init0', Dumper $self);
+  };
   $self->{'myport_generate'} ||= sub {
     my $self = shift;
-    $self->log( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}");
+    $self->log( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}" );
     return $self->{'myport'} unless $self->{'myport_base'} or $self->{'myport_random'};
     $self->{'myport'} = undef if $_[0];
     return $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) );
@@ -460,23 +436,24 @@ sub func {
       'Timeout'  => $self->{'Timeout'}, (
         $self->{'nonblocking'}
         ? (
-          'Blocking'   => 0,
+          'Blocking' => 0,
           #'MultiHomed' => 1,    #del
           )
         : ()
       ),
       %{ $self->{'sockopts'} || {} },
     );
-    
-    $self->log( 'err', "connect socket  error: $@,", Encode::decode($self->{charset_fs},$!),"[$self->{'socket'}]" ), return 1 if !$self->{'socket'};
+    $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $! ), "[$self->{'socket'}]" ),
+      return 1
+      if !$self->{'socket'};
     #$self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
-#$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
-#$self->{charset_protocol} = 'utf8';
-#$self->log( 'dev', "set encoding of socket to [$self->{charset_protocol}]");
-#    binmode($self->{'socket'}, ":encoding($self->{charset_protocol})");
-#    binmode($self->{'socket'}, ":raw:encoding($self->{charset_protocol})");
-#    binmode($self->{'socket'}, ":encoding($self->{charset_protocol}):bytes");
-#    binmode($self->{'socket'}, ":$self->{charset_protocol}");
+    #$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
+    #$self->{charset_protocol} = 'utf8';
+    #$self->log( 'dev', "set encoding of socket to [$self->{charset_protocol}]");
+    #    binmode($self->{'socket'}, ":encoding($self->{charset_protocol})");
+    #    binmode($self->{'socket'}, ":raw:encoding($self->{charset_protocol})");
+    #    binmode($self->{'socket'}, ":encoding($self->{charset_protocol}):bytes");
+    #    binmode($self->{'socket'}, ":$self->{charset_protocol}");
     $self->{time_start} = time;
     $self->select_add();
     #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
@@ -626,15 +603,13 @@ sub func {
       if ( local $_ = $self->{'socket'}->accept() ) {
         #$self->log( 'traceDEV', 'DC::recv', 'accept', $self->{'incomingclass'} );
         $self->log( 'err', 'cant accept, no incomingclass' ), return, unless $self->{'incomingclass'};
-                my (undef, $host )= socket_addr $_;
-        ;# || $self->{parent}{'allow'};
+        my ( undef, $host ) = socket_addr $_;
+        ;    # || $self->{parent}{'allow'};
         #$self->log( 'warn', "$host eq $allow ");
-        if (my $allow = $self->{'allow'}) {
-        my (undef, $host )= socket_addr $_;
-        $self->log( 'warn', "disallowed connect from $host"),
-        return unless $host eq $allow;
+        if ( my $allow = $self->{'allow'} ) {
+          my ( undef, $host ) = socket_addr $_;
+          $self->log( 'warn', "disallowed connect from $host" ), return unless $host eq $allow;
         }
-        
         $_ = $self->{'incomingclass'}->new(
           #%$self,                                clear(),
           'socket' => $_, 'LocalPort' => $self->{'myport'}, 'incoming' => 1,
@@ -683,26 +658,25 @@ sub func {
       $self->{activity} = time;
       #$self->log( 'dcdmp', "[$self->{'number'}]", "raw recv ", length( $self->{'databuf'} ), $self->{'databuf'} );
     }
-#$self->log( 'dcdmp', "0rawrawrcv [fh:$self->{'filehandle'}]:", $self->{'databuf'} );
+    #$self->log( 'dcdmp', "0rawrawrcv [fh:$self->{'filehandle'}]:", $self->{'databuf'} );
     if ( $self->{'filehandle'} ) { $self->file_write( \$self->{'databuf'} ); }
     else {
-#$self->log( 'dcdmp', "rawrawrcv:", $self->{'databuf'} );
+      #$self->log( 'dcdmp', "rawrawrcv:", $self->{'databuf'} );
       $self->{'recv_buf'} .= $self->{'databuf'};
       #$self->log( 'dcdmp', "rawrawbuf:", $self->{'recv_buf'} );
       local $self->{'cmd_aft'} = "\x0A" if !$self->{'adc'} and $self->{'recv_buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
 #$self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
-      $self->{'recv_buf'} .= $self->{'cmd_aft'} if   $self->{'Proto'}                eq 'udp' and    $self->{'status'} eq 'listening';
-
+      $self->{'recv_buf'} .= $self->{'cmd_aft'} if $self->{'Proto'} eq 'udp' and $self->{'status'} eq 'listening';
       while ( $self->{'recv_buf'} =~ s/^(.*?)\Q$self->{'cmd_aft'}//s ) {
         local $_ = $1;
-#$self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
+        #$self->log('dcdmp', 'DC::recv', "parse [$_]($self->{'cmd_aft'})");
         last if $self->{'status'} eq 'destroy';
         #$self->log( 'dcdbg',"[$self->{'number'}] dev cycle ",length $_," [$_]", );
         last unless length $_ and length $self->{'cmd_aft'};
         next unless length;
         $self->get_peer_addr_recv() if $self->{'broadcast'};
         $_ = Encode::decode $self->{charset_protocol}, $_;
-#        $Encode::encode $self->{charset_console},
+        #        $Encode::encode $self->{charset_console},
         $self->parser($_);
         #$self->log( 'dcdbg', "[$self->{'number'}]", "left to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}] now was [$_]" );
         last if ( $self->{'filehandle'} );
@@ -788,7 +762,7 @@ sub func {
   $self->{'wait_clients'} ||= sub {
     my $self = shift;
     for my $n ( 0 .. $self->{'wait_clients_tries'} ) {
-      last if !$self->{'clients_max'} or $self->{'clients_max'} >  scalar( $self->clients_my() );    #keys %{ $self->{'clients'} };
+      last if !$self->{'clients_max'} or $self->{'clients_max'} > scalar( $self->clients_my() );  #keys %{ $self->{'clients'} };
       $self->info() unless $_;
       $self->log(
         'info',
@@ -850,133 +824,103 @@ sub func {
         }
         $self->{$_}->($self) for grep { ref $self->{$_} eq 'CODE' } qw(worker auto_work);
         #$self->log('dev', 'work exit',      );
-
-        
       }
     );
-
-
-
-
     schedule(
       10,
       our $___work_downloader ||= sub {
-
         my $time = time;
-        for my $tth (keys %{$self->{'downloading'}} ) {
-        if ($self->{'downloading'}{$tth}{connect_start} and $self->{'downloading'}{$tth}{connect_start}<$time -60){
-#$self->log('dev', 'want', $tth,'no connection, return to want queue');         
-              $self->{'want_download'}{$tth}=
-              $self->{'downloading'}{$tth} ;
-              delete $self->{'downloading'}{$tth};
-}
-}            
-
-        for my $tth (keys %{$self->{'want_download'}} ) {
-              delete $self->{'want_download'}{$tth}{connect_start};
+        for my $tth ( keys %{ $self->{'downloading'} } ) {
+          if ( $self->{'downloading'}{$tth}{connect_start} and $self->{'downloading'}{$tth}{connect_start} < $time - 60 ) {
+            #$self->log('dev', 'want', $tth,'no connection, return to want queue');
+            $self->{'want_download'}{$tth} = $self->{'downloading'}{$tth};
+            delete $self->{'downloading'}{$tth};
+          }
         }
-        
+        for my $tth ( keys %{ $self->{'want_download'} } ) { delete $self->{'want_download'}{$tth}{connect_start}; }
         if ( $self->{'queue_download'} and @{ $self->{'queue_download'} } ) {
           my $file = shift @{ $self->{'queue_download'} };
           $self->search($file);
         }
         #if (!)
-		#=todo
+        #=todo
         #$self->log('dev', 'work want:', Dumper $self->{'want_download'});
         for my $tth ( grep { keys %{ $self->{'want_download'}{$_} } } keys %{ $self->{'want_download'} } ) {
-        my $wdls = $self->{'want_download'}{$tth}||{};
-
-
-                  local  @_ = ( 
-          #grep { $wdls->{$_}{slotsfree} or $wdls->{$_}{SL} } 
-          sort {$wdls->{$a}{tries} <=> $wdls->{$b}{tries} or
-          ($wdls->{$b}{slotsfree} || $wdls->{$b}{SL}) <=> ($wdls->{$a}{slotsfree} || $wdls->{$a}{SL})
-          }keys %$wdls  );
-        #$self->log('dev', 'from can:',     @_   );  
-
-          
-          if ( my ($fromk) = $_[0]
-           ) {
-                                   my $from  = $wdls->{$fromk} ;
-			           
-			           my ($filename);
-			           for my $file (keys %{$self->{'want_download_filename'}{$tth}}) {
-my $partial = $file;
-     $partial = Encode::encode $self->{charset_fs}, $file     if $self->{charset_fs};
-    $partial = $self->{'partial_prefix'} . $partial . $self->{'partial_ext'};
-if (-s $partial){			            
-#$self->log('dev',  'already downloading: ' ,$file, -s $partial);
-
-			            $filename = $file;
-			             last ;
-}			           
-			           }
-			           
-			           
-			           
-              $filename //= (sort { $self->{'want_download_filename'}{$tth}{$a} <=> $self->{'want_download_filename'}{$tth}{$b} } keys %{ $self->{'want_download_filename'}{$tth} })[0];
+          my $wdls = $self->{'want_download'}{$tth} || {};
+          local @_ = (
+            #grep { $wdls->{$_}{slotsfree} or $wdls->{$_}{SL} }
+            sort {
+              $wdls->{$a}{tries} <=> $wdls->{$b}{tries}
+                or ( $wdls->{$b}{slotsfree} || $wdls->{$b}{SL} ) <=> ( $wdls->{$a}{slotsfree} || $wdls->{$a}{SL} )
+              } keys %$wdls
+          );
+          #$self->log('dev', 'from can:',     @_   );
+          if ( my ($fromk) = $_[0] ) {
+            my $from = $wdls->{$fromk};
+            my ($filename);
+            for my $file ( keys %{ $self->{'want_download_filename'}{$tth} } ) {
+              my $partial = $file;
+              $partial = Encode::encode $self->{charset_fs}, $file if $self->{charset_fs};
+              $partial = $self->{'partial_prefix'} . $partial . $self->{'partial_ext'};
+              if ( -s $partial ) {
+                #$self->log('dev',  'already downloading: ' ,$file, -s $partial);
+                $filename = $file;
+                last;
+              }
+            }
+            $filename //=
+              ( sort { $self->{'want_download_filename'}{$tth}{$a} <=> $self->{'want_download_filename'}{$tth}{$b} }
+                keys %{ $self->{'want_download_filename'}{$tth} } )[0];
             $filename //= $from->{FN};
             $filename =~ s{^.*[/\\]}{}g;
-         #$self->log( "selected22 [$filename] keys",( grep { $wdls->{$_}{slotsfree} or $wdls->{$_}{SL} } sort {$wdls->{$b}{tries} <=> $wdls->{$a}{tries} }keys %$wdls  ),"    from", Dumper $from,);
-            my $dst = $self->{'get_dir'} . $filename;
+#$self->log( "selected22 [$filename] keys",( grep { $wdls->{$_}{slotsfree} or $wdls->{$_}{SL} } sort {$wdls->{$b}{tries} <=> $wdls->{$a}{tries} }keys %$wdls  ),"    from", Dumper $from,);
+#my $dst = $self->{'get_dir'} . $filename;
             my $size = $from->{size} || $from->{SI} || 0;
             #my $sizenow = -s $dst || 0;
             #$self->log( 'dcdev', "selected23 -e $dst and ( !$size or $sizenow < $size" );
             #if ( !-e $dst or ( !$size or $sizenow < $size ) ) {
             ++$self->{'want_download'}{$tth}{$fromk}{tries};
-              $self->get( $from->{nick} || $from->{CID} || $from->{NI} , 
+            $self->get(
+              $from->{nick} || $from->{CID} || $from->{NI},
               #'TTH/' . $tth,
-               undef,
-               $dst, undef, undef, $size, $tth );
-              $self->{'downloading'}{$tth} = $self->{'want_download'}{$tth};
-              $self->{'downloading'}{$tth}{connect_start} = $time;
-              delete $self->{'want_download'}{$tth};
-              last;
+              undef, $filename, undef, undef, $size, $tth
+            );
+            $self->{'downloading'}{$tth} = $self->{'want_download'}{$tth};
+            $self->{'downloading'}{$tth}{connect_start} = $time;
+            delete $self->{'want_download'}{$tth};
+            last;
             #}
             #$work{'tthfrom'}{$s{tth}}
           }
         }
         #=cut
-
-
-
-        });
-
-
-
-
-
-
-      
-      
-      
-      schedule(
-        [ $self->{dev_auto_dump_first} || 20, $self->{dev_auto_dump_every} || 100 ],
-        our $dump_sub__ ||= sub {
-          $self->log('dev', "Writing dump");
-          open my $fh, '>', $self->{dev_auto_dump_file} || $0 . '.dump' or return;
-          print $fh Dumper $self;
-          close $fh;
-        }
-      ) if $self->{dev_auto_dump};
-
-
+      }
+    );
+    schedule(
+      [ $self->{dev_auto_dump_first} || 20, $self->{dev_auto_dump_every} || 100 ],
+      our $dump_sub__ ||= sub {
+        $self->log( 'dev', "Writing dump" );
+        open my $fh, '>', $self->{dev_auto_dump_file} || $0 . '.dump' or return;
+        print $fh Dumper $self;
+        close $fh;
+      }
+    ) if $self->{dev_auto_dump};
     return $self->wait_sleep(@params) if @params;
     return $self->recv_try( $self->{'work_sleep'} );
   };
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
-      $self->log( 'dcdmp', "rawrcv[" . ( $self->{'recv_hostip'} ? $self->{'recv_hostip'} . ':' . $self->{'recv_port'} : $self->{'host'} ) . "]:", $_ );
+      $self->log( 'dcdmp',
+        "rawrcv[" . ( $self->{'recv_hostip'} ? $self->{'recv_hostip'} . ':' . $self->{'recv_port'} : $self->{'host'} ) . "]:",
+        $_ );
       my ( $dst, $cmd, @param );
-      if (/^[<*]/) {
-        $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' );
-      }
+      if (/^[<*]/) { $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' ); }
       s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
       if ( $self->{'adc'} ) {
         $cmd =~ s/^([BCDEFHIU])//, $dst = $1;
         @param = ( [$dst], split / / );
-        if ( $dst eq 'B' or $dst eq 'F' or $dst eq 'U' or $self->{broadcast}) {
+        if ( $dst eq 'B' or $dst eq 'F' or $dst eq 'U' or $self->{broadcast} ) {
           #$self->log( 'dcdmp', "P0 $dst$cmd p=",(Dumper \@param));
           #push @{ $param[0] }, shift@param;
           push @{ $param[0] }, splice @param, 1, 1;
@@ -1002,7 +946,7 @@ if (-s $partial){
       if ( $cmd eq 'chatline' or $cmd eq 'welcome' or $cmd eq 'To' ) {
         #$self->log( 'dev', 'RCV pre encode', ($self->{charset_chat} ), @param, Dumper \@param);
         #$_ =  Encode::decode(($self->{charset_chat} ), $_) for @param;
-#!        $_ = Encode::encode $self->{charset_internal}, Encode::decode $self->{charset_chat}, $_ for @param;
+        #!        $_ = Encode::encode $self->{charset_internal}, Encode::decode $self->{charset_chat}, $_ for @param;
         #$self->log( 'dev', 'RCV postencode', @param, Dumper \@param);
         #Encode::encode $self->{charset_console},;
       } else {
@@ -1014,7 +958,7 @@ if (-s $partial){
       my @self;
       #@self = $self if $self->{'adc'};
       @self = $self;    #if !$self->{'nmdc'};
-                        #$self->handler( @self, $cmd . '_parse_bef_bef', @param );
+      #$self->handler( @self, $cmd . '_parse_bef_bef', @param );
       $self->handler( @self, $cmd . '_parse_bef', @param );
       if ( ref $self->{'parse'}{$cmd} eq 'CODE' ) {
         if ( !exists $self->{'no_print'}{$cmd} ) {
@@ -1044,8 +988,8 @@ if (-s $partial){
   $self->{'send'} ||= sub {
     my $self = shift;
     local $_;    # = join( '', @_ );
-                 #$self->{bytes_send} += length $_;
-                 #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
+    #$self->{bytes_send} += length $_;
+    #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
     eval { $_ = $self->{'socket'}->send(@_); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
@@ -1066,9 +1010,7 @@ if (-s $partial){
         $self->send_udp( $self->{'host'}, $self->{'port'}, join( '', @{ $self->{'send_buffer'} }, ) ),;
       } else {
         $self->log( 'err', "ERROR! no socket to send" ), return unless $self->{'socket'};
-        $self->send( 
-                Encode::encode $self->{charset_protocol},
-                join( '', @{ $self->{'send_buffer'} }, ) );
+        $self->send( Encode::encode $self->{charset_protocol}, join( '', @{ $self->{'send_buffer'} }, ) );
         #local $_;
         #eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };
         #$self->log( 'err', 'send error', $@ ) if $@;
@@ -1093,7 +1035,7 @@ if (-s $partial){
     };
   };
   $self->{'get'} ||= sub {
-    my ( $self, $nick, $file, $as, $from, $to, $size, $tth ) = @_; #TODO hash
+    my ( $self, $nick, $file, $as, $from, $to, $size, $tth ) = @_;    #TODO hash
     #$self->log( 'dcdev', 'wantcall', $self, $nick, $file, $as, $from, $to, $size);
     #my $size;
     #$size = $to unless $from;
@@ -1103,29 +1045,32 @@ if (-s $partial){
     $cid = $nick if $nick =~ /^[A-Z0-9]{39}$/;
     $cid ||= $self->{peers}{$sid}{INF}{ID};
     $sid ||= $self->{peers}{$cid}{SID};
-	$sid ||= $cid if $self->{broadcast};
-$file //= 'TTH/' . $tth if $tth;	
-    local $_ = $self->{'download_to'} . ($as || $file);
-	#$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
-
-my $sizenow = -s $_;	
- if ($sizenow) {
- 	return;	
-    #$self->log( 'warn', "file [$_] already exists size = ", -s $_ , " must be=$size");
-    #return if $size and $size == $sizenow;
- #$from = $sizenow  if $sizenow < $size;  
- }
-    #$to ||= $size - $from; 
+    $sid ||= $cid if $self->{broadcast};
+    $file //= 'TTH/' . $tth if $tth;
+    local $_ = $self->{'download_to'} . ( $as || $file );
+    #$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
+    my $sizenow = -s $_;
+    if ($sizenow) {
+      return;
+      #$self->log( 'warn', "file [$_] already exists size = ", -s $_ , " must be=$size");
+      #return if $size and $size == $sizenow;
+      #$from = $sizenow  if $sizenow < $size;
+    }
+    #$to ||= $size - $from;
     #todo by nick
     $self->wait_clients();
     #$self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $nick }{$file} = $as || $file || '';
     #$self->log( 'dcdev', "wantid: $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick");
-    $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} ||  $nick }{$file} =
-      { 'filename' => $file, 'fileas' => $as || $file || '', 'file_recv_to' => $to, 'file_recv_from' => $from, 
-      'file_recv_size' => $size, 
-      'file_recv_tth'=>$tth };
+    $self->{'want'}{ $self->{peers}{$cid}{'INF'}{'ID'} || $self->{peers}{$sid}{'INF'}{'ID'} || $nick }{$file} = {
+      'filename'       => $file,
+      'fileas'         => $as || $file || '',
+      'file_recv_to'   => $to,
+      'file_recv_from' => $from,
+      'file_recv_size' => $size,
+      'file_recv_tth'  => $tth
+    };
     my $peer = $self->{peers}{$cid} || $self->{peers}{$sid} || $self->{peers}{$nick} || {};
-    $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]"); #, Dumper $peer->{INF});
+    $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]" );    #, Dumper $peer->{INF});
     if ( $self->{'adc'} ) {
       #my $token = $self->make_token($nick);
       local @_;
@@ -1145,7 +1090,7 @@ my $sizenow = -s $_;
     my $self = shift;
     return if length $self->{'filename'};
     my $peerid = $self->{'peerid'} || $self->{'peernick'};
-  #$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
+    #$self->log( 'dcdev','file_select000',$peerid,  $self->{'filename'}, $self->{'fileas'}, Dumper $self->{'want'});
     for my $file ( keys %{ $self->{'want'}{$peerid} } ) {
       #( $self->{'filename'}, $self->{'fileas'} ) = ( $_, $self->{'want'}{$peerid}{$_} );
       $self->{$_} = $self->{'want'}{$peerid}{$file}{$_} for keys %{ $self->{'want'}{$peerid}{$file} };
@@ -1157,8 +1102,7 @@ my $sizenow = -s $_;
       #$self->{'fileas'}
       last;
     }
-    delete $self->{'downloading'}{$self->{'file_recv_tth'}}{connect_start};
-
+    delete $self->{'downloading'}{ $self->{'file_recv_tth'} }{connect_start};
     #$self->log( 'dcdev', 'file_select2', $self->{'filename'}, $self->{'fileas'} );
     return unless defined $self->{'filename'};
     unless ( $self->{'filename'} ) {
@@ -1178,29 +1122,28 @@ my $sizenow = -s $_;
       $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
     }
     $self->{'file_recv_dest'} = ( $self->{'fileas'} || $self->{'filename'} );
-
     #$self->{'file_recv_dest'}
-#$self->log( 'dcdev', "pre enc filename [$self->{'file_recv_dest'}] [$self->{charset_fs} ne $self->{charset_protocol}]");
+    #$self->log( 'dcdev', "pre enc filename [$self->{'file_recv_dest'}] [$self->{charset_fs} ne $self->{charset_protocol}]");
     #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
-    $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_dest'}                                  
-      if $self->{charset_fs};# ne $self->{charset_protocol};
-#$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
+    $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_dest'}
+      if $self->{charset_fs};    # ne $self->{charset_protocol};
+    #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     mkdir_rec $self->{'partial_prefix'} if $self->{'partial_prefix'};
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_dest'} . $self->{'partial_ext'};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
-    $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'} if  $self->{'file_recv_size'} and $self->{'file_recv_from'};
+    $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
+      if $self->{'file_recv_size'} and $self->{'file_recv_from'};
 #$self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'},      'from', $self->{'file_recv_from'} );
   };
   $self->{'file_open'} ||= sub {
     my $self = shift;
     #$self->{'fileas'}=$_[0] if !length $self->{'fileas'} or length $_[0];
     #$self->{'filetotal'} = $_[1]if ! $self->{'filetotal'} or $_[1];
-
     #$self->{'filetotal'} //= $self->{'file_recv_size'}
     my $oparam = $self->{'fileas'} eq '-' ? '>-' : '>>' . $self->{'file_recv_partial'};
     $self->handler( 'file_open_bef', $oparam );
-   # $self->log(      'dbg',             "file_open pre", $oparam, 'want bytes', $self->{'filetotal'}, 'as=',      $self->{'fileas'}, 'f=',            $self->{'filename'}    );
-    #$self->log( 'dcdev', "open [$oparam]" );
+# $self->log(      'dbg',             "file_open pre", $oparam, 'want bytes', $self->{'filetotal'}, 'as=',      $self->{'fileas'}, 'f=',            $self->{'filename'}    );
+#$self->log( 'dcdev', "open [$oparam]" );
     open( $self->{'filehandle'}, $oparam )
       or $self->log( 'dcerr', "file_open error", $!, $oparam ), $self->handler( 'file_open_error', $!, $oparam ), return 1;
     binmode( $self->{'filehandle'} );
@@ -1237,27 +1180,25 @@ my $sizenow = -s $_;
     if ( $self->{'filehandle'} ) {
       #$self->log( 'dcerr', 'file_close',2);
       close( $self->{'filehandle'} ), delete $self->{'filehandle'};
-      if ($self->{'filebytes'} == $self->{'filetotal'} ) {
-      mkdir_rec $self->{'download_to'} if $self->{'download_to'};
-      if ( length $self->{'partial_ext'}) {
-        #$self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
-        $self->log( 'dcerr', 'cant move finished file' ) if !rename $self->{'file_recv_partial'}, $self->{'download_to'} . $self->{'file_recv_dest'};
-      }
-      delete $self->{'downloading'}{$self->{'file_recv_tth'}};
-      ( $self->{parent} || $self )->handler( 'file_recieved', $self->{'download_to'} .$self->{'file_recv_dest'}, $self->{'filename'} );
+      if ( $self->{'filebytes'} == $self->{'filetotal'} ) {
+        mkdir_rec $self->{'download_to'} if $self->{'download_to'};
+        if ( length $self->{'partial_ext'} ) {
+          #$self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
+          $self->log( 'dcerr', 'cant move finished file' )
+            if !rename $self->{'file_recv_partial'}, $self->{'download_to'} . $self->{'file_recv_dest'};
+        }
+        delete $self->{'downloading'}{ $self->{'file_recv_tth'} };
+        ( $self->{parent} || $self )
+          ->handler( 'file_recieved', $self->{'download_to'} . $self->{'file_recv_dest'}, $self->{'filename'} );
       }
     }
-
-      if ($self->{'downloading'}{$self->{'file_recv_tth'}}) {
+    if ( $self->{'downloading'}{ $self->{'file_recv_tth'} } ) {
 #$self->log( 'dev', "onclose: downloading [$self->{'file_recv_tth'}], b$self->{'filebytes'} <= t$self->{'filetotal'} || $self->{'file_recv_size'}" );
-          if ($self->{'filebytes'} <= $self->{'filetotal'}||$self->{'file_recv_size'}){
-         $self->{'want_download'}{$self->{'file_recv_tth'}} = $self->{'downloading'}{$self->{'file_recv_tth'}};
-        } #else {                }
-              delete      $self->{'downloading'}{$self->{'file_recv_tth'}};
-      
-      }
-
-    
+      if ( $self->{'filebytes'} <= $self->{'filetotal'} || $self->{'file_recv_size'} ) {
+        $self->{'want_download'}{ $self->{'file_recv_tth'} } = $self->{'downloading'}{ $self->{'file_recv_tth'} };
+      }    #else {                }
+      delete $self->{'downloading'}{ $self->{'file_recv_tth'} };
+    }
     $self->{'select_send'}->remove( $self->{'socket'} ), close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
       #$self->{'socket'}->flush(),
       if $self->{'filehandle_send'};
@@ -1284,11 +1225,11 @@ my $sizenow = -s $_;
   };
   $self->{'file_send'} ||= sub {
     my $self = shift;
-    $self->log( 'dcdev', 'file_send', Dumper \@_);
+    $self->log( 'dcdev', 'file_send', Dumper \@_ );
     my ( $file, $start, $size, $as ) = @_;
     $start //= 0;
     my $filesize = -s $file;
-    $size =  $filesize - $start if $size <= 0;
+    $size = $filesize - $start if $size <= 0;
     $self->log( 'dcerr', "cant find [$file]" ), $self->disconnect(), return if !-e $file or -d $file;
     if ( open $self->{'filehandle_send'}, '<', $file ) {
       binmode( $self->{'filehandle_send'} );
@@ -1299,10 +1240,8 @@ my $sizenow = -s $_;
       $self->{'file_send_offset'} = $start || 0;
       $self->{'file_send_left'}   = $size;
       $self->log( 'dev', "sendsize=$size filesize=$filesize from", $start, 'e', -e $file, $file, $self->{'file_send_total'} );
-
-#$self->{'filetotal'} = $self->{'file_send_offset'} + $self->{'file_send_left'};	  
-	  $self->file_close(), return if $start >= $self->{'file_send_total'}; 
-	  
+      #$self->{'filetotal'} = $self->{'file_send_offset'} + $self->{'file_send_left'};
+      $self->file_close(), return if $start >= $self->{'file_send_total'};
       if ( $self->{'adc'} ) { $self->cmd( 'C', 'SND', 'file', $as || $name, $start, $size ); }
       else                  { $self->cmd( 'ADCSND', 'file', $as || $name, $start, $size ); }
       $self->{'status'} = 'transfer';
@@ -1329,12 +1268,12 @@ my $sizenow = -s $_;
     #my $readed =
     my $sent;
     if ( $INC{'Sys/Sendfile.pm'} ) {    #works
-          #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
+      #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
       $self->{'file_send_offset'} += $sent =
         Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
- #);
- #$self->log( 'dev', 'ssendfile0', "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sent=$sent" );
- #$self->{'file_send_offset'} += $sent;
+     #);
+     #$self->log( 'dev', 'ssendfile0', "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sent=$sent" );
+     #$self->{'file_send_offset'} += $sent;
     }
 #sux
 #elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
@@ -1366,10 +1305,10 @@ my $sizenow = -s $_;
       read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
         $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
         unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
-                                                   #send $self->{'socket'},
-                                                   #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
-                                                   #my $sent;
-                                                   #$self->log(      'snd',      length $self->{'file_send_buf'},
+      #send $self->{'socket'},
+      #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
+      #my $sent;
+      #$self->log(      'snd',      length $self->{'file_send_buf'},
       $sent = $self->send( $self->{'file_send_buf'} );
       #eval {
       #$sent = $self->{'socket'}->send( $self->{'file_send_buf'} );
@@ -1385,7 +1324,7 @@ my $sizenow = -s $_;
       $self->{__stat_} ||= sub {
         our ( $lastmark, $lasttime );
         $self->log(
-          'dev',                       "sent bytes",                    #length $self->{'file_send_buf'},
+          'dev',                   "sent bytes",                      #length $self->{'file_send_buf'},
           "sent=[$sent] of buf [", length $self->{'file_send_buf'},
           "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now", $self->{'file_send_offset'}, 'of',
           $self->{'file_send_total'}, 's=', ( $self->{'file_send_offset'} - $lastmark ) / ( time - $lasttime or 1 ),
@@ -1452,13 +1391,12 @@ my $sizenow = -s $_;
     };
   $self->{'download'} ||= sub {
     my $self = shift;
-    my ( $file ) = @_;
-	#$self->log('dev', "0s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
+    my ($file) = @_;
+    #$self->log('dev', "0s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
     push @{ $self->{'queue_download'} ||= [] }, $file;
-	#$self->log('dev', "1s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
+    #$self->log('dev', "1s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
     $self->{'want_download'}{$file} ||= {};
   };
-
   $self->{'get_peer_addr'} ||= sub () {
     my ( $self, $recv ) = @_;
     return unless $self->{'socket'};
@@ -1539,9 +1477,10 @@ my $sizenow = -s $_;
     $self->sendcmd(
       $dst, $cmd,
       #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-      ( #$self->{'broadcast'} ? $self->{'INF'}{'SID'} #$self->{'INF'}{'ID'} 
-      #: 
-      ($dst eq 'C' or !length $self->{'INF'}{'SID'}) ? () : $self->{'INF'}{'SID'} ),
+      (    #$self->{'broadcast'} ? $self->{'INF'}{'SID'} #$self->{'INF'}{'ID'}
+        #:
+        ( $dst eq 'C' or !length $self->{'INF'}{'SID'} ) ? () : $self->{'INF'}{'SID'}
+      ),
       $self->adc_make_string(@_)
         #( $dst eq 'D' || !length $self->{'sid'} ? () : $self->{'sid'} ),
     );
@@ -1592,7 +1531,7 @@ my $sizenow = -s $_;
       #my $name=
       #print "PARSE[$1=$_]\n",
       $_{$1} = $self->adc_string_decode($_);
-    #$self->log('dev', "p1:$1=$_{$1}");
+      #$self->log('dev', "p1:$1=$_{$1}");
     }
     return \%_;
     #return ($dst,$peerid)

@@ -20,7 +20,7 @@ use statlib;
 #warn Dumper \%config, \%psmisc::config, \%statlib::config, \%statpl::config, \%main::config, \%pssql::config,;
 #warn Dumper \%INC, \@INC;
 $config{'queue_recalc_every'} ||= 60;
-$static{'no_sig_log'} = 1;                #test
+$static{'no_sig_log'} = 1;    #test
 print(
   "usage:
  $0 [--configParam=configValue] [adc|dchub://]host[:port] [more params and hubs]\n
@@ -31,14 +31,12 @@ print(
   if !$ARGV[0] and !$config{dc}{host};
 my $n = -1;
 my ( $tq, $rq, $vq ) = $db->quotes();
-
 #my @dirs = grep { -d } @ARGV;
 ##printlog('dev', 'started', @ARGV),
 #my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
 #@ARGV = grep { !-d } @ARGV;
 #Net::DirectConnect::filelist->new(  %{ $config{dc} || {} } )->filelist_make(@dirs), exit
 #  if ($filelist and !caller); # or (!@ARGV and !$config{dc}{host});
-
 for my $arg (@ARGV) {
   ++$n;
   #print "ar[$arg]";
@@ -149,6 +147,7 @@ for my $arg (@ARGV) {
         for qw(queries_top_string_ queries_top_tth_ results_top_);
     }
 =cut
+
   } elsif ( $arg eq 'stat' ) {
     $ARGV[$n]             = undef;
     $db->{'auto_repair'}  = 1;
@@ -202,7 +201,7 @@ local $SIG{__DIE__} = sub {
   psmisc::caller_trace(5);
 };
 my @hosts = grep { m{^\w+://} } @ARGV;
-for ( grep { length $_ } @ARGV ? @hosts : psmisc::array($config{dc}{host}) ) {
+for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
   local @_;
   if ( /^-/ and @_ = split '=', $_ ) {
     $config{config_file} = $_[1], psmisc::config() if $_[0] eq '--config';
@@ -211,7 +210,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array($config{dc}{host}) ) {
     my $hub = $_;
     ++$work{'hubs'}{$hub};
     my $dc = Net::DirectConnect->new(
-      modules            => {'filelist' => 1},
+      modules     => { 'filelist' => 1 },
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
       #'log'		=>	sub {},	# no logging
@@ -265,7 +264,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array($config{dc}{host}) ) {
               ];
               psmisc::printlog( 'warn', "reasking" ), $work{'toask'} = [ (
                   sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} } grep {
-                          $work{'ask'}{$_} >= $config{'hit_to_ask'}
+                    $work{'ask'}{$_} >= $config{'hit_to_ask'}
                       and $work{'asked'}{$_}
                       and $work{'asked'}{$_} + $config{'ask_retry'} < $time
                     } keys %{ $work{'ask'} }
@@ -325,8 +324,8 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array($config{dc}{host}) ) {
         'chatline' => sub {
           my $dc = shift;
           #psmisc::printlog( 'chatline', @_ );
-#my $s = join ' ', @_;          $dc->say( 'chatline', $s ) if utf8::valid $s;  
-$dc->say( 'chatline', @_);
+          #my $s = join ' ', @_;          $dc->say( 'chatline', $s ) if utf8::valid $s;
+          $dc->say( 'chatline', @_ );
           my %s;
           ( $s{nick}, $s{string} ) = $_[0] =~
             #/^<([^>]+)> (.+)$/s;
@@ -418,6 +417,7 @@ $dc->say( 'chatline', @_);
             }
           );
 =cut
+
           ++$work{'stat'}{'QUI'};
         },
         'RES' => sub {
@@ -440,8 +440,7 @@ $dc->say( 'chatline', @_);
       },
       %config,
       %{ $config{dc} || {} },
-      'host'      => $hub,
-
+      'host' => $hub,
     );
     #$dc->connect($hub);
     #$dc->{'handler'}{'SCH_parse_aft'} = $dc->{'handler'}{'Search_parse_aft'};
@@ -456,6 +455,7 @@ $dc->say( 'chatline', @_);
       $dc->destroy();
     };
 =cut	
+
     push @dc, $dc;
     $_->work() for @dc;
   }

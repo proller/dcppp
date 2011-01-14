@@ -25,10 +25,10 @@ $config{'dcbot_param'} = sub {
     'Version' => rand_int( 1,           1000 ),
     'V'       => rand_int( 1,           1000 ),
     'M'       => 'P',                   #mode - passive
-                                                                                                 #'log'		=>	sub {},	# no logging
-           #'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
-           #'min_chat_delay'	=> 0.401,
-           #'min_cmd_delay'	=> 0.401,
+    #'log'		=>	sub {},	# no logging
+    #'log'		=>	sub {return if $_[0] =~ /dbg|dmp/},	# no logging
+    #'min_chat_delay'	=> 0.401,
+    #'min_cmd_delay'	=> 0.401,
   };
 };
 $config{'handler'}{'create_aft'} = sub {
