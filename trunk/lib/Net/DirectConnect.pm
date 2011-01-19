@@ -368,7 +368,8 @@ sub func {
       'reconnect_sleep' => 5, 'partial_ext' => '.partial', 'file_send_by' => 1024 * 1024,    #1024 * 64,
       'local_mask_rfc' => [qw(10 172.[123]\d 192\.168)], 'status' => 'disconnected', 'time_start' => time,
       #'peers' => {},
-      'download_to' => './downloads/', 'partial_prefix' => './downloads/Incomplete/',
+      'download_to' => './downloads/', 
+      #'partial_prefix' => './downloads/Incomplete/',
       #ADC
       #number => ++$global{'total'},
       #};
@@ -379,6 +380,8 @@ sub func {
       #charset_nick => 'utf8',
     );
     $self->{$_} //= $_{$_} for keys %_;
+    $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/',
+
     $self->{$_} //= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients);   #want share_full share_tth
     #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
     $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download);
@@ -1047,12 +1050,13 @@ sub func {
     $sid ||= $self->{peers}{$cid}{SID};
     $sid ||= $cid if $self->{broadcast};
     $file //= 'TTH/' . $tth if $tth;
-    local $_ = $self->{'download_to'} . ( $as || $file );
+    my  $full = ( $as || $file );
+    $full = $self->{'download_to'} . $full unless $full =~ m{[/\\]};
     #$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
-    my $sizenow = -s $_;
+    my $sizenow = -s $full;
     if ($sizenow) {
+      $self->log( 'info', "file [$_] already exists size=$sizenow must be=$size");
       return;
-      #$self->log( 'warn', "file [$_] already exists size = ", -s $_ , " must be=$size");
       #return if $size and $size == $sizenow;
       #$from = $sizenow  if $sizenow < $size;
     }
@@ -1067,7 +1071,8 @@ sub func {
       'file_recv_to'   => $to,
       'file_recv_from' => $from,
       'file_recv_size' => $size,
-      'file_recv_tth'  => $tth
+      'file_recv_tth'  => $tth,
+      #'file_recv_full'  => $full
     };
     my $peer = $self->{peers}{$cid} || $self->{peers}{$sid} || $self->{peers}{$nick} || {};
     $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]" );    #, Dumper $peer->{INF});
@@ -1120,8 +1125,11 @@ sub func {
         $self->{'filename'} = 'MyList' . $self->{'fileext'};
       }
       $self->{'fileas'} .= $self->{'fileext'} if $self->{'fileas'};
+    	$self->{'file_recv_filelist'} = 1;
     }
     $self->{'file_recv_dest'} = ( $self->{'fileas'} || $self->{'filename'} );
+    $self->{'file_recv_full'} = $self->{'file_recv_dest'};
+    $self->{'file_recv_full'} = $self->{'download_to'} . $self->{'file_recv_full'} unless $self->{'file_recv_full'} =~ m{[/\\]};
     #$self->{'file_recv_dest'}
     #$self->log( 'dcdev', "pre enc filename [$self->{'file_recv_dest'}] [$self->{charset_fs} ne $self->{charset_protocol}]");
     #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
@@ -1129,11 +1137,12 @@ sub func {
       if $self->{charset_fs};    # ne $self->{charset_protocol};
     #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     mkdir_rec $self->{'partial_prefix'} if $self->{'partial_prefix'};
-    $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_dest'} . $self->{'partial_ext'};
+    $self->{'file_recv_partial'} =  $self->{'file_recv_dest'} . $self->{'partial_ext'};
+    $self->{'file_recv_partial'} = $self->{'partial_prefix'} .  $self->{'file_recv_partial'} unless $self->{'file_recv_partial'} =~ m{[/\\]};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
     $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
       if $self->{'file_recv_size'} and $self->{'file_recv_from'};
-#$self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, $self->{'file_recv_partial'},      'from', $self->{'file_recv_from'} );
+$self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, 'part:',$self->{'file_recv_partial'}, 'full:',$self->{'file_recv_full'},     'from', $self->{'file_recv_from'} );
   };
   $self->{'file_open'} ||= sub {
     my $self = shift;
@@ -1184,12 +1193,12 @@ sub func {
         mkdir_rec $self->{'download_to'} if $self->{'download_to'};
         if ( length $self->{'partial_ext'} ) {
           #$self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
-          $self->log( 'dcerr', 'cant move finished file' )
-            if !rename $self->{'file_recv_partial'}, $self->{'download_to'} . $self->{'file_recv_dest'};
+          $self->log( 'dcerr', 'cant move finished file', $self->{'file_recv_partial'}, $self->{'file_recv_full'} )
+            if !rename $self->{'file_recv_partial'}, $self->{'file_recv_full'};
         }
         delete $self->{'downloading'}{ $self->{'file_recv_tth'} };
         ( $self->{parent} || $self )
-          ->handler( 'file_recieved', $self->{'download_to'} . $self->{'file_recv_dest'}, $self->{'filename'} );
+          ->handler( 'file_recieved', $self->{'file_recv_full'}, $self->{'filename'} );
       }
     }
     if ( $self->{'downloading'}{ $self->{'file_recv_tth'} } ) {
@@ -1202,8 +1211,7 @@ sub func {
     $self->{'select_send'}->remove( $self->{'socket'} ), close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
       #$self->{'socket'}->flush(),
       if $self->{'filehandle_send'};
-    delete $self->{'file_send_left'};
-    delete $self->{'file_send_total'};
+    delete $self->{$_} for 'file_send_left','file_send_total','file_recv_filelist';
     $self->{'status'} = 'connected';
   };
   $self->{'file_send_tth'} ||= sub {
