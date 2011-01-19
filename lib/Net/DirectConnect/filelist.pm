@@ -490,7 +490,7 @@ return unless $name;
 =cut
 
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth );
-    $self->share_add_file( $full, $tth );
+    $self->share_add_file( $full, $tth ) unless $self->{'file_recv_filelist'};# unless $self->{'no_auto_share_downloaded'};
     #TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
     $self->share_changed();
     };
