@@ -537,10 +537,6 @@ sub init {
         @{ $_[0] || $self->{'search_last'} }
       );
     },
-    'make_hub' => sub {
-      my $self = shift if ref $_[0];
-      $self->{'hub_name'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
-    },
     #
     'stat_hub' => sub {
       my $self = shift if ref $_[0];
