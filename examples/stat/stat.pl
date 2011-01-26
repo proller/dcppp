@@ -175,7 +175,7 @@ sub close_all {
 sub flush_all { $db->flush_insert(); }
 
 sub print_info {
-  psmisc::printlog( 'info', "queue len=", scalar @{ $work{'toask'} || [] }, " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+  psmisc::printlog( 'info', "queue len=", scalar @{ $work{'toask'} || [] }, " first hits=", $work{'ask'}{ $work{'toask'}[0] }, ' asks=', scalar keys %{$work{'ask'}});
   local @_ = grep { $_ and $_->active() } @dc;
   psmisc::printlog 'info', 'active hubs:', map { $_->{'host'} . ':' . $_->{'status'} } @_;
   psmisc::printlog 'info', 'hashes:',      map { $_ . '=' . scalar %{ $work{$_} || {} } } qw(ask asked ask_db);
@@ -229,7 +229,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
         #'Search_parse_aft' => sub {
         'Search' => sub {
           my $dc = shift;
-          #printlog 'sch', Dumper @_ if $dc->{adc};
+      #$dc->log('sch', Dumper @_ );#if $dc->{adc};
           my $who    = shift if $dc->{adc};
           my $search = shift if $dc->{nmdc};
           my $s = $_[0] || {};
@@ -262,7 +262,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
                   grep { $work{'ask'}{$_} >= $config{'hit_to_ask'} and !exists $work{'asked'}{$_} } keys %{ $work{'ask'} }
                 )
               ];
-              psmisc::printlog( 'warn', "reasking" ), $work{'toask'} = [ (
+              $dc->log( 'warn', "reasking" ), $work{'toask'} = [ (
                   sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} } grep {
                     $work{'ask'}{$_} >= $config{'hit_to_ask'}
                       and $work{'asked'}{$_}
@@ -271,17 +271,17 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
                 )
                 ]
                 unless @{ $work{'toask'} };
-              psmisc::printlog( 'info', "queue len=", scalar @{ $work{'toask'} },
-                " first hits=", $work{'ask'}{ $work{'toask'}[0] } );
+              $dc->log( 'info', "queue len=", scalar @{ $work{'toask'} },
+                " first hits=", $work{'ask'}{ $work{'toask'}[0] } , ' asks=', scalar keys %{$work{'ask'}} );
             }
           );
           psmisc::schedule(
             [ 3600, 3600 ],
             our $hashes_cleaner_ ||= sub {
               my $min = scalar keys %{ $work{'hubs'} || {} };
-              psmisc::printlog 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} };
+              $dc->log('info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} });
               delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
-              psmisc::printlog 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} };
+              $dc->log('info', "queue clear ok now", scalar %{ $work{'ask'} || {} });
             }
           );
           psmisc::schedule(
@@ -304,7 +304,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
               }
               if ( !$dc->{'search_todo'} ) {
                 $work{'asked'}{$q} = int time;
-                psmisc::printlog( 'info', "search", $q, 'on', $dc->{'host'} );
+                $dc->log( 'info', "search", $q, 'on', $dc->{'host'} );
                 $dc->search($q);
               } else {
                 unshift @{ $work{'toask'} }, $q;
@@ -333,7 +333,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
           if ( $s{nick} and $s{string} ) {
             $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub_name'}, } );
           } else {
-            psmisc::printlog( 'err', 'wtf chat', @_ );
+            $dc->log( 'err', 'wtf chat', @_ );
           }
         },
         'welcome' => sub {
@@ -420,9 +420,10 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
 
           ++$work{'stat'}{'QUI'};
         },
-        'RES' => sub {
+        'RES' => sub { #TODO
+          my $dc = shift;
           #$db->insert_hash( 'results', \%s );
-          psmisc::printlog 'RES:', Dumper @_;
+          $dc->log('RES:', Dumper @_);
           ++$work{'stat'}{'RES'};
         },
         #'FSCH' => sub {
@@ -460,6 +461,8 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
     $_->work() for @dc;
   }
 }
+$_->{___work} = \%work for @dc;
+
 while ( my @dca = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dca;
   psmisc::schedule(
@@ -479,7 +482,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
         $dc->work(1);
         if   ( $dc->{nmdc} ) { $share += $dc->{'NickList'}{$_}{'sharesize'} for @users; }
         else                 { $share += $dc->{'peers_sid'}{$_}{INF}{'SS'}  for @users; }
-        psmisc::printlog 'info', "hubsize $dc->{'hub_name'}: bytes = $share users=", scalar @users;
+        $dc->log( 'info', "hubsize $dc->{'hub_name'}: bytes = $share users=", scalar @users);
         $db->insert_hash( 'hubs', { 'time' => $time, 'hub' => $dc->{'hub_name'}, 'size' => $share, 'users' => scalar @users } )
           if $share;
       }
@@ -493,7 +496,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     if $config{'use_slow'};
 #psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
-  #=z
+=z
   psmisc::schedule(
     [ 10, 100 ],
     our $dump_sub__ ||= sub {
@@ -501,7 +504,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
       psmisc::file_rewrite( 'dump', Dumper @dc );
     }
   ) if $config{'debug'};
-  #=cut
+=cut
 }
 psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
 #psmisc::caller_trace(20);

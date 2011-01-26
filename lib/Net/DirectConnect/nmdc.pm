@@ -144,5 +144,11 @@ sub init {
     /(.+):(.+)/, $save->{$1} = $2 for split /,/, $tag;
     return wantarray ? %$save : $save;
   };
+    $self->{'make_hub'} ||= sub {
+      my $self = shift if ref $_[0];
+      $self->{'hub_name'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
+    },
+
+
 }
 1;
