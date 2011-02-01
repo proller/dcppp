@@ -73,7 +73,7 @@ $config{'sql'} ||= {
       'string' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', 'index' => 1 ),
     },
     'results' => {
-      'time'   => pssql::row( 'time', 'index' => 1,         'purge'  => 30, ),
+      'time'   => pssql::row( 'time', 'index' => 1,         'purge'  => 300, ),
       'string' => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 255, 'index' => 1, 'default' => '', ),
       'hub'    => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
       'nick'   => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 32, 'index' => 1, 'default' => '', ),
