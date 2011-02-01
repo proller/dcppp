@@ -73,7 +73,7 @@ $config{'human'}{'magnet-dl'} = sub {
     ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
     ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' ),
     ( $string ? 'kt=' . psmisc::encode_url($string) : '' ), ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'} : '' );
-  return '&nbsp;<a class="magnet-darr" href="magnet:?' . $_ . '">[&dArr;]</a>' if $_;
+  return '&nbsp;<a class="magnet-darr" href="magnet:?' . $_ . '">[&dArr;]</a> <a href="http://dc.proisk.ru/?' . ( $row->{'string'} ? "q=".$row->{'string'}: "tiger=$row->{'tth'}").'">P</a>' if $_;
   return '';
 };
 $config{'human'}{'dchub-dl'} = sub {
