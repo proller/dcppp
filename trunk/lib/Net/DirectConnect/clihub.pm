@@ -590,10 +590,10 @@ sub init {
           #my $self =  ref $_[0] ? shift() : $self;
           $self->log( 'dev', "PSR", @_ ) if $self;
         },
-        'UPSR' => sub {
+        'UPSR' => sub { # TODO
           my $self = shift if ref $_[0];
           #my $self =  ref $_[0] ? shift() : $self;
-          $self->log( 'dev', "UPSR", 'udp' ) if $self;
+          #!$self->log( 'dev', "UPSR", 'udp' ) if $self;
           for ( split /\n+/, $_[0] ) { return $self->parser($_) if /^\$SR/; }
           #$self->log( 'dev', "UPSR", @_ ) if $self;
         },

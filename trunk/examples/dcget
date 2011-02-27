@@ -164,18 +164,21 @@ my @dc;
           our $queueask_ ||= sub {
             my ($dc) = @_;
             my $q;
+#psmisc::printlog( 'dev', "getbest run");
             while ( $q = shift @{ $work{'toask'} } or return ) {
+#psmisc::printlog( 'dev', "getbest:", $q);
               last if ( !exists $work{'asked'}{$q} );
 #$work{'ask_db'}{$q} = $work{'asked'}{$q} = $r->{'time'}, next                  if $r and $r->{'time'};    # + $config{'ask_retry'} > time;
 #$work{'ask_db'}{$q} = 0;
 #last;
             }
             return unless length $q;
+#psmisc::printlog( 'dev', "getbest todo [$dc->{'search_todo'}]", );
             if ( !$dc->{'search_todo'} ) {
               $work{'asked'}{$q} = int time;
               psmisc::printlog( 'info', "search", $q, 'on', $dc->{'host'} );
-              $dc->search($q);
-              #$dc->download($q);
+              #$dc->search($q);
+              $dc->download($q);
             } else {
               unshift @{ $work{'toask'} }, $q;
             }
