@@ -1130,11 +1130,11 @@ sub func {
     $self->{'file_recv_dest'} = ( $self->{'fileas'} || $self->{'filename'} );
     $self->{'file_recv_full'} = $self->{'file_recv_dest'};
     $self->{'file_recv_full'} = $self->{'download_to'} . $self->{'file_recv_full'} unless $self->{'file_recv_full'} =~ m{[/\\]};
+    $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_dest'}
+      if $self->{charset_fs};    # ne $self->{charset_protocol};
     #$self->{'file_recv_dest'}
     #$self->log( 'dcdev', "pre enc filename [$self->{'file_recv_dest'}] [$self->{charset_fs} ne $self->{charset_protocol}]");
     #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
-    $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_dest'}
-      if $self->{charset_fs};    # ne $self->{charset_protocol};
     #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     mkdir_rec $self->{'partial_prefix'} if $self->{'partial_prefix'};
     $self->{'file_recv_partial'} =  $self->{'file_recv_dest'} . $self->{'partial_ext'};
@@ -1193,6 +1193,9 @@ $self->log( 'dcdev', 'file_select3', $self->{'filename'}, $self->{'fileas'}, 'pa
         mkdir_rec $self->{'download_to'} if $self->{'download_to'};
         if ( length $self->{'partial_ext'} ) {
           #$self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
+    local $self->{'file_recv_full'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_full'}
+      if $self->{charset_fs};    # ne $self->{charset_protocol};
+
           $self->log( 'dcerr', 'cant move finished file', $self->{'file_recv_partial'}, $self->{'file_recv_full'} )
             if !rename $self->{'file_recv_partial'}, $self->{'file_recv_full'};
         }
