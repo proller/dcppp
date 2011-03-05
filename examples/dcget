@@ -35,6 +35,7 @@ psmisc->import qw(:log);
 #psmisc->import qw(:config :log printlog);
 #use pssql;
 use Net::DirectConnect;
+use Net::DirectConnect::filelist;
 #$config{disconnect_after}     //= 10;
 #$config{disconnect_after_inf} //= 0;
 psmisc::configure();      #psmisc::lib_init();
@@ -52,25 +53,46 @@ psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #mkdir $config{'get_dir'};
 #exit;
 #use Net::DirectConnect::adc;
+my $log = sub (@) {
+  my $dc = ref $_[0] ? shift : {};
+  psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
+};
+
 my @todl = grep { /^[A-Z0-9]{39}$/ or /^-/ } @ARGV;
 s/^-// for @todl;
 @ARGV = grep { !(/^[A-Z0-9]{39}$/ or /^-/) } @ARGV;
+
+
+$SIG{PIPE} = sub { printlog( 'sig', 'PIPE' ) };
+my @dirs = grep { -d } @ARGV;
+#printlog('dev', 'started', @ARGV),
+my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
+@ARGV = grep { !-d } @ARGV;
 my @hosts = grep { m{^\w+://} } @ARGV;
+
+Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
+  if ($filelist and !caller) or (!@hosts and !$config{dc}{host});
+
+
+
+
 my @dc;
 @dc = map {
   Net::DirectConnect->new(
+    #'filelist_builder' => ( join ' ', $^X, 'dcshare', 'filelist' ),
+
     modules            => ['filelist'],
-    'filelist_builder' => ( join ' ', $^X, 'dcshare', 'filelist' ),
+    share => \@dirs,
+    'filelist_builder' => ( join ' ', $^X, $0, 'filelist' ),
+    
+    
     #SUPAD        => { H => { PING => 1 } },
     #botinfo      => 'devperlpinger',
     #auto_GetINFO => 1,
     #Nick         => 'perlgetterrr',
     auto_connect => 1,
     dev_http     => 1,
-    'log'        => sub (@) {
-      my $dc = ref $_[0] ? shift : {};
-      psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
-    },
+    'log'        => $log,
     'handler' => { (
         map {
           my $msg = $_;
