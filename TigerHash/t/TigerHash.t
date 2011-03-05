@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 no warnings qw(uninitialized);
+use lib::abs;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Net::DirectConnect::TigerHash') }
 #########################
@@ -18,12 +19,19 @@ for my $str ( sort keys %_ ) {
     ok ( $_ = Net::DirectConnect::TigerHash::tth($str) ) eq $_{$str}, "[" .  ($str =~ /^(.{20})/ ? $1.'...' : $str)  . "]=[$_{$str}] r=[$_]" ;
 }
 
-ok !defined Net::DirectConnect::TigerHash::tthfile('___Not_Existen_t_ffiiiillee____') ;
-ok !defined Net::DirectConnect::TigerHash::tthfile('./') ;
-ok !defined Net::DirectConnect::TigerHash::tthfile('../t') ;
+ok !defined Net::DirectConnect::TigerHash::tthfile('___Not_Existen_t_ffiiiillee____'), 'not exists file' ;
+ok !defined Net::DirectConnect::TigerHash::tthfile('./') , 'on cur dir';
+ok !defined Net::DirectConnect::TigerHash::tthfile('../t'), 'on dir ./t' ;
 
-ok Net::DirectConnect::TigerHash::toBase32('a');
-ok Net::DirectConnect::TigerHash::fromBase32('3UACGB4Z6UAJ73DN5PEDRO3KE7PSXHLPCEGHSNY');
-ok 'a' eq Net::DirectConnect::TigerHash::fromBase32 Net::DirectConnect::TigerHash::toBase32 'a';
+ok Net::DirectConnect::TigerHash::toBase32('a'), 'toBase32';
+ok Net::DirectConnect::TigerHash::fromBase32('3UACGB4Z6UAJ73DN5PEDRO3KE7PSXHLPCEGHSNY'), 'fromBase32';
+ok 'a' eq Net::DirectConnect::TigerHash::fromBase32 Net::DirectConnect::TigerHash::toBase32 'a', 'fromBase32(toBase32)';
+
+my $path = lib::abs::path('');
+for my $file (<$path/*.tth>) {
+(my $tth = $file) =~ s/^(.+-)+|\.tth$//gi;
+#print "\n[$_ $tth]", 
+ok(($_ = Net::DirectConnect::TigerHash::tthfile $file) eq $tth, "$_ on $file");
+}
 
 1;

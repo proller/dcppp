@@ -28,7 +28,7 @@ Net::DirectConnect::TigerHash - Perl extension for calculating tiger hashes from
 
 
  cmdline usage:
-  perl -MNet::DirectConnect::TigerHash -e "print join qq{\n}, map { Net::DirectConnect::TigerHash::tthfile $_ } @ARGV" your files here
+  perl -MNet::DirectConnect::TigerHash -e "print join '', map { Net::DirectConnect::TigerHash::tthfile($_) . qq{ $_\n} } @ARGV" your files here
 
 =head1 DESCRIPTION
 
