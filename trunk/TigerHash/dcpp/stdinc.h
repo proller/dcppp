@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2010 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2001-2011 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,7 +84,6 @@ typedef unsigned __int64 uint64_t;
 
 #else
 #include <unistd.h>
-#include <stdint.h>
 #endif
 
 #ifdef _MSC_VER
@@ -100,6 +99,9 @@ typedef unsigned __int64 uint64_t;
 #include <sys/types.h>
 #include <time.h>
 #include <locale.h>
+#ifndef _MSC_VER
+#include <stdint.h>
+#endif
 
 #include <algorithm>
 #include <vector>
