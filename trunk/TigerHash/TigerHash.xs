@@ -81,7 +81,7 @@ tthfile(s)
 	}
 
 	int64_t size = buffer.st_size; 
-	printf("opened [%s] %db\n", file, size);
+// printf("opened [%s] %db\n", file, size);
 	//int64_t size_left = size;
 	int64_t pos = 0;
 	//int64_t size_read = 0;
@@ -89,7 +89,7 @@ tthfile(s)
 	const int64_t MIN_BLOCK_SIZE = 64*1024;
 	uint8_t* buf = NULL;
 	buf = new uint8_t[BUF_SIZE];
-printf("bufsiz:%lld, = %ld gpage:%ld \n", BUF_SIZE, sizeof(buf),getpagesize());
+//printf("bufsiz:%lld, = %ld gpage:%ld \n", BUF_SIZE, sizeof(buf),getpagesize());
 	size_t n = 0;
 	int64_t bs = std::max((unsigned long)dcpp::TigerTree::calcBlockSize(size, 10), (unsigned long)MIN_BLOCK_SIZE);
 
@@ -99,11 +99,11 @@ printf("bufsiz:%lld, = %ld gpage:%ld \n", BUF_SIZE, sizeof(buf),getpagesize());
 //		size_t bufSize = BUF_SIZE;
 		if ((	n = read(fd, buf, BUF_SIZE))>0) {
 			th.update(buf, n);
-printf("updated %ld b [.]\n", n, buf);
+//printf("updated %ld b [.]\n", n, buf);
 //printf("updated %d b ", n);
 			pos += n;
 		}
-printf(" readed %ld tot=%ld buf=%ld \n", n, pos, BUF_SIZE);
+//printf(" readed %ld tot=%ld buf=%ld \n", n, pos, BUF_SIZE);
 
 	} while (n > 0);
 	close(fd);
