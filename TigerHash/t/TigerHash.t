@@ -30,6 +30,7 @@ ok 'a' eq Net::DirectConnect::TigerHash::fromBase32 Net::DirectConnect::TigerHas
 my $path = lib::abs::path('');
 for my $file (<$path/*.tth>) {
 (my $tth = $file) =~ s{^(.+-)+|\.tth$}{}gi;
+next unless length $tth == 39;
 (my $filename=  $file) =~ s{.*/}{}g;
 #print "\n[$_ $tth]", 
 ok(($_ = Net::DirectConnect::TigerHash::tthfile $file) eq $tth, "$_ on $filename");
