@@ -63,17 +63,12 @@ tthfile(s)
 	
 	STRLEN len;
 	char *  file = SvPV(s, len);
-	//int
-	long
-		fd = open(file, O_RDONLY);
+	long fd = open(file, O_RDONLY | O_BINARY);
 	if(fd <=0 )	{
 		XSRETURN_UNDEF;
-	} 
-
+	}
 	STAT buffer;
-	int         status;
-	 //status; 
-	status = fstat(fd, &buffer);
+	int status = fstat(fd, &buffer);
 
 	if (!(S_ISREG(buffer.st_mode) || S_ISLNK(buffer.st_mode))) {
 		close(fd);
@@ -81,33 +76,21 @@ tthfile(s)
 	}
 
 	int64_t size = buffer.st_size; 
-// printf("opened [%s] %db\n", file, size);
-	//int64_t size_left = size;
 	int64_t pos = 0;
-	//int64_t size_read = 0;
 	static const int64_t BUF_SIZE = 0x1000000 - (0x1000000 % getpagesize());
 	const int64_t MIN_BLOCK_SIZE = 64*1024;
-	uint8_t* buf = NULL;
-	buf = new uint8_t[BUF_SIZE];
-//printf("bufsiz:%lld, = %ld gpage:%ld \n", BUF_SIZE, sizeof(buf),getpagesize());
+	uint8_t* buf = new uint8_t[BUF_SIZE];
+
 	size_t n = 0;
 	int64_t bs = std::max((unsigned long)dcpp::TigerTree::calcBlockSize(size, 10), (unsigned long)MIN_BLOCK_SIZE);
-
 	dcpp::TigerTree th(bs);
-
 	do {
-//		size_t bufSize = BUF_SIZE;
 		if ((	n = read(fd, buf, BUF_SIZE))>0) {
 			th.update(buf, n);
-//printf("updated %ld b [.]\n", n, buf);
-//printf("updated %d b ", n);
 			pos += n;
 		}
-//printf(" readed %ld tot=%ld buf=%ld \n", n, pos, BUF_SIZE);
-
 	} while (n > 0);
 	close(fd);
-
 	th.update(buf, 0);
 	std::string enc;
 	dcpp::Encoder::toBase32(    th.finalize(), dcpp::TigerHash::BYTES, enc);
