@@ -1,4 +1,6 @@
 Revision history for Perl extension TigerHash.
+0.05 2011-03-07
+	fixed incorrect hashes on windows-mingw
 
 0.03 2010-11-17
 	now getting cpp lib from 
