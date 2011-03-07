@@ -67,12 +67,12 @@ sub init {
   #$self->baseinit();
   #share_full share_tth want
   $self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw( NickList IpList PortList PortList_udp);    #handler
-  #$self->{'NickList'} ||= {};
-  #$self->{'IpList'}   ||= {};
-  #$self->{'PortList'} ||= {};
-  #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
-  #You are already in the hub.
-  #  $self->{'parse'} ||= {
+                                                                                                  #$self->{'NickList'} ||= {};
+                                                                                                  #$self->{'IpList'}   ||= {};
+                                                                                                  #$self->{'PortList'} ||= {};
+         #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
+         #You are already in the hub.
+         #  $self->{'parse'} ||= {
   local %_ = (
     'chatline' => sub {
       my $self = shift if ref $_[0];
@@ -171,7 +171,9 @@ sub init {
     },
     'To' => sub {
       my $self = shift if ref $_[0];
-      $self->log( 'msg', "Private message to", @_ );
+      #$self->log( 'msg', "Private message to", @_ );
+      #@_;
+      undef;
     },
     'MyINFO' => sub {
       my $self = shift if ref $_[0];
@@ -372,7 +374,7 @@ sub init {
       #($params->{'file'}) = $params->{FN} =~ m{([^\\/]+)$};
       my $wdl = $self->{'want_download'}{ $params->{'TR'} } || $self->{'want_download'}{ $params->{'filename'} };
       if ($wdl) {    #exists $self->{'want_download'}{ $params->{'TR'} } ) {
-        #$self->{'want_download'}{ $params->{'TR'} }
+                     #$self->{'want_download'}{ $params->{'TR'} }
         $wdl->{$peerid} = $params;    #maybe not all
         if ( $params->{'filename'} ) { ++$self->{'want_download_filename'}{ $params->{TR} }{ $params->{'filename'} }; }
         $self->{'want_download'}{ $params->{TR} }{$peerid} = $params;    # _tth_from
@@ -396,7 +398,6 @@ sub init {
 
 
 =cut  
-
   #$self->{'cmd'} = {
   local %_ = (
     'connect_aft' => sub {
@@ -516,7 +517,7 @@ sub init {
       my $self = shift if ref $_[0];
       #my $string = $_[0];
       $self->{'search_last_string'} = $_[0];    #$string;
-      #$string =~ tr/ /$/;
+                                                #$string =~ tr/ /$/;
       $self->cmd(
         'search_nmdc',
         #'F', 'T', '0', '1',
@@ -590,7 +591,7 @@ sub init {
           #my $self =  ref $_[0] ? shift() : $self;
           $self->log( 'dev', "PSR", @_ ) if $self;
         },
-        'UPSR' => sub { # TODO
+        'UPSR' => sub {                    # TODO
           my $self = shift if ref $_[0];
           #my $self =  ref $_[0] ? shift() : $self;
           #!$self->log( 'dev', "UPSR", 'udp' ) if $self;
@@ -629,7 +630,6 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
-
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};

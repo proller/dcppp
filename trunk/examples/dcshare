@@ -62,53 +62,24 @@ edit config.pl
 perl dcshare
 
 =cut
-
 use 5.10.0;
 use strict;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 use Time::HiRes qw(time sleep);
 use Encode;
-
-#use Encode;
 use lib::abs '../lib';
-#use lib '../TigerHash/lib';
-#use lib './stat/pslib';
-#our ( %config, $db );
-
 use Net::DirectConnect::pslib::psmisc;
 psmisc->import qw(:log);
-#use Net::DirectConnect::pslib::psmisc qw(:config :log);
-#local *config = *psmisc::config;
-#local *config = *main::config;
-
-#local *main::config = *psmisc::config;
-#local *config = *Net::DirectConnect::pslib::psmisc::config;
-#use Net::DirectConnect::pslib::psmisc (qw(:config :log));
-
-our ( %config); #, $db 
-
-#psmisc::import qw(:config :log);
-#Net::DirectConnect::pslib::psmisc::import(qw(:config :log));
-#use pssql;
+our (%config);    #, $db
 use Net::DirectConnect;
 use Net::DirectConnect::filelist;
-#psmisc::use_try 'Sys::Sendfile';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg adcdev);
 $config{'log_pid'} //= 1;
-psmisc::configure();      #psmisc::lib_init();
+psmisc::configure();
 psmisc::lib_init();    #for die handler
-#print Dumper \%config, \%psmisc::config;
-
-#printlog('err','ok');
-
-
 psmisc::printlog("usage: $1 [adc|dchub://]host[:port] [dir ...]\n"), exit if !$ARGV[0] and !$config{dc}{host};
 psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
-
-
-
-
 my $log = sub (@) {
   my $dc = ref $_[0] ? shift : {};
   psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
@@ -119,41 +90,29 @@ my @dirs = grep { -d } @ARGV;
 my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
 @ARGV = grep { !-d } @ARGV;
 my @hosts = grep { m{^\w+://} } @ARGV;
-
 Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
-  if ($filelist and !caller) or (!@hosts and !$config{dc}{host});
-#use Net::DirectConnect::adc;
-#my $dc =
+  if ( $filelist and !caller )
+  or ( !@hosts and !$config{dc}{host} );
 my @dc;
 @dc = map {
   Net::DirectConnect->new(
     modules            => ['filelist'],
-    share => \@dirs,
+    share              => \@dirs,
     'filelist_builder' => ( join ' ', $^X, $0, 'filelist' ),
     'log'              => $log,
-    'handler'          => {
-      map {
-        my $msg = $_;
-        $msg => sub {
-          my $dc = shift;
-          $dc->say($msg, @_); #print with console encoding
-          },
-        } qw(welcome chatline To MSG)
-    },
-    auto_connect => 1,
+    auto_connect       => 1,
     #auto_work    => 1,
-    worker => sub {
+    auto_say => 1,
+    worker   => sub {
       my $dc = shift;
     },
     %{ $config{dc} || {} },
-    #( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
     'host' => $_,
     )
   } (
   grep {
     $_
-    } @hosts ? @hosts : psmisc::array($config{dc}{host}),#ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
-  
+    } @hosts ? @hosts : psmisc::array( $config{dc}{host} ),
   );
 while ( @dc = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dc;

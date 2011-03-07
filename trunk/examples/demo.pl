@@ -11,6 +11,7 @@ my $dc = Net::DirectConnect->new(
   'M'            => 'P',               #passive mode
   'sharesize'    => 10_000_000_000,    # 10G
   'auto_connect' => 0,                 # dont connect in ->new
+  'auto_say'     => 1,                 # auto print welcome, chat, pvt
 );
 print 'available commands:',      ( join ', ', sort keys %{ $dc->{'cmd'} } ),   "\n";
 print 'some available handlers:', ( join ', ', sort keys %{ $dc->{'parse'} } ), "\n";

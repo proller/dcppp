@@ -7,7 +7,6 @@ generate dc++ xml filelist
 perl filelist.pm /path/to/dir
 
 =cut
-
 package    # no cpan
   Net::DirectConnect::filelist;
 use 5.10.0;
@@ -31,13 +30,15 @@ use base 'Net::DirectConnect';
       "; #use Net::DirectConnect; 
       #psmisc::use_try ('Net::DirectConnect');
 =cut
-
 use base 'Net::DirectConnect';
 #use lib '../../../examples/stat/pslib';    # REMOVE
 #use lib 'stat/pslib';                      # REMOVE
 use lib::abs('pslib');
 use psmisc;    # REMOVE
 use pssql;     # REMOVE
+our %config;
+*config = *main::config;
+$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 Net::DirectConnect::use_try 'Sys::Sendfile' unless $^O =~ /win/i;
 my ( $tq, $rq, $vq );
 
@@ -109,8 +110,8 @@ sub new {
         'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
         'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
         'time' => pssql::row( 'time', ),    #'index' => 1,
-        #'added'  => pssql::row( 'added', ),
-        #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
+                                            #'added'  => pssql::row( 'added', ),
+                                            #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
       },
       }
       #},
@@ -124,7 +125,7 @@ sub new {
     return unless psmisc::lock( 'sharescan', timeout => 0, old => 86400 );
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
       unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
-    #$self->log( 'info',"ntth=[$notth]");    exit;
+                                                                             #$self->log( 'info',"ntth=[$notth]");    exit;
     my $stopscan;
     my $level     = 0;
     my $levelreal = 0;
@@ -157,7 +158,6 @@ sub new {
         if $f->{'tth'};
       $self->{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
 =cut
-
   #$self->log 'set share', "[$f->{file}], [$f->{tth}] = [$self->{share_full}{ $f->{tth} }],[$self->{share_full}{ $f->{file} }]";
   #$self->log Dumper $self->{share_full};
       }
@@ -339,7 +339,7 @@ sub new {
     my ( $full_local, $tth, $file ) = @_;
     $full_local =~ m{([^/\\]+)$} unless $file;
     $file //= $1;    # unless length $file;
-    #$full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
+                     #$full_local = Encode::encode $self->{charset_fs}, Encode::decode 'utf8', $full_local;
     $self->{share_full}{$tth} = $full_local, $self->{share_tth}{$full_local} = $tth, $self->{share_tth}{$file} = $tth, if $tth;
     $self->{share_full}{$file} ||= $full_local if $file;
     #$self->share_changed();
@@ -370,7 +370,6 @@ sub new {
     $self->log ".done:", ( scalar keys %{ $self->{share_full} } ), "\n";
   }
 =cut
-
     #$self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
@@ -488,14 +487,13 @@ return unless $name;
           if $tth;
         $self->{share_full}{$file} ||= $full_local;
 =cut
-
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth );
-    $self->share_add_file( $full, $tth ) unless $self->{'file_recv_filelist'};# unless $self->{'no_auto_share_downloaded'};
-    #TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
+    $self->share_add_file( $full, $tth ) unless $self->{'file_recv_filelist'};    # unless $self->{'no_auto_share_downloaded'};
+          #TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
     $self->share_changed();
     };
   $self->filelist_load() unless $standalone;    # (caller)[0] ~~ __PACKAGE__;
-  #$self->log('initok');
+                                                #$self->log('initok');
   return $self;
 }
 eval q{ #do

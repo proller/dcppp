@@ -45,24 +45,25 @@ sub init {
     #NMDC1: 28.8Kbps, 33.6Kbps, 56Kbps, Satellite, ISDN, DSL, Cable, LAN(T1), LAN(T3)
     #NMDC2: Modem, DSL, Cable, Satellite, LAN(T1), LAN(T3)
     'flag' => '1',    # User status as ascii char (byte)
-    #1 normal
-    #2, 3 away
-    #4, 5 server               The server icon is used when the client has
-    #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
-    #8, 9 fireball             The fireball icon is used when the client
-    #10, 11 fireball away      has had an upload > 100 kB/s.
+                      #1 normal
+                      #2, 3 away
+                      #4, 5 server               The server icon is used when the client has
+                      #6, 7 server away          uptime > 2 hours, > 2 GB shared, upload > 200 MB.
+                      #8, 9 fireball             The fireball icon is used when the client
+                      #10, 11 fireball away      has had an upload > 100 kB/s.
     'email' => 'billgates@microsoft.com', 'sharesize' => 10 * 1024 * 1024 * 1024 + int rand( 1024 * 1024 ),    #10GB
     'client' => 'perl',    #'dcp++',                                                              #++: indicates the client
-    #'protocol' => 'nmdc',    # or 'adc'
+                           #'protocol' => 'nmdc',    # or 'adc'
     'V' => $Net::DirectConnect::VERSION,   #. '_' . ( split( ' ', '$Revision: 656 $' ) )[1],    #V: tells you the version number
-    #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
+         #'M' => 'A',      #M: tells if the user is in active (A), passive (P), or SOCKS5 (5) mode
     'H' => '0/1/0'
     , #H: tells how many hubs the user is on and what is his status on the hubs. The first number means a normal user, second means VIP/registered hubs and the last one operator hubs (separated by the forward slash ['/']).
     'S' => '3',      #S: tells the number of slots user has opened
     'O' => undef,    #O: shows the value of the "Automatically open slot if speed is below xx KiB/s" setting, if non-zero
-    'lock'    => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
-    'cmd_bef' => '$',
-    'cmd_aft' => '|',
+    'lock'         => 'EXTENDEDPROTOCOLABCABCABCABCABCABC Pk=DCPLUSPLUS0.668ABCABC',
+    'cmd_bef'      => '$',
+    'cmd_aft'      => '|',
+    'auto_say_cmd' => [qw(welcome chatline To)],
   );
   #$self->{$_} ||= $_{$_} for keys %_;
   #$self->log('dev', 's0',$self->{'sharesize'});
@@ -144,11 +145,9 @@ sub init {
     /(.+):(.+)/, $save->{$1} = $2 for split /,/, $tag;
     return wantarray ? %$save : $save;
   };
-    $self->{'make_hub'} ||= sub {
-      my $self = shift if ref $_[0];
-      $self->{'hub_name'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
-    },
-
-
+  $self->{'make_hub'} ||= sub {
+    my $self = shift if ref $_[0];
+    $self->{'hub_name'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
+  },;
 }
 1;
