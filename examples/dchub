@@ -6,7 +6,6 @@
 dev hub test
 
 =cut
-
 use strict;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
@@ -51,5 +50,4 @@ while ( $dc->active() ) {
 #$dc->wait_finish();
 $dc->disconnect();
 =cut
-
 #$dc = undef;

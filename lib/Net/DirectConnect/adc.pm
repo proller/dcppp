@@ -73,7 +73,6 @@ sub tiger ($) {
 }
 sub hash ($) { base32( tiger( $_[0] ) ); }
 =cut
-
 #sub init {  my $self = shift;
 
 =cu
@@ -90,7 +89,6 @@ return $self;
 
 }
 =cut
-
 sub init {
   my $self = shift;
   #shift if $_[0] eq __PACKAGE__;
@@ -116,6 +114,7 @@ sub init {
     'ID_file'       => 'ID',
     'cmd_bef'       => undef,
     'cmd_aft'       => "\x0A",
+    'auto_say_cmd'  => [qw(MSG)],
   );
   $self->{$_} //= $_{$_} for keys %_;
   #!exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
@@ -236,7 +235,7 @@ sub init {
         $self->log( 'adcdev', $dst, 'SUP:', @_, "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}" );
         $self->cmd( 'I', 'SID', $peerid );
         $self->cmd( 'I', 'INF', );    #$self->{'peers'}{$_}{'INF'}
-        #for keys %{$self->{'peers'}};
+                                      #for keys %{$self->{'peers'}};
         $self->{'status'} = 'connected';
       } elsif ( $dst eq 'C' ) {
         $self->cmd( $dst, 'INF', ) unless $self->{count_sendcmd}{CINF};
@@ -255,7 +254,6 @@ sub init {
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
-
       #$self->log('adcdev', 'SUPans:', $peerid, $self->{'peers'}{$peerid}{'INF'}{I4}, $self->{'peers'}{$peerid}{'INF'}{U4});
       #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; #can answer direct
       #local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4};
@@ -295,8 +293,8 @@ sub init {
       my $sendbinf;
       if ( $self->{parent}{hub} and $dst eq 'B' ) {
         if ( !keys %{ $self->{'peers'}{$peerid}{'INF'} } ) {    #join
-          #++$sendbinf;
-          #$self->log( 'adcdev', 'FIRSTINF:', $peerid, Dumper $params, $self->{'peers'} );
+              #++$sendbinf;
+              #$self->log( 'adcdev', 'FIRSTINF:', $peerid, Dumper $params, $self->{'peers'} );
           $self->cmd( 'B', 'INF', $_, $self->{'peers_sid'}{$_}{'INF'} ) for keys %{ $self->{'peers_sid'} };
         }
       }
@@ -354,9 +352,9 @@ sub init {
         )
       {
         $self->cmd( 'D', 'INF', ) if $self->{'broadcast'};    # and $self->{'broadcast_INF'};
-        #$self->cmd_direct( $peerid, 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
+              #$self->cmd_direct( $peerid, 'D', 'INF', ) if $self->{'broadcast'} and $self->{'broadcast_INF'};
       }
-      return $params;                                         #$self->{'peers'}{$peerid}{'INF'};
+      return $params;    #$self->{'peers'}{$peerid}{'INF'};
     },
     'QUI' => sub {
       my $self = shift if ref $_[0];
@@ -365,7 +363,7 @@ sub init {
       #$self->log( 'adcdev', 'QUI', $dst, $_[0], Dumper $self->{'peers'}{ $_[0] } );
       delete $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
       delete $self->{'peers_sid'}{$peerid};
-      delete $self->{'peers'}{$peerid};                       # or mark time
+      delete $self->{'peers'}{$peerid};    # or mark time
       undef;
     },
     'STA' => sub {
@@ -452,7 +450,7 @@ sub init {
         ( $params->{'filename'} ) = $params->{FN} =~ m{([^\\/]+)$};
         my $wdl = $self->{'want_download'}{ $params->{'TR'} } || $self->{'want_download'}{ $params->{'filename'} };
         if ($wdl) {    #exists $self->{'want_download'}{ $params->{'TR'} } ) {
-          #$self->{'want_download'}{ $params->{'TR'} }
+                       #$self->{'want_download'}{ $params->{'TR'} }
           $wdl->{$peerid} = $params;    #maybe not all
           if ( $params->{'filename'} ) { ++$self->{'want_download_filename'}{ $params->{TR} }{ $params->{'filename'} }; }
           $self->{'want_download'}{ $params->{TR} }{$peerid} = $params;    # _tth_from
@@ -495,7 +493,6 @@ sub init {
         'auto_connect' => 1,
       );
 =cut
-
     },
     'CTM' => sub {
       my $self = shift if ref $_[0];
@@ -551,7 +548,6 @@ sub init {
         $self->log( 'dcerr', 'SND', "unknown type", @_ );
       }
 =cut
-
     },
   };
 
@@ -565,7 +561,6 @@ sub init {
 
 
 =cut  
-
   $self->{'cmd'} = {
     #move to main
     'search_send' => sub {
@@ -672,7 +667,7 @@ sub init {
       $self->cmd_adc        #sendcmd
         (
         $dst, 'INF',        #$self->{'INF'}{'SID'},
-        map { $_ . $self->{'INF'}{$_} } grep { length $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO) 
+        map { $_ . $self->{'INF'}{$_} } grep { length $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO)
         : @_ ? @_
         : (
           qw(ID I4 I6 U6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF), ( $self->{'message_type'} eq 'H' ? 'PD' : () )
@@ -727,7 +722,6 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
-
   $self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
   unless ( $self->{'no_listen'} ) {
     $self->log( 'dev', 'nyportgen',
@@ -753,8 +747,8 @@ sub init {
           #'PortList'    => \%{ $self->{'PortList'} },
           #'handler'     => \%{ $self->{'handler'} },
           'parent' => $self, 'auto_listen' => 1,    #'disconnect_recursive'=>1,
-          #'myport'        => $self->{'myport'},
-          #( map { $_ => $self->{$_} } qw(myport want peers ) ),
+                                                    #'myport'        => $self->{'myport'},
+                                                    #( map { $_ => $self->{$_} } qw(myport want peers ) ),
         );
         #$self->log( 'dev', __FILE__, __LINE__, "  myptr");
         $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
@@ -769,27 +763,27 @@ sub init {
         $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
           #%$self, $self->clear(),
           'parent' => $self, 'Proto' => 'udp', 'auto_listen' => 1,
-          #?    'want'     => \%{ $self->{'want'} },
-          #?    'NickList' => \%{ $self->{'NickList'} },
-          #?    'IpList'   => \%{ $self->{'IpList'} },
-          #?    'PortList' => \%{ $self->{'PortList'} },
-          #'handler' => \%{ $self->{'handler'} },
-          #$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
-          #'LocalPort'=>$self->{'myport'},
-          #'debug'=>1,
-          #'nonblocking' => 0,
-          #'NONONOparse' => {
-            #'SR'  => $self->{'parse'}{'SR'},
-            #'PSR' => sub {                     #U
-             # #$self->log( 'dev', "UPSR", @_ );
-            #},
+#?    'want'     => \%{ $self->{'want'} },
+#?    'NickList' => \%{ $self->{'NickList'} },
+#?    'IpList'   => \%{ $self->{'IpList'} },
+#?    'PortList' => \%{ $self->{'PortList'} },
+#'handler' => \%{ $self->{'handler'} },
+#$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
+#'LocalPort'=>$self->{'myport'},
+#'debug'=>1,
+#'nonblocking' => 0,
+#'NONONOparse' => {
+#'SR'  => $self->{'parse'}{'SR'},
+#'PSR' => sub {                     #U
+# #$self->log( 'dev', "UPSR", @_ );
+#},
 #2008/12/14-13:30:50 [3] rcv: welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131
 #$SR [Predator]Wolf DC++\Btyan Adams - Please Forgive Me.mp314217310 18/20TTH:G7DXSTGPHTXSD2ZZFQEUBWI7PORILSKD4EENOII (81.9.63.68:4111)
 #2008/12/14-13:30:50 welcome UPSR FQ2DNFEXG72IK6IXALNSMBAGJ5JAYOQXJGCUZ4A NIsss2911 HI81.9.63.68:4111 U40 TRZ34KN23JX2BQC2USOTJLGZNEWGDFB327RRU3VUQ PC4 PI0,64,92,94,100,128,132,135 RI64,65,66,67,68,68,69,70,71,72
 #UPSR CDARCZ6URO4RAZKK6NDFTVYUQNLMFHS6YAR3RKQ NIAspid HI81.9.63.68:411 U40 TRQ6SHQECTUXWJG5ZHG3L322N5B2IV7YN2FG4YXFI PC2 PI15,17,20,128 RI128,129,130,131
 #$SR [Predator]Wolf DC++\Btyan Adams - Please Forgive Me.mp314217310 18/20TTH:G7DXSTGPHTXSD2ZZFQEUBWI7PORILSKD4EENOII (81.9.63.68:4111)
-          #},
+#},
         );
         $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
         $self->log( 'dev', 'nyportgen', $self->{'myport_udp'} );
@@ -810,7 +804,6 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'err', "cant listen broadcast (hubless)" ) unless $self->{'clients'}{'listener_udp_broadcast'}{'myport'};
     }
 =cut
-
     if ( $self->{'dev_http'} ) {
       $self->log( 'dev', "making listeners: http" );
       #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
@@ -850,7 +843,8 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
     $self->log(
       'dev',  'disconnect int',           #psmisc::caller_trace(30)
       'hub=', $self->{'parent'}{'hub'},
-      ) if $self
+      )
+      if $self
         and $self->{'log'};
     #psmisc::caller_trace 15;
   };
