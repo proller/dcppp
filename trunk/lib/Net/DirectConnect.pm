@@ -119,7 +119,7 @@ sub module_load {
   $self->log( 'err', 'cant new', $module, $@ ), return if $@;
   eval "$module\::init(\$self, \@_);";    #, \@param
   $self->log( 'err', 'cant init', $module, $@ ), return if $@;
-  $self->log( 'dev', 'loaded  module', $_, $module, );
+  #$self->log( 'dev', 'loaded  module', $_, $module, );
   1;
 }
 
@@ -295,7 +295,7 @@ sub cmd {
       "self=", ref $self,
       #Dumper $self->{'cmd'},
       $self->{'parse'}
-    );
+    ) if ! grep {$cmd eq $_} qw(new init);
     $self->{'cmd'}{$cmd} = sub { };
   }
   $ret = scalar @ret > 1 ? \@ret : $ret[0];
@@ -431,7 +431,7 @@ sub func {
   };
   $self->{'myport_generate'} ||= sub {
     my $self = shift;
-    $self->log( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}" );
+    #$self->log( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}" );
     return $self->{'myport'}
       unless $self->{'myport_base'}
         or $self->{'myport_random'};

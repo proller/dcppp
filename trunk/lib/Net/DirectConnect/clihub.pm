@@ -555,7 +555,7 @@ sub init {
   $self->{'cmd'}{$_} ||= $_{$_} for keys %_;
   #$self->log( 'dev', "0making listeners [$self->{'M'}]" );
   if ( $self->{'M'} eq 'A' or !$self->{'M'} ) {
-    $self->log( 'dev', "making listeners: tcp, class=", $self->{'incomingclass'} );
+    #$self->log( 'dev', "making listeners: tcp, class=", $self->{'incomingclass'} );
     $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
       #%$self, $self->clear(),
       #'want'        => \%{ $self->{'want'} },
@@ -570,7 +570,7 @@ sub init {
     );
     $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
     $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
-    $self->log( 'dev', "making listeners: udp" );
+    #$self->log( 'dev', "making listeners: udp" );
     $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
       #%$self, $self->clear(),
       'parent' => $self, 'Proto' => 'udp', 'myport' => $self->{myport_udp},
