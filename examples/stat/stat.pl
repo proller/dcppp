@@ -333,7 +333,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
           if ( $s{nick} and $s{string} ) {
             $db->insert_hash( 'chat', { %s, 'time' => int(time), 'hub' => $dc->{'hub_name'}, } );
           } else {
-            $dc->log( 'err', 'wtf chat', @_ );
+            $dc->say( 'err', 'wtf chat', @_ );
           }
         },
         'welcome' => sub {

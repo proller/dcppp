@@ -722,10 +722,9 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
-  $self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
+  #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
   unless ( $self->{'no_listen'} ) {
-    $self->log( 'dev', 'nyportgen',
-      "$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
+    #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
     if (
       #( $self->{'M'} eq 'A' or !$self->{'M'} )  and
       !$self->{'incoming'}
@@ -738,7 +737,7 @@ sub init {
         )
       {
         #$self->log( 'dev', __FILE__, __LINE__, "  myptr");
-        $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
+        #$self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
         $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
           #%$self, $self->clear(),
           #'want' => $self->{'want'},
@@ -759,7 +758,7 @@ sub init {
         #and $self->{'Proto'} ne 'udp'
         )
       {
-        $self->log( 'dev', "making listeners: udp" );
+        #$self->log( 'dev', "making listeners: udp" );
         $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
           #%$self, $self->clear(),
           'parent' => $self, 'Proto' => 'udp', 'auto_listen' => 1,

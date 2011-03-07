@@ -38,7 +38,8 @@ use psmisc;    # REMOVE
 use pssql;     # REMOVE
 our %config;
 *config = *main::config;
-$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
+$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg trace);
+$config{ 'log_' . $_ } //= 1  for qw (screen default);
 Net::DirectConnect::use_try 'Sys::Sendfile' unless $^O =~ /win/i;
 my ( $tq, $rq, $vq );
 
@@ -60,8 +61,9 @@ sub new {
   #$self->{$_} = $_{$_} for keys %_;
   $self->func(@_);
   $self->init_main(@_);
-  $self->{log} ||= sub (@) {
+  $self->{log} = sub (@) {
     my $dc = ref $_[0] ? shift : $self || {};
+    #print "PL[$_[0]]";
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   },;
   $self->{no_sql} //= 0;
@@ -98,7 +100,8 @@ sub new {
     #'dbname' => 'files',
     'database' => 'files',
     #'auto_connect'        => 1,
-    'log' => sub { shift if ref $_[0]; $self->log(@_) if $self },
+    #'log' => sub { shift if ref $_[0]; $self->log(@_) if $self },
+    'log'=>$self->{'log'},
     #'cp_in'               => 'cp1251',
     'connect_tries' => 0, 'connect_chain_tries' => 0, 'error_tries' => 0, 'error_chain_tries' => 0,
     #insert_by => 1000,
@@ -117,7 +120,7 @@ sub new {
       #},
     ),
     ( map { $self->{sql}{$_} //= $_{$_} } keys %_ ), $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, ),
-    ( $tq, $rq, $vq ) = $self->{db}->quotes()
+    ( $tq, $rq, $vq ) = $self->{db}->quotes(),
     unless $self->{no_sql};
   $self->{filelist_make} //= sub {
     my $self = shift if ref $_[0];
@@ -378,7 +381,7 @@ sub new {
         ( $Net::DirectConnect::global{shareloaded} and !psmisc::lock( 'sharescan', readonly => 1, timeout => 0, old => 86400 ) )
         or !open my $f, '<:encoding(utf8)', $self->{files};
     my ( $sharesize, $sharefiles );
-    $self->log( 'info', "loading filelist", -s $f );
+    #$self->log( 'info', "loading filelist", -s $f );
     $Net::DirectConnect::global{shareloaded} = -s $f;
     local $/ = '<';
     %{ $self->{share_full} } = %{ $self->{share_tth} } = ();
@@ -440,7 +443,7 @@ sub new {
       #[10, $self->{filelist_scan}],
       $self->{filelist_scan},
       our $sharescan_sub__ ||= sub {
-        $self->log( 'filelist actual', -M $self->{files}, ( time - $^T + 86400 * -M $self->{files} ), $self->{filelist_scan} );
+        $self->log( 'info','filelist actual age seconds:', ( time - $^T + 86400 * -M $self->{files} ), '<', $self->{filelist_scan} );
         return
           if -e $self->{files}
             and -s $self->{files} > 200
