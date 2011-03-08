@@ -1,4 +1,7 @@
 Revision history for Perl extension TigerHash.
+0.05 2011-03-08
+	fixed test only
+
 0.05 2011-03-07
 	fixed incorrect hashes on windows-mingw
 
