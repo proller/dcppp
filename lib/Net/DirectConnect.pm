@@ -1260,7 +1260,7 @@ sub func {
        #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
        #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     mkdir_rec $self->{'partial_prefix'} if $self->{'partial_prefix'};
-    $self->{'file_recv_partial'} = $self->{'file_recv_dest'} . $self->{'partial_ext'};
+    $self->{'file_recv_partial'} = "$self->{'file_recv_dest'}.$self->{'file_recv_tth'}.$self->{'partial_ext'}";
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_partial'}
       unless $self->{'file_recv_partial'} =~ m{[/\\]};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
