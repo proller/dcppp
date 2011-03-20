@@ -1371,7 +1371,7 @@ sub func {
   };
   $self->{'file_send'} ||= sub {
     my $self = shift;
-    $self->log( 'dcdev', 'file_send', Dumper \@_ );
+    #$self->log( 'dcdev', 'file_send', Dumper \@_ );
     my ( $file, $start, $size, $as ) = @_;
     $start //= 0;
     my $filesize = -s $file;
@@ -1474,6 +1474,7 @@ sub func {
     schedule(
       1,
       $self->{__stat_} ||= sub {
+      	my $self = shift;
         our ( $lastmark, $lasttime );
         $self->log(
           'dev',                   "sent bytes",                      #length $self->{'file_send_buf'},
@@ -1487,7 +1488,7 @@ sub func {
           ),
           $lastmark = $self->{'file_send_offset'}, $lasttime = time,
           #if time - $lasttime > 1;
-      }
+      }, $self
     );
     #$self->{activity} = time if $sent;
     #$self->{bytes_send} += $sent;
