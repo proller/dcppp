@@ -290,7 +290,7 @@ sub cmd {
     @ret = $self->cmd_adc( $dst, $cmd, @_ );
   } else {
     $self->log(
-      'info',
+      'dev',
       "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
       "self=", ref $self,
       #Dumper $self->{'cmd'},
@@ -833,17 +833,14 @@ sub func {
   $self->{'wait_clients'} ||= sub {
     my $self = shift;
     for my $n ( 0 .. $self->{'wait_clients_tries'} ) {
+    local @_;
       last
         if !$self->{'clients_max'}
-          or $self->{'clients_max'} > scalar( $self->clients_my() );    #keys %{ $self->{'clients'} };
+          or $self->{'clients_max'} > (@_ = $self->clients_my()) ;    #keys %{ $self->{'clients'} };
       $self->info() unless $_;
       $self->log(
         'info',
-        "wait clients",
-        scalar(
-          $self->clients_my()
-            #keys %{ $self->{'clients'} }
-          )
+        "wait clients", scalar(@_ = $self->clients_my())
           . "/$self->{'clients_max'}  $n/$self->{'wait_clients_tries'}"
       );
       #$self->wait( undef, $self->{'wait_clients_by'} );
@@ -1165,7 +1162,7 @@ sub func {
     $file //= 'TTH/' . $tth if $tth;
     my $full = ( $as || $file );
     $full = $self->{'download_to'} . $full unless $full =~ m{[/\\]};
-    #$self->log( 'warn', "cid[$cid] sid[$sid] nick[$nick]");
+    $self->log( 'dev', "cid[$cid] sid[$sid] nick[$nick] full[$full] as,file[$as || $file]");
     my $sizenow = -s $full;
     if ($sizenow) {
       $self->log( 'info', "file [$_] already exists size=$sizenow must be=$size" );
@@ -1818,13 +1815,10 @@ look at examples for handlers
 
 =head1 SEE ALSO
 
- http://pro.setun.net/dcppp/
- http://sourceforge.net/projects/dcppp
-
- http://svn.setun.net/dcppp/timeline/browser/trunk
-
  latest snapshot
  svn co svn://svn.setun.net/dcppp/trunk/ dcppp
+
+ http://svn.setun.net/dcppp/timeline/browser/trunk
 
  usage example:
  used in [and created for] http://sourceforge.net/projects/pro-search http://pro.setun.net/search/
@@ -1852,7 +1846,7 @@ Oleg Alexeenkov, E<lt>pro@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2005-2010 Oleg Alexeenkov
+Copyright (C) 2005-2011 Oleg Alexeenkov
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
