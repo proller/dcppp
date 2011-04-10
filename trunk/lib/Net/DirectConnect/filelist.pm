@@ -108,8 +108,8 @@ sub new {
     #nav_all => 1,
     'table' => {
       'filelist' => {
-        'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', 'index' => 1, 'primary' => 1 ),
-        'file' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', 'index' => 1, 'primary' => 1 ),
+        'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 200, 'default' => '', 'index' => 1, 'primary' => 1 ),
+        'file' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 100, 'default' => '', 'index' => 1, 'primary' => 1 ),
         'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
         'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
         'time' => pssql::row( 'time', ),    #'index' => 1,
@@ -119,7 +119,10 @@ sub new {
       }
       #},
     ),
-    ( map { $self->{sql}{$_} //= $_{$_} } keys %_ ), $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, ),
+    ( map { $self->{sql}{$_} //= $_{$_} } keys %_ ), 
+    #warn ('sqlore:',Data::Dumper::Dumper $self->{'sql'}, \%_),
+    $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, ),
+    
     ( $tq, $rq, $vq ) = $self->{db}->quotes(),
     unless $self->{no_sql};
   $self->{filelist_make} //= sub {
