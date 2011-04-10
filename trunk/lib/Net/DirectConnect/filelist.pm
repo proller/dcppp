@@ -95,6 +95,17 @@ sub new {
   $self->{'share'} = [ $self->{'share'} ] unless ref $self->{'share'};
   tr{\\}{/} for @{ $self->{'share'} || [] };
   #$self->{'sql'} //= {
+  unless ($self->{no_sql}) {
+  my %table = (      'filelist' => {
+        'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 200, 'default' => '', 'index' => 1, 'primary' => 1 ),
+        'file' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 100, 'default' => '', 'index' => 1, 'primary' => 1 ),
+        'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
+        'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
+        'time' => pssql::row( 'time', ),    #'index' => 1,
+                                            #'added'  => pssql::row( 'added', ),
+                                            #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
+      },
+);
   local %_ = (
     'driver' => 'sqlite',
     #'dbname' => 'files',
@@ -106,25 +117,19 @@ sub new {
     'connect_tries' => 0, 'connect_chain_tries' => 0, 'error_tries' => 0, 'error_chain_tries' => 0,
     #insert_by => 1000,
     #nav_all => 1,
-    'table' => {
-      'filelist' => {
-        'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 200, 'default' => '', 'index' => 1, 'primary' => 1 ),
-        'file' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 100, 'default' => '', 'index' => 1, 'primary' => 1 ),
-        'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
-        'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
-        'time' => pssql::row( 'time', ),    #'index' => 1,
-                                            #'added'  => pssql::row( 'added', ),
-                                            #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
-      },
-      }
+    'table' => \%table,
+    #{}
       #},
-    ),
-    ( map { $self->{sql}{$_} //= $_{$_} } keys %_ ), 
+    );
+    if($self->{db}){
+    $self->{db}{table}{$_} = $table{$_} for keys %table;
+    }
+    ( map { $self->{sql}{$_} //= $_{$_} } keys %_ ); 
     #warn ('sqlore:',Data::Dumper::Dumper $self->{'sql'}, \%_),
-    $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, ),
+    $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, );
     
-    ( $tq, $rq, $vq ) = $self->{db}->quotes(),
-    unless $self->{no_sql};
+    ( $tq, $rq, $vq ) = $self->{db}->quotes();
+    }
   $self->{filelist_make} //= sub {
     my $self = shift if ref $_[0];
     my $notth;
@@ -494,7 +499,7 @@ return unless $name;
         $self->{share_full}{$file} ||= $full_local;
 =cut
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth );
-    $self->share_add_file( $full, $tth ) unless $self->{'file_recv_filelist'};    # unless $self->{'no_auto_share_downloaded'};
+    $self->share_add_file( $full, $tth ) if !$self->{'file_recv_filelist'} and !$self->{'no_auto_share_downloaded'};    # unless $self->{'no_auto_share_downloaded'};
           #TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
     $self->share_changed();
     };

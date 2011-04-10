@@ -819,7 +819,8 @@ sub func {
     my $self = shift;
     for ( 0 .. $self->{'wait_finish_tries'} ) {
       last if $self->finished();
-      $self->wait( undef, $self->{'wait_finish_by'} );
+      #$self->wait( undef, $self->{'wait_finish_by'} );
+      $self->wait_sleep();
       #$self->work( undef, $self->{'wait_finish_by'} );
     }
     local @_;
@@ -1162,7 +1163,7 @@ sub func {
     $file //= 'TTH/' . $tth if $tth;
     my $full = ( $as || $file );
     $full = $self->{'download_to'} . $full unless $full =~ m{[/\\]};
-    $self->log( 'dev', "cid[$cid] sid[$sid] nick[$nick] full[$full] as,file[$as || $file]");
+    #$self->log( 'dev', "cid[$cid] sid[$sid] nick[$nick] full[$full] as,file[$as || $file]");
     my $sizenow = -s $full;
     if ($sizenow) {
       $self->log( 'info', "file [$_] already exists size=$sizenow must be=$size" );
@@ -1263,11 +1264,9 @@ sub func {
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
     $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
       if $self->{'file_recv_size'} and $self->{'file_recv_from'};
-    $self->log(
-      'dcdev', 'file_select3',               $self->{'filename'}, $self->{'fileas'},
-      'part:', $self->{'file_recv_partial'}, 'full:',             $self->{'file_recv_full'},
-      'from',  $self->{'file_recv_from'}
-    );
+    #$self->log('dcdev', 'file_select3',               $self->{'filename'}, $self->{'fileas'},
+    #  'part:', $self->{'file_recv_partial'}, 'full:',             $self->{'file_recv_full'},
+    #  'from',  $self->{'file_recv_from'});
   };
   $self->{'file_open'} ||= sub {
     my $self = shift;
