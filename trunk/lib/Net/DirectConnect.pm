@@ -9,6 +9,7 @@ use Socket;
 use IO::Socket;
 use IO::Select;
 use POSIX;
+ use Fcntl;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = $Data::Dumper::Terse = 1;
@@ -42,12 +43,10 @@ sub send_udp ($$;@) {
       'PeerPort' => $port,
       'Proto'    => 'udp',
       'Timeout'  => $opt->{'Timeout'}, (
-        $opt->{'nonblocking'}
-        ? (
+        #$opt->{'nonblocking'} ? (
           'Blocking' => 0,
           #'MultiHomed' => 1,    #del
-          )
-        : ()
+          #) : ()
       ),
       %{ $opt->{'sockopts'} || {} },
     )
@@ -390,8 +389,8 @@ sub func {
       'work_sleep'        => 0.01,
       'select_timeout'    => 1,
       'cmd_recurse_sleep' => 0,
-      ( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
-      'nonblocking' => 1,
+      #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
+      #'nonblocking' => 1,
       'informative' => [ qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv) ],    # sharesize
       'informative_hash' => [qw(clients)],                   #NickList IpList PortList
                                                              #'disconnect_recursive' => 1,
@@ -471,17 +470,15 @@ sub func {
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
     $self->{'recv_buf'} = undef;
-    $self->{'socket'} ||= new IO::Socket::INET(
+    $self->{'socket'} ||= IO::Socket::INET->new(
       'PeerAddr' => $self->{'host'},
       'PeerPort' => $self->{'port'},
       'Proto'    => $self->{'Proto'} || 'tcp',
       'Timeout'  => $self->{'Timeout'}, (
-        $self->{'nonblocking'}
-        ? (
+        #$self->{'nonblocking'} ? (
           'Blocking' => 0,
           #'MultiHomed' => 1,    #del
-          )
-        : ()
+          #) : ()
       ),
       %{ $self->{'sockopts'} || {} },
     );
@@ -496,6 +493,11 @@ sub func {
     #    binmode($self->{'socket'}, ":raw:encoding($self->{charset_protocol})");
     #    binmode($self->{'socket'}, ":encoding($self->{charset_protocol}):bytes");
     #    binmode($self->{'socket'}, ":$self->{charset_protocol}");
+    eval {$self->{'socket'}->fcntl( Fcntl::O_ASYNC);};
+    $self->log('warn', "cant Fcntl::O_ASYNC : $@") if $@;
+    eval {$self->{'socket'}->fcntl( Fcntl::O_NONBLOCK);};
+    $self->log('warn', "cant Fcntl::O_NONBLOCK : $@") if $@;
+
     $self->{time_start} = time;
     $self->select_add();
     #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
@@ -567,14 +569,15 @@ sub func {
         or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
     $self->myport_generate();
     for ( 1 .. $self->{'myport_tries'} ) {
-      $self->{'socket'} ||= new IO::Socket::INET(
+      $self->{'socket'} ||= IO::Socket::INET->new(
         'LocalPort' => $self->{'myport'},
         'Proto'     => $self->{'Proto'} || 'tcp', (
           $self->{'Proto'} ne 'udp'
           ? ( 'Listen' => $self->{'Listen'} )
           : ()
         ),
-        ( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
+        #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
+        'Blocking' => 0,
         %{ $self->{'sockopts'} || {} },
       );
       $self->select_add(), last if $self->{'socket'};
