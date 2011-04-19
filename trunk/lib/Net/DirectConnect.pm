@@ -1371,7 +1371,9 @@ sub func {
         $file, $self->{'share_full'}{$file},
         'from', scalar keys %{ $self->{'share_full'} }
       );
+      return 1;
     }
+    return undef;
   };
   $self->{'file_send'} ||= sub {
     my $self = shift;
@@ -1529,13 +1531,13 @@ sub func {
     if ( $_[0] eq 'file' ) {
       my $file = $_[1];
       if ( $file =~ s{^TTH/}{} ) {
-        $self->file_send_tth( $file, $_[2], $_[3], $_[1] );
+        return $self->file_send_tth( $file, $_[2], $_[3], $_[1] );
       } else {
         #$self->file_send($file, $_[2], $_[3]);
-        $self->file_send_tth( $file, $_[2], $_[3], $_[1] );
+        return $self->file_send_tth( $file, $_[2], $_[3], $_[1] );
       }
     } elsif ( $_[0] eq 'list' ) {
-      $self->file_send_tth( 'files.xml.bz2', );
+      return $self->file_send_tth( 'files.xml.bz2', );
     } elsif ( $_[0] eq 'tthl' ) {
       #TODO!! now fake
       ( my $tth = $_[1] ) =~ s{^TTH/}{};
@@ -1551,7 +1553,10 @@ sub func {
       $self->send($tth);
     } else {
       $self->log( 'dcerr', 'SND', "unknown type", @_ );
+      return 2;
     }
+    return undef;
+
     };
   $self->{'download'} ||= sub {
     my $self = shift;

@@ -12,8 +12,6 @@ use base 'Net::DirectConnect';
 sub init {
   my $self = shift;
   #$self->log($self, 'inited0',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
-  #%$self = (         #too bad! rewrite
-  #%$self,
   local %_ = (
     #http://www.dcpp.net/wiki/index.php/%24Supports
     'supports_avail' => [ qw(
@@ -170,7 +168,7 @@ sub init {
     'ADCGET' => sub {
       my $self = shift if ref $_[0];
       #$self->log('dev', 'ADCGET', @_);
-      $self->file_send_parse( map { split /\s/, $_ } @_ );
+      $self->cmd('Error',"File Not Available") if $self->file_send_parse( map { split /\s/, $_ } @_ );
     },
     #};
   );
@@ -233,7 +231,10 @@ sub init {
       my $self = shift if ref $_[0];
       $self->sendcmd( 'ADCSND', @_ );
     },
-    #};
+    'Error' => sub {
+      my $self = shift if ref $_[0];
+      $self->sendcmd( 'Error', $_[0] );
+    },
   );
   $self->{'cmd'}{$_} ||= $_{$_} for keys %_;
 }
