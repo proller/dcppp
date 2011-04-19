@@ -772,6 +772,8 @@ sub func {
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     for (@$exeption) {
       $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} );
+      $self->{sockets}{$_}->destroy();
+      delete $self->{sockets}{$_};
     }
     for (@$recv) {
       $self->log( 'err', 'no object for recv handle', $_, ), next,
@@ -879,28 +881,27 @@ sub func {
           #$self->clients_my()
           )
         {
-          $self->log(
-            'dev',
-"del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] last active=",
-            time - $self->{'clients'}{$_}{activity}
-            ), (
-            !ref $self->{'clients'}{$_}{destroy}
-            ? ()
-            : $self->{'clients'}{$_}->destroy()
-            ),
-            #%{$self->{'clients'}{$_}} = (),
-            delete( $self->{'clients'}{$_} ),
-            $self->log(
-            'dev', "now clients", map { "[$self->{'clients'}{$_}{'number'}]$_" }
-              sort keys %{ $self->{'clients'} }
-            ),
-            next
-            if !$self->{'clients'}{$_}{'socket'}
+                    if (!$self->{'clients'}{$_}{'socket'}
               or !length $self->{'clients'}{$_}{'status'}
               or $self->{'clients'}{$_}{'status'} eq 'destroy'
               or (  $self->{'clients'}{$_}{'status'} ne 'listening'
                 and $self->{'clients'}{$_}{inactive_timeout}
-                and time - $self->{'clients'}{$_}{activity} > $self->{'clients'}{$_}{inactive_timeout} );
+                and time - $self->{'clients'}{$_}{activity} > $self->{'clients'}{$_}{inactive_timeout} )){
+
+          $self->log(
+            'dev',
+"del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] last active=",
+            time - $self->{'clients'}{$_}{activity}
+            ); (
+            !ref $self->{'clients'}{$_}{destroy}
+            ? ()
+            : $self->{'clients'}{$_}->destroy()
+            );
+            #%{$self->{'clients'}{$_}} = (),
+            delete( $self->{'clients'}{$_} );
+            #$self->log('dev', "now clients", map { "$_" }sort keys %{ $self->{'clients'} });
+            next;
+}
           #$ret += $self->{'clients'}{$_}->recv();
           #$self->log('dev', 'work', $self->{'clients'}{$_}{'number'}, $self->{'clients'}{$_}, $self);
           #next if $self->{'clients'}{$_} eq $self;
