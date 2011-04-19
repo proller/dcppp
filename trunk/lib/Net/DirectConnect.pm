@@ -470,7 +470,7 @@ sub func {
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
     $self->{'recv_buf'} = undef;
-$self->log('dev', 'conn strt');
+#$self->log('dev', 'conn strt');
     $self->{'socket'} ||= IO::Socket::INET->new(
       'PeerAddr' => $self->{'host'},
       'PeerPort' => $self->{'port'},
@@ -484,7 +484,7 @@ $self->log('dev', 'conn strt');
       #),
       %{ $self->{'sockopts'} || {} },
     );
-$self->log('dev', 'conn end');
+#$self->log('dev', 'conn end');
     $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $! ), "[$self->{'socket'}]" ),
       return 1
       if !$self->{'socket'};
