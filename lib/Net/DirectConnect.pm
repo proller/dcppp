@@ -9,7 +9,7 @@ use Socket;
 use IO::Socket;
 use IO::Select;
 use POSIX;
- use Fcntl;
+ #use Fcntl;
 use Time::HiRes qw(time);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = $Data::Dumper::Terse = 1;
@@ -470,21 +470,25 @@ sub func {
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
     $self->{'recv_buf'} = undef;
+$self->log('dev', 'conn strt');
     $self->{'socket'} ||= IO::Socket::INET->new(
       'PeerAddr' => $self->{'host'},
       'PeerPort' => $self->{'port'},
       'Proto'    => $self->{'Proto'} || 'tcp',
-      'Timeout'  => $self->{'Timeout'}, (
+      #'Timeout'  => $self->{'Timeout'}, 
+      #(
         #$self->{'nonblocking'} ? (
           'Blocking' => 0,
           #'MultiHomed' => 1,    #del
           #) : ()
-      ),
+      #),
       %{ $self->{'sockopts'} || {} },
     );
+$self->log('dev', 'conn end');
     $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $! ), "[$self->{'socket'}]" ),
       return 1
       if !$self->{'socket'};
+    $self->{'socket'}->timeout($self->{'Timeout'}) if $self->{'Timeout'};
     #$self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
     #$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
     #$self->{charset_protocol} = 'utf8';
@@ -493,10 +497,8 @@ sub func {
     #    binmode($self->{'socket'}, ":raw:encoding($self->{charset_protocol})");
     #    binmode($self->{'socket'}, ":encoding($self->{charset_protocol}):bytes");
     #    binmode($self->{'socket'}, ":$self->{charset_protocol}");
-    eval {$self->{'socket'}->fcntl( Fcntl::O_ASYNC);};
-    $self->log('warn', "cant Fcntl::O_ASYNC : $@") if $@;
-    eval {$self->{'socket'}->fcntl( Fcntl::O_NONBLOCK);};
-    $self->log('warn', "cant Fcntl::O_NONBLOCK : $@") if $@;
+    #eval {$self->{'socket'}->fcntl( Fcntl::O_ASYNC,1);};    $self->log('warn', "cant Fcntl::O_ASYNC : $@") if $@;
+    #eval {$self->{'socket'}->fcntl( Fcntl::O_NONBLOCK,1);};    $self->log('warn', "cant Fcntl::O_NONBLOCK : $@") if $@;
 
     $self->{time_start} = time;
     $self->select_add();
@@ -534,10 +536,12 @@ sub func {
       if $self->{'Proto'} eq 'udp'
         or $self->{'incoming'}
         or $self->{'status'} eq 'listening'
-        or ( $self->{'socket'} and $self->{'socket'}->connected() )
+        or ( $self->{'socket'} 
+        #and $self->{'socket'}->connected() 
+        )
         or !$self->active();
     $self->{'status'} = 'reconnecting';
-    #$self->log(          'warn', 'connect_check: must reconnect');
+    #$self->log(          'warn', 'connect_check: must reconnect', Dumper $self->{'socket'}->connected(), $self->{'socket'});
     $self->every(
       $self->{'reconnect_sleep'},
       $self->{'reconnect_func'} ||= sub {
