@@ -1,4 +1,8 @@
 # $Id$ $URL$
+0.10:
+non blocking connect fixed
+
+
 0.09:
 full internal utf
 
