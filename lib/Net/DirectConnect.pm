@@ -471,7 +471,7 @@ sub func {
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
     $self->{'recv_buf'} = undef;
-#$self->log('dev', 'conn strt');
+#$self->log('dev', 'conn strt', $self->{'Timeout'});
     $self->{'socket'} ||= IO::Socket::INET->new(
       'PeerAddr' => $self->{'host'},
       'PeerPort' => $self->{'port'},
@@ -489,7 +489,7 @@ sub func {
     $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $! ), "[$self->{'socket'}]" ),
       return 1
       if !$self->{'socket'};
-    $self->{'socket'}->timeout($self->{'Timeout'}) if $self->{'Timeout'};
+    $self->{'socket'}->timeout($self->{'Timeout'}) if $self->{'Timeout'}; #timeout must be after new, ifyou want nonblocking
     #$self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
     #$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
     #$self->{charset_protocol} = 'utf8';
@@ -501,6 +501,7 @@ sub func {
     #eval {$self->{'socket'}->fcntl( Fcntl::O_ASYNC,1);};    $self->log('warn', "cant Fcntl::O_ASYNC : $@") if $@;
     #eval {$self->{'socket'}->fcntl( Fcntl::O_NONBLOCK,1);};    $self->log('warn', "cant Fcntl::O_NONBLOCK : $@") if $@;
 
+    $self->select_add();
     $self->{time_start} = time;
 
     
@@ -515,8 +516,7 @@ sub func {
 
         $self->{'status'}   = 'connecting';
 
-    $self->select_add();
-    $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
+    #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
     $self->get_my_addr();
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
@@ -778,19 +778,19 @@ sub func {
     #$self->{'databuf'} = '';
     #$self->log( 'traceD', 'DC::select', 'bef' );
     my ( $recv, $send, $exeption ) = IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $sleep );
-$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
+#$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     for (@$exeption) {
-      $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} );
-      $self->{sockets}{$_}->destroy();
+      $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ),
+      $self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
       delete $self->{sockets}{$_};
     }
 
     #for (@$recv, @$send) {
     for (keys %{$self->{sockets}}) {
-    $self->log( 'dev', 'connected chk' , $self->{sockets}{$_}{socket}, $self->{sockets}{$_}{socket}->connected());
+    #$self->log( 'dev', 'connected chk' , $self->{sockets}{$_}{socket}, $self->{sockets}{$_}{socket}->connected());
     
-    $self->log( 'dev', 'connected call' ),
+    #$self->log( 'dev', 'connected call' ),
        $self->{sockets}{$_}->connected() if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
     ++$ret;
     }    
@@ -842,7 +842,7 @@ $self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
   $self->{'wait_connect'} ||= sub {
     my $self = shift;
     for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
-      $self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
+      #$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
       last if $self->{'status'} eq 'connected';
       $self->wait_sleep(1);
       #$self->work(1);
