@@ -781,8 +781,10 @@ sub func {
     my ( $recv, $send, $exeption ) = IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $sleep );
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
+    $self->{'select'}->remove(@$exeption) if $exeption;
     for (@$exeption) {
       $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ),
+      #$self->{'select'}->remove($_);
       $self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
       delete $self->{sockets}{$_};
     }
@@ -933,6 +935,11 @@ sub func {
           #next if $self->{'clients'}{$_} eq $self;
           #$self->{'clients'}{$_}->work();
         }
+                for (keys %{ $self->{'sockets'} }){
+                             next if $self->{'sockets'}{$_} and %{$self->{'sockets'}{$_}};
+                             delete $self->{'sockets'}{$_};
+
+}
         $self->{$_}->($self) for grep { ref $self->{$_} eq 'CODE' } qw(worker auto_work);
         #$self->log('dev', 'work exit',      );
       }
