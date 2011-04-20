@@ -10,7 +10,7 @@ use IO::Socket;
 use IO::Select;
 use POSIX;
  #use Fcntl;
-use Time::HiRes qw(time);
+use Time::HiRes qw(time sleep);
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = $Data::Dumper::Terse = 1;
 our $AUTOLOAD;
@@ -466,7 +466,8 @@ sub func {
       if ( $self->{'socket'} and $self->{'socket'}->connected() )
       or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
     $self->log( 'info', "connecting to $self->{'protocol'}://$self->{'host'}:$self->{'port'}", %{ $self->{'sockopts'} || {} } );
-    $self->{'status'}   = 'connecting';
+    #$self->{'status'}   = 'connecting';
+    $self->{'status'}   = 'connecting_tcp';
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
     $self->{'recv_buf'} = undef;
@@ -501,8 +502,21 @@ sub func {
     #eval {$self->{'socket'}->fcntl( Fcntl::O_NONBLOCK,1);};    $self->log('warn', "cant Fcntl::O_NONBLOCK : $@") if $@;
 
     $self->{time_start} = time;
+
+    
+    #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
+    #$self->log( 'dev', "connect_aft after", );
+    #!!$self->recv_try();
+    #$self->log( 'dev', "connect recv after", );
+    return 0;
+  };
+  $self->{'connected'} ||= sub {
+    my $self = shift;
+
+        $self->{'status'}   = 'connecting';
+
     $self->select_add();
-    #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
+    $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
     $self->get_my_addr();
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
@@ -524,11 +538,7 @@ sub func {
     $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}):$self->{'port'} [me=$self->{'myip'}] ok ", );
     #$self->log( $self, 'connected1 inited', "MT:$self->{'message_type'}", ' with' );
     $self->cmd('connect_aft');
-    #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
-    #$self->log( 'dev', "connect_aft after", );
-    $self->recv_try();
-    #$self->log( 'dev', "connect recv after", );
-    return 0;
+
   };
   $self->{'connect_check'} ||= sub {
     my $self = shift;
@@ -768,13 +778,22 @@ sub func {
     #$self->{'databuf'} = '';
     #$self->log( 'traceD', 'DC::select', 'bef' );
     my ( $recv, $send, $exeption ) = IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $sleep );
-#$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
+$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     for (@$exeption) {
       $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} );
       $self->{sockets}{$_}->destroy();
       delete $self->{sockets}{$_};
     }
+
+    #for (@$recv, @$send) {
+    for (keys %{$self->{sockets}}) {
+    $self->log( 'dev', 'connected chk' , $self->{sockets}{$_}{socket}, $self->{sockets}{$_}{socket}->connected());
+    
+    $self->log( 'dev', 'connected call' ),
+       $self->{sockets}{$_}->connected() if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
+    ++$ret;
+    }    
     for (@$recv) {
       $self->log( 'err', 'no object for recv handle', $_, ), next,
         if !$self->{sockets}{$_}
@@ -799,7 +818,12 @@ sub func {
     $wait_once ||= $self->{'wait_once'};
     local $_;
     my $ret;
-    $ret += $self->recv_try($wait_once) while --$waits > 0 and !$ret;
+    #$self->log( 'dev', "start wait", $waits);
+    while (--$waits > 0 and !$ret) {
+	    $ret += $self->recv_try($wait_once) ;
+    #$self->log( 'dev', "wait", $waits);
+	    #sleep 0.1 if !$ret;
+    }
     #$ret += $self->work($wait_once) while --$waits > 0 and !$ret;
     return $ret;
   };
@@ -818,8 +842,9 @@ sub func {
   $self->{'wait_connect'} ||= sub {
     my $self = shift;
     for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
+      $self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
       last if $self->{'status'} eq 'connected';
-      $self->wait(1);
+      $self->wait_sleep(1);
       #$self->work(1);
     }
     return $self->{'status'};
@@ -1618,12 +1643,12 @@ sub func {
   $self->{'active'} ||= sub {
     my $self = shift;
     return $self->{'status'}
-      if grep { $self->{'status'} eq $_ } qw(connecting connected reconnecting listening transfer);
+      if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer);
     return 0;
   };
   #sub status {
   #now states:
-  #listening  connecting   connected   reconnecting transfer  disconnecting disconnected destroy
+  #listening  connecting_tcp connecting   connected   reconnecting transfer  disconnecting disconnected destroy
   #need checks:
   #\ connected?/             \-----/
   #\-----------------------active?-------------------------/
