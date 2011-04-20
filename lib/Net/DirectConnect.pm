@@ -417,7 +417,8 @@ sub func {
       #charset_nick => 'utf8',
     );
     $self->{$_} //= $_{$_} for keys %_;
-    $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/', $self->{$_} //= $self->{'parent'}{$_} ||= {}
+    $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
+    $self->{$_} //= $self->{'parent'}{$_} ||= {}
       for qw(peers peers_sid peers_cid handler clients);    #want share_full share_tth
                                                             #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
     $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download);
