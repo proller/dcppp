@@ -12,8 +12,10 @@ package    # no cpan
 use 5.10.0;
 use strict;
 use utf8;
-use Encode;
+use warnings;
 no warnings qw(uninitialized);
+use Encode;
+use Net::DirectConnect::adc;
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 
 =tofix
@@ -94,7 +96,8 @@ sub new {
 ##$config{share_root} //= '';
   $self->{'share'} = [ $self->{'share'} ] unless ref $self->{'share'};
   tr{\\}{/} for @{ $self->{'share'} || [] };
-  #$self->{'sql'} //= {
+  Net::DirectConnect::adc::init($self);
+  $self->ID_get();
   unless ($self->{no_sql}) {
   my %table = (      'filelist' => {
         'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 200, 'default' => '', 'index' => 1, 'primary' => 1 ),
@@ -147,8 +150,9 @@ sub new {
     };
     local $SIG{INT} = sub { ++$stopscan; ++$interrupted; $self->log( 'warn', "INT rec, stopscan" ) };
     local $SIG{INFO} = sub { $printinfo->(); };
+    #$self->{'INF'}{'ID'}
     psmisc::file_rewrite $self->{files}, qq{<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<FileListing Version="1" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
+<FileListing Version="1" },(!$self->{'INF'}{'ID'} ? () :qq{CID="$self->{'INF'}{'ID'}" }),qq{Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
 };
 #<FileListing Version="1" CID="KIWZDBLTOFWIQOT6NWP7UOPJVDE2ABYPZJGN5TZ" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
 #};
