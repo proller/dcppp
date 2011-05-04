@@ -96,8 +96,10 @@ sub new {
 ##$config{share_root} //= '';
   $self->{'share'} = [ $self->{'share'} ] unless ref $self->{'share'};
   tr{\\}{/} for @{ $self->{'share'} || [] };
-  Net::DirectConnect::adc::init($self);
+  Net::DirectConnect::adc::func($self);
   $self->ID_get();
+  #$self->log('idr:', $self->{'INF'}{'ID'});
+  #$self->ID_get();
   unless ($self->{no_sql}) {
   my %table = (      'filelist' => {
         'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 200, 'default' => '', 'index' => 1, 'primary' => 1 ),

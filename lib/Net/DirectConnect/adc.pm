@@ -89,8 +89,98 @@ return $self;
 
 }
 =cut
+
+sub func {
+  my $self = shift if ref $_[0];
+
+  %_ = (
+    'ID_file'       => 'ID',
+  );
+  $self->{$_} //= $_{$_} for keys %_;
+
+  
+  if ( Net::DirectConnect::use_try( 'MIME::Base32', 'RFC' ) ) {
+    $self->{base_encode} ||= sub {
+      shift if ref $_[0];
+      MIME::Base32::encode_rfc3548(@_);
+    };
+    $self->{base_decode} ||= sub {
+      shift if ref $_[0];
+      MIME::Base32::decode_rfc3548(@_);
+    };
+  } else {
+    $self->log( 'err', 'cant use MIME::Base32' );
+  }
+  if ( Net::DirectConnect::use_try('Net::DirectConnect::TigerHash') ) {
+    $self->{hash} ||= sub { shift if ref $_[0]; Net::DirectConnect::TigerHash::tthbin( $_[0] ); };
+    $self->{base_encode} ||= sub {
+      shift if ref $_[0];
+      Net::DirectConnect::TigerHash::toBase32( $_[0] );
+    };
+    $self->{base_decode} ||= sub {
+      shift if ref $_[0];
+      Net::DirectConnect::TigerHash::fromBase32( $_[0] );
+    };
+  } else {
+    $self->log( 'err', 'cant use Net::DirectConnect::TigerHash' );
+  }
+  $self->{hash_base} ||= sub { shift if ref $_[0]; $self->base_encode( $self->hash( $_[0] ) ) };
+  #sub hash ($) { base32( tiger( $_[0] ) ); }
+  $self->{cmd_direct} ||= sub {
+    my $self = shift if ref $_[0];
+    my $peerid = shift;
+    local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}, local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4}
+      if $self->{'peers'}{$peerid}{'INF'}{I4} and $self->{'peers'}{$peerid}{'INF'}{U4};
+    $self->cmd(@_);
+  };
+
+  $self->{ID_get} ||= sub {
+  #sub ID_get {
+    my $self = shift if ref $_[0];
+    if ( -s $self->{'ID_file'} ) { $self->{'ID'} ||= psmisc::file_read( $self->{'ID_file'} ); }
+    unless ( $self->{'ID'} ) {
+      $self->{'ID'} ||= join ' ', 'perl', $self->{'myip'}, $VERSION, $0, $self->{'INF'}{'NI'}, time, '$Id$';
+      psmisc::file_rewrite( $self->{'ID_file'}, $self->{'ID'} );
+    }
+    $self->{'PID'}       ||= $self->hash( $self->{'ID'} );
+    $self->{'CID'}       ||= $self->hash( $self->{'PID'} );
+    $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
+    $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
+    return $self->{'ID'};
+  };
+
+  $self->{INF_generate} ||= sub {
+    my $self = shift if ref $_[0];
+    #$self->log( 'dev', 'ing_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
+    #$self->{'clients'}{'listener_udp'}
+    $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
+    $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
+    $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
+    $self->ID_get();
+    $self->{'INF'}{'SID'} ||= $self->{broadcast} ? $self->{'INF'}{'ID'} : substr $self->{'INF'}{'ID'}, 0, 4;
+#sid
+#$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
+    $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
+    $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
+    $self->{'INF'}{'SF'} ||= 30999;
+    $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
+    $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
+    $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
+    $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
+      || 'perl'
+      . $Net::DirectConnect::VERSION . '_'
+      . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
+    $self->{'INF'}{'US'} ||= 10000;
+    $self->{'INF'}{'U4'} ||= $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
+    $self->{'INF'}{'I4'} ||= $self->{'myip'};
+    $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
+    return $self->{'INF'};
+  };
+
+}
+
 sub init {
-  my $self = shift;
+  my $self = shift if ref $_[0];
   #shift if $_[0] eq __PACKAGE__;
   #print "adcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
   #$self->SUPER::new();
@@ -139,83 +229,9 @@ sub init {
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{message_type} = 'B' if $self->{'broadcast'};
-  if ( Net::DirectConnect::use_try( 'MIME::Base32', 'RFC' ) ) {
-    $self->{base_encode} ||= sub {
-      shift if ref $_[0];
-      MIME::Base32::encode_rfc3548(@_);
-    };
-    $self->{base_decode} ||= sub {
-      shift if ref $_[0];
-      MIME::Base32::decode_rfc3548(@_);
-    };
-  } else {
-    $self->log( 'err', 'cant use MIME::Base32' );
-  }
-  if ( Net::DirectConnect::use_try('Net::DirectConnect::TigerHash') ) {
-    $self->{hash} ||= sub { shift if ref $_[0]; Net::DirectConnect::TigerHash::tthbin( $_[0] ); };
-    $self->{base_encode} ||= sub {
-      shift if ref $_[0];
-      Net::DirectConnect::TigerHash::toBase32( $_[0] );
-    };
-    $self->{base_decode} ||= sub {
-      shift if ref $_[0];
-      Net::DirectConnect::TigerHash::fromBase32( $_[0] );
-    };
-  } else {
-    $self->log( 'err', 'cant use Net::DirectConnect::TigerHash' );
-  }
-  $self->{hash_base} ||= sub { shift if ref $_[0]; $self->base_encode( $self->hash( $_[0] ) ) };
-  #sub hash ($) { base32( tiger( $_[0] ) ); }
-  $self->{cmd_direct} ||= sub {
-    my $self = shift if ref $_[0];
-    my $peerid = shift;
-    local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}, local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4}
-      if $self->{'peers'}{$peerid}{'INF'}{I4} and $self->{'peers'}{$peerid}{'INF'}{U4};
-    $self->cmd(@_);
-  };
 
-  $self->{ID_get} ||= sub {
-    my $self = shift if ref $_[0];
-    if ( -s $self->{'ID_file'} ) { $self->{'ID'} ||= psmisc::file_read( $self->{'ID_file'} ); }
-    unless ( $self->{'ID'} ) {
-      $self->{'ID'} ||= join ' ', 'perl', $self->{'myip'}, $VERSION, $0, $self->{'INF'}{'NI'}, time, '$Id$';
-      psmisc::file_rewrite( $self->{'ID_file'}, $self->{'ID'} );
-    }
-    $self->{'PID'}       ||= $self->hash( $self->{'ID'} );
-    $self->{'CID'}       ||= $self->hash( $self->{'PID'} );
-    $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
-    $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
-    return $self->{'ID'};
-  };
+   $self->func();
 
-
-  $self->{INF_generate} ||= sub {
-    my $self = shift if ref $_[0];
-    #$self->log( 'dev', 'ing_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
-    #$self->{'clients'}{'listener_udp'}
-    $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
-    $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
-    $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-    $self->ID_get();
-    $self->{'INF'}{'SID'} ||= $self->{broadcast} ? $self->{'INF'}{'ID'} : substr $self->{'INF'}{'ID'}, 0, 4;
-#sid
-#$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
-    $self->{'INF'}{'SL'} ||= $self->{'S'}         || '2';
-    $self->{'INF'}{'SS'} ||= $self->{'sharesize'} || 20025693588;
-    $self->{'INF'}{'SF'} ||= 30999;
-    $self->{'INF'}{'HN'} ||= $self->{'H'}         || 1;
-    $self->{'INF'}{'HR'} ||= $self->{'R'}         || 0;
-    $self->{'INF'}{'HO'} ||= $self->{'O'}         || 0;
-    $self->{'INF'}{'VE'} ||= $self->{'client'} . $self->{'V'}
-      || 'perl'
-      . $Net::DirectConnect::VERSION . '_'
-      . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
-    $self->{'INF'}{'US'} ||= 10000;
-    $self->{'INF'}{'U4'} ||= $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
-    $self->{'INF'}{'I4'} ||= $self->{'myip'};
-    $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
-    return $self->{'INF'};
-  };
   $self->INF_generate();
   $self->{'parse'} ||= {
 #
