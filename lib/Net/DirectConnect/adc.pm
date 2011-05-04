@@ -173,6 +173,22 @@ sub init {
       if $self->{'peers'}{$peerid}{'INF'}{I4} and $self->{'peers'}{$peerid}{'INF'}{U4};
     $self->cmd(@_);
   };
+
+  $self->{ID_get} ||= sub {
+    my $self = shift if ref $_[0];
+    if ( -s $self->{'ID_file'} ) { $self->{'ID'} ||= psmisc::file_read( $self->{'ID_file'} ); }
+    unless ( $self->{'ID'} ) {
+      $self->{'ID'} ||= join ' ', 'perl', $self->{'myip'}, $VERSION, $0, $self->{'INF'}{'NI'}, time, '$Id$';
+      psmisc::file_rewrite( $self->{'ID_file'}, $self->{'ID'} );
+    }
+    $self->{'PID'}       ||= $self->hash( $self->{'ID'} );
+    $self->{'CID'}       ||= $self->hash( $self->{'PID'} );
+    $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
+    $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
+    return $self->{'ID'};
+  };
+
+
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
     #$self->log( 'dev', 'ing_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
@@ -180,15 +196,7 @@ sub init {
     $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
     $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
     $self->{'CID'} ||= MIME::Base32::decode $self->{'INF'}{'ID'} if $self->{'INF'}{'ID'};
-    if ( -s $self->{'ID_file'} ) { $self->{'ID'} ||= psmisc::file_read( $self->{'ID_file'} ); }
-    unless ( $self->{'ID'} ) {
-      $self->{'ID'} ||= join ' ', 'perl', $self->{'myip'}, $VERSION, $0, $self->{'INF'}{'NI'}, time;
-      psmisc::file_rewrite( $self->{'ID_file'}, $self->{'ID'} );
-    }
-    $self->{'PID'}       ||= $self->hash( $self->{'ID'} );
-    $self->{'CID'}       ||= $self->hash( $self->{'PID'} );
-    $self->{'INF'}{'PD'} ||= $self->base_encode( $self->{'PID'} );
-    $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
+    $self->ID_get();
     $self->{'INF'}{'SID'} ||= $self->{broadcast} ? $self->{'INF'}{'ID'} : substr $self->{'INF'}{'ID'}, 0, 4;
 #sid
 #$self->log( 'id gen',"iID=$self->{'INF'}{'ID'} iPD=$self->{'INF'}{'PD'} PID=$self->{'PID'} CID=$self->{'CID'} ID=$self->{'ID'}" );
