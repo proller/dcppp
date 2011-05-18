@@ -2,6 +2,7 @@
 #$Id$ $URL$
 package statcgi;
 use strict;
+use utf8;
 use MIME::Base64;
 eval { use Time::HiRes qw(time sleep); };
 use Data::Dumper;    #dev only
@@ -11,7 +12,7 @@ use lib::abs qw(../../lib ./);
 use statlib;
 #our $root_path;
 our @colors =
-  qw(aqua 		gray		navy		silver	 black		green		olive		teal	 blue		lime		purple		 magenta		maroon		red		yellow	  	);    #white
+  qw(black aqua 		gray		navy		silver	 green		olive		teal	 blue		lime		purple		 magenta		maroon		red		yellow	  	);    #white
 #BEGIN {
 #  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;                                                             #v0w
 #  $root_path = $1 . '/' if $1;
@@ -131,7 +132,7 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
       #print "M==$main ";
       my ($v) = map { $row->{'orig'}{$_} } grep { $by eq $_ } @{ $q->{'show'} };
       $makegraph{$query}{$v} = $by;
-      $graphcolor = $graphcolors{$v} = $colors[ $n - 1 ];    #if length $query;
+      $graphcolor = $graphcolors{$v} = $colors[ $n ];    #if length $query;
       #my $id = $query;
       #$id =~ tr/ /_/;
     }
@@ -230,7 +231,7 @@ for my $query ( sort keys %makegraph ) {
   for my $line ( sort keys %graph ) {
     my $n;
     #$colors[$color] <!-- $line : -->
-    $img .= qq{ <polyline fill="none" stroke="$graphcolors{$line}" stroke-width="3" points="};    #. #( #"mc
+    $img .= qq{ <polyline fill="none" stroke="}. ($graphcolors{$line} || $colors[0]) .qq{" stroke-width="3" points="};    #. #( #"mc
     # join ' ',
     for ( sort grep { $graph{$line}{$_} } keys %dates ) {
       #      map {
