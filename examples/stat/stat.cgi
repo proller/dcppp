@@ -43,6 +43,7 @@ $config{'view'} = 'html';
 $config{'lang'} = 'ru';
 $db->retry_off();
 $db->set_names();
+my ( $tq, $rq, $vq ) = $db->quotes();
 $config{'query_default'}{'LIMIT'} = psmisc::check_int( $param->{'on_page'}, 10, 100, 10 );
 $param->{'period'} ||= $config{'default_period'};
 print '<a href="?">home</a>';
@@ -176,23 +177,28 @@ for my $query ( sort keys %makegraph ) {
   $table =~ s/\s/_/g;
   $table .= '_' . $param->{'period'};
   my ($by) = values %{ $makegraph{$query} };
-  my ( $maxy, %date_max, %date_step, );
+  my ( $maxy, %date_max, %date_min, %date_step, );
 
   for my $row (
-    $db->query( "SELECT * FROM $table WHERE " . join ' OR ', map { "$by=" . $db->quote($_) } keys %{ $makegraph{$query} } ) )
+    $db->query( "SELECT * FROM $table WHERE (" . (join ' OR ', map { "${rq}$by${rq}=" . $db->quote($_) } keys %{ $makegraph{$query} } ). ") AND ${rq}time${rq} >= ". $db->quote(int time - ($config{'periods'}{ $param->{'period'} } *30) )  . " ORDER BY ${tq}time${tq} DESC "))
   {
     #for my $row ( $db->query("SELECT * FROM $table  " ) ) {
-    #print Dumper $row;
-    my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string} };
+    psmisc::printlog 'dev', Dumper $row;
+    next if $row->{tth} eq 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
+my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string} };
 #print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
 #$row->{date} .= '-'. (localtime $row->{time})[2];
     ++$dates{ $row->{date} };
-    $graph
       #{$query}
-      #{ $row->{$by} }{ $row->{date} } = $row->{n} if length $row->{$by};
-      { $row->{$by} }{ $row->{date} } = $row->{cnt} if length $row->{$by};
-    $maxy = $row->{cnt} if $row->{cnt} > $maxy;
-    $date_max{ $row->{date} } = $row->{cnt} if $row->{cnt} > $date_max{ $row->{date} };
+    my $graphby = $row->{cnt};
+    #my $graphby = $row->{n};
+
+      $graph{ $row->{$by} }{ $row->{date} } = $graphby if length $row->{$by};
+      #{ $graph$row->{$by} }{ $row->{date} } = $row->{cnt} if length $row->{$by};
+      #$maxy = $row->{cnt} if $row->{cnt} > $maxy;
+      $maxy = $graphby if $graphby > $maxy;
+    $date_max{ $row->{date} } = $graphby if $graphby > $date_max{ $row->{date} };
+    $date_min{ $row->{date} } = $graphby if $graphby < $date_min{ $row->{date} } or !$date_min{ $row->{date} };
   }
   #next;
   #my $id  = $query;
@@ -205,7 +211,8 @@ for my $query ( sort keys %makegraph ) {
   my $ys = $yl / $yn;
   for my $date (%date_max) {
     $date_step{$date} = $date_max{$date} ? $yl / $date_max{$date} : 1;
-    psmisc::printlog 'dev', "$date: [$date_step{$date}] yn=$yn; ys=$ys $yl<br\n/>";
+    #$date_step{$date} = $date_max{$date} ?  $date_max{$date} / $yl : 1;
+    #psmisc::printlog 'dev', "$date: [$date_step{$date}] yn=$yn; ys=$ys $yl<br\n/>";
   }
   #my $ys = int $yl / $maxy;
   #$ys = 1;
@@ -228,6 +235,7 @@ for my $query ( sort keys %makegraph ) {
 #qq{ <polyline fill="none" stroke="blue" stroke-width="10"              points="50,375                     150,375 150,325 250,325 250,375                     350,375 350,250 450,250 450,375                     550,375 550,175 650,175 650,375                     750,375 750,100 850,100 850,375                     950,375 950,25 1050,25 1050,375                     1150,375" />},
     ;
   #my $color = 0;
+  psmisc::printlog 'dev', $yl, Dumper \%date_max, \%date_min, \%date_step;
   for my $line ( sort keys %graph ) {
     my $n;
     #$colors[$color] <!-- $line : -->
@@ -235,11 +243,17 @@ for my $query ( sort keys %makegraph ) {
     # join ' ',
     for ( sort grep { $graph{$line}{$_} } keys %dates ) {
       #      map {
-      if ( $graph{$line}{$_} ) {                                                                  # ? () : (
+	#$graph{$line}{$_} = $yl - $graph{$line}{$_};
+      if ( my $v = $graph{$line}{$_} ) {                                                                  # ? () : (
+	$v = $yl if $v > $yn;
+	$v = $v - $date_min{$_};
+
         $img .= int( $n * $xs ) . ',' . int(
+	    
           $yl -
             #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
-            ( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
+            #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
+              $v  * $date_step{$_}
         ) . ' ';
       }
       $n++;

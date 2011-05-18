@@ -235,6 +235,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
           my $s = $_[0] || {};
           $s = pop if $dc->{adc};
           return if $dc->{nmdc} and $s->{'nick'} eq $dc->{'Nick'};
+
           $db->insert_hash(
             'queries', { (
                 $dc->{nmdc} ? () : (
@@ -249,8 +250,9 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
               ),
               %$s
             }
-          );
+          );# if $s->{TR} ne 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
           my $q = $s->{'tth'} || $s->{'string'} || $s->{'TR'} || $s->{'AN'} || return;
+	  #return if $q eq 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
           ++$work{'ask'}{$q};
           ++$work{'stat'}{'Search'};
           psmisc::schedule(
