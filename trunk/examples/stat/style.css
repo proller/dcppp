@@ -13,3 +13,4 @@ table {border:solid 1px Gainsboro; background-color:Gainsboro; margin:auto;}
 .main-top-info {text-align:center; background-color:LightSalmon;}
 table.graph {width:90%;}
 td.graph {width:40%; max-width:90%;}
+.onetable .rss {float:right;}

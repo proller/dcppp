@@ -10,7 +10,7 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 our ( %config, $param, $db, );
 use lib::abs qw(../../lib ./);
 use statlib;
- #binmode(STDOUT, ":utf8");
+ binmode(STDOUT, ":utf8");
 #our $root_path;
 #BEGIN {
 #  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;                                                             #v0w
@@ -21,7 +21,9 @@ use statlib;
 #  print( "Content-type: text/html\n\n", " lib load error rp=$root_path o=$0 sf=$ENV{'SCRIPT_FILENAME'}; ", $@ ), exit if $@;
 #}
 #use lib::abs ;
-use Net::DirectConnect::pslib::psmisc;    # qw(:config :log printlog);
+use Net::DirectConnect::pslib::psmisc
+#qw(%config)
+;    # qw(:config :log printlog);
 psmisc->import qw(:log);
 
 sub part ($;@) {
@@ -38,6 +40,9 @@ $param = psmisc::get_params();
 delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
 $config{'view'} = $param->{'view'} || 'html';
 #$config{'view'} = 'rss';
+
+#warn Dumper $config{'human'};
+
 
 $config{'out'}{'html'}{'http-header'} = sub {
 print "Content-type: text/xml; charset=utf-8\n\n";
@@ -61,6 +66,7 @@ part 'http-header' if $ENV{'SERVER_PORT'};
         print '<link>',        $config{'root_url'},         '</link>'        if $config{'root_url'};
         print '<description>', $config{'rss2_description'}, '</description>' if $config{'rss2_description'};
         #print '<language>', lang('language-code'), '</language>';
+        print "\n\n";
       };
       $config{'out'}{'rss'}{'footer'} ||= sub { print '</channel></rss>'; };
 
@@ -73,14 +79,14 @@ part 'http-header' if $ENV{'SERVER_PORT'};
 
 $config{'out'}{'html'}{'head'} ||= sub {
 #print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
-print '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+#print qq{<!DOCTYPE html>
+print qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <head><title>RU DC stat</title>
 <link href="style.css" rel="stylesheet" type="text/css"/>
-<link rel="alternate" type="application/rss+xml" title="RSS version" href="?query=queries+top+tth&view=rss"/>
+<link rel="alternate" type="application/rss+xml" title="RSS version" href="},psmisc::html_chars('?query=queries+top+tth&view=rss'),qq{"/>
 
-<style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
+<style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>};
 #print '    <svg:svg version="1.1" baseProfile="full" width="300px" height="200px">      <svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>    </svg:svg>';
 };
 part 'head';
@@ -172,24 +178,31 @@ $config{'out'}{'html'}{'table-head'} = sub {
      !( $query eq 'tth' and $param->{'tth'} )
     ? ( !( $param->{$query} ) ? () : "= " . psmisc::html_chars( $param->{$query} ) )
     : ( '= <a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
-    : '<a href="?query=' . ( psmisc::encode_url($query) ) . '">' . ( $q->{'desc'} || $query ) . '</a>';
+    : '<a href="?query=' . ( psmisc::encode_url($query) ) . '">' . ( $q->{'desc'} || $query ) . '</a>'.
+    ' <a class="rss" href="'. psmisc::html_chars('?view=rss&query=' . ( psmisc::encode_url($query) )) . '">RSS</a>'
+    
+    ;
   #print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
 
   print psmisc::human( 'time_period', time - $param->{'time'} ) 
     . "<table"
     . ( !$config{'use_graph'} ? () : ' class="graph"' ) . ">";
-  print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
+  print '<th>', $_, '</th>' for  @{ $q->{'show'} };
 };
 part 'table-head';
   my $res = statlib::make_query( $q, $query, $param->{'period'} );
 
+    #warn Dumper $res;
 
   my $n;
   for my $row (@$res) {
     ++$n;
+    #utf8::encode $_ for %$row;
     $row->{$_} = psmisc::html_chars( $row->{$_} ) for @{ $q->{'show'} };
+    $row->{'n'} ||= $n; 
     $row->{'orig'} = {%$row};
+    #warn $row->{nick};
     #$row->{'tth_orig'}    = $row->{'tth'};
     #$row->{'string_orig'} = $row->{'string'};
     my $graphcolor;
@@ -204,7 +217,7 @@ part 'table-head';
       #my $id = $query;
       #$id =~ tr/ /_/;
     }
-    $row->{$_} =
+    $row->{$_.'_html'} =
       ( $param->{$_}
       ? ''
       : qq{<a class="$_" title="}
@@ -215,14 +228,20 @@ part 'table-head';
       . psmisc::human( 'magnet-dl', $row->{'orig'} )
       for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } }
       grep { $config{'queries'}{$_} } @{ $q->{'show'} };    #qw(string tth);
+
+    $row->{$_.'_html'} = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
+    $row->{$_.'_rss'} = psmisc::human( 'date_time', $row->{$_}, ' ', '-' ) for grep { int $row->{$_} } qw(time online);
+
     $row->{'hub'} .= psmisc::human( 'dchub-dl', { 'hub' => $row->{'orig'}->{'hub'} } ) if $row->{'hub'};
     #$row->{'nick'} .= psmisc::human( 'dchub-dl', $row->{'orig'} ) if $row->{'nick'};
-    $row->{$_} = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
     $row->{$_} = psmisc::human( 'size',        $row->{$_} )        for grep { int $row->{$_} } qw(size share);
 
-$config{'out'}{'html'}{'table-row'} = sub {
-    print '<tr><td>', $n, '</td>';
-    print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
+ $config{'out'}{'html'}{'table-row'} = sub {
+
+    
+    print '<tr>'; 
+    #'<td>', $n, '</td>';
+    print '<td>', $row->{$_.'_html'}//$row->{$_}, '</td>' for @{ $q->{'show'} };
     if ( $q->{'graph'} ) {
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
       print qq{<td class='graph' id='$query' rowspan='100' style='min-width:100px;'> </td>} if $n == 1;
@@ -235,7 +254,8 @@ $config{'out'}{'html'}{'table-row'} = sub {
 
       $config{'out'}{'rss'}{'table-row'} ||= sub {
         #my ( $param, $table, $row ) = @_;
-        printlog('dev', Dumper $row);
+        my ($row) = @_;
+        #printlog('dev', Dumper $row);
         print '<item>';
         #"\n<link>", get_param_url_str( $param, ['view'] ), '#n', ( ++$work{'rssn'} ), '</link>';
         #'<description>';
@@ -246,14 +266,19 @@ $config{'out'}{'html'}{'table-row'} = sub {
         #html_chars( \$buffer );
         #print $buffer;
         #print '</description>';
-        my $unique = $row->{ $config{'rss2_guid'} || 'full' };
+        #$row->{'link'} ||=  'link';
+        $row->{'title'} ||=  $row->{ tth } || $row->{ string } || $row->{ line } || $row->{ nick } || $row->{ hub };
+        my $unique = $row->{ tth } || $row->{ string } || $row->{ time };
         #print "UNIQ1[$unique:$config{'rss2_guid'}]";#, join',',%$row;
         psmisc::html_chars( \$unique );
-        #$row->{'guid'} ||= $unique;
+        $row->{'guid'} ||= $unique;
         #print "UNIQ[$unique]";#, join',',%$row;
-        $row->{'description'} ||= join ' ', map { $row->{$_} } @{ $q->{'show'} };
+        $row->{'description'} ||= '<![CDATA[' . (join ' ', map { $row->{$_.'_rss'} ||  $row->{$_.'_html'} || $row->{$_} } @{ $q->{'show'} } ) . ']]>';
+	#$row->{'description'} ||= 'desc';
+#warn "time[$row->{'time'}]";
         $row->{'pubDate'} ||= psmisc::human( 'rfc822_date_time', $row->{'time'} );
         #$row->{'link'} ||= get_param_url_str( $param, ['view'] ), '#n', ( ++$work{'rssn'} );
+        $row->{'author'} ||=  $row->{'nick'} || 'dcstat';  
         print '<', $_, '>', $row->{$_}, '</', $_, ">\n" for grep { $row->{$_} } qw(title description author category comments guid pubDate link);
         #'<pubDate>', , '</pubDate>',
         #"<guid></guid>"
@@ -261,7 +286,7 @@ $config{'out'}{'html'}{'table-row'} = sub {
       };
     
     
-    part 'table-row';
+    part 'table-row', $row;
 
   }
 $config{'out'}{'html'}{'table-foot'} = sub {
