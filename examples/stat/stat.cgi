@@ -270,7 +270,7 @@ part 'table-head';
         #print '</description>';
         #$row->{'link'} ||=  'link';
         $row->{'title'} ||=  $row->{ filename } || $row->{ string } || $row->{ tth } || $row->{ line } || $row->{ nick } || $row->{ hub };
-        my $unique = $row->{ tth } || $row->{ string } || $row->{ time };
+        my $unique = $row->{ tth } ||  $row->{ filename } || $row->{ string } || $row->{ nick } || $row->{ hub } || $row->{ time };
         #print "UNIQ1[$unique:$config{'rss2_guid'}]";#, join',',%$row;
         psmisc::html_chars( \$unique );
         $row->{'guid'} ||= $unique;
