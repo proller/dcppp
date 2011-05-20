@@ -61,3 +61,4 @@ adjustable: delete user from hash when quit
 .tth.partial
 dont get shared
 
+dcstat: json, xml output, json input
