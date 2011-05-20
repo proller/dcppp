@@ -10,9 +10,8 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 our ( %config, $param, $db, );
 use lib::abs qw(../../lib ./);
 use statlib;
+ #binmode(STDOUT, ":utf8");
 #our $root_path;
-our @colors =
-  qw(black aqua 		gray		navy		silver	 green		olive		teal	 blue		lime		purple		 magenta		maroon		red		yellow	  	);    #white
 #BEGIN {
 #  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;                                                             #v0w
 #  $root_path = $1 . '/' if $1;
@@ -24,28 +23,84 @@ our @colors =
 #use lib::abs ;
 use Net::DirectConnect::pslib::psmisc;    # qw(:config :log printlog);
 psmisc->import qw(:log);
+
+sub part ($;@) {
+  my $name = shift;
+  psmisc::code_run($config{'out'}{$config{'view'}}{$name} || $config{'out'}{''}{$name}, @_);
+}
+
+#first is default
+our @colors =
+  qw(black aqua gray navy silver green olive teal blue lime purple magenta maroon red yellow);    
+
+
 $param = psmisc::get_params();
 delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
-print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
+$config{'view'} = $param->{'view'} || 'html';
+#$config{'view'} = 'rss';
+
+$config{'out'}{'html'}{'http-header'} = sub {
+print "Content-type: text/xml; charset=utf-8\n\n";
+};
+$config{'out'}{'rss'}{'http-header'} = sub {
+print "Content-type: application/rss+xml; charset=utf-8\n\n";
+};
+
+part 'http-header' if $ENV{'SERVER_PORT'};
+
+
+
+      $config{'out'}{'rss'}{'head'} ||= sub {
+        my ( $param, $table ) = @_;
+        #$work{'param_str'} = get_param_url_str( $param, $config{'skip_from_link'} );
+        #$work{'rssn'} = $work{'n'} = $static{'db'}->{'limit_offset'};
+        print '<?xml version="1.0" encoding="utf-8"?>';
+        #print '<?xml-stylesheet type="text/css" href="', $config{'root_url'}, $config{'css'}, '" ?>' if $config{'css'};
+        print '<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">', '<channel>';
+        print '<title>', $config{'title'}, '</title>' if $config{'title'};
+        print '<link>',        $config{'root_url'},         '</link>'        if $config{'root_url'};
+        print '<description>', $config{'rss2_description'}, '</description>' if $config{'rss2_description'};
+        #print '<language>', lang('language-code'), '</language>';
+      };
+      $config{'out'}{'rss'}{'footer'} ||= sub { print '</channel></rss>'; };
+
+
+
+
+
+
+
+
+$config{'out'}{'html'}{'head'} ||= sub {
+#print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
 print '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <head><title>RU DC stat</title>
 <link href="style.css" rel="stylesheet" type="text/css"/>
+<link rel="alternate" type="application/rss+xml" title="RSS version" href="?query=queries+top+tth&view=rss"/>
+
 <style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>';
 #print '    <svg:svg version="1.1" baseProfile="full" width="300px" height="200px">      <svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>    </svg:svg>';
+};
+part 'head';
+
 $config{'log_all'}     = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
 $config{'log_dmp'}     = $config{'log_dbg'} = 1,
   #$db->{'explain'} = 1,
   if $param->{'debug'};
-$config{'view'} = 'html';
+#$config{'view'} = 'html';
 $config{'lang'} = 'ru';
 $db->retry_off();
 $db->set_names();
 my ( $tq, $rq, $vq ) = $db->quotes();
 $config{'query_default'}{'LIMIT'} = psmisc::check_int( $param->{'on_page'}, 10, 100, 10 );
 $param->{'period'} ||= $config{'default_period'};
+
+
+$config{'out'}{'html'}{'header'} = sub {
+
 print '<a href="?">home</a>';
 print ' days ', (
   map {
@@ -65,6 +120,10 @@ print ' days ', (
 print '<br/>';
 print
 qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим dc клиент, например <a href="http://www.apexdc.net/download/">apexdc</a> <a href="http://wikipedia.org/wiki/Direct_Connect_(file_sharing)#Client_software">или</a></div>};
+};
+part 'header';
+
+
 $config{'human'}{'magnet-dl'} = sub {
   my ($row) = @_;
   $row = { 'tth' => $row } unless ref $row eq 'HASH';
@@ -104,6 +163,9 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
   my $q = { %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
   $q->{'desc'} = $q->{'desc'}{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
+
+$config{'out'}{'html'}{'table-head'} = sub {
+
   print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
     ? $query
     . join( '',
@@ -113,14 +175,19 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
     : '<a href="?query=' . ( psmisc::encode_url($query) ) . '">' . ( $q->{'desc'} || $query ) . '</a>';
   #print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
-  my $res = statlib::make_query( $q, $query, $param->{'period'} );
+
   print psmisc::human( 'time_period', time - $param->{'time'} ) 
     . "<table"
     . ( !$config{'use_graph'} ? () : ' class="graph"' ) . ">";
   print '<th>', $_, '</th>' for 'n', @{ $q->{'show'} };
+};
+part 'table-head';
+  my $res = statlib::make_query( $q, $query, $param->{'period'} );
+
+
   my $n;
   for my $row (@$res) {
-    print '<tr><td>', ++$n, '</td>';
+    ++$n;
     $row->{$_} = psmisc::html_chars( $row->{$_} ) for @{ $q->{'show'} };
     $row->{'orig'} = {%$row};
     #$row->{'tth_orig'}    = $row->{'tth'};
@@ -152,6 +219,9 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
     #$row->{'nick'} .= psmisc::human( 'dchub-dl', $row->{'orig'} ) if $row->{'nick'};
     $row->{$_} = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
     $row->{$_} = psmisc::human( 'size',        $row->{$_} )        for grep { int $row->{$_} } qw(size share);
+
+$config{'out'}{'html'}{'table-row'} = sub {
+    print '<tr><td>', $n, '</td>';
     print '<td>', $row->{$_}, '</td>' for @{ $q->{'show'} };
     if ( $q->{'graph'} ) {
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
@@ -161,13 +231,51 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
       print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
     }
     print '</tr>';
+    };
+
+      $config{'out'}{'rss'}{'table-row'} ||= sub {
+        #my ( $param, $table, $row ) = @_;
+        printlog('dev', Dumper $row);
+        print '<item>';
+        #"\n<link>", get_param_url_str( $param, ['view'] ), '#n', ( ++$work{'rssn'} ), '</link>';
+        #'<description>';
+        #my $buffer;
+        #$buffer .= '<table>';
+        #print 'ITEMS:[' ,join',',%$row;
+        #$buffer .= '</table>';
+        #html_chars( \$buffer );
+        #print $buffer;
+        #print '</description>';
+        my $unique = $row->{ $config{'rss2_guid'} || 'full' };
+        #print "UNIQ1[$unique:$config{'rss2_guid'}]";#, join',',%$row;
+        psmisc::html_chars( \$unique );
+        #$row->{'guid'} ||= $unique;
+        #print "UNIQ[$unique]";#, join',',%$row;
+        $row->{'description'} ||= join ' ', map { $row->{$_} } @{ $q->{'show'} };
+        $row->{'pubDate'} ||= psmisc::human( 'rfc822_date_time', $row->{'time'} );
+        #$row->{'link'} ||= get_param_url_str( $param, ['view'] ), '#n', ( ++$work{'rssn'} );
+        print '<', $_, '>', $row->{$_}, '</', $_, ">\n" for grep { $row->{$_} } qw(title description author category comments guid pubDate link);
+        #'<pubDate>', , '</pubDate>',
+        #"<guid></guid>"
+        print "</item>\n";
+      };
+    
+    
+    part 'table-row';
+
   }
+$config{'out'}{'html'}{'table-foot'} = sub {
   print '</table></div>';
   print '<br/>' if $q->{'group_end'};
+  };
+  part 'table-foot';
   psmisc::flush();
 }
-#print Dumper \%makegraph;
+
 my $graphtime = time;
+$config{'out'}{'html'}{'graph'} = sub {
+
+#print Dumper \%makegraph;
 for my $query ( sort keys %makegraph ) {
   #last;
   my $q = { %{ $config{'queries'}{$query} || next } };
@@ -288,6 +396,11 @@ my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string}
     qq{';}, qq{]]></script>};
   #printlog 'dev', Dumper \%graph, \%dates;
 }
+};
+part 'graph';
+
+$config{'out'}{'html'}{'footer'} = sub {
+
 print
   #log'dev',
   '<div>graph per ', psmisc::human( 'time_period', time - $graphtime ), '</div>' if $config{'use_graph'} and %makegraph;
@@ -297,6 +410,8 @@ qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/tru
   . qq{</div>};
 print '<script type="text/javascript" src="http://iekill.proisk.ru/iekill.js"></script>';
 print '</body></html>';
+};
+part 'footer';
 #print "<pre>";
 #print Dumper $param;
 #print Dumper \%ENV;
