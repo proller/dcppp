@@ -54,20 +54,6 @@ print "Content-type: application/rss+xml; charset=utf-8\n\n";
 part 'http-header' if $ENV{'SERVER_PORT'};
 
 
-
-      $config{'out'}{'rss'}{'head'} ||= sub {
-        my ( $param, $table ) = @_;
-        #$work{'param_str'} = get_param_url_str( $param, $config{'skip_from_link'} );
-        #$work{'rssn'} = $work{'n'} = $static{'db'}->{'limit_offset'};
-        print '<?xml version="1.0" encoding="utf-8"?>';
-        #print '<?xml-stylesheet type="text/css" href="', $config{'root_url'}, $config{'css'}, '" ?>' if $config{'css'};
-        print '<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">', '<channel>';
-        print '<title>', $config{'title'}, '</title>' if $config{'title'};
-        print '<link>',        $config{'root_url'},         '</link>'        if $config{'root_url'};
-        print '<description>', $config{'rss2_description'}, '</description>' if $config{'rss2_description'};
-        #print '<language>', lang('language-code'), '</language>';
-        print "\n\n";
-      };
       $config{'out'}{'rss'}{'footer'} ||= sub { print '</channel></rss>'; };
 
 
@@ -170,6 +156,22 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
   next if $q->{'disabled'};
   $q->{'desc'} = $q->{'desc'}{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
 
+
+      $config{'out'}{'rss'}{'table-head'} ||= sub {
+        #my ( $param, $table ) = @_;
+        #$work{'param_str'} = get_param_url_str( $param, $config{'skip_from_link'} );
+        #$work{'rssn'} = $work{'n'} = $static{'db'}->{'limit_offset'};
+        print '<?xml version="1.0" encoding="utf-8"?>';
+        #print '<?xml-stylesheet type="text/css" href="', $config{'root_url'}, $config{'css'}, '" ?>' if $config{'css'};
+        print '<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">', '<channel>';
+        print '<title>', $config{'title'}, ' :: ', $query, '</title>' if $config{'title'};
+        print '<link>',        $config{'root_url'},         '</link>'        if $config{'root_url'};
+        print '<description>', $config{'rss2_description'}, '</description>' if $config{'rss2_description'};
+        #print '<language>', lang('language-code'), '</language>';
+        print "\n\n";
+      };
+
+
 $config{'out'}{'html'}{'table-head'} = sub {
 
   print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
@@ -267,7 +269,7 @@ part 'table-head';
         #print $buffer;
         #print '</description>';
         #$row->{'link'} ||=  'link';
-        $row->{'title'} ||=  $row->{ tth } || $row->{ string } || $row->{ line } || $row->{ nick } || $row->{ hub };
+        $row->{'title'} ||=  $row->{ string } || $row->{ tth } || $row->{ line } || $row->{ nick } || $row->{ hub };
         my $unique = $row->{ tth } || $row->{ string } || $row->{ time };
         #print "UNIQ1[$unique:$config{'rss2_guid'}]";#, join',',%$row;
         psmisc::html_chars( \$unique );
