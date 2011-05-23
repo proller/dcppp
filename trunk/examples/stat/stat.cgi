@@ -36,7 +36,9 @@ our @colors =
   qw(black aqua gray navy silver green olive teal blue lime purple magenta maroon red yellow);    
 
 
-$param = psmisc::get_params();
+#$param = psmisc::get_params();
+$param = psmisc::get_params_utf8();
+
 delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
 $config{'view'} = $param->{'view'} || 'html';
 #$config{'view'} = 'rss';
@@ -63,19 +65,6 @@ part 'http-header' if $ENV{'SERVER_PORT'};
 
 
 
-$config{'out'}{'html'}{'head'} ||= sub {
-#print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
-#print qq{<!DOCTYPE html>
-print qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<head><title>RU DC stat</title>
-<link href="style.css" rel="stylesheet" type="text/css"/>
-<link rel="alternate" type="application/rss+xml" title="RSS version" href="},psmisc::html_chars('?query=queries+top+tth&view=rss'),qq{"/>
-
-<style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>};
-#print '    <svg:svg version="1.1" baseProfile="full" width="300px" height="200px">      <svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>    </svg:svg>';
-};
-part 'head';
 
 $config{'log_all'}     = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
@@ -91,29 +80,6 @@ $config{'query_default'}{'LIMIT'} = psmisc::check_int( $param->{'on_page'}, 10, 
 $param->{'period'} ||= $config{'default_period'};
 
 
-$config{'out'}{'html'}{'header'} = sub {
-
-print '<a href="?">home</a>';
-print ' days ', (
-  map {
-    '<a '
-      . ( $param->{'period'} eq $_ ? '' : qq{href="?period=$_"} )
-      . qq{ onclick="createCookie('period', '$_');window.location.reload(false);">}
-      . psmisc::human( 'time_period', $config{'periods'}{$_} ) . '</a> '
-    } sort {
-    $config{'periods'}{$a} <=> $config{'periods'}{$b}
-    } keys %{ $config{'periods'} }
-  )
-  unless (
-  grep {
-    $param->{$_}
-  } qw(string tth)
-  ) or ( $param->{'query'} and !$config{'queries'}{ $param->{'query'} }{'periods'} );
-print '<br/>';
-print
-qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим dc клиент, например <a href="http://www.apexdc.net/download/">apexdc</a> <a href="http://wikipedia.org/wiki/Direct_Connect_(file_sharing)#Client_software">или</a></div>};
-};
-part 'header';
 
 
 $config{'human'}{'magnet-dl'} = sub {
@@ -149,8 +115,51 @@ $config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
 my %makegraph;
 my %graphcolors;
 
-for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
-  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} } )
+
+      my $rss_link = (@ask ? '?'.$ENV{'QUERY_STRING'}  : '?query=queries+top+tth' ) ;
+
+      $config{'out'}{'html'}{'head'} ||= sub {
+#print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
+#print qq{<!DOCTYPE html>
+print qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head><title>RU DC stat</title>
+<link href="style.css" rel="stylesheet" type="text/css"/>
+<link rel="alternate" type="application/rss+xml" title="RSS version" href="},psmisc::html_chars($rss_link. '&view=rss') ,qq{"/>
+
+<style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>};
+#print '    <svg:svg version="1.1" baseProfile="full" width="300px" height="200px">      <svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>    </svg:svg>';
+};
+part 'head';
+
+
+$config{'out'}{'html'}{'header'} = sub {
+
+print '<a href="?">home</a>';
+print ' days ', (
+  map {
+    '<a '
+      . ( $param->{'period'} eq $_ ? '' : qq{href="?period=$_"} )
+      . qq{ onclick="createCookie('period', '$_');window.location.reload(false);">}
+      . psmisc::human( 'time_period', $config{'periods'}{$_} ) . '</a> '
+    } sort {
+    $config{'periods'}{$a} <=> $config{'periods'}{$b}
+    } keys %{ $config{'periods'} }
+  )
+  unless (
+  grep {
+    $param->{$_}
+  } qw(string tth)
+  ) or ( $param->{'query'} and !$config{'queries'}{ $param->{'query'} }{'periods'} );
+print '<br/>';
+print
+qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим dc клиент, например <a href="http://www.apexdc.net/download/">apexdc</a> <a href="http://wikipedia.org/wiki/Direct_Connect_(file_sharing)#Client_software">или</a></div>};
+};
+part 'header';
+
+my @queries =   @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
+  grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} };
+for my $query ( @queries )
 {
   my $q = { %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
@@ -174,16 +183,17 @@ for my $query ( @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config
 
 $config{'out'}{'html'}{'table-head'} = sub {
 
-  print '<div class="onetable ' . $q->{'class'} . '">', $q->{'no_query_link'}
+  print '<div class="onetable ' . $q->{'class'} . '">', 
+    ($q->{'no_query_link'}
     ? $query
     . join( '',
      !( $query eq 'tth' and $param->{'tth'} )
     ? ( !( $param->{$query} ) ? () : "= " . psmisc::html_chars( $param->{$query} ) )
     : ( '= <a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
-    : '<a href="?query=' . ( psmisc::encode_url($query) ) . '">' . ( $q->{'desc'} || $query ) . '</a>'.
-    ' <a class="rss" href="'. psmisc::html_chars('?view=rss&query=' . ( psmisc::encode_url($query) )) . '">RSS</a>'
-    
-    ;
+    : '<a href="?query=' .  psmisc::encode_url($query)  . '">' . ( $q->{'desc'} || $query ) . '</a>'
+    ). ' <a class="rss" href="'.  psmisc::html_chars( (@queries > 1 ?  '?query=' .  psmisc::encode_url($query) : $rss_link ). '&view=rss') . '">RSS</a>';
+    #print Dumper \%ENV;
+    #print Dumper @ask;
   #print " ($q->{'desc'}):" if $q->{'desc'};
   print "<br\n/>";
 
@@ -269,8 +279,16 @@ part 'table-head';
         #print $buffer;
         #print '</description>';
         #$row->{'link'} ||=  'link';
+        my $key;
+
         $row->{'title'} ||=  $row->{ filename } || $row->{ string } || $row->{ tth } || $row->{ line } || $row->{ nick } || $row->{ hub };
-        my $unique = $row->{ tth } ||  $row->{ filename } || $row->{ string } || $row->{ nick } || $row->{ hub } || $row->{ time };
+        my $unique;
+
+         for (qw(tth filename string nick  hub time)) {
+         $key ||= $_ if $row->{$_};
+         $unique ||= $row->{ $key };
+         }
+          
         #print "UNIQ1[$unique:$config{'rss2_guid'}]";#, join',',%$row;
         psmisc::html_chars( \$unique );
         $row->{'guid'} ||= $unique;
@@ -280,6 +298,7 @@ part 'table-head';
 #warn "time[$row->{'time'}]";
         $row->{'pubDate'} ||= psmisc::human( 'rfc822_date_time', $row->{'time'} );
         #$row->{'link'} ||= get_param_url_str( $param, ['view'] ), '#n', ( ++$work{'rssn'} );
+        $row->{'link'} ||= "?$key=" . psmisc::encode_url($unique);
         $row->{'author'} ||=  $row->{'nick'} || 'dcstat';  
         print '<', $_, '>', $row->{$_}, '</', $_, ">\n" for grep { $row->{$_} } qw(title description author category comments guid pubDate link);
         #'<pubDate>', , '</pubDate>',

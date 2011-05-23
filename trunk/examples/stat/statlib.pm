@@ -80,7 +80,7 @@ $config{'sql'} ||= {
       'hub'    => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 64, 'index' => 1, 'default' => '', ),
       'nick'   => pssql::row( undef,  'type'  => 'VARCHAR', 'length' => 32, 'index' => 1, 'default' => '', ),
       'ip'   => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 15, 'default' => '', ),
-      'port' => pssql::row( undef, 'type' => 'SMALLINT', ),
+      'port' => pssql::row( undef, 'type' => 'SMALLINT', 'default' => 0,),
       'tth'      => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'index'   => 1, 'default' => '', ),
       'file'     => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'default' => '', ),
       'filename' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 255, 'index'   => 1, 'default' => '', ),
@@ -167,6 +167,21 @@ $config{'queries'}{'queries top tth'} ||= {
   'ORDER BY'  => 'cnt DESC',
   'order'     => ++$order,
 };
+
+=cu
+$config{'queries'}{'queries top tth new'} ||= {%{$config{'queries'}{'queries top tth'}}};
+local %_ = 
+(
+'ORDER BY'=> 'time DESC',
+  'desc'      => { 'ru' => 'Популярные новинки', 'en' => 'Pop new' },
+  'graph' => 0,
+  'show'      => [qw(n time cnt string filename size tth )],
+
+  'order'     => ++$order,
+)          ;
+$config{'queries'}{'queries top tth new'}{$_}=$_{$_} for keys %_;
+=cut
+
 $config{'queries'}{'queries top string'} ||= {
   'main'    => 1,
   'periods' => 1,
