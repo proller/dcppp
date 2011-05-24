@@ -206,7 +206,7 @@ part 'table-head';
   my $res = statlib::make_query( $q, $query, $param->{'period'} );
 
     #warn Dumper $res;
-
+  $res = [sort {$a->{$param->{'sort'}} <=> $b->{$param->{'sort'}} || $b->{$param->{'sort'}} cmp $b->{$param->{'sort'}}} @$res ] if $param->{'sort'}; 
   my $n;
   for my $row (@$res) {
     ++$n;

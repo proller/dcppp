@@ -74,6 +74,8 @@ for my $arg (@ARGV) {
           if $time;
         my $res = statlib::make_query( { %{ $config{'queries'}{$query} }, }, $query );
         my $n = 0;
+        my $date = psmisc::human( 'date', $nowtime )
+                . ( $tim ne 'h' ? '' : '-' . sprintf '%02d', ( localtime $nowtime )[2] );
         for my $row (@$res) {
           ++$n;
           my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
@@ -90,15 +92,14 @@ for my $arg (@ARGV) {
               'n' => $n,
               , %$row,
               'time' => $nowtime,
-              'date' => psmisc::human( 'date', $nowtime )
-                . ( $tim ne 'h' ? '' : '-' . sprintf '%02d', ( localtime $nowtime )[2] ),
+              'date' => $date,
             }
           );
           #}
         }
         #exit;
         $db->do(
-          "DELETE FROM ${tq}slow${tq} WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n " )
+          "DELETE FROM ${tq}slow${tq} WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n AND ${rq}date${rq}=$vq$date$vq" )
           if $config{'use_slow'};
         #$db->flush_insert('slow');
         $db->flush_insert();
