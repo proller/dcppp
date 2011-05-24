@@ -48,6 +48,9 @@ fullclean: distclean veryclean
 prerelease:
 
 release: prerelease test fullclean manifest metafile dist
+
+tidy:
+	perltidy -b -i=2 -ce -l=128 -nbbc -sob -otr -sot examples/*.pl examples/stat/*.p* examples/stat/*.cgi /lib/Net/*.pm /lib/Net/DirectConnect/*.pm
 }
 }
 

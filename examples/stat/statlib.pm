@@ -166,6 +166,7 @@ $config{'queries'}{'queries top tth'} ||= {
   'GROUP BY'  => 'queries.tth',
   'ORDER BY'  => 'cnt DESC',
   'order'     => ++$order,
+  'sort'      => [qw(time cnt size)],
 };
 
 =cu
