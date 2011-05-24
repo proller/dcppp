@@ -72,10 +72,9 @@ for my $arg (@ARGV) {
         local $config{'queries'}{$query}{'WHERE'}[5] =
           $config{'queries'}{$query}{'FROM'} . ".time >= " . int( time - $config{'periods'}{$time} )
           if $time;
-        my $res = statlib::make_query( { %{ $config{'queries'}{$query} }, }, $query );
-        my $n = 0;
-        my $date = psmisc::human( 'date', $nowtime )
-                . ( $tim ne 'h' ? '' : '-' . sprintf '%02d', ( localtime $nowtime )[2] );
+        my $res  = statlib::make_query( { %{ $config{'queries'}{$query} }, }, $query );
+        my $n    = 0;
+        my $date = psmisc::human( 'date', $nowtime ) . ( $tim ne 'h' ? '' : '-' . sprintf '%02d', ( localtime $nowtime )[2] );
         for my $row (@$res) {
           ++$n;
           my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
@@ -98,8 +97,11 @@ for my $arg (@ARGV) {
           #}
         }
         #exit;
-        $db->do(
-          "DELETE FROM ${tq}slow${tq} WHERE name=" . $db->quote($query) . " AND period=" . $db->quote($time) . " AND n>$n AND ${rq}date${rq}=$vq$date$vq" )
+        $db->do( "DELETE FROM ${tq}slow${tq} WHERE name="
+            . $db->quote($query)
+            . " AND period="
+            . $db->quote($time)
+            . " AND n>$n AND ${rq}date${rq}=$vq$date$vq" )
           if $config{'use_slow'};
         #$db->flush_insert('slow');
         $db->flush_insert();
@@ -148,7 +150,6 @@ for my $arg (@ARGV) {
         for qw(queries_top_string_ queries_top_tth_ results_top_);
     }
 =cut
-
   } elsif ( $arg eq 'stat' ) {
     $ARGV[$n]             = undef;
     $db->{'auto_repair'}  = 1;
@@ -176,7 +177,11 @@ sub close_all {
 sub flush_all { $db->flush_insert(); }
 
 sub print_info {
-  psmisc::printlog( 'info', "queue len=", scalar @{ $work{'toask'} || [] }, " first hits=", $work{'ask'}{ $work{'toask'}[0] }, ' asks=', scalar keys %{$work{'ask'}});
+  psmisc::printlog(
+    'info', "queue len=", scalar @{ $work{'toask'} || [] },
+    " first hits=", $work{'ask'}{ $work{'toask'}[0] },
+    ' asks=', scalar keys %{ $work{'ask'} }
+  );
   local @_ = grep { $_ and $_->active() } @dc;
   psmisc::printlog 'info', 'active hubs:', map { $_->{'host'} . ':' . $_->{'status'} } @_;
   psmisc::printlog 'info', 'hashes:',      map { $_ . '=' . scalar %{ $work{$_} || {} } } qw(ask asked ask_db);
@@ -230,13 +235,12 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
         #'Search_parse_aft' => sub {
         'Search' => sub {
           my $dc = shift;
-      #$dc->log('sch', Dumper @_ );#if $dc->{adc};
+          #$dc->log('sch', Dumper @_ );#if $dc->{adc};
           my $who    = shift if $dc->{adc};
           my $search = shift if $dc->{nmdc};
           my $s = $_[0] || {};
           $s = pop if $dc->{adc};
           return if $dc->{nmdc} and $s->{'nick'} eq $dc->{'Nick'};
-
           $db->insert_hash(
             'queries', { (
                 $dc->{nmdc} ? () : (
@@ -251,9 +255,9 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
               ),
               %$s
             }
-          );# if $s->{TR} ne 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
+          );    # if $s->{TR} ne 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
           my $q = $s->{'tth'} || $s->{'string'} || $s->{'TR'} || $s->{'AN'} || return;
-	  #return if $q eq 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
+          #return if $q eq 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
           ++$work{'ask'}{$q};
           ++$work{'stat'}{'Search'};
           psmisc::schedule(
@@ -267,24 +271,27 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
               ];
               $dc->log( 'warn', "reasking" ), $work{'toask'} = [ (
                   sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} } grep {
-                    $work{'ask'}{$_} >= $config{'hit_to_ask'}
+                          $work{'ask'}{$_} >= $config{'hit_to_ask'}
                       and $work{'asked'}{$_}
                       and $work{'asked'}{$_} + $config{'ask_retry'} < $time
                     } keys %{ $work{'ask'} }
                 )
                 ]
                 unless @{ $work{'toask'} };
-              $dc->log( 'info', "queue len=", scalar @{ $work{'toask'} },
-                " first hits=", $work{'ask'}{ $work{'toask'}[0] } , ' asks=', scalar keys %{$work{'ask'}} );
+              $dc->log(
+                'info', "queue len=", scalar @{ $work{'toask'} },
+                " first hits=", $work{'ask'}{ $work{'toask'}[0] },
+                ' asks=', scalar keys %{ $work{'ask'} }
+              );
             }
           );
           psmisc::schedule(
             [ 3600, 3600 ],
             our $hashes_cleaner_ ||= sub {
               my $min = scalar keys %{ $work{'hubs'} || {} };
-              $dc->log('info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} });
+              $dc->log( 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} } );
               delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
-              $dc->log('info', "queue clear ok now", scalar %{ $work{'ask'} || {} });
+              $dc->log( 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} } );
             }
           );
           psmisc::schedule(
@@ -420,13 +427,12 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
             }
           );
 =cut
-
           ++$work{'stat'}{'QUI'};
         },
-        'RES' => sub { #TODO
+        'RES' => sub {    #TODO
           my $dc = shift;
           #$db->insert_hash( 'results', \%s );
-          $dc->log('RES:', Dumper @_);
+          $dc->log( 'RES:', Dumper @_ );
           ++$work{'stat'}{'RES'};
         },
         #'FSCH' => sub {
@@ -459,13 +465,11 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
       $dc->destroy();
     };
 =cut	
-
     push @dc, $dc;
     $_->work() for @dc;
   }
 }
 $_->{___work} = \%work for @dc;
-
 while ( my @dca = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dca;
   psmisc::schedule(
@@ -485,7 +489,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
         $dc->work(1);
         if   ( $dc->{nmdc} ) { $share += $dc->{'NickList'}{$_}{'sharesize'} for @users; }
         else                 { $share += $dc->{'peers_sid'}{$_}{INF}{'SS'}  for @users; }
-        $dc->log( 'info', "hubsize $dc->{'hub_name'}: bytes = $share users=", scalar @users);
+        $dc->log( 'info', "hubsize $dc->{'hub_name'}: bytes = $share users=", scalar @users );
         $db->insert_hash( 'hubs', { 'time' => $time, 'hub' => $dc->{'hub_name'}, 'size' => $share, 'users' => scalar @users } )
           if $share;
       }
@@ -499,6 +503,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     if $config{'use_slow'};
 #psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
+
 =z
   psmisc::schedule(
     [ 10, 100 ],
@@ -508,6 +513,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     }
   ) if $config{'debug'};
 =cut
+
 }
 psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
 #psmisc::caller_trace(20);

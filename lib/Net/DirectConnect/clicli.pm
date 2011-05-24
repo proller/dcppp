@@ -168,7 +168,7 @@ sub init {
     'ADCGET' => sub {
       my $self = shift if ref $_[0];
       #$self->log('dev', 'ADCGET', @_);
-      $self->cmd('Error',"File Not Available") if $self->file_send_parse( map { split /\s/, $_ } @_ );
+      $self->cmd( 'Error', "File Not Available" ) if $self->file_send_parse( map { split /\s/, $_ } @_ );
     },
     #};
   );

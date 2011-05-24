@@ -25,10 +25,10 @@ $_{dist} = {
 };
 #$_{PREREQ_PM}{'Net::DirectConnect::TigerHash'} = 0,    #for sharing and adc
 #  $_{NORECURS} = 1, if $^O =~ /win32/i or $^O =~ /mswin/ or $^O =~ /freebsd/i;
-if ( $^O !~ /MSWin32/i) {    #mingw fail
+if ( $^O !~ /MSWin32/i ) {    #mingw fail
   $_{PREREQ_PM}{$_} = 0 for qw(MIME::Base32);
 }
-if ( $^O !~ /MSWin32|cygwin/i) {    #mingw fail
+if ( $^O !~ /MSWin32|cygwin/i ) {    #mingw fail
   $_{PREREQ_PM}{$_} = 0 for qw(Sys::Sendfile);
 }
 WriteMakefile(%_);
@@ -50,7 +50,7 @@ prerelease:
 release: prerelease test fullclean manifest metafile dist
 
 tidy:
-	perltidy -b -i=2 -ce -l=128 -nbbc -sob -otr -sot examples/*.pl examples/stat/*.p* examples/stat/*.cgi /lib/Net/*.pm /lib/Net/DirectConnect/*.pm
+	perltidy -b -i=2 -ce -l=128 -nbbc -sob -otr -sot *.PL examples/*.pl examples/stat/*.p* examples/stat/*.cgi lib/Net/*.pm lib/Net/DirectConnect/*.pm
 }
 }
 

@@ -92,13 +92,8 @@ return $self;
 
 sub func {
   my $self = shift if ref $_[0];
-
-  %_ = (
-    'ID_file'       => 'ID',
-  );
+  %_ = ( 'ID_file' => 'ID', );
   $self->{$_} //= $_{$_} for keys %_;
-
-  
   if ( Net::DirectConnect::use_try( 'MIME::Base32', 'RFC' ) ) {
     $self->{base_encode} ||= sub {
       shift if ref $_[0];
@@ -133,13 +128,13 @@ sub func {
       if $self->{'peers'}{$peerid}{'INF'}{I4} and $self->{'peers'}{$peerid}{'INF'}{U4};
     $self->cmd(@_);
   };
-
   $self->{ID_get} ||= sub {
-  #sub ID_get {
+    #sub ID_get {
     my $self = shift if ref $_[0];
     if ( -s $self->{'ID_file'} ) { $self->{'ID'} ||= psmisc::file_read( $self->{'ID_file'} ); }
     unless ( $self->{'ID'} ) {
-      $self->{'ID'} ||= join ' ', 'perl', $self->{'myip'}, $VERSION, $0, $self->{'INF'}{'NI'}, time, '$Id$';
+      $self->{'ID'} ||= join ' ', 'perl', $self->{'myip'}, $VERSION, $0, $self->{'INF'}{'NI'}, time,
+        '$Id$';
       psmisc::file_rewrite( $self->{'ID_file'}, $self->{'ID'} );
     }
     $self->{'PID'}       ||= $self->hash( $self->{'ID'} );
@@ -148,7 +143,6 @@ sub func {
     $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
     return $self->{'ID'};
   };
-
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
     #$self->log( 'dev', 'ing_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
@@ -176,7 +170,6 @@ sub func {
     $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
     return $self->{'INF'};
   };
-
 }
 
 sub init {
@@ -229,9 +222,7 @@ sub init {
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   $self->{message_type} = 'B' if $self->{'broadcast'};
-
-   $self->func();
-
+  $self->func();
   $self->INF_generate();
   $self->{'parse'} ||= {
 #
@@ -748,7 +739,7 @@ sub init {
 =cut    
   #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
   unless ( $self->{'no_listen'} ) {
-    #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
+#$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
     if (
       #( $self->{'M'} eq 'A' or !$self->{'M'} )  and
       !$self->{'incoming'}
