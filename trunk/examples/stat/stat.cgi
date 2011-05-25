@@ -45,7 +45,7 @@ $config{'out'}{'rss'}{'http-header'} = sub {
   print "Content-type: application/rss+xml; charset=utf-8\n\n";
 };
 part 'http-header' if $ENV{'SERVER_PORT'};
-$config{'out'}{'rss'}{'footer'} ||= sub { print '</channel></rss>'; };
+$config{'out'}{'rss'}{'footer'} = sub { print '</channel></rss>'; };
 $config{'log_all'}     = '0' unless $param->{'debug'};
 $config{'log_default'} = '#';
 $config{'log_dmp'}     = $config{'log_dbg'} = 1,
@@ -97,7 +97,7 @@ $config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
 my %makegraph;
 my %graphcolors;
 my $rss_link = ( @ask ? '?' . $ENV{'QUERY_STRING'} : '?query=queries+top+tth' );
-$config{'out'}{'html'}{'head'} ||= sub {
+$config{'out'}{'html'}{'head'} = sub {
   #print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
   #print qq{<!DOCTYPE html>
   print qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -139,7 +139,7 @@ for my $query (@queries) {
   my $q = { %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
   $q->{'desc'} = $q->{'desc'}{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
-  $config{'out'}{'rss'}{'table-head'} ||= sub {
+  $config{'out'}{'rss'}{'table-head'} = sub {
     #my ( $param, $table ) = @_;
     #$work{'param_str'} = get_param_url_str( $param, $config{'skip_from_link'} );
     #$work{'rssn'} = $work{'n'} = $static{'db'}->{'limit_offset'};
@@ -181,6 +181,7 @@ for my $query (@queries) {
     [ sort { $b->{ $param->{'sort'} } <=> $a->{ $param->{'sort'} } || $b->{ $param->{'sort'} } cmp $a->{ $param->{'sort'} } }
       @$res ]
     if $param->{'sort'};
+  push @{ $q->{'show'} }, $param->{'sort'} if $param->{'sort'} and ! grep {$_ eq $param->{'sort'}}  @{ $q->{'show'} }; 
   my $n;
   for my $row (@$res) {
     ++$n;
@@ -233,7 +234,7 @@ for my $query (@queries) {
       }
       print '</tr>';
     };
-    $config{'out'}{'rss'}{'table-row'} ||= sub {
+    $config{'out'}{'rss'}{'table-row'} = sub {
       #my ( $param, $table, $row ) = @_;
       my ($row) = @_;
       #printlog('dev', Dumper $row);
@@ -423,8 +424,10 @@ qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/tru
     . ( split( ' ', '$Revision$' ) )[1]
     . qq{</div>};
   print '<script type="text/javascript" src="http://iekill.proisk.ru/iekill.js"></script>';
+  part 'footer_aft';
   print '</body></html>';
 };
+part 'footer_bef';
 part 'footer';
 #print "<pre>";
 #print Dumper $param;
