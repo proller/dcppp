@@ -158,7 +158,7 @@ $config{'queries'}{'queries top tth'} ||= {
   'periods' => 1,
   ( !$config{'use_graph'} ? ( 'class' => 'half' ) : ( 'graph' => 1 ) ),
   'desc'      => { 'ru' => 'Чаще всего скачивают', 'en' => 'Most downloaded' },
-  'show'      => [qw(n cnt string filename size tth )],
+  'show'      => [qw(n cnt string filename size tth time )],
   'SELECT'    => '*, COUNT(*) as cnt',
   'FROM'      => 'queries',
   'LEFT JOIN' => 'results USING (tth)',
@@ -182,6 +182,7 @@ local %_ =
 )          ;
 $config{'queries'}{'queries top tth new'}{$_}=$_{$_} for keys %_;
 =cut
+
 $config{'queries'}{'queries top string'} ||= {
   'main'    => 1,
   'periods' => 1,

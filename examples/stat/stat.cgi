@@ -65,9 +65,10 @@ $config{'human'}{'magnet-dl'} = sub {
   my $string = $row->{'string_orig'} || $row->{'string'};
   $string ||= $tth, $tth = undef, unless $tth =~ /^[0-9A-Z]{39}$/;
   local $_ = join '&amp;', grep { $_ } ( $tth ? 'xt=urn:tree:tiger:' . $tth : '' ),
-    ( $row->{'size'} ? 'xl=' . $row->{'size'} : '' ),
+    ( $row->{'size'}     ? 'xl=' . $row->{'size'}                           : '' ),
     ( $row->{'filename'} ? 'dn=' . psmisc::encode_url( $row->{'filename'} ) : '' ),
-    ( $string ? 'kt=' . psmisc::encode_url($string) : '' ), ( $row->{'hub'} ? 'xs=dchub://' . $row->{'hub'} : '' );
+    ( $string            ? 'kt=' . psmisc::encode_url($string)              : '' ),
+    ( ( $row->{'hub'} and $row->{'hub'} ne 'localhost' ) ? 'xs=dchub://' . $row->{'hub'} : '' );
   return
       '&nbsp;<a class="magnet-darr" href="magnet:?' 
     . $_
@@ -172,7 +173,11 @@ for my $query (@queries) {
     print psmisc::human( 'time_period', time - $param->{'time'} ) 
       . "<table"
       . ( !$config{'use_graph'} ? () : ' class="graph"' ) . ">";
-    print '<th>', $_, '</th>' for @{ $q->{'show'} };
+    my %sort = map { $_ => 1 } @{ $q->{'sort'} };
+    print '<th>',
+      $sort{$_} ? qq{<a href="} . psmisc::html_chars( qq{?sort=$_&query=} . psmisc::encode_url($query) ) . qq{">$_</a>} : $_,
+      '</th>'
+      for @{ $q->{'show'} };
   };
   part 'table-head';
   my $res = statlib::make_query( $q, $query, $param->{'period'} );
@@ -181,7 +186,7 @@ for my $query (@queries) {
     [ sort { $b->{ $param->{'sort'} } <=> $a->{ $param->{'sort'} } || $b->{ $param->{'sort'} } cmp $a->{ $param->{'sort'} } }
       @$res ]
     if $param->{'sort'};
-  push @{ $q->{'show'} }, $param->{'sort'} if $param->{'sort'} and ! grep {$_ eq $param->{'sort'}}  @{ $q->{'show'} }; 
+  push @{ $q->{'show'} }, $param->{'sort'} if $param->{'sort'} and !grep { $_ eq $param->{'sort'} } @{ $q->{'show'} };
   my $n;
   for my $row (@$res) {
     ++$n;
@@ -204,14 +209,16 @@ for my $query (@queries) {
                                                        #my $id = $query;
                                                        #$id =~ tr/ /_/;
     }
+    $row->{'tth_show'} = 'tth' if $config{'view'} eq 'rss';
     $row->{ $_ . '_html' } = (
       $param->{$_}
       ? ''
       : qq{<a class="$_" title="}
         . psmisc::html_chars( $row->{$_} )
         . qq{" href="?$_=}
-        . psmisc::encode_url( $row->{$_} )
-        . qq{">$row->{$_}</a>}
+        . psmisc::encode_url( $row->{$_} ) . qq{">}
+        . ( $row->{ $_ . '_show' } || $row->{$_} )
+        . qq{</a>}
       )
       . psmisc::human( 'magnet-dl', $row->{'orig'} )
       for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } }
@@ -250,7 +257,12 @@ for my $query (@queries) {
       #print '</description>';
       #$row->{'link'} ||=  'link';
       my $key;
+      my $title;
       $row->{'title'} ||= $row->{filename} || $row->{string} || $row->{tth} || $row->{line} || $row->{nick} || $row->{hub};
+      for (qw(filename string tth line nick  hub time)) {
+        $title ||= $_ if $row->{$_};
+        $row->{'title'} ||= $row->{$title};
+      }
       my $unique;
       for (qw(tth filename string nick  hub time)) {
         $key ||= $_ if $row->{$_};
@@ -261,7 +273,9 @@ for my $query (@queries) {
       $row->{'guid'} ||= $unique;
       #print "UNIQ[$unique]";#, join',',%$row;
       $row->{'description'} ||= '<![CDATA['
-        . ( join ' ', map { $row->{ $_ . '_rss' } || $row->{ $_ . '_html' } || $row->{$_} } @{ $q->{'show'} } ) . ']]>';
+        . (
+        join ' ', map { $row->{ $_ . '_rss' } || $row->{ $_ . '_html' } || $row->{$_} } grep { $_ ne $title } @{ $q->{'show'} }
+        ) . ']]>';
       #$row->{'description'} ||= 'desc';
       #warn "time[$row->{'time'}]";
       $row->{'pubDate'} ||= psmisc::human( 'rfc822_date_time', $row->{'time'} );
