@@ -73,6 +73,7 @@ for my $arg (@ARGV) {
           $config{'queries'}{$query}{'FROM'} . ".time >= " . int( time - $config{'periods'}{$time} )
           if $time;
         my $res  = statlib::make_query( { %{ $config{'queries'}{$query} }, }, $query );
+#print $query, Dumper $res;
         my $n    = 0;
         my $date = psmisc::human( 'date', $nowtime ) . ( $tim ne 'h' ? '' : '-' . sprintf '%02d', ( localtime $nowtime )[2] );
         for my $row (@$res) {
@@ -101,7 +102,8 @@ for my $arg (@ARGV) {
             . $db->quote($query)
             . " AND period="
             . $db->quote($time)
-            . " AND n>$n AND ${rq}date${rq}=$vq$date$vq" )
+            #. (!$config{'sql'}{'table'}{}" AND n>$n AND ${rq}date${rq}=$vq$date$vq") 
+            )
           if $config{'use_slow'};
         #$db->flush_insert('slow');
         $db->flush_insert();
