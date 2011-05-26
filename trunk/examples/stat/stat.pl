@@ -78,6 +78,7 @@ for my $arg (@ARGV) {
         my $date = psmisc::human( 'date', $nowtime ) . ( $tim ne 'h' ? '' : '-' . sprintf '%02d', ( localtime $nowtime )[2] );
         for my $row (@$res) {
           ++$n;
+          delete $row->{$_} for grep {!defined $row->{$_}} keys %$row;
           my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
           #warn "SLOWi:[$config{'use_slow'}][$dmp]";
           $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => $nowtime } )
@@ -519,7 +520,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
   ) if $config{'debug'};
 =cut
 }
-psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc;
+psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc if @dc;
 #psmisc::caller_trace(20);
 $_->destroy() for @dc;
 psmisc::printlog 'info', 'bye', times;

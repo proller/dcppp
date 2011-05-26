@@ -467,14 +467,28 @@ sub make_query {
 $db ||= pssql->new( %{ $config{'sql'} || {} }, );
 ( $tq, $rq, $vq ) = $db->quotes();
 
-=todo
+#=todo
+  $db->{'array_to_hash'} = sub {
+
+    my $self = shift;
+    my $r = shift;
+    return {} if  !$self->{'sth'} or !$r;
+      my $i = -1;
+      my %uniq;
+      $r = { map {++$i; $_=>($uniq{$_} ||= $r->[$i])  } @{$self->{'sth'}{'NAME'}} };
+    return $r;
+  };
+
   $db->{'line'} = sub {
     my $self = shift;
     return {} if @_ and $self->prepare(@_);
     return {} if !$self->{'sth'} or $self->{'sth'}->err;
     my $tim = psmisc::timer();
     local $_ =
-      scalar( psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, ( $self->{'sth'}->fetchrow_hashref() || {} ) ) );
+      scalar( psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, ( 
+      $self->array_to_hash( $self->{'sth'}->fetchrow_arrayref() )
+      #$self->{'sth'}->fetchrow_hashref() || {} 
+      ) ) );
     $self->{'queries_time'} += $tim->();
     $self->log(
       'dmp', 'line:[', @_, '] = ', scalar keys %$_,
@@ -482,7 +496,8 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       'err=', $self->err(),
     ) if ( caller(2) )[0] ne 'pssql';
     return $_;
-  };
+  }if $db->{'driver'} =~ /mysql/;
+
 
   $db->{'query'} = sub {
     my $self = shift;
@@ -498,11 +513,16 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       next unless $self->{'sth'} and keys %{$_};
       my $tim = psmisc::timer();
       #$self->log("Db[",%$_,"]($self->{'codepage'}, $self->{'cp_out'})"),
-      push( @hash, scalar psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, $_ ) ),
+      #print 'name', Dumper $self->{sth}{'NAME'};
+      while ( my $r = $self->{'sth'}->fetchrow_arrayref()  ) {
+      $r = $self->array_to_hash($r);
+#print "r[$r]", Dumper $r;
+      push( @hash, scalar psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, $r ) );
+      #print Dumper \%uniq;
+      }
         #$self->log("Da[",%$_,"]"),
         #while ( $_ = $self->{'sth'}->fetchrow_hashref() );
-        while ( $_ = $self->{'sth'}->fetchrow_arrayref() );
-#print 'name', Dumper $self->{sth}{'NAME'};
+#print 'name', Dumper $self->{sth}{'NAME'}, $self->{sth}{'NAME_hash'} ,Dumper @hash;
       $self->{'queries_time'} += $tim->();
     }
     $self->log(
@@ -517,26 +537,9 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       for (@hash) { utf8::decode $_ for %$_; }
     }
     return wantarray ? @hash : \@hash;
-  };
+  } if $db->{'driver'} =~ /mysql/;
 
-  $db->{'nonoquery'} = sub {
-    my $self = shift;
-    my $tim  = psmisc::timer();
-    my @hash;
-    for my $query (@_) {
-      next unless $query;
-      #local $self->{'explain'} = 0, $self->query_log( $self->{'EXPLAIN'} . ' ' . $query ) if $self->{'explain'} and $self->{'EXPLAIN'};
-      local $_ =  $self->selectall_arrayref($query);
-print Dumper $_, 'anme:',$self->{sth}{'NAME'};
-      push( @hash, $_ );
-    }
-    $self->{'dbirows'} = scalar @hash if $self->{'no_dbirows'} or $self->{'dbirows'} <= 0;
-    if ( $self->{'codepage'} eq 'utf-8' ) {
-      #for (@hash) { utf8::decode $_ for %$_; }
-    }
-    return wantarray ? @hash : \@hash;
-  };
-=cut
+#=cut
 
 
 1;
