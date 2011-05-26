@@ -160,6 +160,7 @@ $config{'queries'}{'queries top tth'} ||= {
   'desc'      => { 'ru' => 'Чаще всего скачивают', 'en' => 'Most downloaded' },
   'show'      => [qw(n cnt string filename size tth time )],
   'SELECT'    => '*, COUNT(*) as cnt',
+  #'SELECT'    => 'queries.*,results.*, COUNT(*) as cnt',
   'FROM'      => 'queries',
   'LEFT JOIN' => 'results USING (tth)',
   'WHERE'     => ['queries.tth != ""'],
@@ -465,4 +466,77 @@ sub make_query {
 }
 $db ||= pssql->new( %{ $config{'sql'} || {} }, );
 ( $tq, $rq, $vq ) = $db->quotes();
+
+=todo
+  $db->{'line'} = sub {
+    my $self = shift;
+    return {} if @_ and $self->prepare(@_);
+    return {} if !$self->{'sth'} or $self->{'sth'}->err;
+    my $tim = psmisc::timer();
+    local $_ =
+      scalar( psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, ( $self->{'sth'}->fetchrow_hashref() || {} ) ) );
+    $self->{'queries_time'} += $tim->();
+    $self->log(
+      'dmp', 'line:[', @_, '] = ', scalar keys %$_,
+      ' per', psmisc::human( 'time_period', $tim->() ),
+      'err=', $self->err(),
+    ) if ( caller(2) )[0] ne 'pssql';
+    return $_;
+  };
+
+  $db->{'query'} = sub {
+    my $self = shift;
+    my $tim  = psmisc::timer();
+    my @hash;
+    for my $query (@_) {
+      next unless $query;
+      local $self->{'explain'} = 0, $self->query_log( $self->{'EXPLAIN'} . ' ' . $query )
+        if $self->{'explain'} and $self->{'EXPLAIN'};
+      local $_ = $self->line($query);
+      next unless keys %{$_};
+      push( @hash, $_ );
+      next unless $self->{'sth'} and keys %{$_};
+      my $tim = psmisc::timer();
+      #$self->log("Db[",%$_,"]($self->{'codepage'}, $self->{'cp_out'})"),
+      push( @hash, scalar psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, $_ ) ),
+        #$self->log("Da[",%$_,"]"),
+        #while ( $_ = $self->{'sth'}->fetchrow_hashref() );
+        while ( $_ = $self->{'sth'}->fetchrow_arrayref() );
+#print 'name', Dumper $self->{sth}{'NAME'};
+      $self->{'queries_time'} += $tim->();
+    }
+    $self->log(
+      'dmp', 'query:[', @_, '] = ', scalar @hash, ' per', psmisc::human( 'time_period', $tim->() ),
+      'rps', psmisc::human( 'float', ( scalar @hash ) / ( $tim->() || 1 ) ),
+      'err=', $self->err()
+    );
+    $self->{'dbirows'} = scalar @hash if $self->{'no_dbirows'} or $self->{'dbirows'} <= 0;
+    #$self->query_print($_) for @hash;
+    #$self->log('qcp', $self->{'codepage'});
+    if ( $self->{'codepage'} eq 'utf-8' ) {
+      for (@hash) { utf8::decode $_ for %$_; }
+    }
+    return wantarray ? @hash : \@hash;
+  };
+
+  $db->{'nonoquery'} = sub {
+    my $self = shift;
+    my $tim  = psmisc::timer();
+    my @hash;
+    for my $query (@_) {
+      next unless $query;
+      #local $self->{'explain'} = 0, $self->query_log( $self->{'EXPLAIN'} . ' ' . $query ) if $self->{'explain'} and $self->{'EXPLAIN'};
+      local $_ =  $self->selectall_arrayref($query);
+print Dumper $_, 'anme:',$self->{sth}{'NAME'};
+      push( @hash, $_ );
+    }
+    $self->{'dbirows'} = scalar @hash if $self->{'no_dbirows'} or $self->{'dbirows'} <= 0;
+    if ( $self->{'codepage'} eq 'utf-8' ) {
+      #for (@hash) { utf8::decode $_ for %$_; }
+    }
+    return wantarray ? @hash : \@hash;
+  };
+=cut
+
+
 1;
