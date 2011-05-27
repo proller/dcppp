@@ -468,8 +468,20 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
 ( $tq, $rq, $vq ) = $db->quotes();
 
 #=todo
-  $db->{'array_to_hash'} = sub {
+{
+ my $self = $db;
 
+
+  $self->{'array_hash_repl'} = sub {
+    my $self = shift;
+    my $r = shift;
+    return {} if  !$self->{'sth'} or !$r;
+      my $i = -1;
+      my %uniq;
+      $r = { map {++$i; $_=>($r->[$i] ? $uniq{$_} = $r->[$i] : $uniq{$_})  } @{$self->{'sth'}{'NAME'}} };
+    return $r;
+  };
+  $self->{'array_hash_add'} = sub {
     my $self = shift;
     my $r = shift;
     return {} if  !$self->{'sth'} or !$r;
@@ -478,15 +490,28 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       $r = { map {++$i; $_=>($uniq{$_} ||= $r->[$i])  } @{$self->{'sth'}{'NAME'}} };
     return $r;
   };
+  $self->{'fetch_hash'} = sub {
+    my $self = shift;
+    #return $self->{'sth'}->fetchrow_hashref();
+    local $_ = $self->{'sth'}->fetchrow_arrayref() || return;
+#print 'A:',Dumper $self->{'sth'}{'NAME'},$_;
+    #return $self->array_hash_add( $_ );
+    return $self->array_hash_repl( $_ );
+  };
 
-  $db->{'line'} = sub {
+  $self->{'array_to_hash'} = sub {
+    my $self = shift;
+  };
+
+  $self->{'line'} = sub {
     my $self = shift;
     return {} if @_ and $self->prepare(@_);
     return {} if !$self->{'sth'} or $self->{'sth'}->err;
     my $tim = psmisc::timer();
     local $_ =
       scalar( psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, ( 
-      $self->array_to_hash( $self->{'sth'}->fetchrow_arrayref() )
+      #$self->array_to_hash( $self->{'sth'}->fetchrow_arrayref() )
+      $self->fetch_hash()
       #$self->{'sth'}->fetchrow_hashref() || {} 
       ) ) );
     $self->{'queries_time'} += $tim->();
@@ -496,7 +521,7 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       'err=', $self->err(),
     ) if ( caller(2) )[0] ne 'pssql';
     return $_;
-  }if $db->{'driver'} =~ /mysql/;
+  }if $self->{'driver'} =~ /mysql/;
 
 
   $db->{'query'} = sub {
@@ -514,8 +539,12 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       my $tim = psmisc::timer();
       #$self->log("Db[",%$_,"]($self->{'codepage'}, $self->{'cp_out'})"),
       #print 'name', Dumper $self->{sth}{'NAME'};
-      while ( my $r = $self->{'sth'}->fetchrow_arrayref()  ) {
-      $r = $self->array_to_hash($r);
+      #while ( my $r = $self->{'sth'}->fetchrow_arrayref()  ) {
+      while ( my $r = $self->fetch_hash() ) {
+#print 'H:',Dumper $r;
+            
+
+      #$r = $self->array_to_hash($r);
 #print "r[$r]", Dumper $r;
       push( @hash, scalar psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, $r ) );
       #print Dumper \%uniq;
@@ -537,8 +566,8 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       for (@hash) { utf8::decode $_ for %$_; }
     }
     return wantarray ? @hash : \@hash;
-  } if $db->{'driver'} =~ /mysql/;
-
+  } if $self->{'driver'} =~ /mysql/;
+}
 #=cut
 
 
