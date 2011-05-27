@@ -382,7 +382,8 @@ $config{'out'}{'html'}{'graph'} = sub {
         . ( $graphcolors{$line} || $colors[0] )
         . qq{" stroke-width="3" points="};    #. #( #"mc
                                               # join ' ',
-      for ( sort grep { $graph{$line}{$_} } keys %dates ) {
+      for ( sort keys %dates ) {
+	if (  $graph{$line}{$_}   ) {
         #      map {
         #$graph{$line}{$_} = $yl - $graph{$line}{$_};
         if ( my $v = $graph{$line}{$_} ) {    # ? () : (
@@ -395,7 +396,8 @@ $config{'out'}{'html'}{'graph'} = sub {
               $v * $date_step{$_}
           ) . ' ';
         }
-        $n++;
+	}
+        ++$n;
         #)
         #       }
         #      ).
