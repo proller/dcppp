@@ -131,7 +131,7 @@ $config{'out'}{'html'}{'header'} = sub {
     ) or ( $param->{'query'} and !$config{'queries'}{ $param->{'query'} }{'periods'} );
   print '<br/>';
   print
-qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим dc клиент, например <a href="http://www.apexdc.net/download/">apexdc</a> <a href="http://wikipedia.org/wiki/Direct_Connect_(file_sharing)#Client_software">или</a></div>};
+qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим <a href="http://en.wikipedia.org/wiki/DC%2B%2B#Client_software_comparison">dc клиент</a></div>};
 };
 part 'header';
 my @queries = @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
