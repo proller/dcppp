@@ -47,21 +47,14 @@ Net::DirectConnect->new(
   #botinfo      => 'devperlpinger',
   auto_GetINFO => 1,
   auto_connect => 1,
+  auto_say     => 1,
   dev_http     => 1,
   'log'        => sub (@) {
     my $dc = ref $_[0] ? shift : {};
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   },
-  'handler' => { (
-      map {
-        my $msg = $_;
-        $msg => sub {
-          my $dc = shift;
-          #say join ' ', $msg, @_;
-          $dc->say( $msg, @_ );    #print with console encoding
-          },
-        } qw(welcome chatline To)
-    ),
+  'handler' => { 
+    
     INF => sub {
       my $dc  = shift;
       my $dst = shift @{ $_[0] };
