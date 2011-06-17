@@ -129,8 +129,8 @@ sub new {
   else                             { bless( $self, $class ) unless ref $class; }
   #print ref $self;
   #$self-
-  #psmisc::printlog('dev', 'func');
-  $self->func();    #@param
+  #psmisc::printlog('dev', 'func', Dumper @_);
+  $self->func(@_);    #@param
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
   #psmisc::printlog('dev', 'init');
@@ -356,6 +356,8 @@ sub func {
     my $self = shift;
     #$self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ );
     local %_ = @_;
+#warn Dumper \%_;
+    #$self->log(__LINE__, "Proto=$self->{Proto}");
     $self->{$_} = $_{$_} for keys %_;
     local %_ = (
       'Listen'        => 10,
@@ -415,6 +417,8 @@ sub func {
       'charset_internal' => 'utf8',
       #charset_nick => 'utf8',
     );
+    #$self->log(__LINE__, "Proto=$self->{Proto}");
+
     $self->{$_} //= $_{$_} for keys %_;
     $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
     $self->{$_} //= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients);   #want share_full share_tth
@@ -423,7 +427,9 @@ sub func {
     $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {},
       for qw(sockets share_full share_tth want want_download want_download_filename downloading);
     $self->{'parent'}{$_} ? $self->{$_} = $self->{'parent'}{$_} : ()
-      for qw(log disconnect_recursive  partial_prefix partial_ext download_to);
+      for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto);
+    #$self->log("Proto=$self->{Proto}");
+
     #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
     #psmisc::printlog('dev', 'init0', Dumper $self);
   };
@@ -464,7 +470,7 @@ sub func {
     return 0
       if ( $self->{'socket'} and $self->{'socket'}->connected() )
       or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
-    $self->log( 'info', "connecting to $self->{'protocol'}://$self->{'host'}:$self->{'port'}", %{ $self->{'sockopts'} || {} } );
+    $self->log( 'info', "connecting to $self->{'protocol'}://$self->{'host'}:$self->{'port'} via $self->{'Proto'} ", %{ $self->{'sockopts'} || {} } );
     #$self->{'status'}   = 'connecting';
     $self->{'status'}   = 'connecting_tcp';
     $self->{'outgoing'} = 1;

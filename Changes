@@ -2,6 +2,7 @@
 0.10:
 non blocking connect fixed
 
+kidding: sctp connects dev_sctp=1
 
 0.09:
 full internal utf

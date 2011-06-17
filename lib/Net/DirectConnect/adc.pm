@@ -224,8 +224,10 @@ sub init {
   #}
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
+# Proto
   $self->{message_type} = 'B' if $self->{'broadcast'};
   $self->func();
+#warn "IG:$self->{INF_generate}";
   $self->INF_generate();
   $self->{'parse'} ||= {
 #
@@ -715,7 +717,7 @@ sub init {
     'stat_hub' => sub {
       my $self = shift if ref $_[0];
       local %_;
-      for my $w qw(SS SF) {
+      for my $w (qw(SS SF)) {
         #$self->log( 'dev', 'calc', $_, $w),
         $_{$w} += $self->{'peers'}{$_}{INF}{$w} for grep { $_ and $_ ne $self->{'INF'}{'SID'} } keys %{ $self->{'peers_sid'} };
       }

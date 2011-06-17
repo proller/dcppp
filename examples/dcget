@@ -29,7 +29,7 @@ use lib::abs '../lib';
 our ( %config, %work );
 #use psmisc;
 use Net::DirectConnect::pslib::psmisc;
-psmisc->import qw(:log);
+psmisc->import(qw(:log));
 #*config = *main::config;
 #require Net::DirectConnect::pslib::psmisc;
 #psmisc->import qw(:config :log printlog);
