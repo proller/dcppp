@@ -92,6 +92,8 @@ return $self;
 =cut
 sub func {
   my $self = shift if ref $_[0];
+#warn 'func call';
+  $self->SUPER::func(@_);
   %_ = ( 'ID_file' => 'ID', );
   $self->{$_} //= $_{$_} for keys %_;
   if ( Net::DirectConnect::use_try( 'MIME::Base32', 'RFC' ) ) {
@@ -211,6 +213,7 @@ sub init {
   $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
   if ( $self->{'broadcast'} ) { $self->{SUPAD}{B} = $self->{SUPAD}{C}; }
   if ( $self->{'hub'} ) {
+    #$self->log( 'dev', 'hub settings apply');
     $self->{'auto_connect'}         = 0;
     $self->{'auto_listen'}          = 1;
     $self->{'status'}               = 'working';
@@ -742,32 +745,26 @@ sub init {
     },
 =cut    
 
-  #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}" );
+  $self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
   unless ( $self->{'no_listen'} ) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
     if (
       #( $self->{'M'} eq 'A' or !$self->{'M'} )  and
       !$self->{'incoming'}
+        and !$self->{'auto_listen'}
       )
     {
-      #$self->log( 'dev', __FILE__, __LINE__, "  myptr");
+      #$self->log( 'dev', __FILE__, __LINE__, "  myptr", $self->{'auto_listen'}, $self->{broadcast});
       if (
-        !$self->{'auto_listen'} or    #$self->{'Proto'} ne 'tcp'
+        #!$self->{'auto_listen'} or    #$self->{'Proto'} ne 'tcp'
+        
         $self->{broadcast}
         )
       {
         #$self->log( 'dev', __FILE__, __LINE__, "  myptr");
-        #$self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
+        $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
         $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
-          #%$self, $self->clear(),
-          #'want' => $self->{'want'},
-          #'NickList'    => \%{ $self->{'NickList'} },
-          #'IpList'      => \%{ $self->{'IpList'} },
-          #'PortList'    => \%{ $self->{'PortList'} },
-          #'handler'     => \%{ $self->{'handler'} },
-          'parent' => $self, 'auto_listen' => 1,    #'disconnect_recursive'=>1,
-                                                    #'myport'        => $self->{'myport'},
-                                                    #( map { $_ => $self->{$_} } qw(myport want peers ) ),
+          'parent' => $self, 'auto_listen' => 1,    
         );
         #$self->log( 'dev', __FILE__, __LINE__, "  myptr");
         $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
@@ -778,15 +775,9 @@ sub init {
         #and $self->{'Proto'} ne 'udp'
         )
       {
-        #$self->log( 'dev', "making listeners: udp" );
+        $self->log( 'dev', "making listeners: udp ($self->{'auto_listen'})" );
         $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
-          #%$self, $self->clear(),
           'parent' => $self, 'Proto' => 'udp', 'auto_listen' => 1,
-#?    'want'     => \%{ $self->{'want'} },
-#?    'NickList' => \%{ $self->{'NickList'} },
-#?    'IpList'   => \%{ $self->{'IpList'} },
-#?    'PortList' => \%{ $self->{'PortList'} },
-#'handler' => \%{ $self->{'handler'} },
 #$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
 #'LocalPort'=>$self->{'myport'},
 #'debug'=>1,
@@ -808,6 +799,47 @@ sub init {
         $self->log( 'dev', 'nyportgen', $self->{'myport_udp'} );
         $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
       }
+
+
+
+
+      if ( 
+        #!$self->{'auto_listen'} and 
+        $self->{'dev_sctp'}
+        )
+      {
+        $self->log( 'dev', "making listeners: sctp" );
+        $self->{'clients'}{'listener_sctp'} = $self->{'incomingclass'}->new(
+          'parent' => $self, 'Proto' => 'sctp', 'auto_listen' => 1,
+        );
+        $self->{'myport_sctp'} = $self->{'clients'}{'listener_sctp'}{'myport'};
+        $self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
+        $self->log( 'err', "cant listen sctp" ) unless $self->{'myport_sctp'};
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
     #DEV=z
 
