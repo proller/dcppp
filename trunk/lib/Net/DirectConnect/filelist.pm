@@ -366,6 +366,7 @@ sub new {
     #$self->share_changed();
   };
   $self->{share_changed} //= sub {
+    $self->log('dev', "share_changed");
     if ( $self->{'status'} eq 'connected' ) {
       if ( $self->{adc} ) { $self->cmd( 'I', 'INF', undef, 'SS', 'SF' ); }
       else                { $self->cmd('MyINFO'); }
@@ -514,11 +515,12 @@ return unless $name;
         $self->{share_full}{$file} ||= $full_local;
 =cut
 
-    $self->log( 'dev', 'adding downloaded file to share', $full, $tth );
-    $self->share_add_file( $full, $tth )
+    $self->log( 'dev', 'adding downloaded file to share', $full, $tth ),
+    $self->share_add_file( $full, $tth ), 
+    $self->share_changed()
       if !$self->{'file_recv_filelist'} and !$self->{'no_auto_share_downloaded'};  # unless $self->{'no_auto_share_downloaded'};
          #TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
-    $self->share_changed();
+    ;
     };
   $self->filelist_load() unless $standalone;    # (caller)[0] ~~ __PACKAGE__;
                                                 #$self->log('initok');
