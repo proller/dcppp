@@ -451,6 +451,7 @@ sub func {
     #$self->{'select_send'} ||= IO::Select->new();    #$self->{'socket'}
     return unless $self->{'socket'};
     $self->{'select'}->add( $self->{'socket'} );
+    $self->{'select_send'}->add( $self->{'socket'} );
     $self->{'sockets'}{ $self->{'socket'} } = $self;
     #$self->log( 'dev', 'current select', $self->{'select'}->handles );
   };
@@ -515,9 +516,12 @@ sub func {
   };
   $self->{'connected'} ||= sub {
     my $self = shift;
-    $self->{'status'} = 'connecting';
-    #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected() );
     $self->get_my_addr();
+    #$self->log( 'info', 'broken socket, cant get my ip'), 
+    #$self->destroy(), 
+    return unless $self->{'myip'};
+    $self->{'status'} = 'connecting';
+$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected(), 'p=', $self->{'socket'}->protocol() );
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
     #my $localmask ||= join '|', @{ $self->{'local_mask_rfc'} || [] }, @{ $self->{'local_mask'} || [] };
@@ -775,11 +779,11 @@ sub func {
     #$self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
     #my ( $readed, $reads );
     #$self->{'databuf'} = '';
-    #$self->log( 'traceD', 'DC::select', 'bef' );
+    #$self->log( 'dev', 'recv_try', 'bef' );
     my ( $recv, $send, $exeption ) = IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $sleep );
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
-    $self->{'select'}->remove(@$exeption) if $exeption;
+    #$self->{'select'}->remove(@$exeption) if $exeption;
     for (@$exeption) {
       $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ),
         #$self->{'select'}->remove($_);
@@ -796,16 +800,18 @@ sub func {
     }
     for (@$recv) {
       $self->log( 'err', 'no object for recv handle', $_, ), next,
-        if !$self->{sockets}{$_}
-          or !ref $self->{sockets}{$_};
+        #if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
+        if !ref $self->{sockets}{$_};
       $self->{sockets}{$_}->recv($_);
     }
     for (@$send) {
       #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
-      #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number} );
+      ++$self->{sockets}{$_}{send_can};
+      #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
       if ( $self->{sockets}{$_}{'filehandle_send'} ) {
         $self->{sockets}{$_}->file_send_part();
       }
+      #$self->{sockets}{$_}->send();
     }
     #if ( $self->{'filehandle_send'} ) { $self->file_send_part(); }
     #$self->{'recv_runned'}{ $self->{'number'} } = undef;
@@ -1136,6 +1142,17 @@ sub func {
     local $_;    # = join( '', @_ );
                  #$self->{bytes_send} += length $_;
                  #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
+=no
+    unless ($self->{send_can}) {
+    	$self->{send_buffer_raw} = \@_;
+    	return 0;
+    }
+    if ($self->{send_buffer_raw}) {
+	unshift @_, @{$self->{send_buffer_raw}};
+	$self->{send_buffer_raw} = undef;
+    }
+=cut
+    return unless @_;
     eval { $_ = $self->{'socket'}->send(@_); } if $self->{'socket'};
     $self->{bytes_send} += $_;
     $self->log( 'err', 'send error', $@ ) if $@;
@@ -1619,8 +1636,14 @@ sub func {
     my ($self) = @_;
     return unless $self->{'socket'};
     eval { @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) || return ); };
-    return unless $_[1];
-    return unless $_[1] = inet_ntoa( $_[1] );
+    $self->log('dcerr', "cant get my ip [$@]", Dumper \@_) if $@;
+    #$self->log('dcerr', "cant get my ip [0.0.0.0:$_[0]]"), 
+    return if $_[1] eq "\0\0\0\0";
+    #$self->log('dev', "1my ip", Dumper \@_);
+    #return unless $_[1];
+    return unless $_[1] and $_[1] = inet_ntoa( $_[1] );
+    #$self->log('dev', "2my ip", Dumper \@_);
+    #return if $_[1] eq '0.0.0.0';
     #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
     return $self->{'myip'} ||= $_[1];
   };
