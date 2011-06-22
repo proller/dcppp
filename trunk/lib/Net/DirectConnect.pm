@@ -379,11 +379,11 @@ sub func {
       },
       #'auto_recv'          => 1,
       'max_reads'          => 20,
-      'wait_once'          => 0.1,
+      #'wait_once'          => 0.1,
       'waits'              => 100,
       'wait_finish_tries'  => 600,
       'wait_finish_by'     => 1,
-      'wait_connect_tries' => 600,
+      #'wait_connect_tries' => 600,
       'clients_max'        => 50,
       'wait_clients_tries' => 200,
       #del    'wait_clients_by'    => 0.01,
@@ -418,6 +418,7 @@ sub func {
       #charset_nick => 'utf8',
     );
     #$self->log(__LINE__, "Proto=$self->{Proto}");
+    $self->{'wait_connect_tries'} //= $self->{'Timeout'};
 
     $self->{$_} //= $_{$_} for keys %_;
     $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
@@ -521,7 +522,7 @@ sub func {
     #$self->destroy(), 
     return unless $self->{'myip'};
     $self->{'status'} = 'connecting';
-$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected(), 'p=', $self->{'socket'}->protocol() );
+#$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected(), 'p=', $self->{'socket'}->protocol() );
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
     #my $localmask ||= join '|', @{ $self->{'local_mask_rfc'} || [] }, @{ $self->{'local_mask'} || [] };
@@ -637,7 +638,7 @@ $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->co
         )
       {
         #next if $self->{'clients'}{$client} eq $self;
-        $self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_} ),
+        #$self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_} ),
           $self->{'clients'}{$client}->destroy()
           if ref $self->{'clients'}{$client}
             and $self->{'clients'}{$client}{'destroy'};
@@ -785,31 +786,32 @@ $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->co
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
     #$self->{'select'}->remove(@$exeption) if $exeption;
     for (@$exeption) {
-      $self->log( 'err', 'exeption', $_, $self->{sockets}{$_}{number} ),
+      #$self->log( 'dcdbg', 'exeption', $_, $self->{sockets}{$_}{number} ),
         #$self->{'select'}->remove($_);
         $self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
       delete $self->{sockets}{$_};
+      ++$ret,
     }
     #for (@$recv, @$send) {
     for ( keys %{ $self->{sockets} } ) {
       #$self->log( 'dev', 'connected chk' , $self->{sockets}{$_}{socket}, $self->{sockets}{$_}{socket}->connected());
       #$self->log( 'dev', 'connected call' ),
-      $self->{sockets}{$_}->connected()
+      $self->{sockets}{$_}->connected(),
+      ++$ret,
         if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
-      ++$ret;
     }
     for (@$recv) {
       $self->log( 'err', 'no object for recv handle', $_, ), next,
         #if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
         if !ref $self->{sockets}{$_};
-      $self->{sockets}{$_}->recv($_);
+      $ret += $self->{sockets}{$_}->recv($_);
     }
     for (@$send) {
       #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
       ++$self->{sockets}{$_}{send_can};
       #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
       if ( $self->{sockets}{$_}{'filehandle_send'} ) {
-        $self->{sockets}{$_}->file_send_part();
+        $ret += $self->{sockets}{$_}->file_send_part();
       }
       #$self->{sockets}{$_}->send();
     }
@@ -821,13 +823,14 @@ $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->co
     my $self = shift;
     my ( $waits, $wait_once ) = @_;
     $waits     ||= $self->{'waits'};
-    $wait_once ||= $self->{'wait_once'};
+    #$wait_once ||= $self->{'wait_once'};
     local $_;
     my $ret;
     #$self->log( 'dev', "start wait", $waits);
     while ( --$waits > 0 and !$ret ) {
-      $ret += $self->recv_try($wait_once);
-      #$self->log( 'dev', "wait", $waits);
+      #$ret += $self->recv_try($wait_once);
+      $ret += $self->recv_try();
+      #$self->log( 'dev', "wait", $waits, $ret);
       #sleep 0.1 if !$ret;
     }
     #$ret += $self->work($wait_once) while --$waits > 0 and !$ret;
@@ -848,8 +851,8 @@ $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->co
   $self->{'wait_connect'} ||= sub {
     my $self = shift;
     for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
-      #$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
-      last if $self->{'status'} eq 'connected';
+#$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
+      last if grep {$self->{'status'} eq $_} qw(connected transfer disconnecting disconnected destroy), '';
       $self->wait_sleep(1);
       #$self->work(1);
     }
@@ -860,6 +863,7 @@ $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->co
     for ( 0 .. $self->{'wait_finish_tries'} ) {
       last if $self->finished();
       #$self->wait( undef, $self->{'wait_finish_by'} );
+      #$self->log( 'dev', 'wait_finish', $_);
       $self->wait_sleep();
       #$self->work( undef, $self->{'wait_finish_by'} );
     }
@@ -889,13 +893,16 @@ $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->co
     my $self      = shift;
     my $how       = shift || 1;
     my $starttime = time();
-    $self->wait(@_) while $starttime + $how > time();
+    #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
+    $self->wait(@_) while ($starttime + $how > time());
+    #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
     #$self->work(@_) while $starttime + $how > time();
   };
   $self->{'work'} ||= sub {
     my $self   = shift;
     my @params = @_;
     #$self->periodic();
+    #$self->log( 'dev', 'work', @params);
     schedule(
       1,
       our $___work_every ||= sub {
@@ -1038,6 +1045,8 @@ $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->co
         close $fh;
       }
     ) if $self->{dev_auto_dump};
+
+#$self->log( 'dev', "work -> sleep" ),
     return $self->wait_sleep(@params) if @params;
     return $self->recv_try( $self->{'work_sleep'} );
   };
@@ -1567,6 +1576,7 @@ $self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->co
       #?
       #$self->disconnect();
     }
+    return $sent;
   };
   $self->{'file_send_parse'} =
     #$self->{'ADCSND'} =
