@@ -83,7 +83,12 @@ sub init {
     my $self = shift if ref $_[0];
     #return $self->{lock};
     my ($lock) = @_;
-    #$self->{'log'}->( 'dev', 'making lock from', $lock );
+    $self->{'log'}->( 'dev', 'making lock from', $lock );
+
+    $lock = Encode::encode $self->{charset_protocol}, $lock if $self->{charset_protocol};
+    #$self->{'log'}->( 'dev', 'making lock from2:', $lock );
+
+
     my @lock = split( //, $lock );
     my $i;
     my @key = ();
@@ -97,7 +102,10 @@ sub init {
       if ( $_ == 0 || $_ == 5 || $_ == 36 || $_ == 96 || $_ == 124 || $_ == 126 ) { $_ = sprintf( '/%%DCN%03i%%/', $_ ); }
       else                                                                        { $_ = chr; }
     }
-    return join( '', @key );
+    local $_ = join( '', @key );
+    $_ = Encode::decode $self->{charset_protocol}, $_ if $self->{charset_protocol};
+    return $_;
+
   };
   $self->{'tag'} ||= sub {
     my $self = shift;
