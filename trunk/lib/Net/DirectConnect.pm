@@ -361,7 +361,8 @@ sub func {
     $self->{$_} = $_{$_} for keys %_;
     local %_ = (
       'Listen'        => 10,
-      'Timeout'       => 5,
+      'Timeout'       => 10, #connect
+      'Timeout_connected'       => 300,
       'myport'        => 412,                                                               #first try
       'myport_base'   => 40000,
       'myport_random' => 1000,
@@ -496,7 +497,9 @@ sub func {
     $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $! ), "[$self->{'socket'}]" ),
       return 1
       if !$self->{'socket'};
-    $self->{'socket'}->timeout( $self->{'Timeout'} ) if $self->{'Timeout'};   #timeout must be after new, ifyou want nonblocking
+        #$self->log( 'dev',  'timeout to', $self->{'Timeout'});
+
+         $self->{'socket'}->timeout( $self->{'Timeout'} ) if $self->{'Timeout'};   #timeout must be after new, ifyou want nonblocking
          #$self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
          #$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
          #$self->{charset_protocol} = 'utf8';
@@ -512,7 +515,7 @@ sub func {
     #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
     #$self->log( 'dev', "connect_aft after", );
     #!!$self->recv_try();
-    #$self->log( 'dev', "connect recv after", );
+    #$self->log( 'dev', "connect after", );
     return 0;
   };
   $self->{'connected'} ||= sub {
@@ -523,6 +526,8 @@ sub func {
     return unless $self->{'myip'};
     $self->{'status'} = 'connecting';
 #$self->log( 'dev', "connected0", "[$self->{'socket'}] c=", $self->{'socket'}->connected(), 'p=', $self->{'socket'}->protocol() );
+    #$self->log( 'dev',  'timeout to', $self->{'Timeout_connected'});
+    $self->{'socket'}->timeout( $self->{'Timeout_connected'} ) if $self->{'Timeout_connected'};
     $self->get_peer_addr();
     $self->{'hostip'} ||= $self->{'host'};
     #my $localmask ||= join '|', @{ $self->{'local_mask_rfc'} || [] }, @{ $self->{'local_mask'} || [] };
@@ -554,8 +559,8 @@ sub func {
           $self->{'socket'}
           #and $self->{'socket'}->connected()
         ) or !$self->active();
+    #$self->log(          'warn', 'connect_check: must reconnect', Dumper $self->{'socket'}->connected(), $self->{'socket'}, $self->{'status'});
     $self->{'status'} = 'reconnecting';
-    #$self->log(          'warn', 'connect_check: must reconnect', Dumper $self->{'socket'}->connected(), $self->{'socket'});
     $self->every(
       $self->{'reconnect_sleep'},
       $self->{'reconnect_func'} ||= sub {
@@ -575,6 +580,7 @@ sub func {
   };
   $self->{'reconnect'} ||= sub {
     my $self = shift;
+#$self->log(          'dev', 'reconnect');
     $self->disconnect();
     $self->{'status'} = 'reconnecting';
     sleep $self->{'reconnect_sleep'};
