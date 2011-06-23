@@ -83,7 +83,7 @@ sub init {
     my $self = shift if ref $_[0];
     #return $self->{lock};
     my ($lock) = @_;
-    $self->{'log'}->( 'dev', 'making lock from', $lock );
+    #$self->{'log'}->( 'dev', 'making lock from', $lock );
 
     $lock = Encode::encode $self->{charset_protocol}, $lock if $self->{charset_protocol};
     #$self->{'log'}->( 'dev', 'making lock from2:', $lock );

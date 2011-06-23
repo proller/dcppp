@@ -366,7 +366,8 @@ sub new {
     #$self->share_changed();
   };
   $self->{share_changed} //= sub {
-    $self->log('dev', "share_changed");
+    my $self = shift if ref $_[0];
+    #$self->log('dev', "share_changed");
     if ( $self->{'status'} eq 'connected' ) {
       if ( $self->{adc} ) { $self->cmd( 'I', 'INF', undef, 'SS', 'SF' ); }
       else                { $self->cmd('MyINFO'); }
