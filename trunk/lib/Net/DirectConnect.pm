@@ -814,7 +814,7 @@ sub func {
     }
     for (@$send) {
       #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
-      ++$self->{sockets}{$_}{send_can};
+      #++$self->{sockets}{$_}{send_can};
       #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
       if ( $self->{sockets}{$_}{'filehandle_send'} ) {
         $ret += $self->{sockets}{$_}->file_send_part();
