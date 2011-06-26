@@ -1003,11 +1003,14 @@ sub func {
             my ($filename);
             for my $file ( keys %{ $self->{'want_download_filename'}{$tth} } ) {
               my $partial = $file;
+$self->log('dev',  'partial prepare1', $partial);
               $partial = Encode::encode $self->{charset_fs}, $file
                 if $self->{charset_fs};
+$self->log('dev',  'partial prepare2', $partial);
               $partial = $self->{'partial_prefix'} . $partial . $self->{'partial_ext'};
+$self->log('dev',  'partial prepare3', $partial);
               if ( -s $partial ) {
-                #$self->log('dev',  'already downloading: ' ,$file, -s $partial);
+                $self->log('dev',  'already downloading: ' ,$file, -s $partial);
                 $filename = $file;
                 last;
               }
@@ -1045,7 +1048,7 @@ sub func {
       [ $self->{dev_auto_dump_first} || 20, $self->{dev_auto_dump_every} || 100 ],
       our $dump_sub__ ||= sub {
         $self->log( 'dev', "Writing dump" );
-        open my $fh, '>', $self->{dev_auto_dump_file} || $0 . '.dump'
+        open my $fh, '>', $self->{dev_auto_dump_file} || $0 .($self->{dev_auto_dump_timed} ? '.'.time : ()). '.dump'
           or return;
         print $fh Dumper $self;
         close $fh;
@@ -1328,8 +1331,10 @@ sub func {
        #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     mkdir_rec $self->{'partial_prefix'} if $self->{'partial_prefix'};
     $self->{'file_recv_partial'} = "$self->{'file_recv_dest'}.$self->{'file_recv_tth'}$self->{'partial_ext'}";
+$self->log( 'dcdev', "file_recv_partial1 [$self->{'file_recv_partial'}]");
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_partial'}
       unless $self->{'file_recv_partial'} =~ m{[/\\]};
+$self->log( 'dcdev', "file_recv_partial2 [$self->{'file_recv_partial'}]");
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
     $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
       if $self->{'file_recv_size'} and $self->{'file_recv_from'};
@@ -1390,9 +1395,9 @@ sub func {
       if ( $self->{'filebytes'} == $self->{'filetotal'} ) {
         mkdir_rec $self->{'download_to'} if $self->{'download_to'};
         if ( length $self->{'partial_ext'} ) {
-          #$self->log( 'dcerr', 'file_close',3, $self->{'file_recv_partial'} , $dest);
           local $self->{'file_recv_full'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_full'}
             if $self->{charset_fs};    # ne $self->{charset_protocol};
+          $self->log( 'dcdev', 'file_close',3, $self->{'file_recv_partial'}, $self->{'file_recv_full'});
           $self->log( 'dcerr', 'cant move finished file', $self->{'file_recv_partial'}, $self->{'file_recv_full'} )
             if !rename $self->{'file_recv_partial'},
             $self->{'file_recv_full'};
