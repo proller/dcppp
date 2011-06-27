@@ -504,8 +504,14 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     ,
     @dc
   );
-  psmisc::schedule( [ 300, 60 * 19 ], our $hubrunhour_ ||= sub { psmisc::startme('calch'); } ),
-    psmisc::schedule( [ 600, 60 * 60 * 6 ], our $hubrunrare_ ||= sub { psmisc::startme('calcr'); } )
+  psmisc::schedule( [ 300, 60 * 19 ], our $hubrunhour_ ||= sub {
+     psmisc::printlog( 'err', 'cant lock h'),
+     return if !psmisc::lock('calch', old=>86400);
+     psmisc::startme('calch'); } ),
+    psmisc::schedule( [ 600, 60 * 60 * 6 ], our $hubrunrare_ ||= sub {
+     psmisc::printlog( 'err', 'cant lock r'),
+     return if !psmisc::lock('calcr', old=>86400);
+ psmisc::startme('calcr'); } )
     if $config{'use_slow'};
 #psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
