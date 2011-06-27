@@ -1004,10 +1004,10 @@ sub func {
             for my $file ( keys %{ $self->{'want_download_filename'}{$tth} } ) {
               my $partial = $file;
 $self->log('dev',  'partial prepare1', $partial);
+              $partial = $self->{'partial_prefix'} . $partial . $self->{'partial_ext'};
+$self->log('dev',  'partial prepare2', $partial);
               $partial = Encode::encode $self->{charset_fs}, $file
                 if $self->{charset_fs};
-$self->log('dev',  'partial prepare2', $partial);
-              $partial = $self->{'partial_prefix'} . $partial . $self->{'partial_ext'};
 $self->log('dev',  'partial prepare3', $partial);
               if ( -s $partial ) {
                 $self->log('dev',  'already downloading: ' ,$file, -s $partial);

@@ -50,6 +50,8 @@ None by default.
 
 =head1 BUGS
 
+ cant compile with gcc <=3
+
 =head1 AUTHOR
 
 Oleg Alexeenkov, E<lt>pro@cpan.orgE<gt>

@@ -91,11 +91,12 @@ _CrtDbgBreak(); } } while(false)
 # define PATH_SEPARATOR_STR "/"
 
 #endif
-
+/*
 namespace dcpp {
 extern void startup(void (*f)(void*, const string&), void* p);
 extern void shutdown();
 
 } // namespace dcpp
+*/
 
 #endif // !defined(DC_PLUS_PLUS_H)
