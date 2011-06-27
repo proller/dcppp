@@ -1,5 +1,5 @@
---- ./eiskaltdcpp/dcpp/stdinc.h	2010-11-22 15:13:06.040191400 +0300
-+++ dcpp/stdinc.h	2010-11-22 15:37:35.545127200 +0300
+--- ./eiskaltdcpp/dcpp/stdinc.h	2011-06-27 23:47:40.000000000 +0400
++++ dcpp/stdinc.h	2011-06-27 23:50:55.000000000 +0400
 @@ -33,14 +33,8 @@
  #define BZ_NO_STDIO 1
  #endif
@@ -33,22 +33,7 @@
  
  # ifndef CDECL
  #  define CDECL _cdecl
-@@ -64,11 +67,11 @@
- #endif // _MSC_VER
- 
- #ifdef _WIN32
--# define _WIN32_WINNT 0x0501
-+//# define _WIN32_WINNT 0x0501
- # define _WIN32_IE      0x0501
--# define WINVER 0x501
-+//# define WINVER 0x501
- 
--#define STRICT
-+//#define STRICT
- #define WIN32_LEAN_AND_MEAN
- 
- #include <winsock2.h>
-@@ -77,7 +80,7 @@
+@@ -87,7 +90,7 @@
  #include <mmsystem.h>
  
  #include <tchar.h>
@@ -57,7 +42,7 @@
  
  #else
  #include <unistd.h>
-@@ -110,11 +113,13 @@
+@@ -122,11 +125,13 @@
  #include <memory>
  #include <numeric>
  #include <limits>
