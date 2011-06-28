@@ -1586,6 +1586,7 @@ $self->log( 'dcdev', "file_recv_partial2 [$self->{'file_recv_partial'}]");
       #$self->{'status'} = 'connected';
       #?
       #$self->disconnect();
+      $self->destroy();
     }
     return $sent;
   };
