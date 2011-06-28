@@ -251,6 +251,7 @@ sub log(@) {
 
 sub cmd {
   my $self = shift;
+  return unless $self->{'cmd'};
   my $dst;
   $dst =    #$_[0]
     shift if $self->{'adc'} and length $_[0] == 1;
@@ -479,7 +480,7 @@ sub func {
     $self->{'status'}   = 'connecting_tcp';
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
-    $self->{'recv_buf'} = undef;
+    delete $self->{'recv_buf'};
     #$self->log('dev', 'conn strt', $self->{'Timeout'});
     $self->{'socket'} ||= IO::Socket::INET->new(
       'PeerAddr' => $self->{'host'},
@@ -747,7 +748,7 @@ sub func {
     #$self->log( 'dcdmp', "0rawrawrcv [fh:$self->{'filehandle'}]:", $self->{'databuf'} );
     if ( $self->{'filehandle'} ) {
       $self->file_write( \$self->{'databuf'} );
-    } else {
+    } elsif(length $self->{'databuf'}) {
       #$self->log( 'dcdmp', "rawrawrcv:", $self->{'databuf'} );
       $self->{'recv_buf'} .= $self->{'databuf'};
       #$self->log( 'dcdmp', "rawrawbuf:", $self->{'recv_buf'} );
