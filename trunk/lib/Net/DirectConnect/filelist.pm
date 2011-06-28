@@ -103,18 +103,8 @@ sub new {
   #$self->log('idr:', $self->{'INF'}{'ID'});
   #$self->ID_get();
   unless ( $self->{no_sql} ) {
-    my %table = (
-      'filelist' => {
-        'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 200, 'default' => '', 'index' => 1, 'primary' => 1 ),
-        'file' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 100, 'default' => '', 'index' => 1, 'primary' => 1 ),
-        'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
-        'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
-        'time' => pssql::row( 'time', ),    #'index' => 1,
-                                            #'added'  => pssql::row( 'added', ),
-                                            #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
-      },
-    );
-    local %_ = (
+
+      local %_ = (
       'driver' => 'sqlite',
       #'dbname' => 'files',
       'database' => 'files',
@@ -125,15 +115,32 @@ sub new {
       'connect_tries' => 0, 'connect_chain_tries' => 0, 'error_tries' => 0, 'error_chain_tries' => 0,
       #insert_by => 1000,
       #nav_all => 1,
-      'table' => \%table,
       #{}
       #},
+    );
+     $self->{sql}{$_} //= $_{$_} for keys %_ ;
+    my ($short) = $self->{sql}{'driver'} =~ /mysql/;
+	    
+    my %table = (
+      'filelist' => {
+        'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => ($short ? 150 : 255), 'default' => '', 'index' => 1, 'primary' => 1 ),
+        'file' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => ($short ? 150 : 255), 'default' => '', 'index' => 1, 'primary' => 1 ),
+        'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
+        'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
+        'time' => pssql::row( 'time', ),    #'index' => 1,
+                                            #'added'  => pssql::row( 'added', ),
+                                            #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
+      },
     );
     if ( $self->{db} ) {
       $self->{db}{table}{$_} = $table{$_} for keys %table;
     }
-    ( map { $self->{sql}{$_} //= $_{$_} } keys %_ );
+      local %_ = (
+      'table' => \%table,
+    );
+     $self->{sql}{$_} //= $_{$_} for keys %_ ;
     #warn ('sqlore:',Data::Dumper::Dumper $self->{'sql'}, \%_),
+
     $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, );
     ( $tq, $rq, $vq ) = $self->{db}->quotes();
   }
