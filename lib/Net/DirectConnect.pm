@@ -1324,8 +1324,7 @@ $self->log('dev',  'partial prepare3', $partial);
     $self->{'file_recv_full'} = $self->{'file_recv_dest'};
     $self->{'file_recv_full'} = $self->{'download_to'} . $self->{'file_recv_full'}
       unless $self->{'file_recv_full'} =~ m{[/\\]};
-    $self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_dest'}
-      if $self->{charset_fs};    # ne $self->{charset_protocol};
+    #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_dest'} if $self->{charset_fs};    # ne $self->{charset_protocol};
                                  #$self->{'file_recv_dest'}
        #$self->log( 'dcdev', "pre enc filename [$self->{'file_recv_dest'}] [$self->{charset_fs} ne $self->{charset_protocol}]");
        #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
@@ -1336,6 +1335,7 @@ $self->log( 'dcdev', "file_recv_partial1 [$self->{'file_recv_partial'}]");
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_partial'}
       unless $self->{'file_recv_partial'} =~ m{[/\\]};
 $self->log( 'dcdev', "file_recv_partial2 [$self->{'file_recv_partial'}]");
+    $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'} if $self->{charset_fs};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
     $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
       if $self->{'file_recv_size'} and $self->{'file_recv_from'};
