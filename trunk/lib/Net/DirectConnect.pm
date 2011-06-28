@@ -100,6 +100,7 @@ sub use_try ($;@) {
   our %tried;
   ( my $path = ( my $module = shift ) . '.pm' ) =~ s{::}{/}g;
   return $tried{$module} if exists $tried{$module};
+  local $SIG{__DIE__} = undef;
   $tried{$module} = ( $INC{$path} or eval 'use ' . $module . ' qw(' . ( join ' ', @_ ) . ');1;' and $INC{$path} );
 }
 
