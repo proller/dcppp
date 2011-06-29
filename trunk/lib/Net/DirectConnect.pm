@@ -251,7 +251,7 @@ sub log(@) {
 
 sub cmd {
   my $self = shift;
-  return unless $self->{'cmd'};
+  #return unless $self->{'cmd'};
   my $dst;
   $dst =    #$_[0]
     shift if $self->{'adc'} and length $_[0] == 1;
@@ -260,13 +260,13 @@ sub cmd {
   #$self->{'log'}->($self,'dev', 'cmd', $cmd, @_) if $cmd ne 'log';
   #$self->{'log'}->($self,'dev', $self->{number},'cmd', $cmd, @_) if $cmd ne 'log';
   my ( $func, $handler );
-  if ( ref $self->{'cmd'}{$cmd} eq 'CODE' ) {
+  if ($self->{'cmd'} and ref $self->{'cmd'}{$cmd} eq 'CODE' ) {
     $func    = $self->{'cmd'}{$cmd};
     $handler = '_cmd';
     unshift @_, $dst if $dst;
   } elsif ( ref $self->{$cmd} eq 'CODE' ) {
     $func = $self->{$cmd};
-  } elsif ( ref $self->{'cmd'}{ $dst . $cmd } eq 'CODE' ) {
+  } elsif ($self->{'cmd'} and ref $self->{'cmd'}{ $dst . $cmd } eq 'CODE' ) {
     $func    = $self->{'cmd'}{ $dst . $cmd };
     $handler = '_cmd';
     #unshift @_, $dst if $dst;
@@ -296,11 +296,11 @@ sub cmd {
       #Dumper $self->{'cmd'},
       $self->{'parse'}
     ) if !grep { $cmd eq $_ } qw(new init);
-    $self->{'cmd'}{$cmd} = sub { };
+    $self->{'cmd'}{$cmd} = sub { } if $self->{'cmd'};
   }
   $ret = scalar @ret > 1 ? \@ret : $ret[0];
   $self->handler( $cmd . $handler . '_aft', \@_, $ret );
-  if ( $self->{'cmd'}{$cmd} ) {
+  if ($self->{'cmd'} and $self->{'cmd'}{$cmd} ) {
     if    ( $self->{'auto_wait'} ) { $self->wait(); }
     elsif ( $self->{'auto_recv'} ) { $self->recv_try(); }
   }
