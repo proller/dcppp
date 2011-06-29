@@ -267,7 +267,7 @@ sub new {
                 . " AND ${rq}time${rq}="
                 . $self->{db}->quote( $f->{time} )
                 . " LIMIT 1" );
-            $self->log ('already scaned', $indb->{size}),
+            #$self->log ('dev', 'already scaned', $indb->{size}),
             $filelist_line->( { %$f, %$indb } ), next, if $indb->{size} ~~ $f->{size};
             #$db->select('filelist', {path=>$f->{path},file=>$f->{file}, });
             #$self->log Dumper ;
