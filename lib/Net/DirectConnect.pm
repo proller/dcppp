@@ -203,7 +203,7 @@ sub new {
   # $self->log( 'dev', "set console encoding  [$self->{charset_console}]");
   #eval qq{use encoding $self->{charset_console}};
   eval qq{use encoding '$self->{charset_internal}', STDOUT=> '$self->{charset_console}', STDIN => '$self->{charset_console}'}
-    if !$self->{parent} and !$self->{no_charset_console};
+    if !$self->{parent} and !$self->{no_charset_console} and $self->{charset_internal} and $self->{charset_console};
   #$self->log( 'dev', 'utf8: УТф восемь');
   #$self->log( 'dev', Dumper $self);
   if ( $self->{'auto_say'} ) {
@@ -396,7 +396,7 @@ sub func {
       #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
       #'nonblocking' => 1,
       'informative' => [qw(number peernick status host port filebytes filetotal proxy bytes_send bytes_recv)],    # sharesize
-      'informative_hash' => [qw(clients)],                   #NickList IpList PortList
+      #'informative_hash' => [qw(clients)],                   #NickList IpList PortList
                                                              #'disconnect_recursive' => 1,
       'reconnect_sleep'  => 5,
       'partial_ext'      => '.partial',
@@ -1676,8 +1676,11 @@ $self->log( 'dcdev', "file_recv_partial2 [$self->{'file_recv_partial'}]");
     $self->log(
       'info',
       map( {"$_=$self->{$_}"} grep { $self->{$_} } @{ $self->{'informative'} } ),
-      map( { $_ . '(' . scalar( keys %{ $self->{$_} } ) . ')=' . join( ',', sort keys %{ $self->{$_} } ) }
-        grep { keys %{ $self->{$_} } } @{ $self->{'informative_hash'} } )
+      #map( { $_ . '(' . scalar( keys %{ $self->{$_} } ) . ')=' . join( ',', sort keys %{ $self->{$_} } ) }
+        #grep { keys %{ $self->{$_} } } @{ $self->{'informative_hash'} } )
+        'clients:', scalar keys %{ $self->{'clients'} }, 
+        map {"($self->{'clients'}{$_}{'number'})$_=$self->{'clients'}{$_}{'status'}"} 
+        sort keys %{ $self->{'clients'}},
     );
     $self->log(
       'dcdbg',
