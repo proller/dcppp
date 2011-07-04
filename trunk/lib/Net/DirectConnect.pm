@@ -811,7 +811,8 @@ sub func {
     for (@$recv) {
       $self->log( 'err', 'no object for recv handle', $_, ), next,
         #if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
-        if !ref $self->{sockets}{$_};
+        if !ref $self->{sockets}{$_} or ref $self->{sockets}{$_} eq 'HASH';
+#$self->log( 'dev',ref $self->{sockets}{$_});
       $ret += $self->{sockets}{$_}->recv($_);
     }
     for (@$send) {
