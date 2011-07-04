@@ -2,11 +2,11 @@
 # Date created:		2010-01-16
 # Whom:			Oleg Alexeenkov <proler@gmail.com>
 #
-# $FreeBSD: ports/net-p2p/p5-Net-DirectConnect/Makefile,v 1.2 2011/01/10 10:18:16 jadawin Exp $
+# $FreeBSD: ports/net-p2p/p5-Net-DirectConnect/Makefile,v 1.3 2011/03/12 12:54:17 culot Exp $
 #
 
 PORTNAME=	Net-DirectConnect
-PORTVERSION=	0.08
+PORTVERSION=	0.10
 CATEGORIES=	net-p2p net perl5
 MASTER_SITES=	CPAN
 MASTER_SITE_SUBDIR=	../../authors/id/P/PR/PRO/
