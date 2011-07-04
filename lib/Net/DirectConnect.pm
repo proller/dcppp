@@ -1,7 +1,7 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
-our $VERSION = '0.09' . '_' . ( split ' ', '$Revision$' )[1];
+our $VERSION = '0.10';# . '_' . ( split ' ', '$Revision$' )[1];
 no warnings qw(uninitialized);
 use utf8;
 use Encode;
@@ -838,6 +838,7 @@ sub func {
     #$self->log( 'dev', "start wait", $waits);
     while ( --$waits > 0 and !$ret ) {
       #$ret += $self->recv_try($wait_once);
+      last unless $self->active();
       $ret += $self->recv_try();
       #$self->log( 'dev', "wait", $waits, $ret);
       #sleep 0.1 if !$ret;
@@ -903,7 +904,12 @@ sub func {
     my $how       = shift || 1;
     my $starttime = time();
     #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
-    $self->wait(@_) while ($starttime + $how > time());
+    my $ret;
+    while ($starttime + $how > time()) {
+      last unless $self->active();
+      $ret += $self->wait(@_);
+    }
+    return $ret;
     #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
     #$self->work(@_) while $starttime + $how > time();
   };
