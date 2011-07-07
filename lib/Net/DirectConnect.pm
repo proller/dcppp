@@ -1012,12 +1012,9 @@ sub func {
             my ($filename);
             for my $file ( keys %{ $self->{'want_download_filename'}{$tth} } ) {
               my $partial = $file;
-$self->log('dev',  'partial prepare1', $partial);
               $partial = $self->{'partial_prefix'} . $partial . $self->{'partial_ext'};
-$self->log('dev',  'partial prepare2', $partial);
               $partial = Encode::encode $self->{charset_fs}, $file
                 if $self->{charset_fs};
-$self->log('dev',  'partial prepare3', $partial);
               if ( -s $partial ) {
                 $self->log('dev',  'already downloading: ' ,$file, -s $partial);
                 $filename = $file;
@@ -1056,11 +1053,7 @@ $self->log('dev',  'partial prepare3', $partial);
     schedule(
       [ $self->{dev_auto_dump_first} || 20, $self->{dev_auto_dump_every} || 100 ],
       our $dump_sub__ ||= sub {
-        $self->log( 'dev', "Writing dump" );
-        open my $fh, '>', $self->{dev_auto_dump_file} || $0 .($self->{dev_auto_dump_timed} ? '.'.time : ()). '.dump'
-          or return;
-        print $fh Dumper $self;
-        close $fh;
+        $self->dumper();
       }
     ) if $self->{dev_auto_dump};
 
@@ -1068,6 +1061,15 @@ $self->log('dev',  'partial prepare3', $partial);
     return $self->wait_sleep(@params) if @params;
     return $self->recv_try( $self->{'work_sleep'} );
   };
+  $self->{'dumper'} ||= sub {
+    my $self = shift;
+        my $file = $_[0] || $self->{dev_auto_dump_file} || $0 .($self->{dev_auto_dump_timed} ? '.'.time : ()). '.dump';
+        open my $fh, '>', $file or return;
+        print $fh Dumper $self;
+        close $fh;
+        $self->log( 'dev', "Writed dump", -s $file);
+  };
+  
   $self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
@@ -1339,10 +1341,8 @@ $self->log('dev',  'partial prepare3', $partial);
        #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     mkdir_rec $self->{'partial_prefix'} if $self->{'partial_prefix'};
     $self->{'file_recv_partial'} = "$self->{'file_recv_dest'}.$self->{'file_recv_tth'}$self->{'partial_ext'}";
-$self->log( 'dcdev', "file_recv_partial1 [$self->{'file_recv_partial'}]");
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_partial'}
       unless $self->{'file_recv_partial'} =~ m{[/\\]};
-$self->log( 'dcdev', "file_recv_partial2 [$self->{'file_recv_partial'}]");
     $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'} if $self->{charset_fs};
     $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
     $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}

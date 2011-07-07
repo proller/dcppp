@@ -203,8 +203,32 @@ my @dc;
         }
       );
       psmisc::schedule(
-        [ 10, 11 ],
+        [ 10, 0, 1 ],
         our $dl_sub__ ||= sub {
+  my $self = $dc;
+  unless ($self->{no_auto_load_partial}) {
+    my $dir = $self->{'partial_prefix'};
+$self->log('dev', 'look', $self->{'partial_prefix'});
+    for my $file ( <$dir*> ) {
+    #$self->log('dev', $_);
+    local $_ = $file;
+    $_ = Encode::decode $self->{charset_fs}, $_ if $self->{charset_fs};
+    #$self->log('dev', 'U', $_);
+    next unless s/$self->{'partial_ext'}$//i;
+    next unless s/^$self->{'partial_prefix'}//i;
+    $self->log('dev', $_);
+    next unless s/\.([A-Z0-9]{39})$//;
+    my ($tth) = $1;
+    $self->log('dev', $_, $tth);
+    #$self->{'want_download'}{$tth} //= {};
+    push @todl, $tth;
+    $self->{'want_download_filename'}{$tth}{$_} = 100;
+    } 
+    $self->dumper();
+  }
+          
+          
+          
           return unless @todl;
           #$dc->search('lost');
           #$dc->search($_) for @ARGV;
