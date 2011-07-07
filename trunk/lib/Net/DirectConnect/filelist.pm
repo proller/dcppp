@@ -90,6 +90,7 @@ sub new {
   # $self->{sharesize_add}  //= 10_000_000_000; #add to share size virtual bytes
   # $self->{sharefiles_mul} //=3; #same for files for keeping size/files rate
   # $self->{sharefiles_add} //= 10_000;
+  # $self->{no_auto_load_partial} //= 1;
   #
   # ==========
   #
@@ -531,7 +532,8 @@ return unless $name;
     ;
     };
   $self->filelist_load() unless $standalone;    # (caller)[0] ~~ __PACKAGE__;
-                                                #$self->log('initok');
+                                              #$self->log('initok');
+
   return $self;
 }
 eval q{ #do

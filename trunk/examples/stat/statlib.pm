@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 #$Id$ $URL$
-package statlib;
+package #hide from cpan
+  statlib;
 use strict;
 use Time::HiRes qw(time sleep);
 use utf8;
