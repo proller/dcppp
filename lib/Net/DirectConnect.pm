@@ -291,7 +291,7 @@ sub cmd {
   } else {
     $self->log(
       'dev',
-      "UNKNOWN CMD:[$cmd]{@_} : please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
+      "UNKNOWN CMD(st[$self->{'status'}]):[$cmd]{@_}: please add \$dc->{'cmd'}{'$cmd'} = sub { ... };",
       "self=", ref $self,
       #Dumper $self->{'cmd'},
       $self->{'parse'}
