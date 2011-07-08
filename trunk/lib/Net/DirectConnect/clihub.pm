@@ -50,7 +50,7 @@ sub init {
     'search_every_min'     => 10,
     'auto_connect'         => 1,
     'auto_bug'             => 1,
-    'reconnects'           => 5,
+    'reconnects'           => 99999,
     'NoGetINFO'            => 1,                              #test
     'NoHello'              => 1,
     'UserIP2'              => 1,
