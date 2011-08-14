@@ -28,7 +28,9 @@ psmisc->import qw(:log);
 
 sub part ($;@) {
   my $name = shift;
-  psmisc::code_run( $config{'out'}{ $config{'view'} }{$name} || $config{'out'}{''}{$name}, @_ );
+  local $_ = $config{'out'}{ $config{'view'} }{$name} || $config{'out'}{''}{$name};
+  return psmisc::code_run( $_, @_ ) if ref eq 'CODE';
+  psmisc::printall $_;
 }
 #first is default
 our @colors = qw(black aqua gray navy silver green olive teal blue lime purple magenta maroon red yellow);
@@ -44,6 +46,30 @@ $config{'out'}{'html'}{'http-header'} = sub {
 $config{'out'}{'rss'}{'http-header'} = sub {
   print "Content-type: application/rss+xml; charset=utf-8\n\n";
 };
+
+my $json;
+
+      $config{'out'}{'json'}{'http-header'} = "Content-type: application/json\n\n";
+$config{'out'}{'html'}{'head'} = sub {
+      $json  = {};
+      };
+  $config{'out'}{'json'}{'table-head'} = sub {
+        my (  $q ) = @_;
+        $json->{table_current} = $q->{name};
+        $json->{$json->{table_current}}{'head'} = $q;
+
+  };
+      $config{'out'}{'json'}{'footer'} ||= sub {
+        if ( psmisc::use_try 'JSON' ) { print JSON::encode_json($json ); }else 
+        { print Data::Dumper->new( [ $json ] )->Pair(':')->Terse(1)->Indent(0)->Useqq(1)->Dump(); }
+      };
+      $config{'out'}{'json'}{'table-row'} ||= sub {
+        my (  $row ) = @_;
+        #print 'string',Dumper \@_;
+        delete$row->{orig};
+        push @{ $json->{$json->{table_current}}{'rows'} ||= [] }, $row;
+      };
+
 part 'http-header' if $ENV{'SERVER_PORT'};
 $config{'out'}{'rss'}{'footer'} = sub { print '</channel></rss>'; };
 $config{'log_all'}     = '0' unless $param->{'debug'};
@@ -129,6 +155,7 @@ $config{'out'}{'html'}{'header'} = sub {
       $param->{$_}
     } qw(string tth)
     ) or ( $param->{'query'} and !$config{'queries'}{ $param->{'query'} }{'periods'} );
+part 'header_in_top';
   print '<br/>';
   print
 qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим <a href="http://en.wikipedia.org/wiki/DC%2B%2B#Client_software_comparison">dc клиент</a></div>};
@@ -137,7 +164,7 @@ part 'header';
 my @queries = @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
   grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} };
 for my $query (@queries) {
-  my $q = { %{ $config{'queries'}{$query} || next } };
+  my $q = {name=>$query, %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
   $q->{'desc'} = $q->{'desc'}{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
   $config{'out'}{'rss'}{'table-head'} = sub {
@@ -163,9 +190,13 @@ for my $query (@queries) {
         : ( '= <a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
       : '<a href="?query=' . psmisc::encode_url($query) . '">' . ( $q->{'desc'} || $query ) . '</a>'
       )
+      . ' <a class="json" href="'
+      . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=json' )
+      . '">JS</a>'
       . ' <a class="rss" href="'
       . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=rss' )
-      . '">RSS</a>';
+      . '">RSS</a>'
+      ;
     #print Dumper \%ENV;
     #print Dumper @ask;
     #print " ($q->{'desc'}):" if $q->{'desc'};
@@ -179,7 +210,7 @@ for my $query (@queries) {
       '</th>'
       for @{ $q->{'show'} };
   };
-  part 'table-head';
+  part 'table-head', $q;
   my $res = statlib::make_query( $q, $query, $param->{'period'} );
   #warn Dumper $res;
   $res =
