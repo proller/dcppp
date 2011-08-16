@@ -201,12 +201,15 @@ for my $query (@queries) {
         : ( '= <a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
       : '<a href="?query=' . psmisc::encode_url($query) . '">' . ( $q->{'desc'} || $query ) . '</a>'
       )
+      . '<div class="altview">'
+      . '<a class="rss" href="'
+      . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=rss' )
+      . '">RSS</a>'
       . ' <a class="json" href="'
       . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=json' )
       . '">JS</a>'
-      . ' <a class="rss" href="'
-      . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=rss' )
-      . '">RSS</a>';
+      . '</div>'
+      ;
     #print Dumper \%ENV;
     #print Dumper @ask;
     #print " ($q->{'desc'}):" if $q->{'desc'};
