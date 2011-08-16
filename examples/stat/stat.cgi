@@ -63,7 +63,7 @@ $config{'out'}{'html'}{'head'} = sub {
 
   };
       $config{'out'}{'json'}{'footer'} ||= sub {
-        $json->{__test} = [qq{-'"-}, qq{-'"`-}];
+        #$json->{__test} = [qq{-'"-}, qq{-'"`-}];
         
         if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json)}
         if ( psmisc::use_try 'JSON' ) { return print JSON->new->encode($json ); }
