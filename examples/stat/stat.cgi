@@ -67,8 +67,8 @@ $config{'out'}{'json'}{'footer'} ||= sub {
       no warnings 'redefine';
 
       sub Data::Dumper::qquote {
-        $_[0] =~ s/'/\\'/g;
-        return "'" . $_[0] . "'";
+        $_[0] =~ s/"/\\"/g;
+        return '"' . $_[0] . '"';
       }
     }
     return print Data::Dumper->new( [$json] )->Pair(':')->Terse(1)->Indent(0)->Useqq(1)->Useperl(1)->Dump();
