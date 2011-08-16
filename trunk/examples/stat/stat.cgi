@@ -11,9 +11,8 @@ our ( %config, $param, $db, );
 use lib::abs qw(../../lib ./);
 use statlib;
 #binmode( STDOUT, ":utf8" );
- use encoding 'utf8';
+use encoding 'utf8';
 #use encoding 'utf8', STDOUT=> 'utf8', STDIN => 'utf8', STDERR=> 'utf8',;
-
 #our $root_path;
 #BEGIN {
 #  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;                                                             #v0w
@@ -49,42 +48,39 @@ $config{'out'}{'html'}{'http-header'} = sub {
 $config{'out'}{'rss'}{'http-header'} = sub {
   print "Content-type: application/rss+xml; charset=utf-8\n\n";
 };
-
 my $json;
+$config{'out'}{'json'}{'http-header'} = "Content-type: application/json\n\n";
+$config{'out'}{'html'}{'head'}        = sub {
+  $json = {};
+};
+$config{'out'}{'json'}{'table-head'} = sub {
+  my ($q) = @_;
+  $json->{table_current} = $q->{name};
+  $json->{ $json->{table_current} }{'head'} = $q;
+};
+$config{'out'}{'json'}{'footer'} ||= sub {
+  #$json->{__test} = [qq{-'"-}, qq{-'"`-}];
+  if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
+  if ( psmisc::use_try 'JSON' )     { return print JSON->new->encode($json); }
+  {
+    {
+      no warnings 'redefine';
 
-      $config{'out'}{'json'}{'http-header'} = "Content-type: application/json\n\n";
-$config{'out'}{'html'}{'head'} = sub {
-      $json  = {};
-      };
-  $config{'out'}{'json'}{'table-head'} = sub {
-        my (  $q ) = @_;
-        $json->{table_current} = $q->{name};
-        $json->{$json->{table_current}}{'head'} = $q;
-
-  };
-      $config{'out'}{'json'}{'footer'} ||= sub {
-        #$json->{__test} = [qq{-'"-}, qq{-'"`-}];
-        
-        if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json)}
-        if ( psmisc::use_try 'JSON' ) { return print JSON->new->encode($json ); }
-        {
-         { no warnings 'redefine';
-    sub Data::Dumper::qquote {
-	$_[0] =~ s/'/\\'/g;
-        return "'".$_[0]."'";
+      sub Data::Dumper::qquote {
+        $_[0] =~ s/'/\\'/g;
+        return "'" . $_[0] . "'";
+      }
     }
-}
-         
-         return print Data::Dumper->new( [ $json ] )->Pair(':')->Terse(1)->Indent(0)->Useqq(1)->Useperl(1)->Dump(); }
-        #
-      };
-      $config{'out'}{'json'}{'table-row'} ||= sub {
-        my (  $row ) = @_;
-        #print 'string',Dumper \@_;
-        delete$row->{orig};
-        push @{ $json->{$json->{table_current}}{'rows'} ||= [] }, $row;
-      };
-
+    return print Data::Dumper->new( [$json] )->Pair(':')->Terse(1)->Indent(0)->Useqq(1)->Useperl(1)->Dump();
+  }
+  #
+};
+$config{'out'}{'json'}{'table-row'} ||= sub {
+  my ($row) = @_;
+  #print 'string',Dumper \@_;
+  delete $row->{orig};
+  push @{ $json->{ $json->{table_current} }{'rows'} ||= [] }, $row;
+};
 part 'http-header' if $ENV{'SERVER_PORT'};
 $config{'out'}{'rss'}{'footer'} = sub { print '</channel></rss>'; };
 $config{'log_all'}     = '0' unless $param->{'debug'};
@@ -170,7 +166,7 @@ $config{'out'}{'html'}{'header'} = sub {
       $param->{$_}
     } qw(string tth)
     ) or ( $param->{'query'} and !$config{'queries'}{ $param->{'query'} }{'periods'} );
-part 'header_in_top';
+  part 'header_in_top';
   print '<br/>';
   print
 qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим <a href="http://en.wikipedia.org/wiki/DC%2B%2B#Client_software_comparison">dc клиент</a></div>};
@@ -179,7 +175,7 @@ part 'header';
 my @queries = @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
   grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} };
 for my $query (@queries) {
-  my $q = {name=>$query, %{ $config{'queries'}{$query} || next } };
+  my $q = { name => $query, %{ $config{'queries'}{$query} || next } };
   next if $q->{'disabled'};
   $q->{'desc'} = $q->{'desc'}{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
   $config{'out'}{'rss'}{'table-head'} = sub {
@@ -210,8 +206,7 @@ for my $query (@queries) {
       . '">JS</a>'
       . ' <a class="rss" href="'
       . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=rss' )
-      . '">RSS</a>'
-      ;
+      . '">RSS</a>';
     #print Dumper \%ENV;
     #print Dumper @ask;
     #print " ($q->{'desc'}):" if $q->{'desc'};
@@ -278,7 +273,7 @@ for my $query (@queries) {
       print '<tr>';
       #'<td>', $n, '</td>';
       print "<td>D!:";
-      print utf8::is_utf8 ($row->{string});
+      print utf8::is_utf8 ( $row->{string} );
       print "</td>";
       #printlog('dev', Dumper $row);
       print '<td>', $row->{ $_ . '_html' } // $row->{$_}, '</td>' for @{ $q->{'show'} };
@@ -432,20 +427,20 @@ $config{'out'}{'html'}{'graph'} = sub {
         . qq{" stroke-width="3" points="};    #. #( #"mc
                                               # join ' ',
       for ( sort keys %dates ) {
-	if (  $graph{$line}{$_}   ) {
-        #      map {
-        #$graph{$line}{$_} = $yl - $graph{$line}{$_};
-        if ( my $v = $graph{$line}{$_} ) {    # ? () : (
-          $v = $yl if $v > $yn;
-          $v = $v - $date_min{$_};
-          $img .= int( $n * $xs ) . ',' . int(
-            $yl -
-              #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
-              #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
-              $v * $date_step{$_}
-          ) . ' ';
+        if ( $graph{$line}{$_} ) {
+          #      map {
+          #$graph{$line}{$_} = $yl - $graph{$line}{$_};
+          if ( my $v = $graph{$line}{$_} ) {    # ? () : (
+            $v = $yl if $v > $yn;
+            $v = $v - $date_min{$_};
+            $img .= int( $n * $xs ) . ',' . int(
+              $yl -
+                #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $ys )
+                #( $graph{$line}{$_} > $yn ? $yl : ( $graph{$line}{$_} || $yn ) * $date_step{$_} )
+                $v * $date_step{$_}
+            ) . ' ';
+          }
         }
-	}
         ++$n;
         #)
         #       }

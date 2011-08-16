@@ -7,7 +7,6 @@ generate dc++ xml filelist
 perl filelist.pm /path/to/dir
 
 =cut
-
 package    # no cpan
   Net::DirectConnect::filelist;
 use 5.10.0;
@@ -33,7 +32,6 @@ use base 'Net::DirectConnect';
       "; #use Net::DirectConnect; 
       #psmisc::use_try ('Net::DirectConnect');
 =cut
-
 use base 'Net::DirectConnect';
 #use lib '../../../examples/stat/pslib';    # REMOVE
 #use lib 'stat/pslib';                      # REMOVE
@@ -104,8 +102,7 @@ sub new {
   #$self->log('idr:', $self->{'INF'}{'ID'});
   #$self->ID_get();
   unless ( $self->{no_sql} ) {
-
-      local %_ = (
+    local %_ = (
       'driver' => 'sqlite',
       #'dbname' => 'files',
       'database' => 'files',
@@ -119,29 +116,39 @@ sub new {
       #{}
       #},
     );
-     $self->{sql}{$_} //= $_{$_} for keys %_ ;
+    $self->{sql}{$_} //= $_{$_} for keys %_;
     my ($short) = $self->{sql}{'driver'} =~ /mysql/;
-	    
     my %table = (
       'filelist' => {
-        'path' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => ($short ? 150 : 255), 'default' => '', 'index' => 1, 'primary' => 1 ),
-        'file' => pssql::row( undef, 'type' => 'VARCHAR', 'length' => ($short ? 150 : 255), 'default' => '', 'index' => 1, 'primary' => 1 ),
-        'tth'  => pssql::row( undef, 'type' => 'VARCHAR', 'length' => 40,  'default' => '', 'index' => 1 ),
-        'size' => pssql::row( undef, 'type' => 'BIGINT',  'index'  => 1, ),
-        'time' => pssql::row( 'time', ),    #'index' => 1,
-                                            #'added'  => pssql::row( 'added', ),
-                                            #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
+        'path' => pssql::row(
+          undef,
+          'type'    => 'VARCHAR',
+          'length'  => ( $short ? 150 : 255 ),
+          'default' => '',
+          'index'   => 1,
+          'primary' => 1
+        ),
+        'file' => pssql::row(
+          undef,
+          'type'    => 'VARCHAR',
+          'length'  => ( $short ? 150 : 255 ),
+          'default' => '',
+          'index'   => 1,
+          'primary' => 1
+        ),
+        'tth'  => pssql::row( undef, 'type'        => 'VARCHAR', 'length' => 40, 'default' => '', 'index' => 1 ),
+        'size' => pssql::row( undef, 'type'        => 'BIGINT',  'index'  => 1, ),
+        'time' => pssql::row( 'time', ), #'index' => 1,
+                     #'added'  => pssql::row( 'added', ),
+                     #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
       },
     );
     if ( $self->{db} ) {
       $self->{db}{table}{$_} = $table{$_} for keys %table;
     }
-      local %_ = (
-      'table' => \%table,
-    );
-     $self->{sql}{$_} //= $_{$_} for keys %_ ;
+    local %_ = ( 'table' => \%table, );
+    $self->{sql}{$_} //= $_{$_} for keys %_;
     #warn ('sqlore:',Data::Dumper::Dumper $self->{'sql'}, \%_),
-
     $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, );
     ( $tq, $rq, $vq ) = $self->{db}->quotes();
   }
@@ -186,7 +193,6 @@ sub new {
         if $f->{'tth'};
       $self->{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
 =cut
-
   #$self->log 'set share', "[$f->{file}], [$f->{tth}] = [$self->{share_full}{ $f->{tth} }],[$self->{share_full}{ $f->{file} }]";
   #$self->log Dumper $self->{share_full};
       }
@@ -401,7 +407,6 @@ sub new {
     $self->log ".done:", ( scalar keys %{ $self->{share_full} } ), "\n";
   }
 =cut
-
     #$self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
@@ -523,17 +528,14 @@ return unless $name;
           if $tth;
         $self->{share_full}{$file} ||= $full_local;
 =cut
-
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth ),
-    $self->share_add_file( $full, $tth ), 
-    $self->share_changed()
+      $self->share_add_file( $full, $tth ), $self->share_changed()
       if !$self->{'file_recv_filelist'} and !$self->{'no_auto_share_downloaded'};  # unless $self->{'no_auto_share_downloaded'};
          #TODO          $self->{db}->insert_hash( 'filelist', $f ) if !$self->{no_sql} and $f->{tth};
     ;
     };
   $self->filelist_load() unless $standalone;    # (caller)[0] ~~ __PACKAGE__;
-                                              #$self->log('initok');
-
+                                                #$self->log('initok');
   return $self;
 }
 eval q{ #do

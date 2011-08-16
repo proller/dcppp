@@ -17,6 +17,7 @@ get info about hubs
  $config{dc}{host} = 'myhub.net';
 
 =cut
+
 use 5.10.0;
 use strict;
 use Data::Dumper;
@@ -53,8 +54,7 @@ Net::DirectConnect->new(
     my $dc = ref $_[0] ? shift : {};
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
   },
-  'handler' => { 
-    
+  'handler' => {
     INF => sub {
       my $dc  = shift;
       my $dst = shift @{ $_[0] };
