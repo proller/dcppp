@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #$Id$ $URL$
-package #hide from cpan
+package    #hide from cpan
   statlib;
 use strict;
 use Time::HiRes qw(time sleep);
@@ -158,9 +158,9 @@ $config{'queries'}{'queries top tth'} ||= {
   'main'    => 1,
   'periods' => 1,
   ( !$config{'use_graph'} ? ( 'class' => 'half' ) : ( 'graph' => 1 ) ),
-  'desc'      => { 'ru' => 'Чаще всего скачивают', 'en' => 'Most downloaded' },
-  'show'      => [qw(n cnt string filename size tth time )],
-  'SELECT'    => '*, COUNT(*) as cnt',
+  'desc'   => { 'ru' => 'Чаще всего скачивают', 'en' => 'Most downloaded' },
+  'show'   => [qw(n cnt string filename size tth time )],
+  'SELECT' => '*, COUNT(*) as cnt',
   #'SELECT'    => 'queries.*,results.*, COUNT(*) as cnt',
   'FROM'      => 'queries',
   'LEFT JOIN' => 'results USING (tth)',
@@ -184,7 +184,6 @@ local %_ =
 )          ;
 $config{'queries'}{'queries top tth new'}{$_}=$_{$_} for keys %_;
 =cut
-
 $config{'queries'}{'queries top string'} ||= {
   'main'    => 1,
   'periods' => 1,
@@ -467,54 +466,53 @@ sub make_query {
 }
 $db ||= pssql->new( %{ $config{'sql'} || {} }, );
 ( $tq, $rq, $vq ) = $db->quotes();
-
 #=todo
 {
- my $self = $db;
-
-
+  my $self = $db;
   $self->{'array_hash_repl'} = sub {
     my $self = shift;
-    my $r = shift;
-    return {} if  !$self->{'sth'} or !$r;
-      my $i = -1;
-      my %uniq;
-      $r = { map {++$i; $_=>($r->[$i] ? $uniq{$_} = $r->[$i] : $uniq{$_})  } @{$self->{'sth'}{'NAME'}} };
+    my $r    = shift;
+    return {} if !$self->{'sth'} or !$r;
+    my $i = -1;
+    my %uniq;
+    $r = { map { ++$i; $_ => ( $r->[$i] ? $uniq{$_} = $r->[$i] : $uniq{$_} ) } @{ $self->{'sth'}{'NAME'} } };
     return $r;
   };
   $self->{'array_hash_add'} = sub {
     my $self = shift;
-    my $r = shift;
-    return {} if  !$self->{'sth'} or !$r;
-      my $i = -1;
-      my %uniq;
-      $r = { map {++$i; $_=>($uniq{$_} ||= $r->[$i])  } @{$self->{'sth'}{'NAME'}} };
+    my $r    = shift;
+    return {} if !$self->{'sth'} or !$r;
+    my $i = -1;
+    my %uniq;
+    $r = { map { ++$i; $_ => ( $uniq{$_} ||= $r->[$i] ) } @{ $self->{'sth'}{'NAME'} } };
     return $r;
   };
   $self->{'fetch_hash'} = sub {
     my $self = shift;
     #return $self->{'sth'}->fetchrow_hashref();
     local $_ = $self->{'sth'}->fetchrow_arrayref() || return;
-#print 'A:',Dumper $self->{'sth'}{'NAME'},$_;
+    #print 'A:',Dumper $self->{'sth'}{'NAME'},$_;
     #return $self->array_hash_add( $_ );
-    return $self->array_hash_repl( $_ );
+    return $self->array_hash_repl($_);
   };
-
   $self->{'array_to_hash'} = sub {
     my $self = shift;
   };
-
   $self->{'line'} = sub {
     my $self = shift;
     return {} if @_ and $self->prepare(@_);
     return {} if !$self->{'sth'} or $self->{'sth'}->err;
     my $tim = psmisc::timer();
-    local $_ =
-      scalar( psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, ( 
-      #$self->array_to_hash( $self->{'sth'}->fetchrow_arrayref() )
-      $self->fetch_hash()
-      #$self->{'sth'}->fetchrow_hashref() || {} 
-      ) ) );
+    local $_ = scalar(
+      psmisc::cp_trans_hash(
+        $self->{'codepage'},
+        $self->{'cp_out'}, (
+          #$self->array_to_hash( $self->{'sth'}->fetchrow_arrayref() )
+          $self->fetch_hash()
+            #$self->{'sth'}->fetchrow_hashref() || {}
+        )
+      )
+    );
     $self->{'queries_time'} += $tim->();
     $self->log(
       'dmp', 'line:[', @_, '] = ', scalar keys %$_,
@@ -522,9 +520,8 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       'err=', $self->err(),
     ) if ( caller(2) )[0] ne 'pssql';
     return $_;
-  }if $self->{'driver'} =~ /mysql/;
-
-
+    }
+    if $self->{'driver'} =~ /mysql/;
   $db->{'query'} = sub {
     my $self = shift;
     my $tim  = psmisc::timer();
@@ -542,17 +539,15 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       #print 'name', Dumper $self->{sth}{'NAME'};
       #while ( my $r = $self->{'sth'}->fetchrow_arrayref()  ) {
       while ( my $r = $self->fetch_hash() ) {
-#print 'H:',Dumper $r;
-            
-
-      #$r = $self->array_to_hash($r);
-#print "r[$r]", Dumper $r;
-      push( @hash, scalar psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, $r ) );
-      #print Dumper \%uniq;
+        #print 'H:',Dumper $r;
+        #$r = $self->array_to_hash($r);
+        #print "r[$r]", Dumper $r;
+        push( @hash, scalar psmisc::cp_trans_hash( $self->{'codepage'}, $self->{'cp_out'}, $r ) );
+        #print Dumper \%uniq;
       }
-        #$self->log("Da[",%$_,"]"),
-        #while ( $_ = $self->{'sth'}->fetchrow_hashref() );
-#print 'name', Dumper $self->{sth}{'NAME'}, $self->{sth}{'NAME_hash'} ,Dumper @hash;
+      #$self->log("Da[",%$_,"]"),
+      #while ( $_ = $self->{'sth'}->fetchrow_hashref() );
+      #print 'name', Dumper $self->{sth}{'NAME'}, $self->{sth}{'NAME_hash'} ,Dumper @hash;
       $self->{'queries_time'} += $tim->();
     }
     $self->log(
@@ -567,9 +562,8 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       for (@hash) { utf8::decode $_ for %$_; }
     }
     return wantarray ? @hash : \@hash;
-  } if $self->{'driver'} =~ /mysql/;
+    }
+    if $self->{'driver'} =~ /mysql/;
 }
 #=cut
-
-
 1;

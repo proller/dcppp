@@ -84,11 +84,8 @@ sub init {
     #return $self->{lock};
     my ($lock) = @_;
     #$self->{'log'}->( 'dev', 'making lock from', $lock );
-
     $lock = Encode::encode $self->{charset_protocol}, $lock if $self->{charset_protocol};
     #$self->{'log'}->( 'dev', 'making lock from2:', $lock );
-
-
     my @lock = split( //, $lock );
     my $i;
     my @key = ();
@@ -105,7 +102,6 @@ sub init {
     local $_ = join( '', @key );
     $_ = Encode::decode $self->{charset_protocol}, $_ if $self->{charset_protocol};
     return $_;
-
   };
   $self->{'tag'} ||= sub {
     my $self = shift;

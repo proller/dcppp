@@ -72,13 +72,13 @@ for my $arg (@ARGV) {
         local $config{'queries'}{$query}{'WHERE'}[5] =
           $config{'queries'}{$query}{'FROM'} . ".time >= " . int( time - $config{'periods'}{$time} )
           if $time;
-        my $res  = statlib::make_query( { %{ $config{'queries'}{$query} }, }, $query );
-#print $query, Dumper $res;
-        my $n    = 0;
+        my $res = statlib::make_query( { %{ $config{'queries'}{$query} }, }, $query );
+        #print $query, Dumper $res;
+        my $n = 0;
         my $date = psmisc::human( 'date', $nowtime ) . ( $tim ne 'h' ? '' : '-' . sprintf '%02d', ( localtime $nowtime )[2] );
         for my $row (@$res) {
           ++$n;
-          delete $row->{$_} for grep {!defined $row->{$_}} keys %$row;
+          delete $row->{$_} for grep { !defined $row->{$_} } keys %$row;
           my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
           #warn "SLOWi:[$config{'use_slow'}][$dmp]";
           $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => $nowtime } )
@@ -99,13 +99,13 @@ for my $arg (@ARGV) {
           #}
         }
         #exit;
-        $db->do( "DELETE FROM ${tq}slow${tq} WHERE name="
+        $db->do(
+              "DELETE FROM ${tq}slow${tq} WHERE name="
             . $db->quote($query)
             . " AND period="
             . $db->quote($time)
-            #. (!$config{'sql'}{'table'}{}" AND n>$n AND ${rq}date${rq}=$vq$date$vq") 
-            )
-          if $config{'use_slow'};
+            #. (!$config{'sql'}{'table'}{}" AND n>$n AND ${rq}date${rq}=$vq$date$vq")
+        ) if $config{'use_slow'};
         #$db->flush_insert('slow');
         $db->flush_insert();
         #sleep 3;
@@ -153,7 +153,6 @@ for my $arg (@ARGV) {
         for qw(queries_top_string_ queries_top_tth_ results_top_);
     }
 =cut
-
   } elsif ( $arg eq 'stat' ) {
     $ARGV[$n]             = undef;
     $db->{'auto_repair'}  = 1;
@@ -431,7 +430,6 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
             }
           );
 =cut
-
           ++$work{'stat'}{'QUI'};
         },
         'RES' => sub {    #TODO
@@ -470,7 +468,6 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
       $dc->destroy();
     };
 =cut	
-
     push @dc, $dc;
     $_->work() for @dc;
   }
@@ -504,15 +501,20 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     ,
     @dc
   );
-  psmisc::schedule( [ 300, 60 * 19 ], our $hubrunhour_ ||= sub {
-     psmisc::printlog( 'err', 'cant lock h'),
-     return if !psmisc::lock('calch', old=>86400);
-     psmisc::startme('calch'); } ),
-    psmisc::schedule( [ 600, 60 * 60 * 6 ], our $hubrunrare_ ||= sub {
-     psmisc::printlog( 'err', 'cant lock r'),
-     return if !psmisc::lock('calcr', old=>86400);
- psmisc::startme('calcr'); } )
-    if $config{'use_slow'};
+  psmisc::schedule(
+    [ 300, 60 * 19 ],
+    our $hubrunhour_ ||= sub {
+      psmisc::printlog( 'err', 'cant lock h' ), return if !psmisc::lock( 'calch', old => 86400 );
+      psmisc::startme('calch');
+    }
+    ),
+    psmisc::schedule(
+    [ 600, 60 * 60 * 6 ],
+    our $hubrunrare_ ||= sub {
+      psmisc::printlog( 'err', 'cant lock r' ), return if !psmisc::lock( 'calcr', old => 86400 );
+      psmisc::startme('calcr');
+    }
+    ) if $config{'use_slow'};
 #psmisc::schedule( [ 60 * 3, 60 * 60 * 24 ], our $hubrunoptimize_ ||= sub { psmisc::startme('calcr'); } )    if $config{'auto_optimize'};
   psmisc::schedule( [ 900, 86400 ], $config{'purge'} / 10, our $hubrunpurge_ ||= sub { psmisc::startme('purge'); } );
 
@@ -525,6 +527,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     }
   ) if $config{'debug'};
 =cut
+
 }
 psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc if @dc;
 #psmisc::caller_trace(20);
