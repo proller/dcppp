@@ -10,7 +10,10 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 our ( %config, $param, $db, );
 use lib::abs qw(../../lib ./);
 use statlib;
-binmode( STDOUT, ":utf8" );
+#binmode( STDOUT, ":utf8" );
+ use encoding 'utf8';
+#use encoding 'utf8', STDOUT=> 'utf8', STDIN => 'utf8', STDERR=> 'utf8',;
+
 #our $root_path;
 #BEGIN {
 #  ( $ENV{'SCRIPT_FILENAME'} || $0 ) =~ m|^(.+)[/\\].+?$|;                                                             #v0w
@@ -60,8 +63,20 @@ $config{'out'}{'html'}{'head'} = sub {
 
   };
       $config{'out'}{'json'}{'footer'} ||= sub {
-        if ( psmisc::use_try 'JSON' ) { print JSON::encode_json($json ); }else 
-        { print Data::Dumper->new( [ $json ] )->Pair(':')->Terse(1)->Indent(0)->Useqq(1)->Dump(); }
+        $json->{__test} = [qq{-'"-}, qq{-'"`-}];
+        
+        if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json)}
+        if ( psmisc::use_try 'JSON' ) { return print JSON->new->encode($json ); }
+        {
+         { no warnings 'redefine';
+    sub Data::Dumper::qquote {
+	$_[0] =~ s/'/\\'/g;
+        return "'".$_[0]."'";
+    }
+}
+         
+         return print Data::Dumper->new( [ $json ] )->Pair(':')->Terse(1)->Indent(0)->Useqq(1)->Useperl(1)->Dump(); }
+        #
       };
       $config{'out'}{'json'}{'table-row'} ||= sub {
         my (  $row ) = @_;
@@ -262,6 +277,10 @@ for my $query (@queries) {
     $config{'out'}{'html'}{'table-row'} = sub {
       print '<tr>';
       #'<td>', $n, '</td>';
+      print "<td>D!:";
+      print utf8::is_utf8 ($row->{string});
+      print "</td>";
+      #printlog('dev', Dumper $row);
       print '<td>', $row->{ $_ . '_html' } // $row->{$_}, '</td>' for @{ $q->{'show'} };
       if ( $q->{'graph'} ) {
         print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
@@ -275,7 +294,6 @@ for my $query (@queries) {
     $config{'out'}{'rss'}{'table-row'} = sub {
       #my ( $param, $table, $row ) = @_;
       my ($row) = @_;
-      #printlog('dev', Dumper $row);
       print '<item>';
       #"\n<link>", get_param_url_str( $param, ['view'] ), '#n', ( ++$work{'rssn'} ), '</link>';
       #'<description>';
