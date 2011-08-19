@@ -60,7 +60,7 @@ $config{'out'}{'json'}{'table-head'} = sub {
 };
 $config{'out'}{'json'}{'footer'} ||= sub {
   #$json->{__test} = [qq{-'"-}, qq{-'"`-}];
-  if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
+  #if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
   if ( psmisc::use_try 'JSON' )     { return print JSON->new->encode($json); }
   {
     {
@@ -275,9 +275,9 @@ for my $query (@queries) {
     $config{'out'}{'html'}{'table-row'} = sub {
       print '<tr>';
       #'<td>', $n, '</td>';
-      print "<td>D!:";
-      print utf8::is_utf8 ( $row->{string} );
-      print "</td>";
+      #print "<td>D!:";
+      #print utf8::is_utf8 ( $row->{string} );
+      #print "</td>";
       #printlog('dev', Dumper $row);
       print '<td>', $row->{ $_ . '_html' } // $row->{$_}, '</td>' for @{ $q->{'show'} };
       if ( $q->{'graph'} ) {
