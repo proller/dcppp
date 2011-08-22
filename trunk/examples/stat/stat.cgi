@@ -78,6 +78,7 @@ $config{'out'}{'json'}{'footer'} ||= sub {
 $config{'out'}{'json'}{'table-row'} ||= sub {
   my ($row) = @_;
   #print 'string',Dumper \@_;
+  $row= {%$row, %{$row->{orig}||{}}};
   delete $row->{orig};
   push @{ $json->{ $json->{table_current} }{'rows'} ||= [] }, $row;
 };
@@ -254,6 +255,7 @@ for my $query (@queries) {
                                                        #$id =~ tr/ /_/;
     }
     $row->{'tth_show'} = 'tth' if $config{'view'} eq 'rss';
+    unless ($config{'view'} eq 'json'){
     $row->{ $_ . '_html' } = (
       $param->{$_}
       ? ''
@@ -269,6 +271,7 @@ for my $query (@queries) {
       grep { $config{'queries'}{$_} } @{ $q->{'show'} };    #qw(string tth);
     $row->{ $_ . '_html' } = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
     $row->{ $_ . '_rss' } = psmisc::human( 'date_time', $row->{$_}, ' ', '-' ) for grep { int $row->{$_} } qw(time online);
+    }
     $row->{'hub'} .= psmisc::human( 'dchub-dl', { 'hub' => $row->{'orig'}->{'hub'} } ) if $row->{'hub'};
     #$row->{'nick'} .= psmisc::human( 'dchub-dl', $row->{'orig'} ) if $row->{'nick'};
     $row->{$_} = psmisc::human( 'size', $row->{$_} ) for grep { int $row->{$_} } qw(size share);
