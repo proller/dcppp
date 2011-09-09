@@ -353,11 +353,13 @@ sub new {
     psmisc::file_append $self->{files}, qq{</FileListing>};
     psmisc::file_append $self->{files};
     $self->{db}->flush_insert() unless $self->{no_sql};
-    if ( psmisc::use_try 'IO::Compress::Bzip2'
-      and local $_ = IO::Compress::Bzip2::bzip2( $self->{files} => $self->{files} . '.bz2' )
-      or $self->log("bzip2 failed: $IO::Compress::Bzip2::Bzip2Error") and 0 )
+    local $_;
+    if ( psmisc::use_try 'IO::Compress::Bzip2e'
+      and ($_ = !IO::Compress::Bzip2::bzip2( $self->{files} => $self->{files} . '.bz2' )
+      or $self->log("bzip2 failed: ", $IO::Compress::Bzip2::Bzip2Error) and 0 ) )
     {
-      #$self->log 'bzip',$self->{files} => $self->{files} . '.bz2';
+      #$self->log('bzip',$self->{files} => $self->{files} . '.bz2');
+      () = $IO::Compress::Bzip2::Bzip2Error; #no warning
     } else {
       $self->log( 'dev', 'using system bzip2', $_, $!, ':', `bzip2 -f "$self->{files}"` );
     }
