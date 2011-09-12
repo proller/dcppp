@@ -17,6 +17,8 @@ $Data::Dumper::Sortkeys = 1;
 #warn $1 . 'DirectConnect/pslib';
 #use lib $1 . 'DirectConnect/pslib/';
 use Net::DirectConnect::pslib::pssql;
+#use lib::abs qw(pslib);
+#use pssql;
 #psmisc->import qw(:log);
 #use Net::DirectConnect::pslib::pssql;
 #eval q{
@@ -490,6 +492,7 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
   $self->{'fetch_hash'} = sub {
     my $self = shift;
     #return $self->{'sth'}->fetchrow_hashref();
+    #return {} unless int $self->{'executed'};
     local $_ = $self->{'sth'}->fetchrow_arrayref() || return;
     #print 'A:',Dumper $self->{'sth'}{'NAME'},$_;
     #return $self->array_hash_add( $_ );
@@ -531,9 +534,9 @@ $db ||= pssql->new( %{ $config{'sql'} || {} }, );
       local $self->{'explain'} = 0, $self->query_log( $self->{'EXPLAIN'} . ' ' . $query )
         if $self->{'explain'} and $self->{'EXPLAIN'};
       local $_ = $self->line($query);
-      next unless keys %{$_};
+      next unless keys %$_;
       push( @hash, $_ );
-      next unless $self->{'sth'} and keys %{$_};
+      next unless $self->{'sth'} and keys %$_;
       my $tim = psmisc::timer();
       #$self->log("Db[",%$_,"]($self->{'codepage'}, $self->{'cp_out'})"),
       #print 'name', Dumper $self->{sth}{'NAME'};
