@@ -6,9 +6,10 @@ no warnings qw(uninitialized);
 our ( %config, %static, $param, $db, );
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
+#use lib::abs qw(../../lib ./ pslib);
 use lib::abs qw(../../lib ./);
 use Net::DirectConnect::pslib::psmisc;    # qw(:config :log printlog);
-psmisc->import qw(:log);
+psmisc->import(qw(:log));
 #*statpl::config = *main::config;
 #our $root_path;
 #use lib $root_path. '../../lib';
@@ -126,6 +127,8 @@ for my $arg (@ARGV) {
         $db->do( "DELETE FROM $tq$table$tq WHERE $col < " . int( time - $purge ) );
     }
     $db->optimize() unless $config{'no_auto_optimize'};
+  } elsif ( $arg eq 'optimize' ) {
+    $db->optimize();
   } elsif ( $arg eq 'install' ) {
     $ARGV[$n] = undef;
     local $db->{error_sleep} = 0;
