@@ -227,7 +227,12 @@ for my $query (@queries) {
       for @{ $q->{'show'} };
   };
   part 'table-head', $q;
-  my $res = statlib::make_query( $q, $query, $param->{'period'} );
+  my $res;
+psmisc::alarmed( $config{'web_max_query_time'}, sub { 
+  $res = statlib::make_query( $q, $query, $param->{'period'} );
+  }
+);
+print '<p>db ooops</p>' if $@;
   #warn Dumper $res;
   $res =
     [ sort { $b->{ $param->{'sort'} } <=> $a->{ $param->{'sort'} } || $b->{ $param->{'sort'} } cmp $a->{ $param->{'sort'} } }
@@ -482,7 +487,9 @@ $config{'out'}{'html'}{'graph'} = sub {
     #printlog 'dev', Dumper \%graph, \%dates;
   }
 };
+psmisc::alarmed( $config{'web_max_query_time'}, sub { 
 part 'graph';
+});
 $config{'out'}{'html'}{'footer'} = sub {
   print
     #log'dev',
