@@ -170,8 +170,8 @@ sub func {
       . $Net::DirectConnect::VERSION . '_'
       . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
     $self->{'INF'}{'US'} ||= 10000;
-    $self->{'INF'}{'U4'} ||= $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
-    $self->{'INF'}{'I4'} ||= $self->{'myip'};
+    $self->{'INF'}{'U4'} = $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
+    $self->{'INF'}{'I4'} = $self->{'myip'};
     $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
     return $self->{'INF'};
   };
@@ -689,7 +689,7 @@ sub init {
           return;
         }
       } else {
-#$self->INF_generate();
+	$self->INF_generate();
 #$self->{''} ||= $self->{''} || '';
 #$self->sendcmd( $dst, 'INF', $self->{'INF'}{'SID'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       }
