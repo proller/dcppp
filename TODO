@@ -62,3 +62,7 @@ adjustable: delete user from hash when quit
 dont get shared
 
 dcstat: json, xml output, json input
+
+
+STA  2 20 Reconnecting too fast, you have to wait 20 seconds before reconnecting. =[Generic login/access error]
+
