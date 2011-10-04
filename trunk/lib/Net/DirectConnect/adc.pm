@@ -93,6 +93,8 @@ return $self;
 sub func {
   my $self = shift if ref $_[0];
   #warn 'func call';
+#$self->log( 'func s=', $self, $self->{number});
+
   $self->SUPER::func(@_);
   %_ = ( 'ID_file' => 'ID', );
   $self->{$_} //= $_{$_} for keys %_;
@@ -145,9 +147,10 @@ sub func {
     $self->{'INF'}{'ID'} ||= $self->base_encode( $self->{'CID'} );
     return $self->{'ID'};
   };
+  #$self->log( 'sub igen ', );
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
-    #$self->log( 'dev', 'ing_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
+    #$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
     #$self->{'clients'}{'listener_udp'}
     $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
     $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
@@ -172,10 +175,12 @@ sub func {
     $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
     return $self->{'INF'};
   };
+  #$self->log( 'func end', );
 }
 
 sub init {
   my $self = shift if ref $_[0];
+#$self->log( 'init s=', $self, $self->{number});
   #shift if $_[0] eq __PACKAGE__;
   #print "adcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
   #$self->SUPER::new();
@@ -192,7 +197,7 @@ sub init {
     #'auto_wait'        => 1,
     'reconnects' => 99999, 'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
-    'connect_protocol' => 'ADC/0.10', 'message_type' => 'H',
+    'connect_protocol' => 'ADC/1.0', 'message_type' => 'H',
     #@_,
     'incomingclass' => __PACKAGE__,                               #'Net::DirectConnect::adc',
     no_print        => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
@@ -207,7 +212,7 @@ sub init {
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
   #$self->baseinit();    #if ref $self eq __PACKAGE__;
-  #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
+  #$self->log( 'inited3', "MT:$self->{'message_type'}", ' with' );
   $self->{SUPAD}{H}{$_} = $_ for qw(BAS0 BASE TIGR UCM0 BLO0 BZIP );
   $self->{SUPAD}{I}{$_} = $_ for qw(BASE TIGR BZIP);
   $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
@@ -226,8 +231,12 @@ sub init {
   $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
   # Proto
   $self->{message_type} = 'B' if $self->{'broadcast'};
-  $self->func();
+  #$self->log( 'funci', );
+  #$self->func();
+  $self->Net::DirectConnect::adc::func();
+  
   #warn "IG:$self->{INF_generate}";
+  #$self->log( 'igen', $self->{INF_generate});
   $self->INF_generate();
   $self->{'parse'} ||= {
 #
@@ -665,6 +674,7 @@ sub init {
       my $self = shift if ref $_[0];
       my $dst = shift;
       #$self->{'BINFS'} ||= [qw(ID PD I4 I6 U4 U6 SS SF VE US DS SL AS AM EM NI DE HN HR HO TO CT AW SU RF)];
+#$self->log('infsend', $dst, 'h=',$self->{parent}{hub});
       if ( $self->{parent}{hub} ) {
         if ( $dst eq 'I' ) {
           $self->{'INF'} = { CT => 32, VE => 'perl' . $VERSION, NI => 'devhub', DE => 'hubdev', };
@@ -684,6 +694,7 @@ sub init {
 #$self->sendcmd( $dst, 'INF', $self->{'INF'}{'SID'}, map { $_ . $self->{$_} } grep { length $self->{$_} } @{ $self->{'BINFS'} } );
       }
       #$self->log(Dumper $self);
+#$self->log('infsend inf', Dumper$self->{'INF'});
       $self->cmd_adc        #sendcmd
         (
         $dst, 'INF',        #$self->{'INF'}{'SID'},
