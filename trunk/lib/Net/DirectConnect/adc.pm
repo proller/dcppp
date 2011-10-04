@@ -701,7 +701,7 @@ sub init {
         map { $_ . $self->{'INF'}{$_} } grep { length $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO)
         : @_ ? @_
         : (
-          qw(ID I4 I6 U6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF), ( $self->{'message_type'} eq 'H' ? 'PD' : () )
+          qw(ID I4 U4 I6 U6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF), ( $self->{'message_type'} eq 'H' ? 'PD' : () )
           )                 #sort keys %{ $self->{'INF'} }
         );
      #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
