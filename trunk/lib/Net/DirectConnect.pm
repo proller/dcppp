@@ -215,6 +215,13 @@ sub new {
       };
     }
   }
+
+#if ($self->{'dev_sctp'}) {
+#warn "patching IO::Socket::INET";
+#IO::Socket::INET
+#}
+
+
   if ( $self->{'auto_listen'} ) {
     #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
     $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};
@@ -970,7 +977,7 @@ sub func {
           #$self->clients_my()
           )
         {
-          $self->{'clients'}{$_}->work(@params);
+          $self->{'clients'}{$_}->work();
         }
       }
     );
@@ -1278,7 +1285,7 @@ sub func {
       || $self->{peers}{$sid}
       || $self->{peers}{$nick}
       || {};
-    $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]" );    #, Dumper $peer->{INF});
+    $self->log( 'dbg', "getting [$nick] $file as $as  sid=[$sid]:$self->{'myport'}" );    #, Dumper $peer->{INF});
     if ( $self->{'adc'} ) {
       #my $token = $self->make_token($nick);
       local @_;
