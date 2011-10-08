@@ -355,7 +355,7 @@ sub new {
     psmisc::file_append $self->{files};
     $self->{db}->flush_insert() unless $self->{no_sql};
     local $_;
-    if ( psmisc::use_try 'IO::Compress::Bzip2e'
+    if ( psmisc::use_try 'IO::Compress::Bzip2'
       and ($_ = !IO::Compress::Bzip2::bzip2( $self->{files} => $self->{files} . '.bz2' )
       or $self->log("bzip2 failed: ", $IO::Compress::Bzip2::Bzip2Error) and 0 ) )
     {

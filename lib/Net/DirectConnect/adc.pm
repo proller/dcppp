@@ -150,7 +150,7 @@ sub func {
   #$self->log( 'sub igen ', );
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
-    #$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'});
+    #$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'}, Dumper $self->{'INF'});
     #$self->{'clients'}{'listener_udp'}
     $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
     $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
@@ -267,6 +267,7 @@ sub init {
                                       #for keys %{$self->{'peers'}};
         $self->{'status'} = 'connected';
       } elsif ( $dst eq 'C' ) {
+        $self->cmd( $dst, 'SUP', ); #unless $self->{count_sendcmd}{CSUP};
         $self->cmd( $dst, 'INF', ) unless $self->{count_sendcmd}{CINF};
       }
       $peerid ||= '';
@@ -500,7 +501,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       $toid ||= shift;
-      $self->log( 'dcdev', "( $dst, RCM, $peerid, $toid  me=[$self->{'INF'}{'SID'}] )", @_ );
+      $self->log( 'dcdev', "( $dst, RCM, $peerid, $toid  me=[$self->{'INF'}{'SID'}:$self->{'myport'}] )", @_ );
       $self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], ) if $toid eq $self->{'INF'}{'SID'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RCM', $peerid, $toid, @_ );
@@ -753,8 +754,8 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
-  $self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
-  unless ( $self->{'no_listen'} ) {
+  #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
+  if ( !$self->{'no_listen'} ) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
     if (
       #( $self->{'M'} eq 'A' or !$self->{'M'} )  and
@@ -762,11 +763,12 @@ sub init {
       )
     {
       #$self->log( 'dev', __FILE__, __LINE__, "  myptr", $self->{'auto_listen'}, $self->{broadcast});
-      if (
+      #if (
         #!$self->{'auto_listen'} or    #$self->{'Proto'} ne 'tcp'
-        $self->{broadcast}
-        )
-      {
+        #$self->{broadcast}
+      #  1
+      #  )
+      #{
         #$self->log( 'dev', __FILE__, __LINE__, "  myptr");
         $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
         $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
@@ -776,12 +778,12 @@ sub init {
         #$self->log( 'dev', __FILE__, __LINE__, "  myptr");
         $self->{'myport'} = $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
         $self->log( 'err', "cant listen tcp (file transfers)" ) unless $self->{'myport_tcp'};
-      }
-      if (
-        !$self->{'auto_listen'}
+      #}
+      #if (
+      #  !$self->{'auto_listen'}
         #and $self->{'Proto'} ne 'udp'
-        )
-      {
+      #  )
+      #{
         $self->log( 'dev', "making listeners: udp ($self->{'auto_listen'})" );
         $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
           'parent'      => $self,
@@ -807,7 +809,7 @@ sub init {
         $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
         $self->log( 'dev', 'nyportgen', $self->{'myport_udp'} );
         $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
-      }
+      #}
       if (
         #!$self->{'auto_listen'} and
         $self->{'dev_sctp'}
