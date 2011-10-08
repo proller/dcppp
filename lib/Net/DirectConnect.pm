@@ -72,26 +72,21 @@ sub socket_addr ($) {
   return @_;
 }
 
-sub schedule($$;@)
-{    #$Id$ $URL$
+sub schedule($$;@) {    #$Id$ $URL$
   our %schedule;
   my ( $every, $func ) = ( shift, shift );
   my $p;
-  ( $p->{'wait'}, $p->{'every'}, $p->{'runs'}, $p->{'cond'}, $p->{'id'} ) = @$every
-    if ref $every eq 'ARRAY';
+  ( $p->{'wait'}, $p->{'every'}, $p->{'runs'}, $p->{'cond'}, $p->{'id'} ) = @$every if ref $every eq 'ARRAY';
   $p = $every if ref $every eq 'HASH';
   $p->{'every'} ||= $every if !ref $every;
   $p->{'id'} ||= join ';', caller;
-  $schedule{ $p->{'id'} }{'func'} = $func
-    if !$schedule{ $p->{'id'} }{'func'}
-      or $p->{'update'};
-  $schedule{ $p->{'id'} }{'last'} = time - $p->{'every'} + $p->{'wait'}
-    if $p->{'wait'} and !$schedule{ $p->{'id'} }{'last'};
-  $schedule{ $p->{'id'} }{'func'}->(@_), $schedule{ $p->{'id'} }{'last'} = time
+  $schedule{ $p->{'id'} }{'func'} = $func if !$schedule{ $p->{'id'} }{'func'} or $p->{'update'};
+  $schedule{ $p->{'id'} }{'last'} = time - $p->{'every'} + $p->{'wait'} if $p->{'wait'} and !$schedule{ $p->{'id'} }{'last'};
+   $schedule{ $p->{'id'} }{'last'} = time,
+  $schedule{ $p->{'id'} }{'func'}->(@_),
     if ( $schedule{ $p->{'id'} }{'last'} + $p->{'every'} < time )
     and ( !$p->{'runs'} or $schedule{ $p->{'id'} }{'runs'}++ < $p->{'runs'} )
-    and ( !( ref $p->{'cond'} eq 'CODE' )
-    or $p->{'cond'}->( $p, $schedule{ $p->{'id'} }, @_ ) )
+    and ( !( ref $p->{'cond'} eq 'CODE' ) or $p->{'cond'}->( $p, $schedule{ $p->{'id'} }, @_ ) )
     and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
 }
 
@@ -133,7 +128,6 @@ sub new {
   #psmisc::printlog('dev', 'func', Dumper @_);
   $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
-
   $self->func(@_);    #@param
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
@@ -971,6 +965,13 @@ sub func {
         }
         $self->{$_}->($self) for grep { ref $self->{$_} eq 'CODE' } qw(worker auto_work);
         #$self->log('dev', 'work exit',      );
+        for (
+          keys %{ $self->{'clients'} }
+          #$self->clients_my()
+          )
+        {
+          $self->{'clients'}{$_}->work(@params);
+        }
       }
     );
     schedule(
@@ -1185,7 +1186,6 @@ sub func {
 	$self->{send_buffer_raw} = undef;
     }
 =cut
-
     return unless @_;
     eval { $_ = $self->{'socket'}->send(@_); } if $self->{'socket'};
     $self->{bytes_send} += $_;
@@ -1345,7 +1345,10 @@ sub func {
 #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, Encode::decode $self->{charset_protocol},
 #$self->log( 'dcdev', "pst enc filename [$self->{'file_recv_dest'}]");
     mkdir_rec $self->{'partial_prefix'} if $self->{'partial_prefix'};
-    $self->{'file_recv_partial'} = "$self->{'file_recv_dest'}".($self->{'file_recv_tth'} ? '.'.$self->{'file_recv_tth'}: ())."$self->{'partial_ext'}";
+    $self->{'file_recv_partial'} =
+        "$self->{'file_recv_dest'}"
+      . ( $self->{'file_recv_tth'} ? '.' . $self->{'file_recv_tth'} : () )
+      . "$self->{'partial_ext'}";
     $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_partial'}
       unless $self->{'file_recv_partial'} =~ m{[/\\]};
     $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'} if $self->{charset_fs};
@@ -1411,7 +1414,7 @@ sub func {
         if ( length $self->{'partial_ext'} ) {
           local $self->{'file_recv_full'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_full'}
             if $self->{charset_fs};    # ne $self->{charset_protocol};
-          #$self->log( 'dcdev', 'file_close', 3, $self->{'file_recv_partial'}, $self->{'file_recv_full'} );
+              #$self->log( 'dcdev', 'file_close', 3, $self->{'file_recv_partial'}, $self->{'file_recv_full'} );
           $self->log( 'dcerr', 'cant move finished file', $self->{'file_recv_partial'}, $self->{'file_recv_full'} )
             if !rename $self->{'file_recv_partial'},
             $self->{'file_recv_full'};

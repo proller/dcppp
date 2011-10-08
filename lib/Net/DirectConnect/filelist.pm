@@ -15,6 +15,7 @@ use utf8;
 use warnings;
 no warnings qw(uninitialized);
 use Encode;
+#use Net::DirectConnect;
 use Net::DirectConnect::adc;
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 
@@ -473,8 +474,8 @@ sub new {
   #($self->{share_size} = $self->{share_files} )=
   #print "\n pre fl load:", (caller)[0], '<>',  __PACKAGE__;
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {
-    #$self->log (  'periodic in filelist', $self->{filelist_scan});
-    Net::DirectConnect::schedule(
+    #$self->log (  'periodic in filelist', $self->{filelist_scan}, caller );
+    psmisc::schedule(
       #[10, $self->{filelist_scan}],
       $self->{filelist_scan},
       our $sharescan_sub__ ||= sub {
