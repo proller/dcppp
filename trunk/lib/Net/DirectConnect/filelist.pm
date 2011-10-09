@@ -7,6 +7,7 @@ generate dc++ xml filelist
 perl filelist.pm /path/to/dir
 
 =cut
+
 package    # no cpan
   Net::DirectConnect::filelist;
 use 5.10.0;
@@ -33,6 +34,7 @@ use base 'Net::DirectConnect';
       "; #use Net::DirectConnect; 
       #psmisc::use_try ('Net::DirectConnect');
 =cut
+
 use base 'Net::DirectConnect';
 #use lib '../../../examples/stat/pslib';    # REMOVE
 #use lib 'stat/pslib';                      # REMOVE
@@ -194,6 +196,7 @@ sub new {
         if $f->{'tth'};
       $self->{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
 =cut
+
   #$self->log 'set share', "[$f->{file}], [$f->{tth}] = [$self->{share_full}{ $f->{tth} }],[$self->{share_full}{ $f->{file} }]";
   #$self->log Dumper $self->{share_full};
       }
@@ -355,12 +358,14 @@ sub new {
     psmisc::file_append $self->{files};
     $self->{db}->flush_insert() unless $self->{no_sql};
     local $_;
-    if ( psmisc::use_try 'IO::Compress::Bzip2'
+    if (
+      psmisc::use_try 'IO::Compress::Bzip2'
       and ($_ = !IO::Compress::Bzip2::bzip2( $self->{files} => $self->{files} . '.bz2' )
-      or $self->log("bzip2 failed: ", $IO::Compress::Bzip2::Bzip2Error) and 0 ) )
+        or $self->log( "bzip2 failed: ", $IO::Compress::Bzip2::Bzip2Error ) and 0 )
+      )
     {
       #$self->log('bzip',$self->{files} => $self->{files} . '.bz2');
-      () = $IO::Compress::Bzip2::Bzip2Error; #no warning
+      () = $IO::Compress::Bzip2::Bzip2Error;    #no warning
     } else {
       $self->log( 'dev', 'using system bzip2', $_, $!, ':', `bzip2 -f "$self->{files}"` );
     }
@@ -410,6 +415,7 @@ sub new {
     $self->log ".done:", ( scalar keys %{ $self->{share_full} } ), "\n";
   }
 =cut
+
     #$self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
@@ -531,6 +537,7 @@ return unless $name;
           if $tth;
         $self->{share_full}{$file} ||= $full_local;
 =cut
+
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth ),
       $self->share_add_file( $full, $tth ), $self->share_changed()
       if !$self->{'file_recv_filelist'} and !$self->{'no_auto_share_downloaded'};  # unless $self->{'no_auto_share_downloaded'};

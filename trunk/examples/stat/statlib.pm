@@ -57,10 +57,10 @@ $config{'browser_ie'} = 1 if $ENV{'HTTP_USER_AGENT'} =~ /MSIE/ and $ENV{'HTTP_US
 #$config{'client'} = $_,
 $config{ 'browser_' . $_ } = 1 for grep { $ENV{'HTTP_USER_AGENT'} =~ /$_/i } @{ $config{'browsers'} };
 $config{'use_graph'} ||= 1;    #  if grep {$config{'browser_'. $_}} qw(firefox safari chrome opera);
-$config{'graph_inner'} ||= 1 if grep { $config{ 'browser_' . $_ } } qw(firefox safari chrome);
-$config{'title'}       ||= 'dcstat';
+$config{'graph_inner'}        ||= 1 if grep { $config{ 'browser_' . $_ } } qw(firefox safari chrome);
+$config{'title'}              ||= 'dcstat';
 $config{'web_max_query_time'} ||= 10;
-$config{'sql'}         ||= {
+$config{'sql'}                ||= {
   #'driver'              => 'mysql',
   'driver' => 'sqlite', 'dbname' => 'dcstat', 'auto_connect' => 1, 'log' => sub { shift; psmisc::printlog(@_) },
   #'cp_in'               => 'cp1251',
@@ -187,6 +187,7 @@ local %_ =
 )          ;
 $config{'queries'}{'queries top tth new'}{$_}=$_{$_} for keys %_;
 =cut
+
 $config{'queries'}{'queries top string'} ||= {
   'main'    => 1,
   'periods' => 1,
