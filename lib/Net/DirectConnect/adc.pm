@@ -150,7 +150,7 @@ sub func {
   #$self->log( 'sub igen ', );
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
-    #$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'}, $self->{'myip'}, Dumper $self->{'INF'});
+    #$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'},$self->{'myport_sctp'}, $self->{'myip'}, Dumper $self->{'INF'});
     #$self->{'clients'}{'listener_udp'}
     $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
     $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
@@ -172,7 +172,8 @@ sub func {
     $self->{'INF'}{'US'} ||= 10000;
     $self->{'INF'}{'U4'} = $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
     $self->{'INF'}{'I4'} = $self->{'myip'};
-    $self->{'INF'}{'SU'} ||= 'ADC0,TCP4,UDP4';
+    $self->{'INF'}{'S4'} = $self->{'myport_sctp'} if $self->{'myport_sctp'};
+    $self->{'INF'}{'SU'} ||= join ',', keys %{$self->{'SU'}||{}};
     return $self->{'INF'};
   };
   #$self->log( 'func end', );
@@ -216,6 +217,7 @@ sub init {
   $self->{SUPAD}{H}{$_} = $_ for qw(BAS0 BASE TIGR UCM0 BLO0 BZIP );
   $self->{SUPAD}{I}{$_} = $_ for qw(BASE TIGR BZIP);
   $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
+  $self->{SU}{$_} = $_ for qw(ADC0 TCP4 UDP4);
   if ( $self->{'broadcast'} ) { $self->{SUPAD}{B} = $self->{SUPAD}{C}; }
   if ( $self->{'hub'} ) {
     #$self->log( 'dev', 'hub settings apply');
@@ -234,6 +236,16 @@ sub init {
   #$self->log( 'funci', );
   #$self->func();
   $self->Net::DirectConnect::adc::func();
+
+  if($self->{dev_sctp}) {
+    $self->{SU}{$_} = $_ for qw(SCTP4);
+  }
+  if($self->{dev_ipv6}) {
+    $self->{SU}{$_} = $_ for qw(TCP4 UDP4);
+  if($self->{dev_sctp}) {
+    $self->{SU}{$_} = $_ for qw(SCTP6);
+  }
+  }
   
   #warn "IG:$self->{INF_generate}";
   #$self->log( 'igen', $self->{INF_generate});
@@ -702,7 +714,7 @@ sub init {
         map { $_ . $self->{'INF'}{$_} } grep { length $self->{'INF'}{$_} } $dst eq 'C' ? qw(ID TO)
         : @_ ? @_
         : (
-          qw(ID I4 U4 I6 U6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF), ( $self->{'message_type'} eq 'H' ? 'PD' : () )
+          qw(ID I4 U4 I6 U6 S4 S6 SS SF VE US DS SL AS AM EM NI HN HR HO TO CT SU RF), ( $self->{'message_type'} eq 'H' ? 'PD' : () )
           )                 #sort keys %{ $self->{'INF'} }
         );
      #grep { length $self->{$_} } @{ $self->{'BINFS'} } );
