@@ -67,3 +67,5 @@ dcstat: json, xml output, json input
 STA  2 20 Reconnecting too fast, you have to wait 20 seconds before reconnecting. =[Generic login/access error]
 
 STA  2 22 [CZ] Uzivatel s vasim nickem je jiz na hubu, zkuste se pripojit pozdeji. Muzete tez navstivit hub dchub://a-new-star.cz:411 /// [EN] Nickname is already in use. Try to connect later or visit dchub://a-new-star.cz:411 =[Nick taken]
+ISTA 243 У\sвас\sдолжно\sбыть\sрасшарено\sне\sменее\s1\sгигабайта\sинформации.\sСкопируйте\sв\sинтернет\sбраузер\sссылку\shttp://wiki.san.ru/w/index.php?oldid=1665\sи\sознакомm?
+

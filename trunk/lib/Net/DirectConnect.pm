@@ -362,7 +362,8 @@ sub handler {
 sub func {
   my $self = shift;
   #$self->log( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
-  $self->{'init_main'} ||= sub {
+};
+  sub init_main { #$self->{'init_main'} ||= sub {
     my $self = shift;
     #$self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ );
     local %_ = @_;
@@ -443,7 +444,7 @@ sub func {
     #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
     #psmisc::printlog('dev', 'init0', Dumper $self);
   };
-  $self->{'myport_generate'} ||= sub {
+  sub myport_generate { #$self->{'myport_generate'} ||= sub {
     my $self = shift;
     #$self->log( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}" );
     return $self->{'myport'}
@@ -452,7 +453,7 @@ sub func {
     $self->{'myport'} = undef if $_[0];
     return $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) );
   };
-  $self->{'select_add'} ||= sub {
+  sub select_add { #$self->{'select_add'} ||= sub {
     my $self = shift;
 #$self->{'select'} ||= $self->{parent}{'select'}         $self->{'select_send'} ||= $self->{parent}{'select_send'}    if $self->{parent};
 #$self->{'sockets'} ||= $self->{parent}{'sockets'} if $self->{parent};
@@ -465,7 +466,40 @@ sub func {
     $self->{'sockets'}{ $self->{'socket'} } = $self;
     #$self->log( 'dev', 'current select', $self->{'select'}->handles );
   };
-  $self->{'connect'} ||= sub {
+
+    #$self->{'connect_check'} ||= sub {
+  sub connect_check {
+    my $self = shift;
+    return 0
+      if $self->{'Proto'} eq 'udp'
+        or $self->{'incoming'}
+        or $self->{'status'} eq 'listening'
+        or (
+          $self->{'socket'}
+          #and $self->{'socket'}->connected()
+        ) or !$self->active();
+#$self->log(          'warn', 'connect_check: must reconnect', Dumper $self->{'socket'}->connected(), $self->{'socket'}, $self->{'status'});
+    $self->{'status'} = 'reconnecting';
+    $self->every(
+      $self->{'reconnect_sleep'},
+      $self->{'reconnect_func'} ||= sub {
+        if ( $self->{'reconnect_tries'}++ <= $self->{'reconnects'} ) {
+          $self->log(
+            'warn',
+            "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
+            $self->{'reconnect_sleep'}
+          );
+          $self->connect();
+        } else {
+          $self->{'status'} = 'disconnected';
+        }
+      }
+    );
+    return 1;
+  };
+
+
+  sub connect { #$self->{'connect'} ||= sub {
     my $self = shift;
     #$self->log( $self, 'connect0 inited', "MT:$self->{'message_type'}", ' with' );
     if ( $_[0] or $self->{'host'} =~ /:/ ) {
@@ -529,7 +563,7 @@ sub func {
     #$self->log( 'dev', "connect after", );
     return 0;
   };
-  $self->{'connected'} ||= sub {
+  sub connected {#$self->{'connected'} ||= sub {
     my $self = shift;
     $self->get_my_addr();
     #$self->log( 'info', 'broken socket, cant get my ip'),
@@ -560,7 +594,7 @@ sub func {
     #$self->log( $self, 'connected1 inited', "MT:$self->{'message_type'}", ' with' );
     $self->cmd('connect_aft');
   };
-  $self->{'reconnect'} ||= sub {
+  sub reconnect { #$self->{'reconnect'} ||= sub {
     my $self = shift;
     #$self->log(          'dev', 'reconnect');
     $self->disconnect();
@@ -568,7 +602,7 @@ sub func {
     sleep $self->{'reconnect_sleep'};
     $self->connect();
   };
-  $self->{'listen'} ||= sub {
+  sub listen { #$self->{'listen'} ||= sub {
     my $self = shift;
     $self->log( 'err', 'listen off', "[$self->{'Listen'}] [$self->{'M'}] [$self->{'allow_passive_ConnectToMe'}]" ), return
       if !$self->{'Listen'}
@@ -596,7 +630,7 @@ sub func {
     $self->{'status'} = 'listening';
     #$self->recv_try();
   };
-  $self->{'disconnect'} ||= sub {
+  sub disconnect { #$self->{'disconnect'} ||= sub {
     my $self = shift;
     #$self->log('dev', 'in disconnect', $self->{'status'});
     #$self->log( 'dev', "[$self->{'number'}] status=",$self->{'status'}, $self->{'destroying'});
@@ -639,7 +673,20 @@ sub func {
     #$self->log( 'info', "disconnected", __FILE__, __LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
   };
-  $self->{'recv'} ||= sub {
+  #$self->{'destroy'} ||= sub {
+  sub destroy {
+    my $self = shift;
+    #$self->log('dev', 'in destroy');
+    $self->disconnect() if ref $self and !$self->{'destroying'}++;
+    #!?  delete $self->{$_} for keys %$self;
+    $self->info();
+    #$self->{'status'} = 'destroy';
+    #$self = {};
+    %$self = ();
+  };
+
+
+  sub recv { # $self->{'recv'} ||= sub {
     my $self   = shift;
     my $client = shift;
     #my $socket = shift;
@@ -747,7 +794,7 @@ sub func {
           and $self->{'filehandle'};
     }
   };
-  $self->{'recv_try'} ||= sub {
+  sub recv_try { #$self->{'recv_try'} ||= sub {
     my $self = shift;
     #$self->{'recv_runned'}{ $self->{'number'} } = 1;
     my $sleep = shift || $self->{'select_timeout'};
@@ -797,7 +844,7 @@ sub func {
     #$self->{'recv_runned'}{ $self->{'number'} } = undef;
     return $ret;
   };
-  $self->{'wait'} ||= sub {
+  sub wait { #$self->{'wait'} ||= sub {
     my $self = shift;
     my ( $waits, $wait_once ) = @_;
     $waits ||= $self->{'waits'};
@@ -815,7 +862,7 @@ sub func {
     #$ret += $self->work($wait_once) while --$waits > 0 and !$ret;
     return $ret;
   };
-  $self->{'finished'} ||= sub {
+  sub finished {#$self->{'finished'} ||= sub {
     my $self = shift;
     $self->log( 'dcdev', 'not finished file:', "$self->{'filebytes'} / $self->{'filetotal'}", $self->{'peernick'} ), return 0
       if ($self->{'filebytes'}
@@ -827,7 +874,7 @@ sub func {
         grep { !$self->{'clients'}{$_}->finished() } $self->clients_my();    #keys %{ $self->{'clients'} };
     return 1;
   };
-  $self->{'wait_connect'} ||= sub {
+  sub wait_connect { #$self->{'wait_connect'} ||= sub {
     my $self = shift;
     for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
       #$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
@@ -837,7 +884,7 @@ sub func {
     }
     return $self->{'status'};
   };
-  $self->{'wait_finish'} ||= sub {
+  sub wait_finish { #$self->{'wait_finish'} ||= sub {
     my $self = shift;
     for ( 0 .. $self->{'wait_finish_tries'} ) {
       last if $self->finished();
@@ -854,7 +901,7 @@ sub func {
       map { "[$self->{'clients'}{$_}{'number'}]$_;st=$self->{'clients'}{$_}{'status'}" } @_
       ) if @_ = $self->clients_my();    #keys %{ $self->{'clients'} };
   };
-  $self->{'wait_clients'} ||= sub {
+  sub wait_clients {#$self->{'wait_clients'} ||= sub {
     my $self = shift;
     for my $n ( 0 .. $self->{'wait_clients_tries'} ) {
       local @_;
@@ -868,7 +915,7 @@ sub func {
       $self->work(5);
     }
   };
-  $self->{'wait_sleep'} ||= sub {
+  sub wait_sleep { #$self->{'wait_sleep'} ||= sub {
     my $self      = shift;
     my $how       = shift || 1;
     my $starttime = time();
@@ -882,7 +929,7 @@ sub func {
     #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
     #$self->work(@_) while $starttime + $how > time();
   };
-  $self->{'work'} ||= sub {
+  sub work { #$self->{'work'} ||= sub {
     my $self   = shift;
     my @params = @_;
     #$self->periodic();
@@ -1036,7 +1083,7 @@ sub func {
     return $self->wait_sleep(@params) if @params;
     return $self->recv_try( $self->{'work_sleep'} );
   };
-  $self->{'dumper'} ||= sub {
+  sub dumper {#$self->{'dumper'} ||= sub {
     my $self = shift;
     my $file = $_[0] || $self->{dev_auto_dump_file} || $0 . ( $self->{dev_auto_dump_timed} ? '.' . time : () ) . '.dump';
     open my $fh, '>', $file or return;
@@ -1044,7 +1091,7 @@ sub func {
     close $fh;
     $self->log( 'dev', "Writed dump", -s $file );
   };
-  $self->{'parser'} ||= sub {
+  sub parser { #$self->{'parser'} ||= sub {
     my $self = shift;
     for ( local @_ = @_ ) {
       $self->log(
@@ -1140,7 +1187,7 @@ sub func {
       #$self->handler( @self, $cmd . '_parse_aft_aft', @param, $ret );
     }
   };
-  $self->{'send'} ||= sub {
+  sub send { #$self->{'send'} ||= sub {
     my $self = shift;
     local $_;    # = join( '', @_ );
                  #$self->{bytes_send} += length $_;
@@ -1163,7 +1210,7 @@ sub func {
     $self->{activity} = time;
     return $_;
   };
-  $self->{'sendcmd'} ||= sub {
+  sub sendcmd { #$self->{'sendcmd'} ||= sub {
     my $self = shift;
     return if $self->connect_check();
     #$self->{'log'}->( $self,'sendcmd0', @_);
@@ -1192,21 +1239,21 @@ sub func {
       $self->{'sendbuf'}     = 0;
     }
   };
-  $self->{'sendcmd_all'} ||= sub {
+  sub sendcmd_all { #$self->{'sendcmd_all'} ||= sub {
     my $self = shift;
     #%{ $self->{'peers_sid'} }
     #eval {
     $_->sendcmd(@_)    #, $self->wait_sleep( $self->{'cmd_recurse_sleep'} )
       for grep { $_ } values( %{ $self->{'clients'} } );    #, $self;
   };
-  $self->{'rcmd'} ||= sub {
+  sub rcmd{ #$self->{'rcmd'} ||= sub {
     my $self = shift;
     eval {
       eval { $_->cmd(@_) }, $self->wait_sleep( $self->{'cmd_recurse_sleep'} )
         for grep { $_ } values( %{ $self->{'clients'} } ), $self;
     };
   };
-  $self->{'get'} ||= sub {
+  sub get { #$self->{'get'} ||= sub {
     my ( $self, $nick, $file, $as, $from, $to, $size, $tth ) = @_;    #TODO hash
                 #$self->log( 'dcdev', 'wantcall', $self, $nick, $file, $as, $from, $to, $size);
                 #my $size;
@@ -1267,7 +1314,7 @@ sub func {
         $nick );
     }
   };
-  $self->{'file_select'} ||= sub {
+  sub file_select { #$self->{'file_select'} ||= sub {
     my $self = shift;
     return if length $self->{'filename'};
     my $peerid = $self->{'peerid'} || $self->{'peernick'};
@@ -1329,7 +1376,7 @@ sub func {
     #  'part:', $self->{'file_recv_partial'}, 'full:',             $self->{'file_recv_full'},
     #  'from',  $self->{'file_recv_from'});
   };
-  $self->{'file_open'} ||= sub {
+  sub file_open { #$self->{'file_open'} ||= sub {
     my $self = shift;
     #$self->{'fileas'}=$_[0] if !length $self->{'fileas'} or length $_[0];
     #$self->{'filetotal'} = $_[1]if ! $self->{'filetotal'} or $_[1];
@@ -1345,7 +1392,7 @@ sub func {
     $self->{'status'} = 'transfer';
     return 0;
   };
-  $self->{'file_write'} ||= sub {
+  sub file_write{ #$self->{'file_write'} ||= sub {
     my $self = shift;
     $self->{'file_start_time'} ||= time;
     my $fh = $self->{'filehandle'}
@@ -1373,7 +1420,7 @@ sub func {
         if $self->{'filebytes'} >= $self->{'filetotal'};
     }
   };
-  $self->{'file_close'} ||= sub {
+  sub file_close { #$self->{'file_close'} ||= sub {
     my $self = shift;
     #$self->log( 'dcerr', 'file_close', 1);
     if ( $self->{'filehandle'} ) {
@@ -1408,7 +1455,7 @@ sub func {
     delete $self->{$_} for 'file_send_left', 'file_send_total', 'file_recv_filelist';
     $self->{'status'} = 'connected';
   };
-  $self->{'file_send_tth'} ||= sub {
+  sub file_send_tth { #$self->{'file_send_tth'} ||= sub {
     my $self = shift;
     my ( $file, $start, $size, $as ) = @_;
 #$self->log( 'dcdev', 'my share', $self->{'share_full'}, scalar keys %{$self->{'share_full'} }, 'p share', $self->{'parent'}{'share_full'}, scalar keys %{$self->{'parent'}{'share_full'} }, );
@@ -1427,7 +1474,7 @@ sub func {
     }
     return undef;
   };
-  $self->{'file_send'} ||= sub {
+  sub file_send {#$self->{'file_send'} ||= sub {
     my $self = shift;
     #$self->log( 'dcdev', 'file_send', Dumper \@_ );
     my ( $file, $start, $size, $as ) = @_;
@@ -1460,7 +1507,7 @@ sub func {
       $self->file_close();
     }
   };
-  $self->{'file_send_part'} ||= sub {
+  sub file_send_part {#$self->{'file_send_part'} ||= sub {
     #psmisc::printlog 'call', 'file_send_part', @_;
     my $self = shift;
     #my ($file, $start, $size) = @_;
@@ -1577,9 +1624,9 @@ sub func {
     }
     return $sent;
   };
-  $self->{'file_send_parse'} =
+  sub file_send_parse {#$self->{'file_send_parse'} =
     #$self->{'ADCSND'} =
-    sub {
+    #sub {
     my $self = shift if ref $_[0];
     #$self->log(    'cmd_adcSND', Dumper \@_);
     #my ( $dst, $peerid, $toid ) = @{ shift() };
@@ -1612,7 +1659,7 @@ sub func {
     }
     return undef;
     };
-  $self->{'download'} ||= sub {
+  sub download {#$self->{'download'} ||= sub {
     my $self = shift;
     my ($file) = @_;
     #$self->log('dev', "0s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
@@ -1620,7 +1667,7 @@ sub func {
     #$self->log('dev', "1s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
     $self->{'want_download'}{$file} ||= {};
   };
-  $self->{'get_peer_addr'} ||= sub () {
+  sub get_peer_addr {#$self->{'get_peer_addr'} ||= sub () {
     my ( $self, $recv ) = @_;
     return unless $self->{'socket'};
     local @_ = socket_addr $self->{'socket'};
@@ -1632,7 +1679,7 @@ sub func {
       if $_[1];
     return $self->{'hostip'};
   };
-  $self->{'get_peer_addr_recv'} ||= sub (;$) {
+  sub get_peer_addr_recv {#$self->{'get_peer_addr_recv'} ||= sub (;$) {
     my ( $self, $recv ) = @_;
     #return unless $self->{'socket'};
     $recv ||= $self->{'recv_addr'};
@@ -1641,7 +1688,7 @@ sub func {
     $self->{'recv_hostip'} = inet_ntoa($hostn);
     return $self->{'hostip'};
   };
-  $self->{'get_my_addr'} ||= sub {
+  sub get_my_addr{#$self->{'get_my_addr'} ||= sub {
     my ($self) = @_;
     return unless $self->{'socket'};
     eval { @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) || return ); };
@@ -1656,7 +1703,7 @@ sub func {
     #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
     return $self->{'myip'} ||= $_[1];
   };
-  $self->{'info'} ||= sub {
+  sub info {#$self->{'info'} ||= sub {
     my $self = shift;
     $self->log(
       'info',
@@ -1685,7 +1732,16 @@ sub func {
   #\ connected?/             \-----/
   #\-----------------------active?-------------------------/
   #}
-  $self->{'every'} ||= sub {
+  #$self->{'active'} ||= sub {
+  sub active {
+    my $self = shift;
+    return $self->{'status'}
+      if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer);
+    return 0;
+  };
+
+
+  sub every {#$self->{'every'} ||= sub {
     my ( $self, $sec, $func ) = ( shift, shift, shift );
     if (  ( $self->{'every_list'}{$func} + $sec < time )
       and ( ref $func eq 'CODE' ) )
@@ -1694,7 +1750,7 @@ sub func {
       $func->(@_);
     }
   };
-  $self->{'adc_make_string'} = sub (@) {
+  sub adc_make_string {#$self->{'adc_make_string'} = sub (@) {
     my $self = shift if ref $_[0];
     join ' ', map {
       ref $_ eq 'ARRAY' ? @$_ : ref $_ eq 'HASH' ? do {
@@ -1704,7 +1760,7 @@ sub func {
         : $_
     } @_;
   };
-  $self->{'cmd_adc'} ||= sub {
+  sub cmd_adc { #$self->{'cmd_adc'} ||= sub {
     my ( $self, $dst, $cmd ) = ( shift, shift, shift );
     #$self->sendcmd( $dst, $cmd,map {ref $_ eq 'HASH'}@_);
     #$self->log( 'cmd_adc', $dst, $cmd, "SI[$self->{'INF'}{'SID'}]",Dumper \@_ );
@@ -1722,7 +1778,7 @@ sub func {
     );
   };
   #sub adc_string_decode ($) {
-  $self->{'adc_string_decode'} ||= sub ($) {
+  sub adc_string_decode { #$self->{'adc_string_decode'} ||= sub ($) {
     my $self = shift;
     local ($_) = @_;
     s{\\s}{ }g;
@@ -1731,7 +1787,7 @@ sub func {
     $_;
   };
   #sub adc_string_encode ($) {
-  $self->{'adc_string_encode'} = sub ($) {
+  sub adc_string_encode {#$self->{'adc_string_encode'} = sub ($) {
     my $self = shift;
     local ($_) = @_;
     s{\\}{\\\\}g;
@@ -1739,7 +1795,7 @@ sub func {
     s{\x0A}{\\n}g;
     $_;
   };
-  $self->{'adc_path_encode'} = sub ($) {
+  sub adc_path_encode { #$self->{'adc_path_encode'} = sub ($) {
     my $self = shift;
     local ($_) = @_;
     s{^(\w:)}{/${1}_}g;
@@ -1747,16 +1803,16 @@ sub func {
     $self->adc_string_encode($_);
   };
   #sub adc_strings_decode (\@) {
-  $self->{'adc_strings_decode'} = sub (\@) {
+  sub adc_strings_decode {#$self->{'adc_strings_decode'} = sub (\@) {
     my $self = shift;
     map { $self->adc_string_decode($_) } @_;
   };
   #sub adc_strings_encode (\@) {
-  $self->{'adc_strings_encode'} = sub (\@) {
+  sub adc_strings_encode {#$self->{'adc_strings_encode'} = sub (\@) {
     my $self = shift;
     map { $self->adc_string_encode($_) } @_;
   };
-  $self->{'adc_parse_named'} = sub (@) {
+  sub adc_parse_named {#$self->{'adc_parse_named'} = sub (@) {
     my $self = shift;
     #sub adc_parse_named (@) {
     #my ($dst,$peerid) = @{ shift() };
@@ -1772,7 +1828,7 @@ sub func {
     return \%_;
     #return ($dst,$peerid)
   };
-  $self->{'make_token'} = sub (;$) {
+  sub make_token {#$self->{'make_token'} = sub (;$) {
     my $self   = shift;
     my $peerid = shift;
     my $token;
@@ -1785,27 +1841,27 @@ sub func {
     s/\D//g;
     return $token + $_ + int time;
   };
-  $self->{'say'} = sub (@) {
+  sub say {#$self->{'say'} = sub (@) {
     my $self = shift;
     @_ = $_[2] if $_[0] eq 'MSG';
     #local $_ = Encode::encode $self->{charset_console} , join ' ', @_;print $_, "\n";
     print Encode::encode( $self->{charset_console}, join ' ', @_ ), "\n";
   };
-  local %_ = (
-    'search' => sub {
+  #local %_ = (
+    sub search {#'search' => sub {
       my $self = shift if ref $_[0];
       #$self->log( 'search', @_ );
       return $self->cmd( 'search_tth', @_ )
         if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
       return $self->cmd( 'search_string', @_ ) if length $_[0];
-    },
-    'search_retry' => sub {
+    };
+    sub search_retry {#'search_retry' => sub {
       my $self = shift if ref $_[0];
       unshift( @{ $self->{'search_todo'} }, $self->{'search_last'} )
         if ref $self->{'search_last'} eq 'ARRAY';
       $self->{'search_last'} = undef;
-    },
-    'search_buffer' => sub {
+    };
+    sub search_buffer {#'search_buffer' => sub {
       my $self = shift if ref $_[0];
       push( @{ $self->{'search_todo'} }, [@_] ) if @_;
       return unless @{ $self->{'search_todo'} || return };
@@ -1821,73 +1877,20 @@ sub func {
 #$self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport_udp'}", join '?', @{ $self->{'search_last'} } );
 #}
       $self->{'search_last_time'} = time();
-    },
-    'nick_generate' => sub {
+    };
+    sub nick_generate {#'nick_generate' => sub {
       my $self = shift if ref $_[0];
       $self->{'nick_base'} ||= $self->{'Nick'};
       $self->{'Nick'} = $self->{'nick_base'} . int( rand( $self->{'nick_random'} || 100 ) );
-    },
-    'clients_my' => sub {
+    };
+    sub clients_my {#'clients_my' => sub {
       my $self = shift if ref $_[0];
       grep { $self->{'clients'}{$_} and $self->{'clients'}{$_}{parent} eq $self }
         keys %{ $self->{'clients'} };
-    },
-  );
-  $self->{$_} = $_{$_} for keys %_;
-}
-
-  #$self->{'connect_check'} ||= sub {
-  sub connect_check {
-    my $self = shift;
-    return 0
-      if $self->{'Proto'} eq 'udp'
-        or $self->{'incoming'}
-        or $self->{'status'} eq 'listening'
-        or (
-          $self->{'socket'}
-          #and $self->{'socket'}->connected()
-        ) or !$self->active();
-#$self->log(          'warn', 'connect_check: must reconnect', Dumper $self->{'socket'}->connected(), $self->{'socket'}, $self->{'status'});
-    $self->{'status'} = 'reconnecting';
-    $self->every(
-      $self->{'reconnect_sleep'},
-      $self->{'reconnect_func'} ||= sub {
-        if ( $self->{'reconnect_tries'}++ <= $self->{'reconnects'} ) {
-          $self->log(
-            'warn',
-            "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
-            $self->{'reconnect_sleep'}
-          );
-          $self->connect();
-        } else {
-          $self->{'status'} = 'disconnected';
-        }
-      }
-    );
-    return 1;
-  };
-
-  #$self->{'active'} ||= sub {
-  sub active {
-    my $self = shift;
-    return $self->{'status'}
-      if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer);
-    return 0;
-  };
-
-  #$self->{'destroy'} ||= sub {
-  sub destroy {
-    my $self = shift;
-    #$self->log('dev', 'in destroy');
-    $self->disconnect() if ref $self and !$self->{'destroying'}++;
-    #!?  delete $self->{$_} for keys %$self;
-    $self->info();
-    #$self->{'status'} = 'destroy';
-    #$self = {};
-    %$self = ();
-  };
-
-
+    };
+  #);
+  #$self->{$_} = $_{$_} for keys %_;
+#}
 
 #print "N:DC:CALLER=", caller, "\n";
 do {
