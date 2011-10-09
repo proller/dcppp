@@ -357,6 +357,8 @@ sub handler {
 #$self->{'status'} = 'disconnected';
 #$self->protocol_init( $self->{'protocol'} );
 #}
+
+
 sub func {
   my $self = shift;
   #$self->log( 'dev', 'func', __PACKAGE__, 'func', __FILE__, __LINE__ );
@@ -558,35 +560,6 @@ sub func {
     #$self->log( $self, 'connected1 inited', "MT:$self->{'message_type'}", ' with' );
     $self->cmd('connect_aft');
   };
-  $self->{'connect_check'} ||= sub {
-    my $self = shift;
-    return 0
-      if $self->{'Proto'} eq 'udp'
-        or $self->{'incoming'}
-        or $self->{'status'} eq 'listening'
-        or (
-          $self->{'socket'}
-          #and $self->{'socket'}->connected()
-        ) or !$self->active();
-#$self->log(          'warn', 'connect_check: must reconnect', Dumper $self->{'socket'}->connected(), $self->{'socket'}, $self->{'status'});
-    $self->{'status'} = 'reconnecting';
-    $self->every(
-      $self->{'reconnect_sleep'},
-      $self->{'reconnect_func'} ||= sub {
-        if ( $self->{'reconnect_tries'}++ <= $self->{'reconnects'} ) {
-          $self->log(
-            'warn',
-            "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
-            $self->{'reconnect_sleep'}
-          );
-          $self->connect();
-        } else {
-          $self->{'status'} = 'disconnected';
-        }
-      }
-    );
-    return 1;
-  };
   $self->{'reconnect'} ||= sub {
     my $self = shift;
     #$self->log(          'dev', 'reconnect');
@@ -665,16 +638,6 @@ sub func {
     delete $self->{$_} for qw(NickList IpList PortList PortList_udp peers);
     #$self->log( 'info', "disconnected", __FILE__, __LINE__ );
     #$self->log('dev', caller($_)) for 0..5;
-  };
-  $self->{'destroy'} ||= sub {
-    my $self = shift;
-    #$self->log('dev', 'in destroy');
-    $self->disconnect() if ref $self and !$self->{'destroying'}++;
-    #!?  delete $self->{$_} for keys %$self;
-    $self->info();
-    #$self->{'status'} = 'destroy';
-    #$self = {};
-    %$self = ();
   };
   $self->{'recv'} ||= sub {
     my $self   = shift;
@@ -1715,12 +1678,6 @@ sub func {
     );
     #( ref $self->{'clients'}{$_}{info} ? $self->{'clients'}{$_}->info() : () ) for sort keys %{ $self->{'clients'} };
   };
-  $self->{'active'} ||= sub {
-    my $self = shift;
-    return $self->{'status'}
-      if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer);
-    return 0;
-  };
   #sub status {
   #now states:
   #listening  connecting_tcp connecting   connected   reconnecting transfer  disconnecting disconnected destroy
@@ -1878,6 +1835,60 @@ sub func {
   );
   $self->{$_} = $_{$_} for keys %_;
 }
+
+  #$self->{'connect_check'} ||= sub {
+  sub connect_check {
+    my $self = shift;
+    return 0
+      if $self->{'Proto'} eq 'udp'
+        or $self->{'incoming'}
+        or $self->{'status'} eq 'listening'
+        or (
+          $self->{'socket'}
+          #and $self->{'socket'}->connected()
+        ) or !$self->active();
+#$self->log(          'warn', 'connect_check: must reconnect', Dumper $self->{'socket'}->connected(), $self->{'socket'}, $self->{'status'});
+    $self->{'status'} = 'reconnecting';
+    $self->every(
+      $self->{'reconnect_sleep'},
+      $self->{'reconnect_func'} ||= sub {
+        if ( $self->{'reconnect_tries'}++ <= $self->{'reconnects'} ) {
+          $self->log(
+            'warn',
+            "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
+            $self->{'reconnect_sleep'}
+          );
+          $self->connect();
+        } else {
+          $self->{'status'} = 'disconnected';
+        }
+      }
+    );
+    return 1;
+  };
+
+  #$self->{'active'} ||= sub {
+  sub active {
+    my $self = shift;
+    return $self->{'status'}
+      if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer);
+    return 0;
+  };
+
+  #$self->{'destroy'} ||= sub {
+  sub destroy {
+    my $self = shift;
+    #$self->log('dev', 'in destroy');
+    $self->disconnect() if ref $self and !$self->{'destroying'}++;
+    #!?  delete $self->{$_} for keys %$self;
+    $self->info();
+    #$self->{'status'} = 'destroy';
+    #$self = {};
+    %$self = ();
+  };
+
+
+
 #print "N:DC:CALLER=", caller, "\n";
 do {
   use lib '../';
