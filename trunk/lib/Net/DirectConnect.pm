@@ -216,10 +216,14 @@ sub new {
     }
   }
 
-#if ($self->{'dev_sctp'}) {
-#warn "patching IO::Socket::INET";
-#IO::Socket::INET
-#}
+
+#$self->log('dev', 'sctp', $self->{'dev_sctp'});
+if ($self->{'dev_sctp'}) {
+#use Data::Dumper;
+$self->{'Proto'} = 'sctp';
+  #dev_sctp=>1,
+
+}
 
 
   if ( $self->{'auto_listen'} ) {
@@ -525,11 +529,14 @@ sub func {
     $self->{'outgoing'} = 1;
     $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
     delete $self->{'recv_buf'};
-    #$self->log('dev', 'conn strt', $self->{'Timeout'});
+    #$self->log('dev', 'conn strt', $self->{'Timeout'}, $self->{'Proto'}, Socket::SOCK_STREAM);
     $self->{'socket'} ||= IO::Socket::INET->new(
       'PeerAddr' => $self->{'host'},
       'PeerPort' => $self->{'port'},
       'Proto'    => $self->{'Proto'} || 'tcp',
+($self->{'Proto'} eq 'sctp' ? ('Type'=>Socket::SOCK_STREAM): ()),
+
+
       #'Timeout'  => $self->{'Timeout'},
       #(
       #$self->{'nonblocking'} ? (
@@ -616,6 +623,8 @@ sub func {
           ? ( 'Listen' => $self->{'Listen'} )
           : ()
         ),
+($self->{'Proto'} eq 'sctp' ? ('Type'=>Socket::SOCK_STREAM): ()),
+
         #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
         'Blocking' => 0,
         %{ $self->{'sockopts'} || {} },
