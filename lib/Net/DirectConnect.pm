@@ -1206,7 +1206,7 @@ sub func {
     #$self->{'log'}->( $self,'sendcmd0', @_);
     local @_ = @_, $_[0] .= splice @_, 1, 1
       if $self->{'adc'} and length $_[0] == 1;
-    $self->log( 'dcdmp', 'sendcmd1', $self->{number}, @_ );
+    #$self->log( 'dcdmp', 'sendcmd1', $self->{number}, @_ );
     push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'}
       if @_;
     ++$self->{count_sendcmd}{ $_[0] };
