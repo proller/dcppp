@@ -61,7 +61,7 @@ $config{'out'}{'json'}{'table-head'} = sub {
 $config{'out'}{'json'}{'footer'} ||= sub {
   #$json->{__test} = [qq{-'"-}, qq{-'"`-}];
   #if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
-  if ( psmisc::use_try 'JSON' )     { return print JSON->new->encode($json); }
+  if ( psmisc::use_try 'JSON' ) { return print JSON->new->encode($json); }
   {
     {
       no warnings 'redefine';
@@ -78,7 +78,7 @@ $config{'out'}{'json'}{'footer'} ||= sub {
 $config{'out'}{'json'}{'table-row'} ||= sub {
   my ($row) = @_;
   #print 'string',Dumper \@_;
-  $row= {%$row, %{$row->{orig}||{}}};
+  $row = { %$row, %{ $row->{orig} || {} } };
   delete $row->{orig};
   push @{ $json->{ $json->{table_current} }{'rows'} ||= [] }, $row;
 };
@@ -140,7 +140,6 @@ $config{'out'}{'html'}{'head'} = sub {
   #print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
   #print qq{<!DOCTYPE html>
   #xmlns:addthis="http://www.addthis.com/help/api-spec"
-
   print qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <head><title>RU DC stat</title>
@@ -211,8 +210,7 @@ for my $query (@queries) {
       . ' <a class="json" href="'
       . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=json' )
       . '">JS</a>'
-      . '</div>'
-      ;
+      . '</div>';
     #print Dumper \%ENV;
     #print Dumper @ask;
     #print " ($q->{'desc'}):" if $q->{'desc'};
@@ -228,11 +226,13 @@ for my $query (@queries) {
   };
   part 'table-head', $q;
   my $res;
-psmisc::alarmed( $config{'web_max_query_time'}, sub { 
-  $res = statlib::make_query( $q, $query, $param->{'period'} );
-  }
-);
-print '<p>db ooops</p>' if $@;
+  psmisc::alarmed(
+    $config{'web_max_query_time'},
+    sub {
+      $res = statlib::make_query( $q, $query, $param->{'period'} );
+    }
+  );
+  print '<p>db ooops</p>' if $@;
   #warn Dumper $res;
   $res =
     [ sort { $b->{ $param->{'sort'} } <=> $a->{ $param->{'sort'} } || $b->{ $param->{'sort'} } cmp $a->{ $param->{'sort'} } }
@@ -262,22 +262,22 @@ print '<p>db ooops</p>' if $@;
                                                        #$id =~ tr/ /_/;
     }
     $row->{'tth_show'} = 'tth' if $config{'view'} eq 'rss';
-    unless ($config{'view'} eq 'json'){
-    $row->{ $_ . '_html' } = (
-      $param->{$_}
-      ? ''
-      : qq{<a class="$_" title="}
-        . psmisc::html_chars( $row->{$_} )
-        . qq{" href="?$_=}
-        . psmisc::encode_url( $row->{$_} ) . qq{">}
-        . ( $row->{ $_ . '_show' } || $row->{$_} )
-        . qq{</a>}
-      )
-      . psmisc::human( 'magnet-dl', $row->{'orig'} )
-      for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } }
-      grep { $config{'queries'}{$_} } @{ $q->{'show'} };    #qw(string tth);
-    $row->{ $_ . '_html' } = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
-    $row->{ $_ . '_rss' } = psmisc::human( 'date_time', $row->{$_}, ' ', '-' ) for grep { int $row->{$_} } qw(time online);
+    unless ( $config{'view'} eq 'json' ) {
+      $row->{ $_ . '_html' } = (
+        $param->{$_}
+        ? ''
+        : qq{<a class="$_" title="}
+          . psmisc::html_chars( $row->{$_} )
+          . qq{" href="?$_=}
+          . psmisc::encode_url( $row->{$_} ) . qq{">}
+          . ( $row->{ $_ . '_show' } || $row->{$_} )
+          . qq{</a>}
+        )
+        . psmisc::human( 'magnet-dl', $row->{'orig'} )
+        for grep { length $row->{$_} and !$q->{ 'no_' . $_ . '_link' } }
+        grep { $config{'queries'}{$_} } @{ $q->{'show'} };    #qw(string tth);
+      $row->{ $_ . '_html' } = psmisc::human( 'time_period', time - $row->{$_} ) for grep { int $row->{$_} } qw(time online);
+      $row->{ $_ . '_rss' } = psmisc::human( 'date_time', $row->{$_}, ' ', '-' ) for grep { int $row->{$_} } qw(time online);
     }
     $row->{'hub'} .= psmisc::human( 'dchub-dl', { 'hub' => $row->{'orig'}->{'hub'} } ) if $row->{'hub'};
     #$row->{'nick'} .= psmisc::human( 'dchub-dl', $row->{'orig'} ) if $row->{'nick'};
@@ -487,9 +487,12 @@ $config{'out'}{'html'}{'graph'} = sub {
     #printlog 'dev', Dumper \%graph, \%dates;
   }
 };
-psmisc::alarmed( $config{'web_max_query_time'}, sub { 
-part 'graph';
-});
+psmisc::alarmed(
+  $config{'web_max_query_time'},
+  sub {
+    part 'graph';
+  }
+);
 $config{'out'}{'html'}{'footer'} = sub {
   print
     #log'dev',
