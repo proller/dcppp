@@ -261,7 +261,7 @@ sub init {
         $self->log( 'adcdevsid', "pack [$self->{'number'}] = [$peerid]" );
         $peerid = ( 'A' x ( 4 - length $peerid ) ) . $peerid;
         $self->{'peerid'} ||= $peerid;
-        $self->log( 'adcdev', $dst, 'SUP:', @_, "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}" );
+        #$self->log( 'adcdev', $dst, 'SUP:', @_, "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}" );
         $self->cmd( 'I', 'SID', $peerid );
         $self->cmd( 'I', 'INF', );    #$self->{'peers'}{$_}{'INF'}
                                       #for keys %{$self->{'peers'}};
@@ -296,7 +296,7 @@ sub init {
       my ( $dst, $peerid, $toid ) = @{ shift() };
       return $self->{'INF'}{'SID'} unless $dst eq 'I';
       $self->{'INF'}{'SID'} = $_[0];
-      $self->log( 'adcdev', 'SID:', $self->{'INF'}{'SID'} );
+      #$self->log( 'adcdev', 'SID:', $self->{'INF'}{'SID'} );
       return $self->{'INF'}{'SID'};
     },
     'INF' => sub {
@@ -409,7 +409,7 @@ sub init {
 #2 	Fatal (disconnect)
 #my $desc = $self->{'codesSTA'}{$code};
       @_ = $self->adc_strings_decode(@_);
-      $self->log( 'adcdev', 'STA', $peerid, $severity, $code, @_, "=[$Net::DirectConnect::adc::codesSTA{$code}]" );
+      #$self->log( 'adcdev', 'STA', $peerid, $severity, $code, @_, "=[$Net::DirectConnect::adc::codesSTA{$code}]" );
       return $severity, $code, $Net::DirectConnect::adc::codesSTA{$code}, @_;
     },
     'SCH' => sub {
@@ -468,7 +468,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       #test $_[1] eq 'I'!
-      $self->log( 'adcdev', '0RES:', "[d=$dst,p=$peerid,t=$toid]", join ':', @_ );
+      #$self->log( 'adcdev', '0RES:', "[d=$dst,p=$peerid,t=$toid]", join ':', @_ );
       my $params = $self->adc_parse_named(@_);
       #$self->log('adcdev', 'RES:',"[d=$dst,p=$peerid]",Dumper $params);
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
@@ -501,7 +501,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       $toid ||= shift;
-      $self->log( 'dcdev', "( $dst, RCM, $peerid, $toid  me=[$self->{'INF'}{'SID'}:$self->{'myport'}] )", @_ );
+      #$self->log( 'dcdev', "( $dst, RCM, $peerid, $toid  me=[$self->{'INF'}{'SID'}:$self->{'myport'}] )", @_ );
       $self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], ) if $toid eq $self->{'INF'}{'SID'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RCM', $peerid, $toid, @_ );
@@ -530,7 +530,7 @@ sub init {
       $toid ||= shift;
       my ( $proto, $port, $token ) = @_;
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
-      $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'INF'}{'SID'}", );
+      #$self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'INF'}{'SID'}", );
       $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
       $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = __PACKAGE__->new(
         #%$self, $self->clear(),
