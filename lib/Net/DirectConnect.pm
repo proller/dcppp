@@ -240,6 +240,7 @@ sub new {
     while ( $self->active() ) {
       $self->work();    #forever
                         #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
+      Time::HiRes::sleep 0.01;
     }
     $self->disconnect();
   }
@@ -326,7 +327,7 @@ sub AUTOLOAD {
 
 sub DESTROY {
   my $self = shift;
-  #print "DESTROYing $self->{number}\n";
+  warn "DESTROY [$self->{number}]";
   #$self->log( 'dev', 'DESTROYing' );
   $self->destroy();
   --$global{'count'};
@@ -635,7 +636,7 @@ sub listen {       #$self->{'listen'} ||= sub {
 
 sub disconnect {    #$self->{'disconnect'} ||= sub {
   my $self = shift;
-  #$self->log('dev', 'in disconnect', $self->{'status'});
+  $self->log('dev', 'in disconnect', $self->{'status'}, caller);
   #$self->log( 'dev', "[$self->{'number'}] status=",$self->{'status'}, $self->{'destroying'});
   $self->{'status'} = 'disconnected';
   if ( $self->{'socket'} ) {
@@ -664,28 +665,28 @@ sub disconnect {    #$self->{'disconnect'} ||= sub {
     {
       #next if $self->{'clients'}{$client} eq $self;
       #$self->log( 'dev', "destroy cli", $self->{'clients'}{$_}, ref $self->{'clients'}{$_} ),
-      $self->{'clients'}{$client}->destroy()
-        if ref $self->{'clients'}{$client}
-          and $self->{'clients'}{$client}{'destroy'};
+      #$self->{'clients'}{$client}->destroy()
+      $self->{'clients'}{$client}->disconnect() if ref $self->{'clients'}{$client};
+          #and $self->{'clients'}{$client}{'destroy'};
       $self->{$_} += $self->{'clients'}{$client}{$_} for qw(bytes_recv bytes_send);
       #%{$self->{'clients'}{$client}} = ();
-      delete( $self->{'clients'}{$client} );
+      delete $self->{'clients'}{$client};
     }
   }
-  delete $self->{$_} for qw(NickList IpList PortList PortList_udp peers);
+  delete $self->{$_} for qw(NickList IpList PortList PortList_udp peers peers_cid peers_sid);
   #$self->log( 'info', "disconnected", __FILE__, __LINE__ );
   #$self->log('dev', caller($_)) for 0..5;
 }
 #$self->{'destroy'} ||= sub {
 sub destroy {
   my $self = shift;
-  #$self->log('dev', 'in destroy');
-  $self->disconnect() if ref $self and !$self->{'destroying'}++;
+  $self->log('dev', 'in destroy');
+  $self->disconnect(); # if ref $self and !$self->{'destroying'}++;
   #!?  delete $self->{$_} for keys %$self;
   $self->info();
-  #$self->{'status'} = 'destroy';
+  $self->{'status'} = 'destroy';
   #$self = {};
-  %$self = ();
+  #!?%$self = ();
 }
 
 sub recv {    # $self->{'recv'} ||= sub {
@@ -816,7 +817,7 @@ sub recv_try {    #$self->{'recv_try'} ||= sub {
   for (@$exeption) {
     #$self->log( 'dcdbg', 'exeption', $_, $self->{sockets}{$_}{number} ),
     #$self->{'select'}->remove($_);
-    $self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
+    #!?$self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
     delete $self->{sockets}{$_};
     ++$ret,;
   }
@@ -944,9 +945,11 @@ sub work {    #$self->{'work'} ||= sub {
   my @params = @_;
   #$self->periodic();
   #$self->log( 'dev', 'work', @params);
+  $self->{'auto_work'}->(@params) if ref $self->{'auto_work'} eq 'CODE';
   schedule(
     1,
     our $___work_every ||= sub {
+  my $self   = shift;
       $self->connect_check();
       $_->() for grep { ref $_ eq 'CODE' } values %{ $self->{periodic} || {} };
       #print ("P:$_\n"),
@@ -971,13 +974,12 @@ sub work {    #$self->{'work'} ||= sub {
 "del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] last active=",
             time - $self->{'clients'}{$_}{activity}
           );
-          (
-            !ref $self->{'clients'}{$_}{destroy}
-            ? ()
-            : $self->{'clients'}{$_}->destroy()
-          );
+          #(
+            #!ref $self->{'clients'}{$_}{destroy} ? () : 
+          #  $self->{'clients'}{$_}->destroy()
+          #);
           #%{$self->{'clients'}{$_}} = (),
-          delete( $self->{'clients'}{$_} );
+          delete $self->{'clients'}{$_} ;
           #$self->log('dev', "now clients", map { "$_" }sort keys %{ $self->{'clients'} });
           next;
         }
@@ -999,11 +1001,12 @@ sub work {    #$self->{'work'} ||= sub {
       {
         $self->{'clients'}{$_}->work();
       }
-    }
+    },$self
   );
   schedule(
     10,
     our $___work_downloader ||= sub {
+  my $self   = shift;
       my $time = time;
       for my $tth ( keys %{ $self->{'downloading'} } ) {
         if (  $self->{'downloading'}{$tth}{connect_start}
@@ -1081,13 +1084,14 @@ sub work {    #$self->{'work'} ||= sub {
         }
       }
       #=cut
-    }
+    },$self
   );
   schedule(
     [ $self->{dev_auto_dump_first} || 20, $self->{dev_auto_dump_every} || 100 ],
     our $dump_sub__ ||= sub {
+  my $self   = shift;
       $self->dumper();
-    }
+    }, $self
   ) if $self->{dev_auto_dump};
   #$self->log( 'dev', "work -> sleep" ),
   return $self->wait_sleep(@params) if @params;
@@ -1430,12 +1434,13 @@ sub file_write {    #$self->{'file_write'} ||= sub {
       $self->float( time - $self->{'file_start_time'} ),
       's at', $self->float( $self->{'filebytes'} / ( ( time - $self->{'file_start_time'} ) or 1 ) ), 'b/s'
       ),
-      $self->disconnect(), $self->{'status'} = 'destroy',
+      #$self->disconnect(), $self->{'status'} = 'destroy',
       $self->{'file_start_time'} = 0, $self->{'filename'} = '',
       $self->{'fileas'} = '',
       delete $self->{'want'}{ $self->{'peerid'} }{ $self->{'filecurrent'} },
       $self->{'filecurrent'} = '', $self->{'file_recv_partial'} = '',
       $self->{'file_recv_from'} = $self->{'file_recv_to'} = undef,
+      $self->destroy(),
       if $self->{'filebytes'} >= $self->{'filetotal'};
   }
 }
@@ -1764,8 +1769,9 @@ sub info {    #$self->{'info'} ||= sub {
 #$self->{'active'} ||= sub {
 sub active {
   my $self = shift;
+  $self->log('dev', 'active=', $self->{'status'});
   return $self->{'status'}
-    if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer);
+    if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer working);
   return 0;
 }
 

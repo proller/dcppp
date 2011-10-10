@@ -162,7 +162,7 @@ my @dc;
           psmisc::printlog( 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} } );
           delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
           psmisc::printlog( 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} } );
-        }
+        }, $dc
       );
       if ( $config{'auto_get_best'} ) {
         psmisc::schedule(
@@ -200,15 +200,17 @@ my @dc;
         our $se_sub__ ||= sub {
           #$dc->search('lost');
           #$dc->search($_) for @ARGV;
-        }
+        }, $dc
       );
       psmisc::schedule(
         [ 10, 0, 1 ],
         our $dl_sub__ ||= sub {
-  my $self = $dc;
+  #my $self = $dc;
+  my $self = shift;
+$self->log('dev', 'dlsub once!!');
   unless ($self->{no_auto_load_partial}) {
     my $dir = $self->{'partial_prefix'};
-#$self->log('dev', 'look', $self->{'partial_prefix'});
+$self->log('dev', 'look', $self->{'partial_prefix'});
     for my $file ( <$dir*> ) {
     #$self->log('dev', $_);
     local $_ = $file;
@@ -226,7 +228,7 @@ my @dc;
     } 
     $self->dumper();
   }
-        }
+        }, $dc
       );
           
       psmisc::schedule(
@@ -238,7 +240,7 @@ my @dc;
           #$dc->search('lost');
           #$dc->search($_) for @ARGV;
           $dc->download( shift @todl );
-        }
+        }, $dc
       );
     },
     %{ $config{dc} || {} },

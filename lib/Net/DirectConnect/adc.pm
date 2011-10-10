@@ -171,7 +171,7 @@ sub func {
     $self->{'INF'}{'US'} ||= 10000;
     $self->{'INF'}{'U4'} = $self->{'myport_udp'} || $self->{'myport'};         #maybe if broadcast only
     $self->{'INF'}{'I4'} = $self->{'myip'};
-    $self->{'INF'}{'S4'} = $self->{'myport_sctp'} if $self->{'myport_sctp'};
+    $self->{'INF'}{'S4'} = $self->{'myport_sctp'}; # if $self->{'myport_sctp'};
     $self->{'INF'}{'SU'} ||= join ',', keys %{ $self->{'SU'} || {} };
     return $self->{'INF'};
   };
@@ -239,7 +239,7 @@ sub init {
     $self->{SU}{$_} = $_ for qw(SCTP4);
   }
   if ( $self->{dev_ipv6} ) {
-    $self->{SU}{$_} = $_ for qw(TCP4 UDP4);
+    $self->{SU}{$_} = $_ for qw(TCP6 UDP6);
     if ( $self->{dev_sctp} ) {
       $self->{SU}{$_} = $_ for qw(SCTP6);
     }

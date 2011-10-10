@@ -485,6 +485,7 @@ sub new {
       #[10, $self->{filelist_scan}],
       $self->{filelist_scan},
       our $sharescan_sub__ ||= sub {
+        my $self = shift;
         $self->log(
           'info',
           'filelist actual age seconds:',
@@ -500,14 +501,15 @@ sub new {
         $self->{'filelist_builder'} ? psmisc::start $self->{'filelist_builder'}, @{ $self->{'share'} } : psmisc::start $^X,
           $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} };
         #: psmisc::startme( 'filelist', grep { -d } @ARGV );
-      }
-    ) if $self->{filelist_scan};
+      }, $self
+    )  if $self->{filelist_scan};
     #Net::DirectConnect::
     psmisc::schedule(
       #10,    #dev! 300!
       $self->{filelist_reload},
       #our $filelist_load_sub__ ||=
       sub {
+        my $self = shift;
         #psmisc::startme( 'filelist', grep { -d } @ARGV );
         #my($sharesize,$sharefiles) =
         $self->filelist_load(
@@ -517,7 +519,7 @@ sub new {
 ##todo! change INF cmd or myinfo
           #}
         );
-      }
+      }, $self
     ) if $self->{filelist_scan};
     },
     #psmisc::startme( 'filelist', grep { -d } @ARGV )  if  !-e $config{files} or !-e $config{files}.'.bz2';
