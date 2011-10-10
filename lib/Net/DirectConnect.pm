@@ -1099,8 +1099,9 @@ sub work {    #$self->{'work'} ||= sub {
       $self->dumper();
     }, $self
   ) if $self->{dev_auto_dump};
-  #$self->log( 'dev', "work -> sleep" ),
+  $self->log( 'dev', "work -> sleep", @params ),
   return $self->wait_sleep(@params) if @params;
+
   return $self->recv_try( $self->{'work_sleep'} );
 }
 
@@ -1199,7 +1200,7 @@ sub parser {    #$self->{'parser'} ||= sub {
       @ret = $self->{'parse'}{$cmd}->( @self, @param );
       $ret = scalar @ret > 1 ? \@ret : $ret[0];
       #$self->handler( @self, $cmd . '_parse_aft', @param, $ret );
-      ++$self->{count_parse}{$cmd};
+      ++$self->{'count_parse'}{$cmd};
     } else {
 #$self->log( 'dcinf', "unknown", $cmd, @_ ,'with',$self->{'parse'}{$cmd}, ref $self->{'parse'}{$cmd}, 'run=', @self, 'unknown', $cmd,@param,);
       $self->handler( @self, 'unknown', $cmd, @param, );
@@ -1243,10 +1244,10 @@ sub sendcmd {    #$self->{'sendcmd'} ||= sub {
   #$self->{'log'}->( $self,'sendcmd0', @_);
   local @_ = @_, $_[0] .= splice @_, 1, 1
     if $self->{'adc'} and length $_[0] == 1;
-  #$self->log( 'dcdmp', 'sendcmd1', $self->{number}, @_ );
+  $self->log( 'dcdmp', 'sendcmd', $self->{number},':', @_ );
   push @{ $self->{'send_buffer'} }, $self->{'cmd_bef'} . join( $self->{'cmd_sep'}, @_ ) . $self->{'cmd_aft'}
     if @_;
-  ++$self->{count_sendcmd}{ $_[0] };
+  ++$self->{'count_sendcmd'}{ $_[0] };
   if ( ( $self->{'sendbuf'} and @_ )
     or !@{ $self->{'send_buffer'} || [] } )
   {
@@ -1261,7 +1262,7 @@ sub sendcmd {    #$self->{'sendcmd'} ||= sub {
       #eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };
       #$self->log( 'err', 'send error', $@ ) if $@;
     }
-    $self->log( 'dcdmp', "we send [" . join( '', @{ $self->{'send_buffer'} } ) . "]:", $! );
+    #$self->log( 'dcdmp', "we send [" . join( '', @{ $self->{'send_buffer'} } ) . "]:", $! );
     $self->{'send_buffer'} = [];
     $self->{'sendbuf'}     = 0;
   }

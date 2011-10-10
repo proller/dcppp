@@ -267,7 +267,7 @@ sub init {
           pack 'S', $self->{'number'}
             #+ int rand 100
         );
-        $self->log( 'adcdevsid', "pack [$self->{'number'}] = [$peerid]" );
+        #$self->log( 'adcdevsid', "pack [$self->{'number'}] = [$peerid]" );
         $peerid = ( 'A' x ( 4 - length $peerid ) ) . $peerid;
         $self->{'peerid'} ||= $peerid;
         #$self->log( 'adcdev', $dst, 'SUP:', @_, "SID:n=$self->{'number'}; $peerid=$self->{'peerid'}" );
@@ -890,7 +890,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'dev', "making listeners: fallback tcp" );
       $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
         'parent' => $self,
-        #'Proto'       => 'sctp',
+	(map {$_ => $self->{$_}} qw(myport hub)),
         'auto_listen' => 1,
       );
       $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
