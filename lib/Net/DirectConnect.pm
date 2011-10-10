@@ -330,7 +330,7 @@ sub AUTOLOAD {
 
 sub DESTROY {
   my $self = shift;
-  warn "DESTROY [$self->{number}]";
+  #warn "DESTROY [$self->{number}]";
   #$self->log( 'dev', 'DESTROYing' );
   $self->destroy();
   --$global{'count'};
