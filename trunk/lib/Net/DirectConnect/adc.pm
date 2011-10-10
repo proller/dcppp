@@ -903,8 +903,10 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
   $self->{'handler_int'}{'disconnect_aft'} = sub {
       my $self = shift if ref $_[0];
 
+
+
  my $peerid = $self->{'peerid'};
-    
+        $self->log('dev', 'adc disconnecting', $peerid);
     
       delete $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
       delete $self->{'peers_sid'}{$peerid};
@@ -917,8 +919,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       'dev',  'disconnect int',           #psmisc::caller_trace(30)
       'hub=', $self->{'parent'}{'hub'},
       )
-      if $self
-        and $self->{'log'};
+      ;#if $self and $self->{'log'};
     #psmisc::caller_trace 15;
   };
   $self->get_peer_addr() if $self->{'socket'};
