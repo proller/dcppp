@@ -1338,9 +1338,9 @@ sub get {                                                 #$self->{'get'} ||= su
       and $self->{'myip'}
       and !$self->{'passive_get'} )
     {
-      @_ = ( 'CTM', $sid, $self->{'connect_protocol'}, $self->{'myport'}, $self->make_token($nick) );
+      @_ = ( 'CTM', $sid, $self->{'protocol_connect'}, $self->{'myport'}, $self->make_token($nick) );
     } else {
-      @_ = ( 'RCM', $sid, $self->{'connect_protocol'}, $self->make_token($nick) );
+      @_ = ( 'RCM', $sid, $self->{'protocol_connect'}, $self->make_token($nick) );
     }
     $self->cmd( 'D', @_ );
     #$self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], )

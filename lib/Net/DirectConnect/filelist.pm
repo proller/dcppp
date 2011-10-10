@@ -77,7 +77,7 @@ sub new {
   $self->{tth_cheat}         //= 1_000_000;         #try find file with same name-size-date
   $self->{tth_cheat_no_date} //= 0;                 #--//-- only name-size
   $self->{file_min}          //= 0;                 #skip files  smaller
-  $self->{filelist_scan}     //= 3600;              #every seconds, 0 to disable
+  $self->{filelist_scan}     //= 3600 * 12;              #every seconds, 0 to disable
   $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
   $self->{file_send_by}      //= 1024 * 1024 * 1;
   $self->{skip_hidden}       //= 1;
