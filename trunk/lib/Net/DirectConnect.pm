@@ -1212,6 +1212,7 @@ sub parser {    #$self->{'parser'} ||= sub {
 
 sub send {    #$self->{'send'} ||= sub {
   my $self = shift;
+  return if $self->{'listener'};
   local $_;    # = join( '', @_ );
                #$self->{bytes_send} += length $_;
                #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
