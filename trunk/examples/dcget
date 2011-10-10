@@ -245,6 +245,7 @@ my @dc;
       );
     },
     %{ $config{dc} || {} },
+    %{ $config{dcget} || {} },
     #( $_ ? ( 'host' => $_ ) : () ),
     #( $ARGV[0] ? ( 'host' => $ARGV[0] ) : () ),
     'host' => $_,

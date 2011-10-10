@@ -108,6 +108,7 @@ my @dc;
       my $dc = shift;
     },
     %{ $config{dc} || {} },
+    %{ $config{dcshare} || {} },
     'host' => $_,
     )
   } (

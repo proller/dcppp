@@ -10,5 +10,8 @@ our %config;
 # $config{debug} = 1;
 # $config{ 'log_' . $_ } = 1 for qw (dmp dcdmp dcdbg adcdev dev);
 # $config{dc}{dev_http} = 1;
+# $config{dc}{dev_sctp} = 1;
+# $config{dc}{dev_ipv6} = 1; #future
 # $config{auto_get_best} = 1; #for dcget : download all popular files
+# $config{dchub}{myport} = 412; #only for dchub script
 1;
