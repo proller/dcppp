@@ -324,11 +324,12 @@ sub init {
       #}
       my $peersid = $peerid;
       if ( $dst ne 'B' and $peerid ||= $params->{ID} ) {
-        #$self->log('adcdev', 'INF:', "moving peer '' to $peerid");
+        $self->log('adcdev', 'INF:', "moving peer '' to $peerid");
         $self->{'peerid'} ||= $peerid;
         $self->{'peers'}{$peerid}{$_} = $self->{'peers'}{''}{$_} for keys %{ $self->{'peers'}{''} || {} };
         delete $self->{'peers'}{''};
       }
+        $self->log('adcdev', 'INF:', "existing '' peer: $peerid") if $self->{'peers'}{''};
       my $sendbinf;
       if ( $self->{parent}{hub} and $dst eq 'B' ) {
         if ( !keys %{ $self->{'peers'}{$peerid}{'INF'} } ) {    #join
@@ -900,8 +901,16 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
   }
   #=cut
   $self->{'handler_int'}{'disconnect_aft'} = sub {
-    delete $self->{'peers'}{ $self->{'peerid'} };
-    delete $self->{'peers_sid'}{ $self->{'peerid'} };
+      my $self = shift if ref $_[0];
+
+ my $peerid = $self->{'peerid'};
+    
+    
+      delete $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
+      delete $self->{'peers_sid'}{$peerid};
+      delete $self->{'peers'}{$self->{'peers'}{$peerid}{'INF'}{'ID'}};
+      delete $self->{'peers'}{$peerid};
+
     $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'};
     delete $self->{'INF'}{'SID'} unless $self->{'parent'};
     $self->log(
