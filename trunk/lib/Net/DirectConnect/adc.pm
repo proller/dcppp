@@ -197,7 +197,9 @@ sub init {
     #'auto_wait'        => 1,
     'reconnects' => 99999, 'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
-    'connect_protocol' => 'ADC/1.0', 'message_type' => 'H',
+    'protocol_connect' => 'ADC/1.0',
+    'protocol_supported' => {map {$_=>$_}qw(ADC/1.0)}, #ADCS/0.10
+     'message_type' => 'H',
     #@_,
     'incomingclass' => __PACKAGE__,                               #'Net::DirectConnect::adc',
     no_print        => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
@@ -512,7 +514,8 @@ sub init {
       my ( $dst, $peerid, $toid ) = @{ shift() };
       $toid ||= shift;
       #$self->log( 'dcdev', "( $dst, RCM, $peerid, $toid  me=[$self->{'INF'}{'SID'}:$self->{'myport'}] )", @_ );
-      $self->cmd( $dst, 'CTM', $peerid, $_[0], $self->{'myport'}, $_[1], ) if $toid eq $self->{'INF'}{'SID'};
+      
+      $self->cmd( $dst, 'CTM', $peerid, $self->{'protocol_supported'}{$_[0]}||$self->{'protocol_connect'}, $self->{'myport'}, $_[1], ) if $toid eq $self->{'INF'}{'SID'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RCM', $peerid, $toid, @_ );
       }
@@ -731,7 +734,7 @@ sub init {
     'GET' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
+      #$self->sendcmd( $dst, 'CTM', $self->{'protocol_connect'},@_);
       local @_ = @_;
       if ( !@_ ) {
         @_ = ( 'file', $self->{'filename'}, $self->{'file_recv_from'} || '0', $self->{'file_recv_to'} || '-1' )
@@ -756,19 +759,19 @@ sub init {
       'CTM' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
+      #$self->sendcmd( $dst, 'CTM', $self->{'protocol_connect'},@_);
       $self->cmd_adc( $dst, 'CTM', @_ );
     },
      'RCM' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
+      #$self->sendcmd( $dst, 'CTM', $self->{'protocol_connect'},@_);
       $self->cmd_adc( $dst, 'RCM', @_ );
     },
     'SND' => sub {
       my $self = shift if ref $_[0];
       my $dst = shift;
-      #$self->sendcmd( $dst, 'CTM', $self->{'connect_protocol'},@_);
+      #$self->sendcmd( $dst, 'CTM', $self->{'protocol_connect'},@_);
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
