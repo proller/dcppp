@@ -62,7 +62,7 @@ sub init {
     'disconnect_recursive' => 1,
   );
   $self->{$_} //= $_{$_} for keys %_;
-  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
+  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->search_buffer() if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want
@@ -502,7 +502,7 @@ sub init {
       $_[3] ||= ( $_[4] =~ s/^(TTH:)?([A-Z0-9]{39})$/TTH:$2/ ? '9' : '1' ) unless defined $_[3];
       #
       #$self->cmd( 'search_buffer', 'F', 'T', '0', '1', @_ );
-      $self->cmd( 'search_buffer', @_ );
+      $self->search_buffer( @_ );
     },
     'search_tth' => sub {
       my $self = shift if ref $_[0];
