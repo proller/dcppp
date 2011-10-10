@@ -73,7 +73,6 @@ sub tiger ($) {
 }
 sub hash ($) { base32( tiger( $_[0] ) ); }
 =cut
-
 #sub init {  my $self = shift;
 
 =cu
@@ -90,6 +89,7 @@ return $self;
 
 }
 =cut
+
 sub func {
   my $self = shift if ref $_[0];
   #warn 'func call';
@@ -169,9 +169,9 @@ sub func {
       . $Net::DirectConnect::VERSION . '_'
       . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
     $self->{'INF'}{'US'} ||= 10000;
-    $self->{'INF'}{'U4'} = $self->{'myport_udp'} || $self->{'myport'};         #maybe if broadcast only
+    $self->{'INF'}{'U4'} = $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
     $self->{'INF'}{'I4'} = $self->{'myip'};
-    $self->{'INF'}{'S4'} = $self->{'myport_sctp'}; # if $self->{'myport_sctp'};
+    $self->{'INF'}{'S4'} = $self->{'myport_sctp'};                        # if $self->{'myport_sctp'};
     $self->{'INF'}{'SU'} ||= join ',', keys %{ $self->{'SU'} || {} };
     return $self->{'INF'};
   };
@@ -293,7 +293,6 @@ sub init {
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
-
       #$self->log('adcdev', 'SUPans:', $peerid, $self->{'peers'}{$peerid}{'INF'}{I4}, $self->{'peers'}{$peerid}{'INF'}{U4});
       #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; #can answer direct
       #local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4};
@@ -533,7 +532,6 @@ sub init {
         'auto_connect' => 1,
       );
 =cut
-
     },
     'CTM' => sub {
       my $self = shift if ref $_[0];
@@ -589,7 +587,6 @@ sub init {
         $self->log( 'dcerr', 'SND', "unknown type", @_ );
       }
 =cut
-
     },
   };
 
@@ -603,7 +600,6 @@ sub init {
 
 
 =cut  
-
   $self->{'cmd'} = {
     #move to main
     'search_send' => sub {
@@ -673,16 +669,23 @@ sub init {
 #$self->{'SUPAD'} ||= { map { $_ => 1 } @{ $self->{'SUPADS'} } };
 #$self->cmd_adc( $dst, 'SUP', ( map { 'AD' . $_ } @{ $self->{'SUPADS'} } ), ( map { 'RM' . $_ } keys %{ $self->{'SUPRM'} } ), );
 #$self->log( 'SUP', "sidp=[$self->{'INF'}{'SID'}]");
-      {
-        local $self->{'INF'}{'SID'} = undef unless $self->{'broadcast'};
-        $self->cmd_adc(
-          $dst, 'SUP',
-          ( map { 'AD' . $_ } sort keys %{ $self->{SUPAD}{$dst} } ),
-          ( map { 'RM' . $_ } sort keys %{ $self->{SUPRM}{$dst} } ),
-        );
-      }
+#{
+      local $self->{'INF'}{'SID'} = undef unless $self->{'broadcast'};
+      $self->cmd_adc(
+        $dst, 'SUP',
+        ( map { 'AD' . $_ } sort keys %{ $self->{SUPAD}{$dst} } ),
+        ( map { 'RM' . $_ } sort keys %{ $self->{SUPRM}{$dst} } ),
+      );
+      #}
       #$self->log( 'SUP', "sida=[$self->{'INF'}{'SID'}]");
       #ADBAS0 ADBASE ADTIGR ADUCM0 ADBLO0
+    },
+    'SID' => sub {
+      my $self = shift if ref $_[0];
+      my $dst = shift;
+      #$self->{'peerid'}
+      local $self->{'INF'}{'SID'} = undef;    #!? unless $self->{'broadcast'};
+      $self->cmd_adc( $dst, 'SID', $_[0] || $self->{'peerid'} );
     },
     'INF' => sub {
       my $self = shift if ref $_[0];
@@ -768,7 +771,6 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
-
   #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
   if ( !$self->{'no_listen'} ) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
@@ -830,7 +832,7 @@ sub init {
         $self->{'dev_sctp'}
         )
       {
-        $self->log( 'dev', "making listeners: sctp", "h=$self->{'hub'}");
+        $self->log( 'dev', "making listeners: sctp", "h=$self->{'hub'}" );
         $self->{'clients'}{'listener_sctp'} = $self->{'incomingclass'}->new(
           'parent'      => $self,
           'Proto'       => 'sctp',
@@ -839,7 +841,6 @@ sub init {
         $self->{'myport_sctp'} = $self->{'clients'}{'listener_sctp'}{'myport'};
         #$self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
         $self->log( 'err', "cant listen sctp" ) unless $self->{'myport_sctp'};
-      
       }
     }
     #DEV=z
@@ -856,7 +857,6 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'err', "cant listen broadcast (hubless)" ) unless $self->{'clients'}{'listener_udp_broadcast'}{'myport'};
     }
 =cut
-
     if ( $self->{'dev_http'} ) {
       $self->log( 'dev', "making listeners: http" );
       #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
@@ -886,21 +886,17 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->{'myport_http'} = $self->{'clients'}{'listener_http'}{'myport'};
       $self->log( 'err', "cant listen http" ) unless $self->{'myport_http'};
     }
-
-           if ($self->{'hub'} and $self->{'dev_sctp'}) {
-        $self->log( 'dev', "making listeners: fallback tcp" );
-        $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
-          'parent'      => $self,
-          #'Proto'       => 'sctp',
-          'auto_listen' => 1,
-        );
-        $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
-        #$self->log( 'dev', 'nyportgen_tcp', $self->{'myport_tcp'} );
-        $self->log( 'err', "cant listen tcp" ) unless $self->{'myport_tcp'};
-       
-       }
-
-
+    if ( $self->{'hub'} and $self->{'dev_sctp'} ) {
+      $self->log( 'dev', "making listeners: fallback tcp" );
+      $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
+        'parent' => $self,
+        #'Proto'       => 'sctp',
+        'auto_listen' => 1,
+      );
+      $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
+      #$self->log( 'dev', 'nyportgen_tcp', $self->{'myport_tcp'} );
+      $self->log( 'err', "cant listen tcp" ) unless $self->{'myport_tcp'};
+    }
   }
   #=cut
   $self->{'handler_int'}{'disconnect_aft'} = sub {
