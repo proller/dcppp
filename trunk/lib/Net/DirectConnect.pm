@@ -1239,6 +1239,7 @@ sub send {    #$self->{'send'} ||= sub {
 sub sendcmd {    #$self->{'sendcmd'} ||= sub {
   my $self = shift;
   return if $self->connect_check();
+  return if $self->{'listener'};
   #$self->{'log'}->( $self,'sendcmd0', @_);
   local @_ = @_, $_[0] .= splice @_, 1, 1
     if $self->{'adc'} and length $_[0] == 1;
