@@ -209,7 +209,7 @@ sub init {
   $self->{$_} //= $_{$_} for keys %_;
   #!exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
   #print 'adc init now=',Dumper $self;
-  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
+  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->search_buffer() if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
   #$self->baseinit();    #if ref $self eq __PACKAGE__;
   #$self->log( 'inited3', "MT:$self->{'message_type'}", ' with' );
@@ -623,7 +623,7 @@ sub init {
       my $string = shift;
       if ( $self->{'adc'} ) {
         #$self->cmd( 'search_buffer', { TO => 'auto', map AN => $_, split /\s+/, $string } );
-        $self->cmd( 'search_buffer', ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), @_ } );    #TOauto
+        $self->search_buffer(( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), @_ } );    #TOauto
       } else {
         #$self->{'search_last_string'} = $string;
         #$string =~ tr/ /$/;
