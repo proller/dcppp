@@ -679,6 +679,9 @@ sub disconnect {    #$self->{'disconnect'} ||= sub {
       delete $self->{'clients'}{$client};
     }
   }
+
+  $self->disconnect_aft();
+
   delete $self->{$_} for qw(NickList IpList PortList PortList_udp peers peers_cid peers_sid);
   #$self->log( 'info', "disconnected", __FILE__, __LINE__ );
   #$self->log('dev', caller($_)) for 0..5;
