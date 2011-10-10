@@ -375,7 +375,7 @@ sub init {
         $self->cmd( $dst, 'INF' ) unless $self->{count_sendcmd}{CINF};
         if   ( $params->{TO} ) { }
         else                   { }
-        $self->cmd('file_select');
+        $self->file_select();
         $self->cmd( $dst, 'GET' );
       }
       #$self->log('adcdev', 'INF8', $peerid, @_);

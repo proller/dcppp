@@ -112,7 +112,7 @@ sub init {
         $self->{'sendbuf'} = 0;
         $self->cmd( 'Key', $self->{'key'} );
       }
-      $self->cmd('file_select'), $self->log( "get:[filename:", $self->{'filename'}, '; fileas:', $self->{'fileas'}, "]" )
+      $self->file_select(), $self->log( "get:[filename:", $self->{'filename'}, '; fileas:', $self->{'fileas'}, "]" )
         if $self->{'direction'} eq 'Download';
       $self->{'get'} = $self->{'filename'} . '$' . ( $self->{'file_recv_from'} || 1 ),
         $self->{'adcget'} =
