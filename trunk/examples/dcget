@@ -261,4 +261,5 @@ $_->{__work} ||= \%work for    #for dumper
   grep { $_->{dev_auto_dump} } @dc;
 while ( @dc = grep { $_ and $_->active() } @dc ) {
   $_->work() for @dc;
+Time::HiRes::sleep 0.1;
 }
