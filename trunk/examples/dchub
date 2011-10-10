@@ -7,6 +7,7 @@ dev hub test
 
 =cut
 use strict;
+use Time::HiRes;
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 use lib::abs '../lib';
@@ -34,6 +35,8 @@ my $dc = Net::DirectConnect->new(
   },
   'auto_work' => sub {
     my $dc = shift;
+    #warn('hubwork');    
+    Time::HiRes::sleep 0.1;
   },
   %{ $config{dc} || {} },
 );
