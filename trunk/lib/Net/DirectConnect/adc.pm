@@ -769,7 +769,7 @@ sub init {
     },
 =cut    
 
-  $self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
+  #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
   if ( !$self->{'no_listen'} ) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
     if (
@@ -822,7 +822,7 @@ sub init {
 #},
       );
       $self->{'myport_udp'} = $self->{'clients'}{'listener_udp'}{'myport'};
-      $self->log( 'dev', 'nyportgen', $self->{'myport_udp'} );
+      #$self->log( 'dev', 'nyportgen', $self->{'myport_udp'} );
       $self->log( 'err', "cant listen udp (search repiles)" ) unless $self->{'myport_udp'};
       #}
       if (
@@ -830,15 +830,16 @@ sub init {
         $self->{'dev_sctp'}
         )
       {
-        $self->log( 'dev', "making listeners: sctp" );
+        $self->log( 'dev', "making listeners: sctp", "h=$self->{'hub'}");
         $self->{'clients'}{'listener_sctp'} = $self->{'incomingclass'}->new(
           'parent'      => $self,
           'Proto'       => 'sctp',
           'auto_listen' => 1,
         );
         $self->{'myport_sctp'} = $self->{'clients'}{'listener_sctp'}{'myport'};
-        $self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
+        #$self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
         $self->log( 'err', "cant listen sctp" ) unless $self->{'myport_sctp'};
+      
       }
     }
     #DEV=z
@@ -885,6 +886,21 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->{'myport_http'} = $self->{'clients'}{'listener_http'}{'myport'};
       $self->log( 'err', "cant listen http" ) unless $self->{'myport_http'};
     }
+
+           if ($self->{'hub'} and $self->{'dev_sctp'}) {
+        $self->log( 'dev', "making listeners: fallback tcp" );
+        $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
+          'parent'      => $self,
+          #'Proto'       => 'sctp',
+          'auto_listen' => 1,
+        );
+        $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
+        #$self->log( 'dev', 'nyportgen_tcp', $self->{'myport_tcp'} );
+        $self->log( 'err', "cant listen tcp" ) unless $self->{'myport_tcp'};
+       
+       }
+
+
   }
   #=cut
   $self->{'handler_int'}{'disconnect_aft'} = sub {
