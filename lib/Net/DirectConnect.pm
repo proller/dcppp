@@ -72,8 +72,7 @@ sub socket_addr ($) {
   return @_;
 }
 
-sub schedule($$;@)
-{    #$Id$ $URL$
+sub schedule($$;@) {    #$Id$ $URL$
   our %schedule;
   my ( $every, $func ) = ( shift, shift );
   my $p;
@@ -81,11 +80,15 @@ sub schedule($$;@)
   $p = $every if ref $every eq 'HASH';
   $p->{'every'} ||= $every if !ref $every;
   $p->{'id'} ||= join ';', caller;
+  #dmp $p, \%schedule;
+  #dmp $schedule{ $p->{'id'} }{'runs'}, $p->{'runs'}, $p, $schedule{ $p->{'id'} } if $p->{'runs'};
   $schedule{ $p->{'id'} }{'func'} = $func if !$schedule{ $p->{'id'} }{'func'} or $p->{'update'};
   $schedule{ $p->{'id'} }{'last'} = time - $p->{'every'} + $p->{'wait'} if $p->{'wait'} and !$schedule{ $p->{'id'} }{'last'};
+  #dmp("RUN", $p->{'id'}), 
+  ++$schedule{ $p->{'id'} }{'runs'}, 
   $schedule{ $p->{'id'} }{'last'} = time, $schedule{ $p->{'id'} }{'func'}->(@_),
-        if ( $schedule{ $p->{'id'} }{'last'} + $p->{'every'} < time )
-    and ( !$p->{'runs'} or $schedule{ $p->{'id'} }{'runs'}++ < $p->{'runs'} )
+    if ( $schedule{ $p->{'id'} }{'last'} + $p->{'every'} < time )
+    and ( !$p->{'runs'} or $schedule{ $p->{'id'} }{'runs'} < $p->{'runs'} )
     and ( !( ref $p->{'cond'} eq 'CODE' ) or $p->{'cond'}->( $p, $schedule{ $p->{'id'} }, @_ ) )
     and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
 }
@@ -367,7 +370,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
   #$self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ );
   local %_ = @_;
   #warn Dumper \%_;
-  #$self->log(__LINE__, "Proto=$self->{Proto}");
+  #$self->log('dev', __LINE__, "Proto=$self->{Proto}");
   $self->{$_} = $_{$_} for keys %_;
   local %_ = (
     'Listen'            => 10,
@@ -439,7 +442,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
   $self->{'parent'}{$_} ? $self->{$_} = $self->{'parent'}{$_} : ()
     for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto);
-  #$self->log("Proto=$self->{Proto}");
+  #$self->log("Proto=$self->{Proto}, Listen=$self->{Listen}");
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
   #psmisc::printlog('dev', 'init0', Dumper $self);
 }
@@ -470,10 +473,12 @@ sub select_add {         #$self->{'select_add'} ||= sub {
 #$self->{'connect_check'} ||= sub {
 sub connect_check {
   my $self = shift;
+  #$self->log('dev', 'connect_check', " s=$self->{'status'}, i=$self->{'incoming'}");
   return 0
     if $self->{'Proto'} eq 'udp'
       or $self->{'incoming'}
-      or $self->{'status'} eq 'listening'
+      #or $self->{'status'} eq 'listening' or 
+      or $self->{'listener'}
       or (
         $self->{'socket'}
         #and $self->{'socket'}->connected()
@@ -607,8 +612,9 @@ sub reconnect {    #$self->{'reconnect'} ||= sub {
 sub listen {       #$self->{'listen'} ||= sub {
   my $self = shift;
   $self->log( 'err', 'listen off', "[$self->{'Listen'}] [$self->{'M'}] [$self->{'allow_passive_ConnectToMe'}]" ), return
-    if !$self->{'Listen'}
-      or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
+    if !$self->{'Listen'};
+      #or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
+  $self->{'listener'} = 1;
   $self->myport_generate();
   for ( 1 .. $self->{'myport_tries'} ) {
     $self->{'socket'} ||= IO::Socket::INET->new(
@@ -1769,7 +1775,7 @@ sub info {    #$self->{'info'} ||= sub {
 #$self->{'active'} ||= sub {
 sub active {
   my $self = shift;
-  $self->log('dev', 'active=', $self->{'status'});
+  #$self->log('dev', 'active=', $self->{'status'});
   return $self->{'status'}
     if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer working);
   return 0;
