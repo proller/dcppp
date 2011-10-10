@@ -17,6 +17,7 @@
  $config{dc}{host} = 'myhub.net';
 
 =cut
+
 use 5.10.0;
 use strict;
 use Data::Dumper;
@@ -162,7 +163,8 @@ my @dc;
           psmisc::printlog( 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} } );
           delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
           psmisc::printlog( 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} } );
-        }, $dc
+        },
+        $dc
       );
       if ( $config{'auto_get_best'} ) {
         psmisc::schedule(
@@ -173,9 +175,8 @@ my @dc;
             #psmisc::printlog( 'dev', "getbest run");
             while ( $q = shift @{ $work{'toask'} } or return ) {
               #psmisc::printlog( 'dev', "getbest:", $q);
-              psmisc::printlog('dev', 'already in share', $q),
-              next if $dc->{share_full}{$q};
-              last if  !exists $work{'asked'}{$q};
+              psmisc::printlog( 'dev', 'already in share', $q ), next if $dc->{share_full}{$q};
+              last if !exists $work{'asked'}{$q};
 #$work{'ask_db'}{$q} = $work{'asked'}{$q} = $r->{'time'}, next                  if $r and $r->{'time'};    # + $config{'ask_retry'} > time;
 #$work{'ask_db'}{$q} = 0;
 #last;
@@ -200,47 +201,47 @@ my @dc;
         our $se_sub__ ||= sub {
           #$dc->search('lost');
           #$dc->search($_) for @ARGV;
-        }, $dc
+        },
+        $dc
       );
       psmisc::schedule(
         [ 10, 0, 1 ],
         our $update_queue_sub__ ||= sub {
-  #my $self = $dc;
-  my $self = shift;
-#$self->log('dev', 'dlsub once!!');
-  unless ($self->{no_auto_load_partial}) {
-    my $dir = $self->{'partial_prefix'};
-#$self->log('dev', 'look', $self->{'partial_prefix'});
-    for my $file ( <$dir*> ) {
-    #$self->log('dev', $_);
-    local $_ = $file;
-    $_ = Encode::decode $self->{charset_fs}, $_ if $self->{charset_fs};
-    #$self->log('dev', 'U', $_);
-    next unless s/$self->{'partial_ext'}$//i;
-    next unless s/^$self->{'partial_prefix'}//i;
-    #$self->log('dev', $_);
-    next unless s/\.([A-Z0-9]{39})$//;
-    my ($tth) = $1;
-    $self->log('dev', 'adding to queue', $_, $tth);
-    #$self->{'want_download'}{$tth} //= {};
-    push @todl, $tth;
-    $self->{'want_download_filename'}{$tth}{$_} = 100;
-    } 
-    $self->dumper();
-  }
-        }, $dc
+          #my $self = $dc;
+          my $self = shift;
+          #$self->log('dev', 'dlsub once!!');
+          unless ( $self->{no_auto_load_partial} ) {
+            my $dir = $self->{'partial_prefix'};
+            #$self->log('dev', 'look', $self->{'partial_prefix'});
+            for my $file (<$dir*>) {
+              #$self->log('dev', $_);
+              local $_ = $file;
+              $_ = Encode::decode $self->{charset_fs}, $_ if $self->{charset_fs};
+              #$self->log('dev', 'U', $_);
+              next unless s/$self->{'partial_ext'}$//i;
+              next unless s/^$self->{'partial_prefix'}//i;
+              #$self->log('dev', $_);
+              next unless s/\.([A-Z0-9]{39})$//;
+              my ($tth) = $1;
+              $self->log( 'dev', 'adding to queue', $_, $tth );
+              #$self->{'want_download'}{$tth} //= {};
+              push @todl, $tth;
+              $self->{'want_download_filename'}{$tth}{$_} = 100;
+            }
+            $self->dumper();
+          }
+        },
+        $dc
       );
-          
       psmisc::schedule(
         [ 10, 11 ],
         our $dl_sub__ ||= sub {
-          
-          
           return unless @todl;
           #$dc->search('lost');
           #$dc->search($_) for @ARGV;
           $dc->download( shift @todl );
-        }, $dc
+        },
+        $dc
       );
     },
     %{ $config{dc} || {} },
