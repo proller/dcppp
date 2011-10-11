@@ -12,6 +12,7 @@ our %config;
 # $config{dc}{dev_http} = 1;
 # $config{dc}{dev_sctp} = 1;
 # $config{dc}{dev_ipv6} = 1; #future
+# $config{dc}{dev_adcs} = 1; #future
 # $config{auto_get_best} = 1; #for dcget : download all popular files
 # $config{dchub}{myport} = 412; #only for dchub script
 1;
