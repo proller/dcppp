@@ -79,7 +79,7 @@ sub init {
       #$self->log( 'dev', Dumper \@_);
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
       #$self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
-      $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->cmd('nick_generate'),
+      $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->nick_generate(),
         $self->reconnect(),
         if ( ( !keys %{ $self->{'NickList'} } or $self->{'NickList'}{$nick}{'oper'} )
         and $text eq 'You are already in the hub.' );

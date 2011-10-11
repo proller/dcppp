@@ -38,7 +38,7 @@ sub send_udp ($$;@) {
   $self->log( 'dcdev', "sending UDP to [$host]:[$port] = [$_[0]]" );
   my $opt = $_[1] || {};
   if (
-    my $s = IO::Socket::INET->new(
+    my $s = $self->{'socket_class'}->new(
       'PeerAddr' => $host,
       'PeerPort' => $port,
       'Proto'    => 'udp',
@@ -48,7 +48,7 @@ sub send_udp ($$;@) {
         #'MultiHomed' => 1,    #del
         #) : ()
       ),
-      %{ $opt->{'sockopts'} || {} },
+      %{ $opt->{'socket_options'} || {} },
     )
     )
   {
@@ -108,14 +108,19 @@ sub module_load {
   return unless length $_;
   my $module = __PACKAGE__ . '::' . $_;
   #eval "use $module;";
-  use_try $module;
-  $self->log( 'err', 'cant load', $module, $@ ), return if $@;
+  $self->log( 'err', 'cant load', $module, $@ ), return unless use_try $module;
+  #$self->log( 'dev', "loading", $_, $module->can('new'), __PACKAGE__->can('new'));
+  #$self->log( 'err', 'cant load', $module, $@ ), return if $@;
   #${module}::new($self, @_) if $module->can('new');
   #${module}::init($self, @_) if $module->can('init');
-  eval "$module\::new(\$self, \@_);";    #, \@param
-  $self->log( 'err', 'cant new', $module, $@ ), return if $@;
-  eval "$module\::init(\$self, \@_);";    #, \@param
-  $self->log( 'err', 'cant init', $module, $@ ), return if $@;
+  #$self->log( 'dev', 'can', $module->can('new'));
+  #$self->log( 'dev', 'can', $module->can('init'));
+  #eval "$module\::new(\$self, \@_);";    #, \@param
+  $_->($self, @_) if $_ = $module->can('new') and $_ ne __PACKAGE__->can('new');
+  $_->($self, @_) if $_ = $module->can('init');
+  #$self->log( 'err', 'cant new', $module, $@ ), return if $@;
+  #eval "$module\::init(\$self, \@_);";    #, \@param
+  #$self->log( 'err', 'cant init', $module, $@ ), return if $@;
   #$self->log( 'dev', 'loaded  module', $_, $module, );
   1;
 }
@@ -156,8 +161,8 @@ sub new {
       $self->{'protocol'} ||= 'adc';
       $self->{'auto_listen'}           = 1;
       $self->{'Proto'}                 = 'udp';
-      $self->{'sockopts'}{'Broadcast'} = 1;
-      $self->{'sockopts'}{'ReuseAddr'} = 1;
+      $self->{'socket_options'}{'Broadcast'} = 1;
+      $self->{'socket_options'}{'ReuseAddr'} = 1;
       $self->{'host'}                  = inet_ntoa(INADDR_BROADCAST)
         if $self->{'host'} !~ /^255\./;
       #$self->{'port'},
@@ -165,7 +170,9 @@ sub new {
       $self->{'broadcast'} = 1;
       #$self->{'lis'} = 1;
     }
-    if ( !$self->{'module'} and !$self->{'protocol'} and $self->{'host'} ) {
+    if ( 
+    #!$self->{'module'} and 
+    !$self->{'protocol'} and $self->{'host'} ) {
       #$self->log( 'proto0 ', $1);
       my $p = lc $1 if $self->{'host'} =~ m{^(.+?)://};
       #$self->protocol_init($p);
@@ -176,10 +183,18 @@ sub new {
       #$self->{'protocol'}
       #$self->log( 'proto ', $self->{'protocol'} );
     }
-    $self->{'module'} ||= $self->{'protocol'};
-    if ( $self->{'module'} eq 'nmdc' ) {
-      $self->{'module'} = [ 'nmdc', ( $self->{'hub'} ? 'hubcli' : 'clihub' ) ];
+    #$self->{'module'} ||= $self->{'protocol'};
+    #if ( $self->{'module'} eq 'nmdc' ) {
+    #  $self->{'module'} = [ 'nmdc', ( $self->{'hub'} ? 'hubcli' : 'clihub' ) ];
+    #}
+    ++$self->{'module'}{$self->{'protocol'}};
+    if ( $self->{'protocol'} eq 'nmdc' ) {
+      ++$self->{'module'}{ $self->{'hub'} ? 'hubcli' : 'clihub' };
     }
+
+    ++$self->{'module'}{'ipv6'} if $self->{'dev_ipv6'};
+    ++$self->{'module'}{'adcs'} if $self->{'dev_adcs'};
+    
     #$self->log( 'module load', $self->{'module'});
     #if ( $self->{'module'} ) {
   }
@@ -367,7 +382,7 @@ sub func {
 
 sub init_main {    #$self->{'init_main'} ||= sub {
   my $self = shift;
-  #$self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ );
+  #$self->log( 'dev', 'init', __PACKAGE__, 'func', __FILE__, __LINE__ , Dumper \@_);
   local %_ = @_;
   #warn Dumper \%_;
   #$self->log('dev', __LINE__, "Proto=$self->{Proto}");
@@ -430,6 +445,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     'charset_protocol' => 'utf8',
     'charset_internal' => 'utf8',
     #charset_nick => 'utf8',
+    'socket_class' => 'IO::Socket::INET',
   );
   #$self->log(__LINE__, "Proto=$self->{Proto}");
   $self->{'wait_connect_tries'} //= $self->{'Timeout'};
@@ -441,7 +457,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {},
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
   $self->{'parent'}{$_} ? $self->{$_} = $self->{'parent'}{$_} : ()
-    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto);
+    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 dev_adcs);
   #$self->log("Proto=$self->{Proto}, Listen=$self->{Listen}");
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
   #psmisc::printlog('dev', 'init0', Dumper $self);
@@ -522,7 +538,7 @@ sub connect {    #$self->{'connect'} ||= sub {
   $self->log(
     'info',
     "connecting to $self->{'protocol'}://$self->{'host'}:$self->{'port'} via $self->{'Proto'} ",
-    %{ $self->{'sockopts'} || {} }
+    %{ $self->{'socket_options'} || {} }
   );
   #$self->{'status'}   = 'connecting';
   $self->{'status'}   = 'connecting_tcp';
@@ -530,7 +546,7 @@ sub connect {    #$self->{'connect'} ||= sub {
   $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
   delete $self->{'recv_buf'};
   #$self->log('dev', 'conn strt', $self->{'Timeout'}, $self->{'Proto'}, Socket::SOCK_STREAM);
-  $self->{'socket'} ||= IO::Socket::INET->new(
+  $self->{'socket'} ||= $self->{'socket_class'}->new(
     'PeerAddr' => $self->{'host'},
     'PeerPort' => $self->{'port'},
     'Proto'    => $self->{'Proto'} || 'tcp',
@@ -542,7 +558,7 @@ sub connect {    #$self->{'connect'} ||= sub {
     #'MultiHomed' => 1,    #del
     #) : ()
     #),
-    %{ $self->{'sockopts'} || {} },
+    %{ $self->{'socket_options'} || {} },
   );
   #$self->log('dev', 'conn end');
   $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $! ), "[$self->{'socket'}]" ), return 1
@@ -617,7 +633,7 @@ sub listen {       #$self->{'listen'} ||= sub {
   $self->{'listener'} = 1;
   $self->myport_generate();
   for ( 1 .. $self->{'myport_tries'} ) {
-    $self->{'socket'} ||= IO::Socket::INET->new(
+    $self->{'socket'} ||= $self->{'socket_class'}->new(
       'LocalPort' => $self->{'myport'},
       'Proto'     => $self->{'Proto'} || 'tcp', (
         $self->{'Proto'} ne 'udp'
@@ -627,14 +643,14 @@ sub listen {       #$self->{'listen'} ||= sub {
       ( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
       #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
       'Blocking' => 0,
-      %{ $self->{'sockopts'} || {} },
+      %{ $self->{'socket_options'} || {} },
     );
     $self->select_add(), last if $self->{'socket'};
     $self->log( 'err', "listen $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
       unless $self->{'socket'};
   }
   $self->log( 'err', 'cant listen' ), return unless $self->{'socket'};
-  $self->log( 'dcdbg', "listening $self->{'myport'} $self->{'Proto'}" );
+  $self->log( 'dcdbg', "listening $self->{'myport'} $self->{'Proto'} with $self->{'socket_class'}" );
   $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
   $self->{'status'} = 'listening';
   #$self->recv_try();
@@ -1392,6 +1408,8 @@ sub file_select {    #$self->{'file_select'} ||= sub {
   $self->{'file_recv_full'} = $self->{'file_recv_dest'};
   $self->{'file_recv_full'} = $self->{'download_to'} . $self->{'file_recv_full'}
     unless $self->{'file_recv_full'} =~ m{[/\\]};
+#$self->log('dcdev', '1full', $self->{'file_recv_full'});
+
 #$self->{'file_recv_dest'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_dest'} if $self->{charset_fs};    # ne $self->{charset_protocol};
 #$self->{'file_recv_dest'}
 #$self->log( 'dcdev', "pre enc filename [$self->{'file_recv_dest'}] [$self->{charset_fs} ne $self->{charset_protocol}]");
@@ -1406,6 +1424,7 @@ sub file_select {    #$self->{'file_select'} ||= sub {
   $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
   $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
     if $self->{'file_recv_size'} and $self->{'file_recv_from'};
+#$self->log('dcdev', '1part', $self->{'file_recv_partial'});
   #$self->log('dcdev', 'file_select3',               $self->{'filename'}, $self->{'fileas'},
   #  'part:', $self->{'file_recv_partial'}, 'full:',             $self->{'file_recv_full'},
   #  'from',  $self->{'file_recv_from'});
@@ -1416,6 +1435,7 @@ sub file_open {    #$self->{'file_open'} ||= sub {
   #$self->{'fileas'}=$_[0] if !length $self->{'fileas'} or length $_[0];
   #$self->{'filetotal'} = $_[1]if ! $self->{'filetotal'} or $_[1];
   #$self->{'filetotal'} //= $self->{'file_recv_size'}
+#$self->log('dcdev', '2part', $self->{'file_recv_partial'});
   my $oparam = $self->{'fileas'} eq '-' ? '>-' : '>>' . $self->{'file_recv_partial'};
   $self->handler( 'file_open_bef', $oparam );
 # $self->log(      'dbg',             "file_open pre", $oparam, 'want bytes', $self->{'filetotal'}, 'as=',      $self->{'fileas'}, 'f=',            $self->{'filename'}    );
@@ -1448,12 +1468,13 @@ sub file_write {    #$self->{'file_write'} ||= sub {
       's at', $self->float( $self->{'filebytes'} / ( ( time - $self->{'file_start_time'} ) or 1 ) ), 'b/s'
       ),
       #$self->disconnect(), $self->{'status'} = 'destroy',
+      $self->file_close(),
       $self->{'file_start_time'} = 0, $self->{'filename'} = '',
       $self->{'fileas'} = '',
       delete $self->{'want'}{ $self->{'peerid'} }{ $self->{'filecurrent'} },
       $self->{'filecurrent'} = '', $self->{'file_recv_partial'} = '',
       $self->{'file_recv_from'} = $self->{'file_recv_to'} = undef,
-      $self->destroy(),
+      #!!?$self->destroy(),
       if $self->{'filebytes'} >= $self->{'filetotal'};
   }
 }
@@ -1470,9 +1491,8 @@ sub file_close {    #$self->{'file_close'} ||= sub {
         local $self->{'file_recv_full'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_full'}
           if $self->{charset_fs};    # ne $self->{charset_protocol};
             #$self->log( 'dcdev', 'file_close', 3, $self->{'file_recv_partial'}, $self->{'file_recv_full'} );
-        $self->log( 'dcerr', 'cant move finished file', $self->{'file_recv_partial'}, $self->{'file_recv_full'} )
-          if !rename $self->{'file_recv_partial'},
-          $self->{'file_recv_full'};
+        $self->log( 'dcerr', 'cant move finished file', $self->{'file_recv_partial'},'=>',$self->{'file_recv_full'} )
+          if !rename $self->{'file_recv_partial'}, $self->{'file_recv_full'};
       }
       delete $self->{'downloading'}{ $self->{'file_recv_tth'} };
       ( $self->{parent} || $self )->handler( 'file_recieved', $self->{'file_recv_full'}, $self->{'filename'} );
