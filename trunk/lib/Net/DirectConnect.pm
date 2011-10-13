@@ -206,7 +206,7 @@ sub new {
     push @modules, keys %{ $self->{$_} } if ref $self->{$_} eq 'HASH';
     push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
-  $self->log('dev', 'modules load', @modules);
+  #$self->log('dev', 'modules load', @modules);
   #$self->log( 'modules load', @modules);
   $self->module_load($_) for @modules;
  
@@ -1002,6 +1002,7 @@ sub work {    #$self->{'work'} ||= sub {
           or !length $self->{'clients'}{$_}{'status'}
           or $self->{'clients'}{$_}{'status'} eq 'destroy'
           or (  $self->{'clients'}{$_}{'status'} ne 'listening'
+          or (  $self->{'clients'}{$_}{'status'} ne 'working'
             and $self->{'clients'}{$_}{inactive_timeout}
             and time - $self->{'clients'}{$_}{activity} > $self->{'clients'}{$_}{inactive_timeout} )
           )
