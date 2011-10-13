@@ -209,6 +209,9 @@ sub new {
   #$self->log('dev', 'modules load', @modules);
   #$self->log( 'modules load', @modules);
   $self->module_load($_) for @modules;
+
+  #$self->log( 'now proto', $self->{'Proto'});
+
  
   $self->{charset_chat} ||= $self->{charset_protocol};
   #$self->protocol_init();
@@ -445,16 +448,16 @@ sub init_main {    #$self->{'init_main'} ||= sub {
   );
   #$self->log(__LINE__, "Proto=$self->{Proto}");
   $self->{'wait_connect_tries'} //= $self->{'Timeout'};
-  $self->{$_} //= $_{$_} for keys %_;
-  $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   $self->{$_} //= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid handler clients);    #want share_full share_tth
          #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
   $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download);
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {},
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
-  $self->{'parent'}{$_} ? $self->{$_} = $self->{'parent'}{$_} : ()
-    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 dev_adcs);
-  #$self->log("Proto=$self->{Proto}, Listen=$self->{Listen}");
+  $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
+    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class); #dev_adcs
+ #$self->log("Proto=$self->{Proto}, Listen=$self->{Listen}");
+  $self->{$_} //= $_{$_} for keys %_;
+  $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
   #psmisc::printlog('dev', 'init0', Dumper $self);
 }
@@ -637,7 +640,7 @@ sub listen {       #$self->{'listen'} ||= sub {
       #or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
   $self->{'listener'} = 1;
   $self->myport_generate();
-  $self->log( 'dev', 'sockopts', Dumper $self->{'socket_options'});
+  #$self->log( 'dev', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}", 'sockopts', Dumper $self->{'socket_options'});
   for ( 1 .. $self->{'myport_tries'} ) {
     $self->{'socket'} ||= $self->{'socket_class'}->new(
       'LocalPort' => $self->{'myport'},
@@ -651,10 +654,11 @@ sub listen {       #$self->{'listen'} ||= sub {
       #( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
       #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
       'Blocking' => 0,
+      #SSL_server=>1,
       %{ $self->{'socket_options'} || {} },
     );
     $self->select_add(), last if $self->{'socket'};
-    $self->log( 'err', "listen $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
+    $self->log( 'err', "listen($self->{'Listen'}) $self->{'myport'} socket error: $@"), $self->myport_generate(1),
       unless $self->{'socket'};
   }
   $self->log( 'err', 'cant listen' ), return unless $self->{'socket'};

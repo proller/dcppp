@@ -353,17 +353,19 @@ sub init {
         }
       }
       #$dst eq 'I' ?
-      $self->log( 'adcdev', "ip change from [$params->{I4}] to [$self->{hostip}] " ), $params->{I4} = $self->{hostip}
-        if $dst eq 'B' and $self->{parent}{hub} and $params->{I4} and $params->{I4} ne $self->{hostip};   #!$self->{parent}{hub}
+	my $v = $self->{hostip} =~ /:/ ? '6' : '4';
+      $self->log( 'adcdev', "ip change from [$params->{qq{I$v}}] to [$self->{hostip}] " ), $params->{"I$v"} = $self->{hostip}
+        if $dst eq 'B' and $self->{parent}{hub} and $params->{"I$v"} and $params->{"I$v"} ne $self->{hostip};   #!$self->{parent}{hub}
+       $v = $self->{recv_hostip} =~ /:/ ? '6' : '4';
       if (                                                                                                #$dst eq 'B' and
         $self->{broadcast}
         )
       {
         $self->log( 'adcdev',
-          "ip change from [$params->{I4}] to [$self->{recv_hostip}:$self->{recv_port}] ($self->{recv_hostip}:$self->{port})" );
+          "ip change from [$params->{qq{I$v}}] to [$self->{recv_hostip}:$self->{recv_port}] ($self->{recv_hostip}:$self->{port})" );
         #$params->{U4} = $self->{recv_port};
-        $params->{U4} ||= $self->{port};
-        $params->{I4} ||= $self->{recv_hostip};
+        $params->{"U$v"} ||= $self->{port};
+        $params->{"I$v"} ||= $self->{recv_hostip};
       }
       if ( $peerid eq $self->{'INF'}{'SID'} and !$self->{myip} ) {
         $self->{myip} ||= $params->{I4};
@@ -903,9 +905,10 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'err', "cant listen http" ) unless $self->{'myport_http'};
     }
     if ( $self->{'hub'} and $self->{'dev_sctp'} ) {
-      $self->log( 'dev', "making listeners: fallback tcp" );
+      $self->log( 'dev', "making listeners: fallback tcp; $self->{'incomingclass'}" );
       $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
         'parent' => $self,
+	'Proto' => 'tcp',
 	(map {$_ => $self->{$_}} qw(myport hub)),
         'auto_listen' => 1,
       );
@@ -921,7 +924,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
 
 
  my $peerid = $self->{'peerid'};
-        $self->log('dev', 'adc disconnecting', $peerid);
+        #$self->log('dev', 'adc disconnecting', $peerid);
     
       delete $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
       delete $self->{'peers_sid'}{$peerid};
