@@ -854,7 +854,7 @@ sub select {    #$self->{'select'} ||= sub {
   #$self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
   #my ( $readed, $reads );
   #$self->{'databuf'} = '';
-  #$self->log( 'dev', 'select', 'bef', $sleep, $nosend , caller, '::::', caller 1, );
+  #$self->log( 'dev', 'select', 'bef', $sleep, $nosend , );
   my ( $recv, $send, $exeption ) = IO::Select->select( $self->{'select'}, ($nosend ? undef : $self->{'select_send'}), $self->{'select'}, $sleep );
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
@@ -870,28 +870,34 @@ sub select {    #$self->{'select'} ||= sub {
     ++$ret,;
   }
   #for (@$recv, @$send) {
+=hm
   for ( keys %{ $self->{sockets} } ) {
     #$self->log( 'dev', 'connected chk' , $self->{sockets}{$_}{socket}, $self->{sockets}{$_}{socket}->connected());
     #$self->log( 'dev', 'connected call' ),
     $self->{sockets}{$_}->connected(), ++$ret,
       if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
   }
+=cut
+  for (@$send) {
+    next unless $self->{sockets}{$_};
+    $self->{sockets}{$_}->connected(), ++$ret,
+      if  $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
+    #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
+    #++$self->{sockets}{$_}{send_can};
+    #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
+    $ret += $self->{sockets}{$_}->send_can();
+    if ( $self->{sockets}{$_}{'filehandle_send'} ) {
+      $ret += $self->{sockets}{$_}->file_send_part();
+    }
+    #$self->{sockets}{$_}->send();
+  }
   for (@$recv) {
+    #next unless $self->{sockets}{$_};
     $self->log( 'err', 'no object for recv handle', $_, ), next,
       #if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
       if !ref $self->{sockets}{$_} or ref $self->{sockets}{$_} eq 'HASH';
     #$self->log( 'dev',ref $self->{sockets}{$_});
     $ret += $self->{sockets}{$_}->recv($_);
-  }
-  for (@$send) {
-    #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
-    #++$self->{sockets}{$_}{send_can};
-    #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
-    $ret += $self->{sockets}{$_}->send_can() if $self->{sockets}{$_};
-    if ( $self->{sockets}{$_}{'filehandle_send'} ) {
-      $ret += $self->{sockets}{$_}->file_send_part();
-    }
-    #$self->{sockets}{$_}->send();
   }
   #if ( $self->{'filehandle_send'} ) { $self->file_send_part(); }
   #$self->{'recv_runned'}{ $self->{'number'} } = undef;
