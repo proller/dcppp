@@ -73,6 +73,7 @@ sub tiger ($) {
 }
 sub hash ($) { base32( tiger( $_[0] ) ); }
 =cut
+
 #sub init {  my $self = shift;
 
 =cu
@@ -89,7 +90,6 @@ return $self;
 
 }
 =cut
-
 sub func {
   my $self = shift if ref $_[0];
   #warn 'func call';
@@ -169,21 +169,20 @@ sub func {
       . $Net::DirectConnect::VERSION . '_'
       . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
     $self->{'INF'}{'US'} ||= 10000;
-    my $domain = '4';
+    my $domain    = '4';
     my $domaindel = '4';
-    if ($self->{'myip'} =~ /:/) {
-    $domain= '6';
-    $domaindel = '4';
-    }
-    $self->{'INF'}{'U'.$domain} = $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
-    $self->{'INF'}{'I'.$domain} = $self->{'myip'};
-    $self->{'INF'}{'S'.$domain} = $self->{'myport_sctp'};                        # if $self->{'myport_sctp'};
-    
-    delete $self->{'INF'}{$_.$domaindel} for qw(I);
-    if ($self->{'ipv6_only'}) {
-      delete $self->{'INF'}{$_.$domaindel} for qw(U S);
-    }
 
+    if ( $self->{'myip'} =~ /:/ ) {
+      $domain    = '6';
+      $domaindel = '4';
+    }
+    $self->{'INF'}{ 'U' . $domain } = $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
+    $self->{'INF'}{ 'I' . $domain } = $self->{'myip'};
+    $self->{'INF'}{ 'S' . $domain } = $self->{'myport_sctp'};                        # if $self->{'myport_sctp'};
+    delete $self->{'INF'}{ $_ . $domaindel } for qw(I);
+    if ( $self->{'ipv6_only'} ) {
+      delete $self->{'INF'}{ $_ . $domaindel } for qw(U S);
+    }
     $self->{'INF'}{'SU'} ||= join ',', keys %{ $self->{'SU'} || {} };
     return $self->{'INF'};
   };
@@ -199,7 +198,7 @@ sub init {
   #%$self = (
   #%$self,
   local %_ = (
-    'Nick'     => 'NetDCBot',
+    'Nick' => 'NetDCBot',
     #'port'     => 412,
     'host'     => 'localhost',
     'protocol' => 'adc',
@@ -209,9 +208,9 @@ sub init {
     #'auto_wait'        => 1,
     'reconnects' => 99999, 'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
-    'protocol_connect' => 'ADC/1.0',
-    'protocol_supported' => {map {$_=>$_}qw(ADC/1.0)}, #ADCS/0.10
-     'message_type' => 'H',
+    'protocol_connect'   => 'ADC/1.0',
+    'protocol_supported' => { map { $_ => $_ } qw(ADC/1.0) },    #ADCS/0.10
+    'message_type'       => 'H',
     #@_,
     'incomingclass' => __PACKAGE__,                               #'Net::DirectConnect::adc',
     no_print        => { 'INF' => 1, 'QUI' => 1, 'SCH' => 1, },
@@ -307,6 +306,7 @@ sub init {
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
+
       #$self->log('adcdev', 'SUPans:', $peerid, $self->{'peers'}{$peerid}{'INF'}{I4}, $self->{'peers'}{$peerid}{'INF'}{U4});
       #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; #can answer direct
       #local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4};
@@ -338,12 +338,12 @@ sub init {
       #}
       my $peersid = $peerid;
       if ( $dst ne 'B' and $peerid ||= $params->{ID} ) {
-        $self->log('adcdev', 'INF:', "moving peer '' to $peerid");
+        $self->log( 'adcdev', 'INF:', "moving peer '' to $peerid" );
         $self->{'peerid'} ||= $peerid;
         $self->{'peers'}{$peerid}{$_} = $self->{'peers'}{''}{$_} for keys %{ $self->{'peers'}{''} || {} };
         delete $self->{'peers'}{''};
       }
-        $self->log('adcdev', 'INF:', "existing '' peer: $peerid") if $self->{'peers'}{''};
+      $self->log( 'adcdev', 'INF:', "existing '' peer: $peerid" ) if $self->{'peers'}{''};
       my $sendbinf;
       if ( $self->{parent}{hub} and $dst eq 'B' ) {
         if ( !keys %{ $self->{'peers'}{$peerid}{'INF'} } ) {    #join
@@ -353,16 +353,20 @@ sub init {
         }
       }
       #$dst eq 'I' ?
-	my $v = $self->{hostip} =~ /:/ ? '6' : '4';
+      my $v = $self->{hostip} =~ /:/ ? '6' : '4';
       $self->log( 'adcdev', "ip change from [$params->{qq{I$v}}] to [$self->{hostip}] " ), $params->{"I$v"} = $self->{hostip}
-        if $dst eq 'B' and $self->{parent}{hub} and $params->{"I$v"} and $params->{"I$v"} ne $self->{hostip};   #!$self->{parent}{hub}
-       $v = $self->{recv_hostip} =~ /:/ ? '6' : '4';
-      if (                                                                                                #$dst eq 'B' and
+        if $dst eq 'B'
+          and $self->{parent}{hub}
+          and $params->{"I$v"}
+          and $params->{"I$v"} ne $self->{hostip};    #!$self->{parent}{hub}
+      $v = $self->{recv_hostip} =~ /:/ ? '6' : '4';
+      if (                                            #$dst eq 'B' and
         $self->{broadcast}
         )
       {
         $self->log( 'adcdev',
-          "ip change from [$params->{qq{I$v}}] to [$self->{recv_hostip}:$self->{recv_port}] ($self->{recv_hostip}:$self->{port})" );
+"ip change from [$params->{qq{I$v}}] to [$self->{recv_hostip}:$self->{recv_port}] ($self->{recv_hostip}:$self->{port})"
+        );
         #$params->{U4} = $self->{recv_port};
         $params->{"U$v"} ||= $self->{port};
         $params->{"I$v"} ||= $self->{recv_hostip};
@@ -528,8 +532,9 @@ sub init {
       my ( $dst, $peerid, $toid ) = @{ shift() };
       $toid ||= shift;
       #$self->log( 'dcdev', "( $dst, RCM, $peerid, $toid  me=[$self->{'INF'}{'SID'}:$self->{'myport'}] )", @_ );
-      
-      $self->cmd( $dst, 'CTM', $peerid, $self->{'protocol_supported'}{$_[0]}||$self->{'protocol_connect'}, $self->{'myport'}, $_[1], ) if $toid eq $self->{'INF'}{'SID'};
+      $self->cmd( $dst, 'CTM', $peerid, $self->{'protocol_supported'}{ $_[0] } || $self->{'protocol_connect'},
+        $self->{'myport'}, $_[1], )
+        if $toid eq $self->{'INF'}{'SID'};
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'RCM', $peerid, $toid, @_ );
       }
@@ -550,6 +555,7 @@ sub init {
         'auto_connect' => 1,
       );
 =cut
+
     },
     'CTM' => sub {
       my $self = shift if ref $_[0];
@@ -605,6 +611,7 @@ sub init {
         $self->log( 'dcerr', 'SND', "unknown type", @_ );
       }
 =cut
+
     },
   };
 
@@ -618,6 +625,7 @@ sub init {
 
 
 =cut  
+
   $self->{'cmd'} = {
     #move to main
     'search_send' => sub {
@@ -640,7 +648,7 @@ sub init {
       my $string = shift;
       if ( $self->{'adc'} ) {
         #$self->cmd( 'search_buffer', { TO => 'auto', map AN => $_, split /\s+/, $string } );
-        $self->search_buffer(( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), @_ } );    #TOauto
+        $self->search_buffer( ( map { 'AN' . $_ } split /\s+/, $string ), { TO => $self->make_token(), @_ } );    #TOauto
       } else {
         #$self->{'search_last_string'} = $string;
         #$string =~ tr/ /$/;
@@ -789,6 +797,7 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
+
   #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
   if ( !$self->{'no_listen'} ) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
@@ -875,6 +884,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'err', "cant listen broadcast (hubless)" ) unless $self->{'clients'}{'listener_udp_broadcast'}{'myport'};
     }
 =cut
+
     if ( $self->{'dev_http'} ) {
       $self->log( 'dev', "making listeners: http" );
       #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
@@ -908,8 +918,8 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'dev', "making listeners: fallback tcp; $self->{'incomingclass'}" );
       $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
         'parent' => $self,
-	'Proto' => 'tcp',
-	(map {$_ => $self->{$_}} qw(myport hub)),
+        'Proto'  => 'tcp',
+        ( map { $_ => $self->{$_} } qw(myport hub) ),
         'auto_listen' => 1,
       );
       $self->{'myport_tcp'} = $self->{'clients'}{'listener_tcp'}{'myport'};
@@ -919,26 +929,20 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
   }
   #=cut
   $self->{'handler_int'}{'disconnect_aft'} = sub {
-      my $self = shift if ref $_[0];
-
-
-
- my $peerid = $self->{'peerid'};
-        #$self->log('dev', 'adc disconnecting', $peerid);
-    
-      delete $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
-      delete $self->{'peers_sid'}{$peerid};
-      delete $self->{'peers'}{$self->{'peers'}{$peerid}{'INF'}{'ID'}};
-      delete $self->{'peers'}{$peerid};
-
+    my $self = shift if ref $_[0];
+    my $peerid = $self->{'peerid'};
+    #$self->log('dev', 'adc disconnecting', $peerid);
+    delete $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
+    delete $self->{'peers_sid'}{$peerid};
+    delete $self->{'peers'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
+    delete $self->{'peers'}{$peerid};
     $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'};
     delete $self->{'INF'}{'SID'} unless $self->{'parent'};
     $self->log(
       'dev',  'disconnect int',           #psmisc::caller_trace(30)
       'hub=', $self->{'parent'}{'hub'},
-      )
-      ;#if $self and $self->{'log'};
-    #psmisc::caller_trace 15;
+    );                                    #if $self and $self->{'log'};
+                                          #psmisc::caller_trace 15;
   };
   $self->get_peer_addr() if $self->{'socket'};
   $self->log( 'err', 'cant load TigerHash module' ) unless $INC{'Net/DirectConnect/TigerHash.pm'};

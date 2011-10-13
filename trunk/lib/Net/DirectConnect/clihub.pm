@@ -79,8 +79,7 @@ sub init {
       #$self->log( 'dev', Dumper \@_);
       my ( $nick, $text ) = $_[0] =~ /^(?:<|\* )(.+?)>? (.+)$/s;
       #$self->log('dcdev', 'chatline parse', Dumper(\@_,$nick, $text));
-      $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->nick_generate(),
-        $self->reconnect(),
+      $self->log( 'warn', "[$nick] oper: already in the hub [$self->{'Nick'}]" ), $self->nick_generate(), $self->reconnect(),
         if ( ( !keys %{ $self->{'NickList'} } or $self->{'NickList'}{$nick}{'oper'} )
         and $text eq 'You are already in the hub.' );
       if ( $self->{'NickList'}{$nick}{'oper'} or $self->{'NickList'}{$nick}{'hubbot'} or $nick eq 'Hub-Security' ) {
@@ -400,6 +399,7 @@ sub init {
 
 
 =cut  
+
   #$self->{'cmd'} = {
   local %_ = (
     'connect_aft' => sub {
@@ -502,7 +502,7 @@ sub init {
       $_[3] ||= ( $_[4] =~ s/^(TTH:)?([A-Z0-9]{39})$/TTH:$2/ ? '9' : '1' ) unless defined $_[3];
       #
       #$self->cmd( 'search_buffer', 'F', 'T', '0', '1', @_ );
-      $self->search_buffer( @_ );
+      $self->search_buffer(@_);
     },
     'search_tth' => sub {
       my $self = shift if ref $_[0];
@@ -632,6 +632,7 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
+
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};

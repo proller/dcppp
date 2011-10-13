@@ -156,7 +156,6 @@ for my $arg (@ARGV) {
         for qw(queries_top_string_ queries_top_tth_ results_top_);
     }
 =cut
-
   } elsif ( $arg eq 'stat' ) {
     $ARGV[$n]             = undef;
     $db->{'auto_repair'}  = 1;
@@ -434,7 +433,6 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
             }
           );
 =cut
-
           ++$work{'stat'}{'QUI'};
         },
         'RES' => sub {    #TODO
@@ -473,7 +471,6 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
       $dc->destroy();
     };
 =cut	
-
     push @dc, $dc;
     $_->work() for @dc;
   }
@@ -533,6 +530,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     }
   ) if $config{'debug'};
 =cut
+
 }
 psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc if @dc;
 #psmisc::caller_trace(20);

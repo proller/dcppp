@@ -8,12 +8,9 @@ use Socket6;
 use IO::Socket::INET6;
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
-
 sub init {
   my $self = shift if ref $_[0];
-
-   $self->{'socket_class'} = 'IO::Socket::INET6';
-   #$self->{'socket_options'}{Domain} = AF_INET6;
+  $self->{'socket_class'} = 'IO::Socket::INET6';
+  #$self->{'socket_options'}{Domain} = AF_INET6;
 }
-
 6;

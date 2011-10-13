@@ -1,4 +1,13 @@
 # $Id$ $URL$
+0.11: 
+lot of fixes, better select (cpu usage)
+unfinished adc ipv6 support
+unfinished acds support
+both automatic on client, but manual for hub:
+# $config{dc}{dev_ipv6} = 1; 
+# $config{dc}{protocol} = 'acds'; 
+
+
 0.10: 
 non blocking connect fixed
 
