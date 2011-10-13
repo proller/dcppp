@@ -32,15 +32,16 @@ sub mkdir_rec(;$$) {
 sub send_udp ($$;@) {
   my $self = shift if ref $_[0];
   my $host = shift;
-  $host =~ s/:(\d+)$//;
-  my $port = shift;
-  $port ||= $1;
-  $self->log( 'dcdev', "sending UDP to [$host]:[$port] = [$_[0]]" );
+  #$host =~ s/:(\d+)$//;
+  #my $port = shift;
+  #$port ||= $1;
+  #$self->log( 'dcdev', "sending UDP to [$host]:[$port] = [$_[0]]" );
+  $self->log( 'dcdev', "sending UDP to [$host] = [$_[0]]" );
   my $opt = $_[1] || {};
   if (
     my $s = $self->{'socket_class'}->new(
       'PeerAddr' => $host,
-      'PeerPort' => $port,
+      #'PeerPort' => $port,
       'Proto'    => 'udp',
       'Timeout'  => $opt->{'Timeout'}, (
         #$opt->{'nonblocking'} ? (
@@ -59,7 +60,8 @@ sub send_udp ($$;@) {
     #close($s);
     #$self->log( 'dcdev', "sent ",length $_[0]," closed [$s],");
   } else {
-    $self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
+    #$self->log( 'dcerr', "FAILED sending UDP to $host :$port = [$_[0]]" );
+    $self->log( 'dcerr', "FAILED sending UDP to $host = [$_[0]]" );
   }
 }
 
@@ -192,19 +194,18 @@ sub new {
       ++$self->{'module'}{ $self->{'hub'} ? 'hubcli' : 'clihub' };
     }
 
-    ++$self->{'module'}{'ipv6'} if $self->{'dev_ipv6'};
-    ++$self->{'module'}{'adcs'} if $self->{'dev_adcs'};
+    ++$self->{'module'}{$_} for grep { $self->{'dev_'.$_} } qw(ipv6 adcs sctp);
     
     #$self->log( 'module load', $self->{'module'});
     #if ( $self->{'module'} ) {
   }
-  #psmisc::printlog('dev', 'modules load', ( $self->{'module'}, @{ $self->{'modules'} || [] } ));
   my @modules;    #= ($self->{'module'});
   for (qw(module modules)) {
     push @modules, @{ $self->{$_} }      if ref $self->{$_} eq 'ARRAY';
     push @modules, keys %{ $self->{$_} } if ref $self->{$_} eq 'HASH';
     push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
+  $self->log('dev', 'modules load', @modules);
   #$self->log( 'modules load', @modules);
   $self->module_load($_) for @modules;
   #@param
@@ -234,11 +235,6 @@ sub new {
     }
   }
   #$self->log('dev', 'sctp', $self->{'dev_sctp'});
-  if ( $self->{'dev_sctp'} ) {
-    #use Data::Dumper;
-    $self->{'Proto'} = 'sctp';
-    #dev_sctp=>1,
-  }
   if ( $self->{'auto_listen'} ) {
     #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
     $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};
@@ -528,9 +524,9 @@ sub connect {    #$self->{'connect'} ||= sub {
     my $p = lc $1;
     #$self->protocol_init($p) if $p =~ /^adc/;
     $self->{'host'} =~ s{/.*}{}g;
-    $self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
+    #$self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
   }
-  $self->{'port'} = $_[1] if $_[1];
+  #$self->{'port'} = $_[1] if $_[1];
   #print "Hhohohhhh" ,$self->{'protocol'},$self->{'host'};
   return 0
     if ( $self->{'socket'} and $self->{'socket'}->connected() )
@@ -543,19 +539,19 @@ sub connect {    #$self->{'connect'} ||= sub {
   #$self->{'status'}   = 'connecting';
   $self->{'status'}   = 'connecting_tcp';
   $self->{'outgoing'} = 1;
-  $self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
+  #$self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
   delete $self->{'recv_buf'};
   #$self->log('dev', 'conn strt', $self->{'Timeout'}, $self->{'Proto'}, Socket::SOCK_STREAM);
   $self->{'socket'} ||= $self->{'socket_class'}->new(
     'PeerAddr' => $self->{'host'},
-    'PeerPort' => $self->{'port'},
-    'Proto'    => $self->{'Proto'} || 'tcp',
-    ( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
+    ($self->{'port'} ? ('PeerPort' => $self->{'port'}) : ()),
+    ($self->{'Proto'} ? ('Proto'   => $self->{'Proto'}) : ()),
+    #( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
     #'Timeout'  => $self->{'Timeout'},
     #(
     #$self->{'nonblocking'} ? (
     'Blocking' => 0,
-    #'MultiHomed' => 1,    #del
+    'MultiHomed' => 1,    #del
     #) : ()
     #),
     %{ $self->{'socket_options'} || {} },
@@ -595,7 +591,8 @@ sub connected {    #$self->{'connected'} ||= sub {
 #$self->log( 'dev',  'timeout to', $self->{'Timeout_connected'});
   $self->{'socket'}->timeout( $self->{'Timeout_connected'} ) if $self->{'Timeout_connected'};
   $self->get_peer_addr();
-  $self->{'hostip'} ||= $self->{'host'};
+  $self->get_my_addr();
+  #!$self->{'hostip'} ||= $self->{'host'};
   #my $localmask ||= join '|', @{ $self->{'local_mask_rfc'} || [] }, @{ $self->{'local_mask'} || [] };
   my $localmask ||= join '|', map { ref $_ eq 'ARRAY' ? @$_ : $_ }
     grep { $_ } $self->{'local_mask_rfc'},
@@ -632,15 +629,18 @@ sub listen {       #$self->{'listen'} ||= sub {
       #or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
   $self->{'listener'} = 1;
   $self->myport_generate();
+  $self->log( 'dev', 'sockopts', Dumper $self->{'socket_options'});
   for ( 1 .. $self->{'myport_tries'} ) {
     $self->{'socket'} ||= $self->{'socket_class'}->new(
       'LocalPort' => $self->{'myport'},
-      'Proto'     => $self->{'Proto'} || 'tcp', (
+      #'Proto'     => $self->{'Proto'} || 'tcp', 
+      ($self->{'Proto'} ? ('Proto'   => $self->{'Proto'} ): ()),
+      (
         $self->{'Proto'} ne 'udp'
         ? ( 'Listen' => $self->{'Listen'} )
         : ()
       ),
-      ( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
+      #( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
       #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
       'Blocking' => 0,
       %{ $self->{'socket_options'} || {} },
@@ -1723,7 +1723,8 @@ sub file_send_parse {    #$self->{'file_send_parse'} =
 }
 
 sub download {    #$self->{'download'} ||= sub {
-  my $self = shift;
+  my $self = shift if ref $_[0];
+  #my $self = shift;
   my ($file) = @_;
   #$self->log('dev', "0s=[$self]; download [$file] now $self->{'want_download'}{$file} ", Dumper \@_);
   push @{ $self->{'queue_download'} ||= [] }, $file;
@@ -1732,8 +1733,15 @@ sub download {    #$self->{'download'} ||= sub {
 }
 
 sub get_peer_addr {    #$self->{'get_peer_addr'} ||= sub () {
-  my ( $self, $recv ) = @_;
+  my $self = shift if ref $_[0];
+  my ( $recv ) = @_;
   return unless $self->{'socket'};
+  $self->{'port'} = $self->{'socket'}->peerport();
+  $self->{'hostip'} = $self->{'socket'}->peerhost();
+  $self->{'host'} ||= $self->{'hostip'};
+  return $self->{'hostip'};
+
+=no
   local @_ = socket_addr $self->{'socket'};
   #eval { @_ = unpack_sockaddr_in( getpeername( $self->{'socket'} ) || return ) };
   #return unless $_[1];
@@ -1742,10 +1750,13 @@ sub get_peer_addr {    #$self->{'get_peer_addr'} ||= sub () {
   $self->{'hostip'} = $_[1], $self->{'host'} ||= $self->{'hostip'}
     if $_[1];
   return $self->{'hostip'};
+=cut
+
 }
 
 sub get_peer_addr_recv {               #$self->{'get_peer_addr_recv'} ||= sub (;$) {
-  my ( $self, $recv ) = @_;
+  my $self = shift if ref $_[0];
+  my ( $recv ) = @_;
   #return unless $self->{'socket'};
   $recv ||= $self->{'recv_addr'};
   ( $self->{'recv_port'}, my $hostn ) = sockaddr_in($recv);
@@ -1755,8 +1766,13 @@ sub get_peer_addr_recv {               #$self->{'get_peer_addr_recv'} ||= sub (;
 }
 
 sub get_my_addr {                      #$self->{'get_my_addr'} ||= sub {
-  my ($self) = @_;
+  my $self = shift if ref $_[0];
+  #my ($self) = @_;
   return unless $self->{'socket'};
+  #$self->log('dev', 'saddr', $self->{'socket'}->sockhost(), IO::Socket::INET::sockhost($self->{'socket'}));
+  $self->{'myport'} = $self->{'socket'}->sockport();
+  return $self->{'myip'} = $self->{'socket'}->sockhost();
+=no  
   eval { @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) || return ); };
   $self->log( 'dcerr', "cant get my ip [$@]", Dumper \@_ ) if $@;
   #$self->log('dcerr', "cant get my ip [0.0.0.0:$_[0]]"),
@@ -1768,10 +1784,12 @@ sub get_my_addr {                      #$self->{'get_my_addr'} ||= sub {
   #return if $_[1] eq '0.0.0.0';
   #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
   return $self->{'myip'} ||= $_[1];
+=cut
 }
 
 sub info {    #$self->{'info'} ||= sub {
-  my $self = shift;
+  my $self = shift if ref $_[0];
+  #my $self = shift;
   $self->log(
     'info',
     map( {"$_=$self->{$_}"} grep { $self->{$_} } @{ $self->{'informative'} } ),
@@ -1801,7 +1819,8 @@ sub info {    #$self->{'info'} ||= sub {
 #}
 #$self->{'active'} ||= sub {
 sub active {
-  my $self = shift;
+  #my $self = shift;
+  my $self = shift if ref $_[0];
   #$self->log('dev', 'active=', $self->{'status'});
   return $self->{'status'}
     if grep { $self->{'status'} eq $_ } qw(connecting_tcp connecting connected reconnecting listening transfer working);

@@ -149,7 +149,7 @@ sub func {
   #$self->log( 'sub igen ', );
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
-#$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'},$self->{'myport_sctp'}, $self->{'myip'}, Dumper $self->{'INF'});
+$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'},$self->{'myport_sctp'}, $self->{'myip'}, Dumper $self->{'INF'});
 #$self->{'clients'}{'listener_udp'}
     $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
     $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
@@ -169,9 +169,21 @@ sub func {
       . $Net::DirectConnect::VERSION . '_'
       . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
     $self->{'INF'}{'US'} ||= 10000;
-    $self->{'INF'}{'U4'} = $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
-    $self->{'INF'}{'I4'} = $self->{'myip'};
-    $self->{'INF'}{'S4'} = $self->{'myport_sctp'};                        # if $self->{'myport_sctp'};
+    my $domain = '4';
+    my $domaindel = '4';
+    if ($self->{'myip'} =~ /:/) {
+    $domain= '6';
+    $domaindel = '4';
+    }
+    $self->{'INF'}{'U'.$domain} = $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
+    $self->{'INF'}{'I'.$domain} = $self->{'myip'};
+    $self->{'INF'}{'S'.$domain} = $self->{'myport_sctp'};                        # if $self->{'myport_sctp'};
+    
+    delete $self->{'INF'}{$_.$domaindel} for qw(I);
+    if ($self->{'ipv6_only'}) {
+      delete $self->{'INF'}{$_.$domaindel} for qw(U S);
+    }
+
     $self->{'INF'}{'SU'} ||= join ',', keys %{ $self->{'SU'} || {} };
     return $self->{'INF'};
   };
@@ -188,7 +200,7 @@ sub init {
   #%$self,
   local %_ = (
     'Nick'     => 'NetDCBot',
-    'port'     => 412,
+    #'port'     => 412,
     'host'     => 'localhost',
     'protocol' => 'adc',
     'adc'      => 1,
@@ -231,7 +243,7 @@ sub init {
   #  $self->{'disconnect_recursive'} = 1;
   #}
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
-  $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport);
+  $self->{$_} ||= $self->{'parent'}{$_} for qw(ID PID CID INF SUPAD myport ipv6_only);
   # Proto
   $self->{message_type} = 'B' if $self->{'broadcast'};
   #$self->log( 'funci', );
@@ -356,7 +368,7 @@ sub init {
       if ( $peerid eq $self->{'INF'}{'SID'} and !$self->{myip} ) {
         $self->{myip} ||= $params->{I4};
         $self->{'INF'}{'I4'} ||= $params->{I4};
-        $self->log( 'adcdev', "ip  detected: [$self->{myip}:$self->{myport}]" );
+        $self->log( 'adcdev', "ip detected: [$self->{myip}:$self->{myport}]" );
       }
       #my $first_seen;
       #$first_seen = 1 unless $self->{'peers'}{$peerid}{INF};
