@@ -6,7 +6,6 @@
 dev hub test
 
 =cut
-
 use strict;
 use Time::HiRes;
 use Data::Dumper;    #dev only
@@ -27,7 +26,7 @@ my $dc = Net::DirectConnect->new(
   hub        => 1,
   no_print   => undef,
   myport     => 413,
-  'log' => sub {
+  'log'      => sub {
     my $dc = ref $_[0] ? shift : {};
     #psmisc::printlog shift(), $dc->{'number'}, join ' ', psmisc::human('time'), @_, "\n";
     psmisc::printlog shift(), "[$dc->{'number'}]", @_,;
@@ -37,7 +36,7 @@ my $dc = Net::DirectConnect->new(
     #warn('hubwork');
     #Time::HiRes::sleep 0.1;
   },
-  %{ $config{dc} || {} },
+  %{ $config{dc}    || {} },
   %{ $config{dchub} || {} },
 );
 #$dc->work(100);      #seconds
@@ -56,5 +55,4 @@ while ( $dc->active() ) {
 #$dc->wait_finish();
 $dc->disconnect();
 =cut
-
 #$dc = undef;

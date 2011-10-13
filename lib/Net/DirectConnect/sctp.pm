@@ -7,11 +7,9 @@ use Socket;
 #use IO::Socket::INET6;
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
-
 sub init {
   my $self = shift if ref $_[0];
-    $self->{'Proto'} = 'sctp';
+  $self->{'Proto'} = 'sctp';
   $self->{'socket_options'}{Type} = Socket::SOCK_STREAM;
 }
-
 6;

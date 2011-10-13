@@ -5,16 +5,10 @@ use strict;
 use IO::Socket::SSL;
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
-
 sub init {
   my $self = shift if ref $_[0];
-   $self->module_load('adc');
-   $self->{'protocol_supported'}{$_} = $_ for qw(ADCS/0.10), 
-
-   $self->{'socket_class'} = 'IO::Socket::SSL';
-   #$self->{'adcs'}
-   
+  $self->module_load('adc');
+  $self->{'protocol_supported'}{$_} = $_ for qw(ADCS/0.10), $self->{'socket_class'} = 'IO::Socket::SSL';
+  #$self->{'adcs'}
 }
-
-
 6;
