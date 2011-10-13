@@ -599,7 +599,7 @@ sub connected {    #$self->{'connected'} ||= sub {
 #$self->log( 'dev',  'timeout to', $self->{'Timeout_connected'});
   $self->{'socket'}->timeout( $self->{'Timeout_connected'} ) if $self->{'Timeout_connected'};
   $self->get_peer_addr();
-  $self->get_my_addr();
+  #$self->get_my_addr();
   #!$self->{'hostip'} ||= $self->{'host'};
   #my $localmask ||= join '|', @{ $self->{'local_mask_rfc'} || [] }, @{ $self->{'local_mask'} || [] };
   my $localmask ||= join '|', map { ref $_ eq 'ARRAY' ? @$_ : $_ }
@@ -1811,7 +1811,7 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   my $self = shift if ref $_[0];
   #my ($self) = @_;
   return unless $self->{'socket'};
-  #$self->log('dev', 'saddr', $self->{'socket'}->sockhost(), IO::Socket::INET::sockhost($self->{'socket'}));
+  $self->log('dev', 'saddr', $self->{'socket'}->sockhost(),$self->{'socket'}->sockport() );
   $self->{'myport'} = $self->{'socket'}->sockport();
   return $self->{'myip'} = $self->{'socket'}->sockhost();
 
@@ -1987,9 +1987,9 @@ sub say {    #$self->{'say'} = sub (@) {
 sub search {    #'search' => sub {
   my $self = shift if ref $_[0];
   #$self->log( 'search', @_ );
-  return $self->cmd( 'search_tth', @_ )
+  return $self->search_tth( @_ )
     if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
-  return $self->cmd( 'search_string', @_ ) if length $_[0];
+  return $self->search_string( @_ ) if length $_[0];
 }
 
 sub search_retry {    #'search_retry' => sub {
@@ -2009,7 +2009,7 @@ sub search_buffer {    #'search_buffer' => sub {
     if time() - $self->{'search_last_time'} < $self->{'search_every'} + 2;
   $self->{'search_last'} = shift( @{ $self->{'search_todo'} } );
   $self->{'search_todo'} = undef unless @{ $self->{'search_todo'} };
-  $self->cmd('search_send');
+  $self->search_send();
 #if ( $self->{'adc'} ) {
 #}      else {
 #$self->sendcmd( 'Search', $self->{'M'} eq 'P' ? 'Hub:' . $self->{'Nick'} : "$self->{'myip'}:$self->{'myport_udp'}", join '?', @{ $self->{'search_last'} } );
