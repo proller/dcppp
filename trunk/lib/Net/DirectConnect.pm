@@ -668,7 +668,7 @@ sub listen {       #$self->{'listen'} ||= sub {
       unless $self->{'socket'};
   }
   $self->log( 'err', 'cant listen' ), return unless $self->{'socket'};
-  $self->log( 'dcdbg', "listening $self->{'myport'} $self->{'Proto'} with $self->{'socket_class'}" );
+  $self->log( 'info', "listening $self->{'myport'} $self->{'Proto'} with $self->{'socket_class'}" );
   $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
   $self->{'status'} = 'listening';
   #$self->select();
@@ -749,7 +749,7 @@ sub recv {    # $self->{'recv'} ||= sub {
         unless $self->{'incomingclass'};
       my ( undef, $host ) = socket_addr $_;
       ;    # || $self->{parent}{'allow'};
-           #$self->log( 'warn', "$host eq $allow ");
+      $self->log( 'info', "incoming [$host] to $self->{'incomingclass'}");
       if ( my $allow = $self->{'allow'} ) {
         my ( undef, $host ) = socket_addr $_;
         $self->log( 'warn', "disallowed connect from $host" ), return
