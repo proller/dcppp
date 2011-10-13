@@ -149,7 +149,7 @@ sub func {
   #$self->log( 'sub igen ', );
   $self->{INF_generate} ||= sub {
     my $self = shift if ref $_[0];
-$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'},$self->{'myport_sctp'}, $self->{'myip'}, Dumper $self->{'INF'});
+#$self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'},$self->{'myport_sctp'}, $self->{'myip'}, Dumper $self->{'INF'});
 #$self->{'clients'}{'listener_udp'}
     $self->{'INF'}{'NI'} ||= $self->{'Nick'} || 'perlAdcDev';
     $self->{'PID'} ||= MIME::Base32::decode $self->{'INF'}{'PD'} if $self->{'INF'}{'PD'};
@@ -192,7 +192,7 @@ $self->log( 'dev', 'inf_generate', $self->{'myport'},$self->{'myport_udp'},$self
 
 sub init {
   my $self = shift if ref $_[0];
-  #$self->log( 'init s=', $self, $self->{number});
+  #$self->log( 'init s=', $self, $self->{number}, __PACKAGE__);
   #shift if $_[0] eq __PACKAGE__;
   #print "adcinit SELF=", $self, "REF=", ref $self, "  P=", @_, "package=", __PACKAGE__, "\n\n";
   #$self->SUPER::new();

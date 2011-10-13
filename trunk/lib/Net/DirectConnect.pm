@@ -108,6 +108,7 @@ sub module_load {
   my $self = shift if ref $_[0];
   local $_ = shift;
   return unless length $_;
+  return if $self->{'module_loaded'}{$_}++;
   my $module = __PACKAGE__ . '::' . $_;
   #eval "use $module;";
   $self->log( 'err', 'cant load', $module, $@ ), return unless use_try $module;
@@ -123,7 +124,7 @@ sub module_load {
   #$self->log( 'err', 'cant new', $module, $@ ), return if $@;
   #eval "$module\::init(\$self, \@_);";    #, \@param
   #$self->log( 'err', 'cant init', $module, $@ ), return if $@;
-  #$self->log( 'dev', 'loaded  module', $_, $module, );
+  #$self->log( 'dev', 'loaded  module', $module, );
   1;
 }
 
@@ -194,7 +195,7 @@ sub new {
       ++$self->{'module'}{ $self->{'hub'} ? 'hubcli' : 'clihub' };
     }
 
-    ++$self->{'module'}{$_} for grep { $self->{'dev_'.$_} } qw(ipv6 adcs sctp);
+    ++$self->{'module'}{$_} for grep { $self->{'dev_'.$_} } qw(ipv6 sctp);
     
     #$self->log( 'module load', $self->{'module'});
     #if ( $self->{'module'} ) {
@@ -208,8 +209,7 @@ sub new {
   $self->log('dev', 'modules load', @modules);
   #$self->log( 'modules load', @modules);
   $self->module_load($_) for @modules;
-  #@param
-  #}
+ 
   $self->{charset_chat} ||= $self->{charset_protocol};
   #$self->protocol_init();
   #$self->log( 'dev', $self, 'new inited', "MT:$self->{'message_type'}", 'autolisten=', $self->{'auto_listen'} );
@@ -522,6 +522,7 @@ sub connect {    #$self->{'connect'} ||= sub {
     $self->{'host'} = $_[0] if $_[0];
     $self->{'host'} =~ s{^(.*?)://}{};
     my $p = lc $1;
+    $self->module_load('adcs') if $p eq 'adcs';
     #$self->protocol_init($p) if $p =~ /^adc/;
     $self->{'host'} =~ s{/.*}{}g;
     #$self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
@@ -533,7 +534,7 @@ sub connect {    #$self->{'connect'} ||= sub {
     or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
   $self->log(
     'info',
-    "connecting to $self->{'protocol'}://$self->{'host'}:$self->{'port'} via $self->{'Proto'} ",
+    "connecting to $self->{'protocol'}://[$self->{'host'}]:$self->{'port'} via $self->{'Proto'} class $self->{'socket_class'}",
     %{ $self->{'socket_options'} || {} }
   );
   #$self->{'status'}   = 'connecting';
@@ -556,11 +557,16 @@ sub connect {    #$self->{'connect'} ||= sub {
     #),
     %{ $self->{'socket_options'} || {} },
   );
-  #$self->log('dev', 'conn end');
+  #$self->log('dev', 'connect end');
+
   $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $! ), "[$self->{'socket'}]" ), return 1
     if !$self->{'socket'};
   #$self->log( 'dev',  'timeout to', $self->{'Timeout'});
   $self->{'socket'}->timeout( $self->{'Timeout'} ) if $self->{'Timeout'};    #timeout must be after new, ifyou want nonblocking
+
+    #$self->log( 'dev',  'ssltry'), IO::Socket::SSL->start_SSL($self->{'socket'}) if $self->{'protocol'} eq 'adcs';
+
+
        #$self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
        #$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
        #$self->{charset_protocol} = 'utf8';
@@ -610,6 +616,8 @@ sub connected {    #$self->{'connected'} ||= sub {
   #$self->log( 'info', "mode set [$self->{'M'}] ");
   $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}):$self->{'port'} [me=$self->{'myip'}] ok ", );
   #$self->log( $self, 'connected1 inited', "MT:$self->{'message_type'}", ' with' );
+  #$self->log( 'dev',  'ssltry'), 
+  #IO::Socket::SSL->start_SSL($self->{'socket'}) if $self->{'protocol'} eq 'adcs';
   $self->cmd('connect_aft');
 }
 
@@ -658,7 +666,7 @@ sub listen {       #$self->{'listen'} ||= sub {
 
 sub disconnect {    #$self->{'disconnect'} ||= sub {
   my $self = shift;
-  $self->log('dev', 'in disconnect', $self->{'status'}, caller);
+  #$self->log('dev', 'in disconnect', $self->{'status'}, caller);
   #$self->log( 'dev', "[$self->{'number'}] status=",$self->{'status'}, $self->{'destroying'});
   $self->handler('disconnect_bef');
   $self->{'status'} = 'disconnected';
@@ -706,7 +714,7 @@ sub disconnect {    #$self->{'disconnect'} ||= sub {
 #$self->{'destroy'} ||= sub {
 sub destroy {
   my $self = shift;
-  $self->log('dev', 'in destroy');
+  #$self->log('dev', 'in destroy');
   $self->disconnect(); # if ref $self and !$self->{'destroying'}++;
   #!?  delete $self->{$_} for keys %$self;
   $self->info();
@@ -840,6 +848,9 @@ sub recv_try {    #$self->{'recv_try'} ||= sub {
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
 #$self->{'select'}->remove(@$exeption) if $exeption;
+  #for ( keys %{ $self->{sockets} } ) {
+    #$self->log( 'tracez', 'C:', $self->{sockets}{$_}{socket}, $self->{sockets}{$_}{socket}->connected());
+  #}
   for (@$exeption) {
     #$self->log( 'dcdbg', 'exeption', $_, $self->{sockets}{$_}{number} ),
     #$self->{'select'}->remove($_);
@@ -910,7 +921,7 @@ sub finished {    #$self->{'finished'} ||= sub {
 sub wait_connect {                                                         #$self->{'wait_connect'} ||= sub {
   my $self = shift;
   for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
-    #$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
+   #$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
     last if grep { $self->{'status'} eq $_ } qw(connected transfer disconnecting disconnected destroy), '';
     $self->wait_sleep(1);
     #$self->work(1);
