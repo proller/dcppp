@@ -523,7 +523,7 @@ sub connect_check {
 
 sub connect {    #$self->{'connect'} ||= sub {
   my $self = shift;
-  $self->log( 'c', 'connect0 inited', "MT:$self->{'message_type'}", ' with', $self->{'host'} );
+  #$self->log( 'c', 'connect0 inited', "MT:$self->{'message_type'}", ' with', $self->{'host'} );
   if ( $_[0] or $self->{'host'} =~ /:/ ) {
     $self->{'host'} = $_[0] if $_[0];
     $self->{'host'} =~ s{^(.*?)://}{};
@@ -974,7 +974,7 @@ sub wait_clients {                    #$self->{'wait_clients'} ||= sub {
         or $self->{'clients_max'} > ( @_ = $self->clients_my() );    #keys %{ $self->{'clients'} };
     $self->info() unless $_;
     $self->log( 'info', "wait clients",
-      scalar( @_ = $self->clients_my() ) . "/$self->{'clients_max'}  ", int ($time-time) );
+      scalar( @_ = $self->clients_my() ) . "/$self->{'clients_max'}  ", int ($time-time()) );
     #$self->wait( undef, $self->{'wait_clients_by'} );
     $self->work(5);
   }
