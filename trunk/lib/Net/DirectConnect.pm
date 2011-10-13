@@ -1067,6 +1067,8 @@ sub work {    #$self->{'work'} ||= sub {
     10,
     our $___work_downloader ||= sub {
       my $self = shift;
+      return unless $self->active();
+      return if $self->{'status'} eq 'listening';
       my $time = time;
       for my $tth ( keys %{ $self->{'downloading'} } ) {
         if (  $self->{'downloading'}{$tth}{connect_start}
