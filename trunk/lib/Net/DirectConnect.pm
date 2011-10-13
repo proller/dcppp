@@ -1814,7 +1814,7 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   #my ($self) = @_;
   return unless $self->{'socket'};
   $self->log('dev', 'saddr', $self->{'socket'}->sockhost(),$self->{'socket'}->sockport() );
-  $self->{'myport'} = $self->{'socket'}->sockport();
+  $self->{'myport'} ||= $self->{'socket'}->sockport();
   return $self->{'myip'} = $self->{'socket'}->sockhost();
 
 =no  
