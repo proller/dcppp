@@ -399,7 +399,6 @@ sub init {
 
 
 =cut  
-
   #$self->{'cmd'} = {
   local %_ = (
     'connect_aft' => sub {
@@ -507,29 +506,18 @@ sub init {
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
-      $self->cmd(
-        'search_nmdc',
-        #'F', 'T', '0', '9',
-        #'TTH:' .
-        #$_[0],
-        @_
-      );
+      $self->search_nmdc( @_ );
     },
     'search_string' => sub {
       my $self = shift if ref $_[0];
       #my $string = $_[0];
       $self->{'search_last_string'} = $_[0];    #$string;
                                                 #$string =~ tr/ /$/;
-      $self->cmd(
-        'search_nmdc',
-        #'F', 'T', '0', '1',
-        #$string,
-        @_
-      );
-      #}
+      $self->search_nmdc( @_ );
     },
     'search_send' => sub {
       my $self = shift if ref $_[0];
+      $self->log( 'devsearchsend', "$self->{'M'} ne 'P' and $self->{'myip'} and $self->{'myport_udp'}" );
       $self->sendcmd(
         'Search', (
           ( $self->{'M'} ne 'P' and $self->{'myip'} and $self->{'myport_udp'} )
@@ -632,7 +620,6 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
-
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
