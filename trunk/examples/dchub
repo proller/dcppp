@@ -35,7 +35,7 @@ my $dc = Net::DirectConnect->new(
   'auto_work' => sub {
     my $dc = shift;
     #warn('hubwork');
-    Time::HiRes::sleep 0.1;
+    #Time::HiRes::sleep 0.1;
   },
   %{ $config{dc} || {} },
   %{ $config{dchub} || {} },
