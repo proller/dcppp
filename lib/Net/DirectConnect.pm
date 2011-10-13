@@ -108,11 +108,11 @@ sub module_load {
   my $self = shift if ref $_[0];
   local $_ = shift;
   return unless length $_;
+  #$self->log( 'dev', "loading", $_, $self->{'module_loaded'}{$_});
   return if $self->{'module_loaded'}{$_}++;
   my $module = __PACKAGE__ . '::' . $_;
   #eval "use $module;";
   $self->log( 'err', 'cant load', $module, $@ ), return unless use_try $module;
-  #$self->log( 'dev', "loading", $_, $module->can('new'), __PACKAGE__->can('new'));
   #$self->log( 'err', 'cant load', $module, $@ ), return if $@;
   #${module}::new($self, @_) if $module->can('new');
   #${module}::init($self, @_) if $module->can('init');
@@ -124,7 +124,7 @@ sub module_load {
   #$self->log( 'err', 'cant new', $module, $@ ), return if $@;
   #eval "$module\::init(\$self, \@_);";    #, \@param
   #$self->log( 'err', 'cant init', $module, $@ ), return if $@;
-  #$self->log( 'dev', 'loaded  module', $module, );
+ # $self->log( 'ddev', 'loaded  module', $module, );
   1;
 }
 
@@ -325,7 +325,7 @@ sub cmd {
   $self->handler( $cmd . $handler . '_aft', \@_, $ret );
   if ( $self->{'cmd'} and $self->{'cmd'}{$cmd} ) {
     if    ( $self->{'auto_wait'} ) { $self->wait(); }
-    elsif ( $self->{'auto_recv'} ) { $self->recv_try(); }
+    elsif ( $self->{'auto_recv'} ) { $self->select(); }
   }
   $self->handler( $cmd . $handler . '_aft_aft', \@_, $ret );
   return wantarray ? @ret : $ret[0];
@@ -406,16 +406,19 @@ sub init_main {    #$self->{'init_main'} ||= sub {
       #Dumper \
     },
     #'auto_recv'          => 1,
-    'max_reads' => 20,
+    #'max_reads' => 20,
     #'wait_once'          => 0.1,
-    'waits'             => 100,
-    'wait_finish_tries' => 600,
-    'wait_finish_by'    => 1,
+    #'waits'             => 100,
+    #'wait_finish_tries' => 600,
+    #'wait_finish_by'    => 1,
     #'wait_connect_tries' => 600,
     'clients_max'        => 50,
-    'wait_clients_tries' => 200,
+    #'wait_clients_tries' => 200,
+    'wait_finish_tries' => 300, #5 min
+    'wait_clients' => 300, #5 min
     #del    'wait_clients_by'    => 0.01,
-    'work_sleep'        => 0.01,
+    #'work_sleep'        => 0.01,
+    'work_sleep'        => 1,
     'select_timeout'    => 1,
     'cmd_recurse_sleep' => 0,
     #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
@@ -520,7 +523,7 @@ sub connect_check {
 
 sub connect {    #$self->{'connect'} ||= sub {
   my $self = shift;
-  #$self->log( $self, 'connect0 inited', "MT:$self->{'message_type'}", ' with' );
+  $self->log( 'c', 'connect0 inited', "MT:$self->{'message_type'}", ' with', $self->{'host'} );
   if ( $_[0] or $self->{'host'} =~ /:/ ) {
     $self->{'host'} = $_[0] if $_[0];
     $self->{'host'} =~ s{^(.*?)://}{};
@@ -530,6 +533,9 @@ sub connect {    #$self->{'connect'} ||= sub {
     $self->{'host'} =~ s{/.*}{}g;
     #$self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
   }
+  #$self->log( 'H:', scalar(@{[$self->{'host'} =~ /(:)/g]}) );
+  #$self->log( 'H:', ((),$self->{'host'} =~ /(:)/g)>1 );
+  $self->module_load('ipv6') if (@{[$self->{'host'} =~ /(:)/g]} > 1);
   #$self->{'port'} = $_[1] if $_[1];
   #print "Hhohohhhh" ,$self->{'protocol'},$self->{'host'};
   return 0
@@ -584,7 +590,7 @@ sub connect {    #$self->{'connect'} ||= sub {
   $self->{time_start} = time;
   #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
   #$self->log( 'dev', "connect_aft after", );
-  #!!$self->recv_try();
+  #!!$self->select();
   #$self->log( 'dev', "connect after", );
   return 0;
 }
@@ -665,7 +671,7 @@ sub listen {       #$self->{'listen'} ||= sub {
   $self->log( 'dcdbg', "listening $self->{'myport'} $self->{'Proto'} with $self->{'socket_class'}" );
   $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
   $self->{'status'} = 'listening';
-  #$self->recv_try();
+  #$self->select();
 }
 
 sub disconnect {    #$self->{'disconnect'} ||= sub {
@@ -836,10 +842,11 @@ sub recv {    # $self->{'recv'} ||= sub {
   }
 }
 
-sub recv_try {    #$self->{'recv_try'} ||= sub {
+sub select {    #$self->{'select'} ||= sub {
   my $self = shift;
   #$self->{'recv_runned'}{ $self->{'number'} } = 1;
   my $sleep = shift || $self->{'select_timeout'};
+  my $nosend = shift;
   my $ret = 0;
   #$self->connect_check();
   #$self->log( 'dev', 'cant recv, ret' ),
@@ -847,8 +854,8 @@ sub recv_try {    #$self->{'recv_try'} ||= sub {
   #$self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
   #my ( $readed, $reads );
   #$self->{'databuf'} = '';
-  #$self->log( 'dev', 'recv_try', 'bef' );
-  my ( $recv, $send, $exeption ) = IO::Select->select( $self->{'select'}, $self->{'select_send'}, $self->{'select'}, $sleep );
+  #$self->log( 'dev', 'select', 'bef', $sleep, $nosend , caller, '::::', caller 1, );
+  my ( $recv, $send, $exeption ) = IO::Select->select( $self->{'select'}, ($nosend ? undef : $self->{'select_send'}), $self->{'select'}, $sleep );
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
 #schedule(10, sub {        $self->log( 'dev', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption), 'from', $self->{'select'}->handles() ,    'and ', $self->{'select_send'}->handles());        });
 #$self->{'select'}->remove(@$exeption) if $exeption;
@@ -880,6 +887,7 @@ sub recv_try {    #$self->{'recv_try'} ||= sub {
     #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
     #++$self->{sockets}{$_}{send_can};
     #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
+    $ret += $self->{sockets}{$_}->send_can() if $self->{sockets}{$_};
     if ( $self->{sockets}{$_}{'filehandle_send'} ) {
       $ret += $self->{sockets}{$_}->file_send_part();
     }
@@ -889,7 +897,7 @@ sub recv_try {    #$self->{'recv_try'} ||= sub {
   #$self->{'recv_runned'}{ $self->{'number'} } = undef;
   return $ret;
 }
-
+=no
 sub wait {    #$self->{'wait'} ||= sub {
   my $self = shift;
   my ( $waits, $wait_once ) = @_;
@@ -897,17 +905,18 @@ sub wait {    #$self->{'wait'} ||= sub {
   #$wait_once ||= $self->{'wait_once'};
   local $_;
   my $ret;
-  #$self->log( 'dev', "start wait", $waits);
+  #$self->log( 'dev', "start wait", $waits, caller, '::::', caller 1, );
   while ( --$waits > 0 and !$ret ) {
-    #$ret += $self->recv_try($wait_once);
+    #$ret += $self->select($wait_once);
     last unless $self->active();
-    $ret += $self->recv_try();
+    $ret += $self->select(undef, 1);
     #$self->log( 'dev', "wait", $waits, $ret);
     #sleep 0.1 if !$ret;
   }
   #$ret += $self->work($wait_once) while --$waits > 0 and !$ret;
   return $ret;
 }
+=cut
 
 sub finished {    #$self->{'finished'} ||= sub {
   my $self = shift;
@@ -927,7 +936,7 @@ sub wait_connect {                                                         #$sel
   for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
    #$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
     last if grep { $self->{'status'} eq $_ } qw(connected transfer disconnecting disconnected destroy), '';
-    $self->wait_sleep(1);
+    $self->wait(1);
     #$self->work(1);
   }
   return $self->{'status'};
@@ -935,7 +944,9 @@ sub wait_connect {                                                         #$sel
 
 sub wait_finish {                                                          #$self->{'wait_finish'} ||= sub {
   my $self = shift;
-  for ( 0 .. $self->{'wait_finish_tries'} ) {
+  my $time = time()+ (shift || $self->{'wait_finish'});
+  while ( $time > time() ) {
+  #for ( 0 .. $self->{'wait_finish_tries'} ) {
     last if $self->finished();
     #$self->wait( undef, $self->{'wait_finish_by'} );
     #$self->log( 'dev', 'wait_finish', $_);
@@ -953,28 +964,33 @@ sub wait_finish {                                                          #$sel
 
 sub wait_clients {                    #$self->{'wait_clients'} ||= sub {
   my $self = shift;
-  for my $n ( 0 .. $self->{'wait_clients_tries'} ) {
+  #for my $n ( 0 .. $self->{'wait_clients_tries'} ) {
+  my $time = time()+ (shift || $self->{'wait_clients'});
+  while ( $time > time() ) {
+
     local @_;
     last
       if !$self->{'clients_max'}
         or $self->{'clients_max'} > ( @_ = $self->clients_my() );    #keys %{ $self->{'clients'} };
     $self->info() unless $_;
     $self->log( 'info', "wait clients",
-      scalar( @_ = $self->clients_my() ) . "/$self->{'clients_max'}  $n/$self->{'wait_clients_tries'}" );
+      scalar( @_ = $self->clients_my() ) . "/$self->{'clients_max'}  ", int ($time-time) );
     #$self->wait( undef, $self->{'wait_clients_by'} );
     $self->work(5);
   }
 }
 
-sub wait_sleep {                                                     #$self->{'wait_sleep'} ||= sub {
+#sub wait_sleep {                                                     #$self->{'wait_sleep'} ||= sub {
+sub wait {                                                     #$self->{'wait_sleep'} ||= sub {
   my $self      = shift;
-  my $how       = shift || 1;
-  my $starttime = time();
   #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
   my $ret;
-  while ( $starttime + $how > time() ) {
+  my $time = time()+ (shift || 1);
+  while ( $time > time() ) {
     last unless $self->active();
-    $ret += $self->wait(@_);
+    #$ret += $self->wait(@_);
+    $ret += $self->select(1, 1);
+
   }
   return $ret;
   #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
@@ -1135,10 +1151,10 @@ sub work {    #$self->{'work'} ||= sub {
       $self->dumper();
     }, $self
   ) if $self->{dev_auto_dump};
-  $self->log( 'dev', "work -> sleep", @params ),
+  $self->select( ); # maybe send
+  #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait_sleep(@params) if @params;
-
-  return $self->recv_try( $self->{'work_sleep'} );
+  return $self->select( $self->{'work_sleep'}, 1 );
 }
 
 sub dumper {    #$self->{'dumper'} ||= sub {
@@ -1247,13 +1263,26 @@ sub parser {    #$self->{'parser'} ||= sub {
   }
 }
 
+sub send_can {    #$self->{'send'} ||= sub {
+  my $self = shift;
+#$self->log( 'dev', 'send_can');
+  local $_;  
+  eval { $_ += $self->{'socket'}->send($_) for @{$self->{send_buffer_raw}}; } if $self->{'socket'};
+  $self->{send_buffer_raw}=[];
+  $self->{bytes_send} += $_;
+  $self->log( 'err', 'send error', $@ ) if $@;
+  $self->{activity} = time;
+  return $_;
+}
+
 sub send {    #$self->{'send'} ||= sub {
   my $self = shift;
   return if $self->{'listener'};
-  local $_;    # = join( '', @_ );
+    # = join( '', @_ );
                #$self->{bytes_send} += length $_;
                #eval { $_ = $self->{'socket'}->send( join( '', @_ ) ); } if $self->{'socket'};
-
+  push @{$self->{send_buffer_raw}||=[]}, @_;
+  $self->select();
 =no
     unless ($self->{send_can}) {
     	$self->{send_buffer_raw} = \@_;
@@ -1265,12 +1294,7 @@ sub send {    #$self->{'send'} ||= sub {
     }
 =cut
 
-  return unless @_;
-  eval { $_ = $self->{'socket'}->send(@_); } if $self->{'socket'};
-  $self->{bytes_send} += $_;
-  $self->log( 'err', 'send error', $@ ) if $@;
-  $self->{activity} = time;
-  return $_;
+  #return unless @_;
 }
 
 sub sendcmd {    #$self->{'sendcmd'} ||= sub {

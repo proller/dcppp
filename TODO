@@ -1,5 +1,6 @@
 # $Id$ $URL$
 
+debian: libio-socket-inet6-perl libio-socket-ssl-perl 
 
 dont add to share downloaded filelists
 
