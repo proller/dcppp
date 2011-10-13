@@ -139,6 +139,7 @@ my @dc;
       psmisc::schedule(
         $config{'queue_recalc_every'},
         our $queuerecalc_ ||= sub {
+            my $dc = shift;
           my $time = int time;
           $work{'toask'} = [ (
               sort { $work{'ask'}{$a} <=> $work{'ask'}{$b} } grep {
@@ -153,11 +154,12 @@ my @dc;
             " first hits=", $work{'ask'}{ $work{'toask'}[0] },
             $work{'toask'}[0]
           );
-        }
+        }, $dc
       );
       psmisc::schedule(
         [ 3600, 3600 ],
         our $hashes_cleaner_ ||= sub {
+            my $dc = shift;
           my $min = scalar keys %{ $work{'hubs'} || {} };
           psmisc::printlog( 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} } );
           delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
@@ -168,8 +170,9 @@ my @dc;
       if ( $config{'auto_get_best'} ) {
         psmisc::schedule(
           $dc->{'search_every'},
-          our $queueask_ ||= sub {
-            my ($dc) = @_;
+          $dc->{'___queueask_'} ||= sub {
+            my $dc = shift;
+            return unless $dc->active();
             my $q;
             #psmisc::printlog( 'dev', "getbest run");
             while ( $q = shift @{ $work{'toask'} } or return ) {
@@ -198,6 +201,7 @@ my @dc;
       psmisc::schedule(
         [ 10, 99999999 ],
         our $se_sub__ ||= sub {
+            my $dc = shift;
           #$dc->search('lost');
           #$dc->search($_) for @ARGV;
         },
