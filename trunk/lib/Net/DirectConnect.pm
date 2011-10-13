@@ -1002,7 +1002,7 @@ sub work {    #$self->{'work'} ||= sub {
           or !length $self->{'clients'}{$_}{'status'}
           or $self->{'clients'}{$_}{'status'} eq 'destroy'
           or (  $self->{'clients'}{$_}{'status'} ne 'listening'
-          or (  $self->{'clients'}{$_}{'status'} ne 'working'
+            and $self->{'clients'}{$_}{'status'} ne 'working'
             and $self->{'clients'}{$_}{inactive_timeout}
             and time - $self->{'clients'}{$_}{activity} > $self->{'clients'}{$_}{inactive_timeout} )
           )
