@@ -187,6 +187,7 @@ local %_ =
 )          ;
 $config{'queries'}{'queries top tth new'}{$_}=$_{$_} for keys %_;
 =cut
+
 $config{'queries'}{'queries top string'} ||= {
   'main'    => 1,
   'periods' => 1,

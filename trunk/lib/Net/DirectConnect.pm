@@ -15,11 +15,9 @@ use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = $Data::Dumper::Terse = 1;
 our $AUTOLOAD;
 our %global;
-
 sub is_code ($) { UNIVERSAL::isa( $_[0], 'CODE' ) }
 sub code_run ($;@) { my $f = shift; return $f->(@_) if is_code $f }
-sub can_run ($$;@) { my $c = shift || return; my $f = shift || return; my $r = $c->can($f); return $r->($c,@_) if $r; }
-
+sub can_run ($$;@) { my $c = shift || return; my $f = shift || return; my $r = $c->can($f); return $r->( $c, @_ ) if $r; }
 
 sub float {    #v1
   my $self = shift if ref $_[0];
@@ -46,7 +44,7 @@ sub send_udp ($$;@) {
   if (
     my $s = $self->{'socket_class'}->new(
       'PeerAddr' => $host,
-      ($port ? ('PeerPort' => $port) : ()),
+      ( $port ? ( 'PeerPort' => $port ) : () ),
       'Proto'   => 'udp',
       'Timeout' => $opt->{'Timeout'}, (
         #$opt->{'nonblocking'} ? (
@@ -201,19 +199,18 @@ sub new {
     if ( $self->{'protocol'} eq 'nmdc' ) {
       ++$self->{'module'}{ $self->{'hub'} ? 'hubcli' : 'clihub' };
     }
-
     ++$self->{'module'}{$_} for grep { $self->{ 'dev_' . $_ } } qw(ipv6 sctp);
     #if ( $self->{'module'} ) {
   }
-    ++$self->{'module'}{$_} for grep {$self->{'protocol'} eq $_} qw(adcs http);
-    $self->log('dev', 'module load', $self->{'module'}, 'p', $self->{'protocol'});
+  ++$self->{'module'}{$_} for grep { $self->{'protocol'} eq $_ } qw(adcs http);
+  $self->log( 'dev', 'module load', $self->{'module'}, 'p', $self->{'protocol'} );
   my @modules;    #= ($self->{'module'});
   for (qw(module modules)) {
     push @modules, @{ $self->{$_} }      if ref $self->{$_} eq 'ARRAY';
     push @modules, keys %{ $self->{$_} } if ref $self->{$_} eq 'HASH';
     push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
-  $self->log('dev', 'modules load', @modules);
+  $self->log( 'dev', 'modules load', @modules );
   #$self->log( 'modules load', @modules);
   $self->module_load($_) for @modules;
   #$self->log( 'now proto', $self->{'Proto'});
@@ -296,7 +293,7 @@ sub cmd {
     $func    = $self->{'cmd'}{ $dst . $cmd };
     $handler = '_cmd';
     #unshift @_, $dst if $dst;
-  } elsif (  $func = $self->can($cmd)  ) {
+  } elsif ( $func = $self->can($cmd) ) {
   }
   $self->handler( $cmd . $handler . '_bef_bef', \@_ );
   if ( $self->{'min_cmd_delay'}
@@ -392,8 +389,8 @@ sub init_main {    #$self->{'init_main'} ||= sub {
   #$self->log('dev', __LINE__, "Proto=$self->{Proto}");
   $self->{$_} = $_{$_} for keys %_;
   local %_ = (
-    'recv' => 'recv',
-    'send' => 'send',
+    'recv'              => 'recv',
+    'send'              => 'send',
     'Listen'            => 10,
     'Timeout'           => 10,                                                                #connect
     'Timeout_connected' => 300,
@@ -465,7 +462,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
   $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
     for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol);    #dev_adcs
-      $self->log('dev',"Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}");
+  $self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}" );
   $self->{$_} //= $_{$_} for keys %_;
   $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
@@ -578,17 +575,17 @@ sub connect {    #$self->{'connect'} ||= sub {
     if !$self->{'socket'};
   #$self->log( 'dev',  'timeout to', $self->{'Timeout'});
   $self->{'socket'}->timeout( $self->{'Timeout'} ) if $self->{'Timeout'};    #timeout must be after new, ifyou want nonblocking
-  #$self->log( 'dev',  'ssltry'), IO::Socket::SSL->start_SSL($self->{'socket'}) if $self->{'protocol'} eq 'adcs';
-  #$self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
-  #$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
-  #$self->{charset_protocol} = 'utf8';
-  #$self->log( 'dev', "set encoding of socket to [$self->{charset_protocol}]");
-  #    binmode($self->{'socket'}, ":encoding($self->{charset_protocol})");
-  #    binmode($self->{'socket'}, ":raw:encoding($self->{charset_protocol})");
-  #    binmode($self->{'socket'}, ":encoding($self->{charset_protocol}):bytes");
-  #    binmode($self->{'socket'}, ":$self->{charset_protocol}");
-  #eval {$self->{'socket'}->fcntl( Fcntl::O_ASYNC,1);};    $self->log('warn', "cant Fcntl::O_ASYNC : $@") if $@;
-  #eval {$self->{'socket'}->fcntl( Fcntl::O_NONBLOCK,1);};    $self->log('warn', "cant Fcntl::O_NONBLOCK : $@") if $@;
+       #$self->log( 'dev',  'ssltry'), IO::Socket::SSL->start_SSL($self->{'socket'}) if $self->{'protocol'} eq 'adcs';
+       #$self->log( 'err', "connect socket  error: $@, $! [$self->{'socket'}]" ), return 1 if !$self->{'socket'};
+       #$self->{'socket'}->binmode(":encoding($self->{charset_protocol})");
+       #$self->{charset_protocol} = 'utf8';
+       #$self->log( 'dev', "set encoding of socket to [$self->{charset_protocol}]");
+       #    binmode($self->{'socket'}, ":encoding($self->{charset_protocol})");
+       #    binmode($self->{'socket'}, ":raw:encoding($self->{charset_protocol})");
+       #    binmode($self->{'socket'}, ":encoding($self->{charset_protocol}):bytes");
+       #    binmode($self->{'socket'}, ":$self->{charset_protocol}");
+       #eval {$self->{'socket'}->fcntl( Fcntl::O_ASYNC,1);};    $self->log('warn', "cant Fcntl::O_ASYNC : $@") if $@;
+       #eval {$self->{'socket'}->fcntl( Fcntl::O_NONBLOCK,1);};    $self->log('warn', "cant Fcntl::O_NONBLOCK : $@") if $@;
   $self->select_add();
   $self->{time_start} = time;
   #$self->log($self, 'connected2 inited',"MT:$self->{'message_type'}", ' with');
@@ -648,7 +645,8 @@ sub listen {       #$self->{'listen'} ||= sub {
   #or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
   $self->{'listener'} = 1;
   $self->myport_generate();
-#$self->log( 'dev','listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}", 'sockopts', Dumper $self->{'socket_options'});
+  $self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",
+    'sockopts', Dumper $self->{'socket_options'} );
   for ( 1 .. $self->{'myport_tries'} ) {
     $self->{'socket'} ||= $self->{'socket_class'}->new(
       'LocalPort' => $self->{'myport'},
@@ -684,9 +682,8 @@ sub disconnect {    #$self->{'disconnect'} ||= sub {
   $self->{'status'} = 'disconnected';
   if ( $self->{'socket'} ) {
     #$self->log( 'dev', "[$self->{'number'}] Closing socket",
-    $self->{'select'}->remove( $self->{'socket'} ) if $self->{'select'};
-    $self->{'select_send'}->remove( $self->{'socket'} )
-      if $self->{'select_send'};
+    $self->{'select'}->remove( $self->{'socket'} )      if $self->{'select'};
+    $self->{'select_send'}->remove( $self->{'socket'} ) if $self->{'select_send'};
     delete $self->{'sockets'}{ $self->{'socket'} };
     #$self->{'socket'}->shutdown(2);
     $self->{'socket'}->close();
@@ -755,9 +752,7 @@ sub recv {                # $self->{'recv'} ||= sub {
         $self->log( 'warn', "disallowed connect from $host" ), return
           unless $host eq $allow;
       }
-
-        #$self->log( 'dev', "incp[$self->{'protocol'}]");
-
+      #$self->log( 'dev', "incp[$self->{'protocol'}]");
       $_ = $self->{'incomingclass'}->new(
         #%$self,                                clear(),
         'socket'    => $_,
@@ -870,7 +865,7 @@ sub select {    #$self->{'select'} ||= sub {
   for (@$exeption) {
     #$self->log( 'dcdbg', 'exeption', $_, $self->{sockets}{$_}{number} ),
     #$self->{'select'}->remove($_);
-    can_run($self->{sockets}{$_}, 'destroy');
+    can_run( $self->{sockets}{$_}, 'destroy' );
     #$self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
     delete $self->{sockets}{$_};
     ++$ret,;
@@ -885,18 +880,17 @@ sub select {    #$self->{'select'} ||= sub {
       if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
   }
 =cut
-
   for (@$send) {
     next unless $self->{sockets}{$_} and $self->{sockets}{$_}{socket};
     $self->{sockets}{$_}->connected(),
-     #can_run($self->{sockets}{$_}, 'connected'),
-     ++$ret,
+      #can_run($self->{sockets}{$_}, 'connected'),
+      ++$ret,
       if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
     #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
     #++$self->{sockets}{$_}{send_can};
     #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
     #$ret += $self->{sockets}{$_}->send_can();
-    $ret += can_run($self->{sockets}{$_}, 'send_can');
+    $ret += can_run( $self->{sockets}{$_}, 'send_can' );
     if ( $self->{sockets}{$_}{'filehandle_send'} ) {
       $ret += $self->{sockets}{$_}->file_send_part();
     }
@@ -904,9 +898,7 @@ sub select {    #$self->{'select'} ||= sub {
   }
   for (@$recv) {
     #next unless $self->{sockets}{$_};
-    $self->log( 'err', 'no object for recv handle', $_, Dumper $self->{sockets}{$_}), 
-    $self->{'select'}->remove( $_ ),
-    next,
+    $self->log( 'err', 'no object for recv handle', $_, Dumper $self->{sockets}{$_} ), $self->{'select'}->remove($_), next,
       #if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
       if !ref $self->{sockets}{$_} or ref $self->{sockets}{$_} eq 'HASH';
     #$self->log( 'dev',ref $self->{sockets}{$_});
@@ -1070,7 +1062,7 @@ sub work {    #$self->{'work'} ||= sub {
         next if $self->{'sockets'}{$_} and %{ $self->{'sockets'}{$_} };
         delete $self->{'sockets'}{$_};
       }
-      unless ($self->{parent}) {
+      unless ( $self->{parent} ) {
         $self->{$_}->($self) for grep { ref $self->{$_} eq 'CODE' } qw(worker auto_work);
       }
       #$self->log('dev', 'work exit',      );
@@ -1303,7 +1295,7 @@ sub send_can {    #$self->{'send'} ||= sub {
   return $size;
 }
 
-sub send {        #$self->{'send'} ||= sub {
+sub send {    #$self->{'send'} ||= sub {
   my $self = shift;
   return if $self->{'listener'};
   # = join( '', @_ );
@@ -1322,6 +1314,7 @@ sub send {        #$self->{'send'} ||= sub {
 	$self->{send_buffer_raw} = undef;
     }
 =cut
+
   #return unless @_;
 }
 
@@ -1574,7 +1567,8 @@ sub file_close {    #$self->{'file_close'} ||= sub {
     }    #else {                }
     delete $self->{'downloading'}{ $self->{'file_recv_tth'} };
   }
-  $self->{'select_send'}->remove( $self->{'socket'} ), close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
+  #$self->{'select_send'}->remove( $self->{'socket'} ),
+  close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
     #$self->{'socket'}->flush(),
     if $self->{'select_send'} and $self->{'filehandle_send'};
   delete $self->{$_} for 'file_send_left', 'file_send_total', 'file_recv_filelist';
@@ -1629,7 +1623,7 @@ sub file_send {    #$self->{'file_send'} ||= sub {
     }
     $self->{'status'} = 'transfer';
     #$self->file_send_part();
-    $self->{'select_send'}->add( $self->{'socket'} );
+    #$self->{'select_send'}->add( $self->{'socket'} );
   } else {
     $self->file_close();
   }
@@ -1694,7 +1688,7 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
                                                  #$self->{'socket'}->send( buf, POSIX::BUFSIZ, $self->{'recv_flags'} )
                                                  #my $sent;
                                                  #$self->log(      'snd',      length $self->{'file_send_buf'},
-    $sent = $self->send( $self->{'file_send_buf'} );
+    $sent = $self->send_can( $self->{'file_send_buf'} );
     #eval {
     #$sent = $self->{'socket'}->send( $self->{'file_send_buf'} );
     #$_;
@@ -1818,6 +1812,7 @@ sub get_peer_addr {    #$self->{'get_peer_addr'} ||= sub () {
     if $_[1];
   return $self->{'hostip'};
 =cut
+
 }
 
 sub get_peer_addr_recv {    #$self->{'get_peer_addr_recv'} ||= sub (;$) {
@@ -1852,7 +1847,6 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
   return $self->{'myip'} ||= $_[1];
 =cut
-
 }
 
 sub info {    #$self->{'info'} ||= sub {
@@ -2011,9 +2005,9 @@ sub say {    #$self->{'say'} = sub (@) {
 sub search {    #'search' => sub {
   my $self = shift if ref $_[0];
   #$self->log( 'search', @_ );
-  return $self->search_tth( @_ )
+  return $self->search_tth(@_)
     if length $_[0] == 39 and $_[0] =~ /^[0-9A-Z]+$/;
-  return $self->search_string( @_ ) if length $_[0];
+  return $self->search_string(@_) if length $_[0];
 }
 
 sub search_retry {    #'search_retry' => sub {
