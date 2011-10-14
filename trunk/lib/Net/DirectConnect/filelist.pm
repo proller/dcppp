@@ -81,7 +81,7 @@ sub new {
   $self->{tth_cheat}         //= 1_000_000;         #try find file with same name-size-date
   $self->{tth_cheat_no_date} //= 0;                 #--//-- only name-size
   $self->{file_min}          //= 0;                 #skip files  smaller
-  $self->{filelist_scan}     //= 3600 * 12;         #every seconds, 0 to disable
+  $self->{filelist_scan}     //= 3600 * 1;         #every seconds, 0 to disable
   $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
   $self->{file_send_by}      //= 1024 * 1024 * 1;
   $self->{skip_hidden}       //= 1;
@@ -372,7 +372,7 @@ sub new {
       #$self->log('bzip',$self->{files} => $self->{files} . '.bz2');
       () = $IO::Compress::Bzip2::Bzip2Error;    #no warning
     } else {
-      $self->log( 'dev', 'using system bzip2', $_, $!, ':', `bzip2 -f "$self->{files}"` );
+      $self->log( 'dev', 'using system bzip2', $_, $!, ':', `bzip2 --force --keep "$self->{files}"` );
     }
 #unless $interrupted;
 #$self->{share_full}{ $self->{files} . '.bz2' } = $self->{files} . '.bz2';  $self->{share_full}{ $self->{files} } = $self->{files};
