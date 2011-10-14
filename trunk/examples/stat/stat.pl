@@ -269,6 +269,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
           psmisc::schedule(
             $config{'queue_recalc_every'},
             our $queuerecalc_ ||= sub {
+              my $dc = shift;
               my $time = int time;
               $work{'toask'} = [ (
                   sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
@@ -289,21 +290,22 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
                 " first hits=", $work{'ask'}{ $work{'toask'}[0] },
                 ' asks=', scalar keys %{ $work{'ask'} }
               );
-            }
+            }, $dc
           );
           psmisc::schedule(
             [ 3600, 3600 ],
             our $hashes_cleaner_ ||= sub {
+              my $dc = shift;
               my $min = scalar keys %{ $work{'hubs'} || {} };
               $dc->log( 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} } );
               delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
               $dc->log( 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} } );
-            }
+            }, $dc
           );
           psmisc::schedule(
             $dc->{'search_every'},
             our $queueask_ ||= sub {
-              my ($dc) = @_;
+              my $dc = shift;
               my $q;
               while ( $q = shift @{ $work{'toask'} } or return ) {
                 my $r;
