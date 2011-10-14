@@ -517,7 +517,7 @@ sub init {
     },
     'search_send' => sub {
       my $self = shift if ref $_[0];
-      $self->log( 'devsearchsend', "$self->{'M'} ne 'P' and $self->{'myip'} and $self->{'myport_udp'}" );
+      #$self->log( 'devsearchsend', "$self->{'M'} ne 'P' and $self->{'myip'} and $self->{'myport_udp'}" );
       $self->sendcmd(
         'Search', (
           ( $self->{'M'} ne 'P' and $self->{'myip'} and $self->{'myport_udp'} )

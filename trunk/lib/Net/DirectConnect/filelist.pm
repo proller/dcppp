@@ -120,6 +120,10 @@ sub new {
       #nav_all => 1,
       #{}
       #},
+      'upgrade' => sub {    my $db = shift if ref $_[0];
+      $db->do("ALTER TABLE filelist ADD COLUMN $_")for 'hit INT', 'dl INT';
+
+},
     );
     $self->{sql}{$_} //= $_{$_} for keys %_;
     my ($short) = $self->{sql}{'driver'} =~ /mysql/;
@@ -146,6 +150,8 @@ sub new {
         'time' => pssql::row( 'time', ), #'index' => 1,
                      #'added'  => pssql::row( 'added', ),
                      #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
+        'hit' => pssql::row( undef, 'type'        => 'INT',  ),
+        'dl' => pssql::row( undef, 'type'        => 'INT',  ),
       },
     );
     if ( $self->{db} ) {
@@ -181,7 +187,12 @@ sub new {
       qq{Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
 };
 #<FileListing Version="1" CID="KIWZDBLTOFWIQOT6NWP7UOPJVDE2ABYPZJGN5TZ" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
-#};
+#}; 
+    my %o;
+    my $o = sub{our $n; $o{$_[0]} = ++$n; @_};
+
+    our %table2filelist = ($o->(file=>'Name'), $o->(size => 'Size'), $o->(tth => 'TTH'), $o->(time=>'TS'), $o->(hit=>'HIT'), $o->(dl=>'DL'));
+#warn Dumper   \%o, \%table2filelist;
     my $filelist_line = sub($) {
       for my $f (@_) {
         next if !length $f->{file} or !length $f->{'tth'};
@@ -189,7 +200,9 @@ sub new {
         ++$sharefiles if $f->{size};
         #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
         psmisc::file_append $self->{files}, "\t" x $level,
-          qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
+          #qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
+          qq{<File},(map {qq{ $table2filelist{$_}="$f->{$_}"}} sort {$o{$a}<=>$o{$b}} grep {$table2filelist{$_} and length $f->{$_} }  keys %$f),qq{/>\n};
+          
         #$self->{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $self->{share_full}{ $f->{file} } ||= $f->{full};
         $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
 
@@ -481,8 +494,33 @@ sub new {
     $self->share_changed();
     return ( $sharesize, $sharefiles );
   };
-  #($self->{share_size} = $self->{share_files} )=
-  #print "\n pre fl load:", (caller)[0], '<>',  __PACKAGE__;
+
+  $self->{search_stat_update} = sub {
+    my $self = shift if ref $_[0];
+    my $tth = shift or return;
+    
+                  my $updated = $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}hit${rq}=${rq}hit${rq}+1 WHERE "
+                  . "${rq}tth${rq}="
+                  . $self->{db}->quote( $tth  )
+                  . ($self->{db}{no_update_limit} ? (): " LIMIT 1") 
+                  );
+    $self->log ( 'dev', "counter increased[$updated] on [$tth]") if $updated;
+ 
+ };
+
+  $self->{handler_int}{Search} //= sub {
+    my $self = shift if ref $_[0];
+    #$self->log ( 'dev', 'Search stat', Dumper @_) ;
+    #$self->log ( 'dev', 'Search stat', Dumper $_[1]{tth}) ;
+    $self->search_stat_update($_[1]{tth});
+
+  };  
+  $self->{handler_int}{SCH} //= sub {
+    my $self = shift if ref $_[0];
+    #$self->log ( 'dev', 'SCH stat', Dumper @_) ;
+    $self->search_stat_update($_[-1]{TR});
+  };  
+  
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {
     #$self->log (  'periodic in filelist', $self->{filelist_scan}, caller );
     psmisc::schedule(

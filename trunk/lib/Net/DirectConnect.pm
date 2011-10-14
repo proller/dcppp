@@ -640,7 +640,7 @@ sub listen {       #$self->{'listen'} ||= sub {
   #or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
   $self->{'listener'} = 1;
   $self->myport_generate();
-#$self->log( 'dev', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}", 'sockopts', Dumper $self->{'socket_options'});
+#$self->log( 'dev','listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}", 'sockopts', Dumper $self->{'socket_options'});
   for ( 1 .. $self->{'myport_tries'} ) {
     $self->{'socket'} ||= $self->{'socket_class'}->new(
       'LocalPort' => $self->{'myport'},
@@ -1052,7 +1052,9 @@ sub work {    #$self->{'work'} ||= sub {
         next if $self->{'sockets'}{$_} and %{ $self->{'sockets'}{$_} };
         delete $self->{'sockets'}{$_};
       }
-      $self->{$_}->($self) for grep { ref $self->{$_} eq 'CODE' } qw(worker auto_work);
+      unless ($self->{parent}) {
+        $self->{$_}->($self) for grep { ref $self->{$_} eq 'CODE' } qw(worker auto_work);
+      }
       #$self->log('dev', 'work exit',      );
       for (
         keys %{ $self->{'clients'} }
@@ -1814,7 +1816,7 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   my $self = shift if ref $_[0];
   #my ($self) = @_;
   return unless $self->{'socket'};
-  $self->log('dev', 'saddr', $self->{'socket'}->sockhost(),$self->{'socket'}->sockport() );
+  #$self->log('dev', 'saddr', $self->{'socket'}->sockhost(),$self->{'socket'}->sockport() );
   $self->{'myport'} ||= $self->{'socket'}->sockport();
   return $self->{'myip'} = $self->{'socket'}->sockhost();
 
