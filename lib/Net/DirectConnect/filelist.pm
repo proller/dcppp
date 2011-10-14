@@ -15,6 +15,10 @@ use utf8;
 use warnings;
 no warnings qw(uninitialized);
 use Encode;
+
+use Data::Dumper;    #dev only
+$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
+
 #use Net::DirectConnect;
 use Net::DirectConnect::adc;
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
@@ -152,6 +156,7 @@ sub new {
     #warn ('sqlore:',Data::Dumper::Dumper $self->{'sql'}, \%_),
     $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, );
     ( $tq, $rq, $vq ) = $self->{db}->quotes();
+  #$self->log('db', Dumper $self->{db});
   }
   $self->{filelist_make} //= sub {
     my $self = shift if ref $_[0];
@@ -263,7 +268,9 @@ sub new {
 #/^\./ &&     -f "$dir/$_"     }
 #print " ", $file;
 #todo - select not all cols
+ #         $self->log('preselect', $self->{no_sql});
           unless ( $self->{no_sql} ) {
+          #$self->log('select go',);# Dumper $f);
             my $indb =
               $self->{db}->line( "SELECT * FROM ${tq}filelist${tq} WHERE"
                 . " ${rq}path${rq}="
@@ -275,6 +282,7 @@ sub new {
                 . " AND ${rq}time${rq}="
                 . $self->{db}->quote( $f->{time} )
                 . " LIMIT 1" );
+          #$self->log('select', Dumper $indb);
             #$self->log ('dev', 'already scaned', $indb->{size}),
             $filelist_line->( { %$f, %$indb } ), next, if $indb->{size} ~~ $f->{size};
             #$db->select('filelist', {path=>$f->{path},file=>$f->{file}, });
