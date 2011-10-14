@@ -151,7 +151,7 @@ my @dc;
           ];
           psmisc::printlog(
             'info', "queue len=", scalar @{ $work{'toask'} },
-            " first hits=", $work{'ask'}{ $work{'toask'}[0] },
+            " first hits=", $work{'ask'}{ $work{'toask'}[0], "asks=", scalar keys $work{'ask'} },
             $work{'toask'}[0]
           );
         }, $dc
