@@ -1275,13 +1275,13 @@ sub parser {          #$self->{'parser'} ||= sub {
 sub send_can {    #$self->{'send'} ||= sub {
   my $self = shift;
   #$self->log( 'dev', 'send_can');
-  local $_;
-  eval { $_ += $self->{'socket'}->send($_) for @{ $self->{send_buffer_raw} }; } if $self->{'socket'};
+  my $size;
+  eval { $size += $self->{'socket'}->send($_) for @{ $self->{send_buffer_raw} }; } if $self->{'socket'};
   $self->{send_buffer_raw} = [];
-  $self->{bytes_send} += $_;
+  $self->{bytes_send} += $size;
   $self->log( 'err', 'send error', $@ ) if $@;
   $self->{activity} = time;
-  return $_;
+  return $size;
 }
 
 sub send {        #$self->{'send'} ||= sub {
