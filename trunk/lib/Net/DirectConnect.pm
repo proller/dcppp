@@ -16,6 +16,11 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = $Data::
 our $AUTOLOAD;
 our %global;
 
+sub is_code ($) { UNIVERSAL::isa( $_[0], 'CODE' ) }
+sub code_run ($;@) { my $f = shift; return $f->(@_) if is_code $f }
+sub can_run ($$;@) { my $c = shift || return; my $f = shift || return; my $r = $c->can($f); return $r->($c,@_) if $r; }
+
+
 sub float {    #v1
   my $self = shift if ref $_[0];
   return ( $_[0] < 8 and $_[0] - int( $_[0] ) )
@@ -385,6 +390,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
   #$self->log('dev', __LINE__, "Proto=$self->{Proto}");
   $self->{$_} = $_{$_} for keys %_;
   local %_ = (
+    'recv' => 'recv',
     'Listen'            => 10,
     'Timeout'           => 10,                                                                #connect
     'Timeout_connected' => 300,
@@ -619,8 +625,7 @@ sub connected {    #$self->{'connected'} ||= sub {
   #$self->log( 'info', "mode set [$self->{'M'}] ");
   $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}):$self->{'port'} [me=$self->{'myip'}] ok ", );
   #$self->log( $self, 'connected1 inited', "MT:$self->{'message_type'}", ' with' );
-  #$self->log( 'dev',  'ssltry'),
-  #IO::Socket::SSL->start_SSL($self->{'socket'}) if $self->{'protocol'} eq 'adcs';
+  #$self->log( 'dev',  'ssltry'),IO::Socket::SSL->start_SSL($self->{'socket'}) if $self->{'protocol'} eq 'adcs';
   $self->cmd('connect_aft');
 }
 
@@ -779,7 +784,8 @@ sub recv {                # $self->{'recv'} ||= sub {
     if $client ne $self->{'socket'};
   $self->{'databuf'} = '';
   #my $r;
-  if ( !defined( $self->{'recv_addr'} = $client->recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
+  my $recv = $self->{'recv'};
+  if ( !defined( $self->{'recv_addr'} = $client->$recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
     or !length( $self->{'databuf'} ) )
   {
     #TODO not here
@@ -858,7 +864,8 @@ sub select {    #$self->{'select'} ||= sub {
   for (@$exeption) {
     #$self->log( 'dcdbg', 'exeption', $_, $self->{sockets}{$_}{number} ),
     #$self->{'select'}->remove($_);
-    $self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
+    can_run($self->{sockets}{$_}, 'destroy');
+    #$self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
     delete $self->{sockets}{$_};
     ++$ret,;
   }
@@ -874,13 +881,16 @@ sub select {    #$self->{'select'} ||= sub {
 =cut
 
   for (@$send) {
-    next unless $self->{sockets}{$_};
-    $self->{sockets}{$_}->connected(), ++$ret,
+    next unless $self->{sockets}{$_} and $self->{sockets}{$_}{socket};
+    $self->{sockets}{$_}->connected(),
+     #can_run($self->{sockets}{$_}, 'connected'),
+     ++$ret,
       if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
     #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
     #++$self->{sockets}{$_}{send_can};
     #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
-    $ret += $self->{sockets}{$_}->send_can();
+    #$ret += $self->{sockets}{$_}->send_can();
+    $ret += can_run($self->{sockets}{$_}, 'send_can');
     if ( $self->{sockets}{$_}{'filehandle_send'} ) {
       $ret += $self->{sockets}{$_}->file_send_part();
     }
@@ -888,7 +898,9 @@ sub select {    #$self->{'select'} ||= sub {
   }
   for (@$recv) {
     #next unless $self->{sockets}{$_};
-    $self->log( 'err', 'no object for recv handle', $_, ), next,
+    $self->log( 'err', 'no object for recv handle', $_, Dumper $self->{sockets}{$_}), 
+    $self->{'select'}->remove( $_ ),
+    next,
       #if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
       if !ref $self->{sockets}{$_} or ref $self->{sockets}{$_} eq 'HASH';
     #$self->log( 'dev',ref $self->{sockets}{$_});
@@ -1557,9 +1569,9 @@ sub file_close {    #$self->{'file_close'} ||= sub {
   }
   $self->{'select_send'}->remove( $self->{'socket'} ), close( $self->{'filehandle_send'} ), delete $self->{'filehandle_send'},
     #$self->{'socket'}->flush(),
-    if $self->{'filehandle_send'};
+    if $self->{'select_send'} and $self->{'filehandle_send'};
   delete $self->{$_} for 'file_send_left', 'file_send_total', 'file_recv_filelist';
-  $self->{'status'} = 'connected';
+  $self->{'status'} = 'connected' if $self->{'status'} eq 'transfer';
 }
 
 sub file_send_tth {    #$self->{'file_send_tth'} ||= sub {
