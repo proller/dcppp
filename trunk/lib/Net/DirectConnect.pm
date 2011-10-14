@@ -289,6 +289,7 @@ sub cmd {
     $func    = $self->{'cmd'}{ $dst . $cmd };
     $handler = '_cmd';
     #unshift @_, $dst if $dst;
+  } elsif (  $func = $self->can($cmd)  ) {
   }
   $self->handler( $cmd . $handler . '_bef_bef', \@_ );
   if ( $self->{'min_cmd_delay'}
@@ -1853,7 +1854,7 @@ sub info {    #$self->{'info'} ||= sub {
         grep { $self->{$_} } qw(count_sendcmd count_parse)
       }
     ),
-  );
+  ) unless $self->{'parent'};
   #( ref $self->{'clients'}{$_}{info} ? $self->{'clients'}{$_}->info() : () ) for sort keys %{ $self->{'clients'} };
 }
 #sub status {
