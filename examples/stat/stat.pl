@@ -156,6 +156,7 @@ for my $arg (@ARGV) {
         for qw(queries_top_string_ queries_top_tth_ results_top_);
     }
 =cut
+
   } elsif ( $arg eq 'stat' ) {
     $ARGV[$n]             = undef;
     $db->{'auto_repair'}  = 1;
@@ -269,7 +270,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
           psmisc::schedule(
             $config{'queue_recalc_every'},
             our $queuerecalc_ ||= sub {
-              my $dc = shift;
+              my $dc   = shift;
               my $time = int time;
               $work{'toask'} = [ (
                   sort { $work{'ask'}{$b} <=> $work{'ask'}{$a} }
@@ -290,7 +291,8 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
                 " first hits=", $work{'ask'}{ $work{'toask'}[0] },
                 ' asks=', scalar keys %{ $work{'ask'} }
               );
-            }, $dc
+            },
+            $dc
           );
           psmisc::schedule(
             [ 3600, 3600 ],
@@ -300,7 +302,8 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
               $dc->log( 'info', "queue clear min[$min] now", scalar %{ $work{'ask'} || {} } );
               delete $work{'ask'}{$_} for grep { $work{'ask'}{$_} < $min } keys %{ $work{'ask'} || {} };
               $dc->log( 'info', "queue clear ok now", scalar %{ $work{'ask'} || {} } );
-            }, $dc
+            },
+            $dc
           );
           psmisc::schedule(
             $dc->{'search_every'},
@@ -435,6 +438,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
             }
           );
 =cut
+
           ++$work{'stat'}{'QUI'};
         },
         'RES' => sub {    #TODO
@@ -473,6 +477,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
       $dc->destroy();
     };
 =cut	
+
     push @dc, $dc;
     $_->work() for @dc;
   }
@@ -532,7 +537,6 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     }
   ) if $config{'debug'};
 =cut
-
 }
 psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc if @dc;
 #psmisc::caller_trace(20);

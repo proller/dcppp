@@ -41,7 +41,7 @@ sub init {
   my $self = shift if ref $_[0];
   $self->module_load('adc');
   $self->{'protocol_supported'}{'ADCS/0.10'} = 'adcs'; 
-    #$self->log( 'dev',  'sslinit', $self->{'protocol'} ),
+    $self->log( 'dev',  'sslinit', $self->{'protocol'} ),
   
   $self->{'socket_class'} = 'IO::Socket::SSL' if 
   #!$self->{hub} and 
@@ -59,6 +59,7 @@ sub init {
 #    $self->{'socket_options'}{SSL_cert_file} = 'certs\server-cert.pem';
 $self->{'socket_options'}{SSL_version}  = 'TLSv1';
 
+$self->{'socket_options'}{SSL_server}=1 if $self->{'auto_listen'} ;
   #$self->{'adcs'}
 
     #$self->log( 'dev',  'ssltry'),
