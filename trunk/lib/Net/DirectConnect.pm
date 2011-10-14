@@ -201,17 +201,19 @@ sub new {
     if ( $self->{'protocol'} eq 'nmdc' ) {
       ++$self->{'module'}{ $self->{'hub'} ? 'hubcli' : 'clihub' };
     }
+
     ++$self->{'module'}{$_} for grep { $self->{ 'dev_' . $_ } } qw(ipv6 sctp);
-    #$self->log( 'module load', $self->{'module'});
     #if ( $self->{'module'} ) {
   }
+    ++$self->{'module'}{$_} for grep {$self->{'protocol'} eq $_} qw(adcs http);
+    $self->log('dev', 'module load', $self->{'module'}, 'p', $self->{'protocol'});
   my @modules;    #= ($self->{'module'});
   for (qw(module modules)) {
     push @modules, @{ $self->{$_} }      if ref $self->{$_} eq 'ARRAY';
     push @modules, keys %{ $self->{$_} } if ref $self->{$_} eq 'HASH';
     push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
-  #$self->log('dev', 'modules load', @modules);
+  $self->log('dev', 'modules load', @modules);
   #$self->log( 'modules load', @modules);
   $self->module_load($_) for @modules;
   #$self->log( 'now proto', $self->{'Proto'});
@@ -391,6 +393,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
   $self->{$_} = $_{$_} for keys %_;
   local %_ = (
     'recv' => 'recv',
+    'send' => 'send',
     'Listen'            => 10,
     'Timeout'           => 10,                                                                #connect
     'Timeout_connected' => 300,
@@ -461,8 +464,8 @@ sub init_main {    #$self->{'init_main'} ||= sub {
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {},
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
   $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
-    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class);    #dev_adcs
-      #$self->log("Proto=$self->{Proto}, Listen=$self->{Listen}");
+    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol);    #dev_adcs
+      $self->log('dev',"Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}");
   $self->{$_} //= $_{$_} for keys %_;
   $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
@@ -752,6 +755,9 @@ sub recv {                # $self->{'recv'} ||= sub {
         $self->log( 'warn', "disallowed connect from $host" ), return
           unless $host eq $allow;
       }
+
+        #$self->log( 'dev', "incp[$self->{'protocol'}]");
+
       $_ = $self->{'incomingclass'}->new(
         #%$self,                                clear(),
         'socket'    => $_,
@@ -1288,7 +1294,8 @@ sub send_can {    #$self->{'send'} ||= sub {
   my $self = shift;
   #$self->log( 'dev', 'send_can');
   my $size;
-  eval { $size += $self->{'socket'}->send($_) for @{ $self->{send_buffer_raw} }; } if $self->{'socket'};
+  my $send = $self->{send};
+  eval { $size += $self->{'socket'}->$send($_) for @{ $self->{send_buffer_raw} }; } if $self->{'socket'};
   $self->{send_buffer_raw} = [];
   $self->{bytes_send} += $size;
   $self->log( 'err', 'send error', $@ ) if $@;

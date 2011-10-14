@@ -209,7 +209,7 @@ sub init {
     'reconnects' => 99999, 'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
     'protocol_connect'   => 'ADC/1.0',
-    'protocol_supported' => { map { $_ => $_ } qw(ADC/1.0) },    #ADCS/0.10
+    'protocol_supported' => { 'ADC/1.0'=>'adc' },    #ADCS/0.10
     'message_type'       => 'H',
     #@_,
     'incomingclass' => __PACKAGE__,                               #'Net::DirectConnect::adc',
@@ -561,10 +561,11 @@ sub init {
       $toid ||= shift;
       my ( $proto, $port, $token ) = @_;
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
-      #$self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'INF'}{'SID'}", );
+      $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'INF'}{'SID'} p=",$self->{'protocol_supported'}{$proto} );
       $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
       $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = __PACKAGE__->new(
         #%$self, $self->clear(),
+        protocol=>$self->{'protocol_supported'}{$proto}||'adc',
         parent => $self, 'host' => $host, 'port' => $port,
         #'parse' => $self->{'parse'},
         #'cmd'   => $self->{'cmd'},
@@ -894,6 +895,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
         #'debug'=>1,
         #@_,
         'incomingclass' => 'Net::DirectConnect::http', 'auto_connect' => 0, 'auto_listen' => 1,
+        'protocol' => 'http',
         #'auto_listen' => 1,
         #'HubName'       => 'Net::DirectConnect test hub',
         #'myport'        => 80,
