@@ -1287,7 +1287,7 @@ sub send_can {    #$self->{'send'} ||= sub {
   #$self->log( 'dev', 'send_can');
   my $size;
   my $send = $self->{send};
-  eval { $size += $self->{'socket'}->$send($_) for @{ $self->{send_buffer_raw} }; } if $self->{'socket'};
+  eval { $size += $self->{'socket'}->$send($_) for @_ ? @_ : @{ $self->{send_buffer_raw} }; } if $self->{'socket'};
   $self->{send_buffer_raw} = [];
   $self->{bytes_send} += $size;
   $self->log( 'err', 'send error', $@ ) if $@;
@@ -1699,9 +1699,11 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
     #$self->log( 'err', 'send error', $@ ) if $@;
   }
   schedule(
-    1,
+    10,
     $self->{__stat_} ||= sub {
       my $self = shift;
+      my $sent = shift;
+      my $read = shift;
       our ( $lastmark, $lasttime );
       $self->log(
         'dev',                   "sent bytes",                      #length $self->{'file_send_buf'},
@@ -1716,7 +1718,7 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
         $lastmark = $self->{'file_send_offset'}, $lasttime = time,
         #if time - $lasttime > 1;
     },
-    $self
+    $self, $sent, $read
   );
   #$self->{activity} = time if $sent;
   #$self->{bytes_send} += $sent;
