@@ -33,7 +33,7 @@ openssl req -new -x509 -key server-key.pem -out certs/server-cert.pem -config cf
 package    #hide from cpan
   Net::DirectConnect::adcs;
 use strict;
-use IO::Socket::SSL;
+#use IO::Socket::SSL;
 use IO::Socket::SSL qw(debug3);
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
@@ -43,7 +43,11 @@ sub init {
   $self->{'protocol_supported'}{'ADCS/0.10'} = 'adcs'; 
     #$self->log( 'dev',  'sslinit', $self->{'protocol'} ),
   
-  $self->{'socket_class'} = 'IO::Socket::SSL' if !$self->{hub} and $self->{'protocol'} eq 'adcs';
+  $self->{'socket_class'} = 'IO::Socket::SSL' if 
+  #!$self->{hub} and 
+  $self->{'protocol'} eq 'adcs'
+   #and !$self->{'auto_listen'}
+   ;
   local %_ = (
   'recv' => 'read',
   'send' => 'syswrite',
@@ -60,6 +64,27 @@ $self->{'socket_options'}{SSL_version}  = 'TLSv1';
     #$self->log( 'dev',  'ssltry'),
     IO::Socket::SSL->start_SSL($self->{'socket'}, %{$self->{'socket_options'}||{}}) if $self->{'socket'} and $self->{'protocol'} eq 'adcs';
 
+
+      if ( !$self->{'no_listen'} #) {
+#$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
+#    if (
+and
+      #( $self->{'M'} eq 'A' or !$self->{'M'} )  and
+      !$self->{'incoming'} and !$self->{'auto_listen'}
+      )
+    {
+
+            $self->log( 'dev', "making listeners: tls", "h=$self->{'hub'}" );
+        $self->{'clients'}{'listener_tls'} = $self->{'incomingclass'}->new(
+          'parent'      => $self,
+          #'Proto'       => 'sctp',
+          'protocol' => 'adcs',
+          'auto_listen' => 1,
+        );
+        $self->{'myport_tls'} = $self->{'clients'}{'listener_tls'}{'myport'};
+        #$self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
+        $self->log( 'err', "cant listen tls" ) unless $self->{'myport_tls'};
+  }
 
 }
 6;

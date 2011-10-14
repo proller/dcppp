@@ -342,7 +342,7 @@ sub init {
         $self->{'peers'}{$peerid}{$_} = $self->{'peers'}{''}{$_} for keys %{ $self->{'peers'}{''} || {} };
         delete $self->{'peers'}{''};
       }
-      $self->log( 'adcdev', 'INF:', "existing '' peer: $peerid" ) if $self->{'peers'}{''};
+      #$self->log( 'adcdev', 'INF:', "existing '' peer: $peerid" ) if $self->{'peers'}{''};
       my $sendbinf;
       if ( $self->{parent}{hub} and $dst eq 'B' ) {
         if ( !keys %{ $self->{'peers'}{$peerid}{'INF'} } ) {    #join
