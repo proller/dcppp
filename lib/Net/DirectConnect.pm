@@ -33,7 +33,7 @@ sub send_udp ($$;@) {
   my $self = shift if ref $_[0];
   my $host = shift;
   #$host =~ s/:(\d+)$//;
-  #my $port = shift;
+  my $port = shift;
   #$port ||= $1;
   #$self->log( 'dcdev', "sending UDP to [$host]:[$port] = [$_[0]]" );
   $self->log( 'dcdev', "sending UDP to [$host] = [$_[0]]" );
@@ -41,7 +41,7 @@ sub send_udp ($$;@) {
   if (
     my $s = $self->{'socket_class'}->new(
       'PeerAddr' => $host,
-      #'PeerPort' => $port,
+      ($port ? 'PeerPort' => $port : ()),
       'Proto'   => 'udp',
       'Timeout' => $opt->{'Timeout'}, (
         #$opt->{'nonblocking'} ? (
