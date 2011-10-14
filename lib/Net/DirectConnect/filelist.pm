@@ -201,7 +201,7 @@ sub new {
         #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
         psmisc::file_append $self->{files}, "\t" x $level,
           #qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
-          qq{<File},(map {qq{ $table2filelist{$_}="$f->{$_}"}} sort {$o{$a}<=>$o{$b}} grep {$table2filelist{$_} and length $f->{$_} }  keys %$f),qq{/>\n};
+          qq{<File},(map {qq{ $table2filelist{$_}="}.psmisc::html_chars($f->{$_}).qq{"}} sort {$o{$a}<=>$o{$b}} grep {$table2filelist{$_} and length $f->{$_} }  keys %$f),qq{/>\n};
           
         #$self->{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $self->{share_full}{ $f->{file} } ||= $f->{full};
         $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
