@@ -1059,7 +1059,7 @@ sub work {    #$self->{'work'} ||= sub {
         #$self->clients_my()
         )
       {
-        $self->{'clients'}{$_}->work();
+        $self->{'clients'}{$_}->work() if $self->{'clients'}{$_};
       }
     },
     $self
