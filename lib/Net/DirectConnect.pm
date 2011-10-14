@@ -35,13 +35,13 @@ sub send_udp ($$;@) {
   #$host =~ s/:(\d+)$//;
   my $port = shift;
   #$port ||= $1;
-  #$self->log( 'dcdev', "sending UDP to [$host]:[$port] = [$_[0]]" );
-  $self->log( 'dcdev', "sending UDP to [$host] = [$_[0]]" );
+  $self->log( 'dcdev', "sending UDP to [$host]:[$port] = [$_[0]]" );
+  #$self->log( 'dcdev', "sending UDP to [$host] = [$_[0]]" );
   my $opt = $_[1] || {};
   if (
     my $s = $self->{'socket_class'}->new(
       'PeerAddr' => $host,
-      ($port ? 'PeerPort' => $port : ()),
+      ($port ? ('PeerPort' => $port) : ()),
       'Proto'   => 'udp',
       'Timeout' => $opt->{'Timeout'}, (
         #$opt->{'nonblocking'} ? (
