@@ -857,7 +857,7 @@ sub select {    #$self->{'select'} ||= sub {
   for (@$exeption) {
     #$self->log( 'dcdbg', 'exeption', $_, $self->{sockets}{$_}{number} ),
     #$self->{'select'}->remove($_);
-    #!?$self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
+    $self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
     delete $self->{sockets}{$_};
     ++$ret,;
   }
