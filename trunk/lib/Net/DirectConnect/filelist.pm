@@ -155,12 +155,16 @@ sub new {
       },
     );
     if ( $self->{db} ) {
+      #warn 'preFL',Dumper $self->{db}{table}; #$config{'sql'};
+
       $self->{db}{table}{$_} = $table{$_} for keys %table;
     }
     local %_ = ( 'table' => \%table, );
     $self->{sql}{$_} //= $_{$_} for keys %_;
     #warn ('sqlore:',Data::Dumper::Dumper $self->{'sql'}, \%_),
     $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, );
+
+    
     ( $tq, $rq, $vq ) = $self->{db}->quotes();
   #$self->log('db', Dumper $self->{db});
   }

@@ -140,7 +140,7 @@ for my $arg (@ARGV) {
     local $db->{'auto_install'} = 0;
     local $db->{'error_sleep'}  = 0;
     #my ( $tq, $rq, $vq ) = $db->quotes();
-
+    $db->upgrade();
 =old 
     $db->do( "DROP TABLE ${_}d")    for qw(queries_top_string_ queries_top_tth_ results_top_);
     $db->do("ALTER TABLE queries_top_string_daily RENAME TO queries_top_string_d");
@@ -224,6 +224,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
     ++$work{'hubs'}{$hub};
     my $dc = Net::DirectConnect->new(
       modules     => { 'filelist' => 1 },
+      db => $db, #for filelist
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
       #'log'		=>	sub {},	# no logging

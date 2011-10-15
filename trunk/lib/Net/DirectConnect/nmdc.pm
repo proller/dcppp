@@ -151,7 +151,9 @@ sub init {
   };
   $self->{'make_hub'} ||= sub {
     my $self = shift if ref $_[0];
-    $self->{'hub_name'} ||= $self->{'host'} . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
+    $self->{'hub_name'} ||= $self->{'host'}; # . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
+    $self->{'hub_name'} =~ s/:411$//;
+  #$self->log('dev', $self->{'hub_name'});
   },;
 }
 1;
