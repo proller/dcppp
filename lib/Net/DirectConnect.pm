@@ -1068,11 +1068,11 @@ sub work {    #$self->{'work'} ||= sub {
         code_run($self->{$_}, $self) for qw(worker); #auto_work
       }
       #$self->log('dev', 'work parent',  scalar keys %{ $self->{parent}} , scalar keys %{ $self->{parent}{parent}}   );
-      for (grep {$_ ne $self} keys %{ $self->{'clients'} }
+      for (grep {$self->{'clients'}{$_} ne $self} keys %{ $self->{'clients'} }
         #$self->clients_my()
         )
       {
-        #$self->log('dev', 'starting work on', $self->{'clients'}{$_}{'number'});
+        #$self->log('dev', 'starting work on', $self->{'clients'}{$_}{'number'}, $self,$self->{'clients'}{$_});
         $self->{'clients'}{$_}->work() if $self->{'clients'}{$_};
       }
     },
