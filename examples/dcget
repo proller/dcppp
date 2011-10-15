@@ -136,6 +136,8 @@ my @dc;
     #auto_work
     worker => sub {
       my $dc = shift;
+#printlog('worker',  keys %{$dc->{parent}||{}}    );
+
       $dc->{'handler'}{'SCH'} ||= $dc->{'handler'}{'Search'};    #_parse_aft _parse_aft
       psmisc::schedule(
         $config{'queue_recalc_every'},
@@ -152,7 +154,7 @@ my @dc;
           ];
           psmisc::printlog(
             'info', "queue len=", scalar @{ $work{'toask'} },
-            " first hits=", $work{'ask'}{ $work{'toask'}[0], "asks=", scalar keys %{ $work{'ask'} } },
+            " first hits=", $work{'ask'}{ $work{'toask'}[0]}, "asks=", scalar keys %{ $work{'ask'}  },
             $work{'toask'}[0]
           );
         },

@@ -203,14 +203,14 @@ sub new {
     #if ( $self->{'module'} ) {
   }
   ++$self->{'module'}{$_} for grep { $self->{'protocol'} eq $_ } qw(adcs http);
-  $self->log( 'dev', 'module load', $self->{'module'}, 'p', $self->{'protocol'} );
+  #$self->log( 'dev', 'module load', $self->{'module'}, 'p', $self->{'protocol'} );
   my @modules;    #= ($self->{'module'});
   for (qw(module modules)) {
     push @modules, @{ $self->{$_} }      if ref $self->{$_} eq 'ARRAY';
     push @modules, keys %{ $self->{$_} } if ref $self->{$_} eq 'HASH';
     push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
-  $self->log( 'dev', 'modules load', @modules );
+  #$self->log( 'dev', 'modules load', @modules );
   #$self->log( 'modules load', @modules);
   $self->module_load($_) for @modules;
   #$self->log( 'now proto', $self->{'Proto'});
@@ -241,7 +241,7 @@ sub new {
   #$self->log('dev', 'sctp', $self->{'dev_sctp'});
   if ( $self->{'auto_listen'} ) {
     #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
-    $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};
+    $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};# if $self->{'parent'};
     $self->listen();
     $self->cmd('connect_aft') if $self->{'broadcast'};
   } elsif ( $self->{'auto_connect'} ) {
@@ -462,7 +462,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
   $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
     for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol);    #dev_adcs
-  $self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}" );
+  #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}" );
   $self->{$_} //= $_{$_} for keys %_;
   $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
@@ -645,8 +645,7 @@ sub listen {       #$self->{'listen'} ||= sub {
   #or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
   $self->{'listener'} = 1;
   $self->myport_generate();
-  $self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",
-    'sockopts', Dumper $self->{'socket_options'} );
+  #$self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",'sockopts', Dumper $self->{'socket_options'} );
   for ( 1 .. $self->{'myport_tries'} ) {
     $self->{'socket'} ||= $self->{'socket_class'}->new(
       'LocalPort' => $self->{'myport'},
@@ -1062,10 +1061,13 @@ sub work {    #$self->{'work'} ||= sub {
         next if $self->{'sockets'}{$_} and %{ $self->{'sockets'}{$_} };
         delete $self->{'sockets'}{$_};
       }
-      unless ( $self->{parent} ) {
-        $self->{$_}->($self) for grep { ref $self->{$_} eq 'CODE' } qw(worker auto_work);
+
+      
+
+      unless ( $self->{parent}{parent} ) { # first parent always autocreated on init
+        code_run($self->{$_}, $self) for qw(worker auto_work);
       }
-      #$self->log('dev', 'work exit',      );
+      #$self->log('dev', 'work exit',  Dumper $self->{parent}    );
       for (
         keys %{ $self->{'clients'} }
         #$self->clients_my()
