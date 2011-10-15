@@ -222,7 +222,8 @@ sub init {
   $self->{$_} //= $_{$_} for keys %_;
   #!exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
   #print 'adc init now=',Dumper $self;
-  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->search_buffer() if $self->{'socket'}; };
+  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {      my $self = shift if ref $_[0];
+ $self->search_buffer() if $self->{'socket'}; };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
   #$self->baseinit();    #if ref $self eq __PACKAGE__;
   #$self->log( 'inited3', "MT:$self->{'message_type'}", ' with' );

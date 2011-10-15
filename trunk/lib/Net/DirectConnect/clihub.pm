@@ -62,7 +62,8 @@ sub init {
     'disconnect_recursive' => 1,
   );
   $self->{$_} //= $_{$_} for keys %_;
-  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->search_buffer() if $self->{'socket'}; };
+  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {      my $self = shift if ref $_[0];
+ $self->search_buffer() if $self->{'socket'}; };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want

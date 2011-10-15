@@ -258,7 +258,7 @@ sub new {
     while ( $self->active() ) {
       $self->work();    #forever
                         #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
-      Time::HiRes::sleep 0.01;
+      #Time::HiRes::sleep 0.01;
     }
     $self->disconnect();
   }
@@ -1013,13 +1013,13 @@ sub work {    #$self->{'work'} ||= sub {
   my @params = @_;
   #$self->periodic();
   #$self->log( 'dev', 'work', @params);
-  $self->{'auto_work'}->(@params) if ref $self->{'auto_work'} eq 'CODE';
+  code_run $self->{'auto_work'}, @params; # if ref $self->{'auto_work'} eq 'CODE';
   schedule(
     1,
     our $___work_every ||= sub {
       my $self = shift;
       $self->connect_check();
-      $_->() for grep { ref $_ eq 'CODE' } values %{ $self->{periodic} || {} };
+      code_run($_, $self) for values %{ $self->{periodic} || {} };
       #print ("P:$_\n"),
       #$self->{periodic}{$_}->() for grep {ref$self->{periodic}{$_} eq 'CODE'}keys %{$self->{periodic} || {}};
       #$self->log('dev', 'work for', keys %{$self->{'clients'}});
@@ -1065,7 +1065,7 @@ sub work {    #$self->{'work'} ||= sub {
       
 
       if ( !$self->{parent} or !$self->{parent}{parent} ) { # first parent always autocreated on init
-        code_run($self->{$_}, $self) for qw(worker auto_work);
+        code_run($self->{$_}, $self) for qw(worker); #auto_work
       }
       #$self->log('dev', 'work parent',  scalar keys %{ $self->{parent}} , scalar keys %{ $self->{parent}{parent}}   );
       for (
@@ -1073,6 +1073,7 @@ sub work {    #$self->{'work'} ||= sub {
         #$self->clients_my()
         )
       {
+        #$self->log('dev', 'starting work on', $self->{'clients'}{$_}{'number'});
         $self->{'clients'}{$_}->work() if $self->{'clients'}{$_};
       }
     },
