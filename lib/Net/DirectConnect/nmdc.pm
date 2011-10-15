@@ -77,7 +77,7 @@ sub init {
   $self->{$_} = $_{$_} for keys %_;
   #$self->log('dev', 'chPROTO:',$self->{'charset_protocol'});
   #print 'adc init now=',Dumper $self;
-  #$self->{'periodic'}{ __FILE__ . __LINE__ } = sub { $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
+  #$self->{'periodic'}{ __FILE__ . __LINE__ } = sub {      my $self = shift if ref $_[0]; $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
   #http://www.dcpp.net/wiki/index.php/LockToKey :
   $self->{'lock2key'} ||= sub {
     my $self = shift if ref $_[0];

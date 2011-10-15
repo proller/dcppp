@@ -522,6 +522,8 @@ sub new {
   };  
   
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {
+          my $self = shift if ref $_[0];
+
     #$self->log (  'periodic in filelist', $self->{filelist_scan}, caller );
     psmisc::schedule(
       #[10, $self->{filelist_scan}],
