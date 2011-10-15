@@ -258,7 +258,7 @@ sub init {
     'Search' => sub {
       my $self = shift if ref $_[0];
       my $search = $_[0];
-      $self->cmd('make_hub');
+      $self->make_hub();
       my $params = { 'time' => int( time() ), 'hub' => $self->{'hub_name'}, };
       ( $params->{'who'}, $params->{'cmds'} ) = split /\s+/, $search;
       $params->{'cmd'} = [ split /\?/, $params->{'cmds'} ];
@@ -347,7 +347,7 @@ sub init {
     'SR' => sub {
       my $self = shift if ref $_[0];
 #$self->log( 'dev', "SR", @_ , 'parent=>', $self->{parent}, 'h=', $self->{handler}, Dumper($self->{handler}), 'ph=', $self->{parent}{handler}, Dumper($self->{parent}{handler}), ) if $self;
-      $self->cmd('make_hub');
+      $self->make_hub();
       my $params = { 'time' => int( time() ), 'hub' => $self->{'hub_name'}, };
       ( $params->{'nick'}, $params->{'str'} ) = split / /, $_[0], 2;
       $params->{'str'} = [ split /\x05/, $params->{'str'} ];

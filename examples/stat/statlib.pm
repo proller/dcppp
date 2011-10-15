@@ -60,6 +60,7 @@ $config{'use_graph'} ||= 1;    #  if grep {$config{'browser_'. $_}} qw(firefox s
 $config{'graph_inner'}        ||= 1 if grep { $config{ 'browser_' . $_ } } qw(firefox safari chrome);
 $config{'title'}              ||= 'dcstat';
 $config{'web_max_query_time'} ||= 10;
+#warn 'pre',Dumper $config{'sql'};
 $config{'sql'}                ||= {
   #'driver'              => 'mysql',
   'driver' => 'sqlite', 'dbname' => 'dcstat', 'auto_connect' => 1, 'log' => sub { shift; psmisc::printlog(@_) },
