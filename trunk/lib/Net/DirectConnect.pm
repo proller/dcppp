@@ -1064,10 +1064,10 @@ sub work {    #$self->{'work'} ||= sub {
 
       
 
-      unless ( $self->{parent}{parent} ) { # first parent always autocreated on init
+      if ( !$self->{parent} or !$self->{parent}{parent} ) { # first parent always autocreated on init
         code_run($self->{$_}, $self) for qw(worker auto_work);
       }
-      #$self->log('dev', 'work exit',  Dumper $self->{parent}    );
+      #$self->log('dev', 'work parent',  scalar keys %{ $self->{parent}} , scalar keys %{ $self->{parent}{parent}}   );
       for (
         keys %{ $self->{'clients'} }
         #$self->clients_my()
