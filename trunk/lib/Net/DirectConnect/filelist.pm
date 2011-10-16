@@ -176,6 +176,7 @@ sub new {
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
       unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
                                                                              #$self->log( 'info',"ntth=[$notth]");    exit;
+    $self->log( 'err', 'forced db upgrade'),
     $self->{db}->upgrade() if $self->{upgrade_force};
     my $stopscan;
     my $level     = 0;
