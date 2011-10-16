@@ -227,8 +227,8 @@ sub new {
       and $self->{charset_console};
   #$self->log( 'dev', 'utf8: УТф восемь');
   #$self->log( 'dev', Dumper $self);
+  $self->log( 'dcdbg', "using encodings console:[$self->{charset_console}] protocol:[$self->{charset_protocol}] fs:[$self->{charset_fs}]" );
   if ( $self->{'auto_say'} ) {
-    $self->log( 'dcdbg', "using encodings console:[$self->{charset_console}] protocol:[$self->{charset_protocol}]" );
     for my $cmd ( @{ $self->{'auto_say_cmd'} || [] } ) {
       #$self->log('AS', $cmd);
       $self->{'handler_int'}{$cmd} = sub {

@@ -121,7 +121,8 @@ sub new {
       #{}
       #},
       'upgrade' => sub {    my $db = shift if ref $_[0];
-      $db->do("ALTER TABLE filelist ADD COLUMN $_")for 'hit INT', 'dl INT';
+      $db->do("ALTER TABLE filelist ADD COLUMN $_")for 'hit INTEGER UNSIGNED NOT NULL DEFAULT 0 ', 'dl INTEGER UNSIGNED NOT NULL DEFAULT 0 ';
+      $db->do("UPDATE filelist SET hit=0, dl=0 WHERE hit IS NULL");
 
 },
     );
@@ -150,8 +151,8 @@ sub new {
         'time' => pssql::row( 'time', ), #'index' => 1,
                      #'added'  => pssql::row( 'added', ),
                      #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
-        'hit' => pssql::row( undef, 'type'        => 'INT',  ),
-        'dl' => pssql::row( undef, 'type'        => 'INT',  ),
+        'hit' => pssql::row( undef, 'type'        => 'INTEGER UNSIGNED NOT NULL DEFAULT 0 ',  ),
+        'dl' => pssql::row( undef, 'type'        => 'INTEGER UNSIGNED NOT NULL DEFAULT 0',  ),
       },
     );
     if ( $self->{db} ) {
@@ -175,6 +176,7 @@ sub new {
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
       unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
                                                                              #$self->log( 'info',"ntth=[$notth]");    exit;
+    $self->{db}->upgrade() if $self->{upgrade_force};
     my $stopscan;
     my $level     = 0;
     my $levelreal = 0;
@@ -602,7 +604,8 @@ return unless $name;
 eval q{ #do
   use lib '../..';
   use Net::DirectConnect;
-  #print "making\n";
+  print "making\n";
+  __PACKAGE__->new(@ARGV)->{db}->upgrade(), exit if $ARGV[0] eq 'upgrade';
   __PACKAGE__->new(@ARGV)->filelist_make(@ARGV),;
-} unless caller;
+},print $@ unless caller;
 1;
