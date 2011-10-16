@@ -176,8 +176,7 @@ sub new {
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
       unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
                                                                              #$self->log( 'info',"ntth=[$notth]");    exit;
-    $self->log( 'err', 'forced db upgrade'),
-    $self->{db}->upgrade() if $self->{upgrade_force};
+    $self->log( 'err', 'forced db upgrade on make'),    $self->{db}->upgrade() if $self->{upgrade_force};
     my $stopscan;
     my $level     = 0;
     my $levelreal = 0;
@@ -208,7 +207,7 @@ sub new {
         #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
         psmisc::file_append $self->{files}, "\t" x $level,
           #qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
-          qq{<File},(map {qq{ $table2filelist{$_}="}.psmisc::html_chars($f->{$_}).qq{"}} sort {$o{$a}<=>$o{$b}} grep {$table2filelist{$_} and length $f->{$_} }  keys %$f),qq{/>\n};
+          qq{<File},(map {qq{ $table2filelist{$_}="}.psmisc::html_chars($f->{$_}).qq{"}} sort {$o{$a}<=>$o{$b}} grep {$table2filelist{$_} and $f->{$_} }  keys %$f),qq{/>\n};
           
         #$self->{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $self->{share_full}{ $f->{file} } ||= $f->{full};
         $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
@@ -422,6 +421,8 @@ sub new {
   };
   $self->{filelist_load} //= sub {    #{'cmd'}
     my $self = shift if ref $_[0];
+
+    $self->log( 'err', 'forced db upgrade on load'),    $self->{db}->upgrade() if $self->{upgrade_force};
 
 =old
   if ( $config{filelist} and open my $f, '<', $config{filelist} ) {
