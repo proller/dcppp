@@ -59,7 +59,7 @@ sub init {
   #$self->{'NickList'} ||= {};
   #$self->{'IpList'}   ||= {};
   #$self->{'PortList'} ||= {};
-  $self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
+  #$self->log( 'info', "Incoming client $self->{'host'}:$self->{'port'} via ", ref $self ) if $self->{'incoming'};
   #$self->{'parse'} = undef if $self->{'parse'} and !keys %{ $self->{'parse'} };
   #$self->{'parse'} ||= {
   local %_ = (
