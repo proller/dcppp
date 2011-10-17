@@ -48,7 +48,7 @@ $config{'get_every'}          //= 60;
 #$config{'get_dir'}            //= './downloads/';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 psmisc::printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit
-  if !$ARGV[0] and !$config{dc}{host};    # and !$config{dc}{hosts};
+  if !$ARGV[0] and !($config{dc}{host} || $config{dcget}{host});    # and !$config{dc}{hosts};
 psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
 #printlog 'dev', 'mkdir', $config{'get_dir'},
@@ -71,7 +71,7 @@ my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
 my @hosts = grep { m{^\w+://} } @ARGV;
 Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
   if ( $filelist and !caller )
-  or ( !@hosts and !$config{dc}{host} );
+  or ( !@hosts and !($config{dc}{host} || $config{dcget}{host}) );
 my @dc;
 @dc = map {
   Net::DirectConnect->new(
@@ -262,7 +262,7 @@ my @dc;
     $_
     }    #psmisc::array($config{dc}{host}), #ref $config{dc}{host} eq 'ARRAY' ? @{ $config{dc}{host} } : $config{dc}{host},
          #@ARGV
-    @hosts ? @hosts : psmisc::array( $config{dc}{host} )
+    @hosts ? @hosts : psmisc::array( $config{dc}{host} || $config{dcget}{host} )
   );
 $_->{__work} ||= \%work for    #for dumper
   grep { $_->{dev_auto_dump} } @dc;
