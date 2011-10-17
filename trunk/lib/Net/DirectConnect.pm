@@ -1586,6 +1586,7 @@ sub file_send_tth {    #$self->{'file_send_tth'} ||= sub {
     $self->{'share_full'}{$file} =~ tr{\\}{/};
     #$self->log( 'dcdev', 'call send', $self->{'share_full'}{$file}, $start, $size, $as );
     $self->file_send( $self->{'share_full'}{$file}, $start, $size, $as );
+    $self->search_stat_update($file, 'hit');
   } else {
     $self->log(
       'dcerr', 'send', 'cant find file',

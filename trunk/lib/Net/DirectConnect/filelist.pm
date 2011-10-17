@@ -123,9 +123,8 @@ sub new {
       #{}
       #},
       'upgrade' => sub {    my $db = shift if ref $_[0];
-      $db->do("ALTER TABLE filelist ADD COLUMN $_")for 'hit INTEGER UNSIGNED NOT NULL DEFAULT 0 ', 'dl INTEGER UNSIGNED NOT NULL DEFAULT 0 ';
-      $db->do("UPDATE filelist SET hit=0, dl=0 WHERE hit IS NULL");
-
+      $db->do("ALTER TABLE filelist ADD COLUMN $_")for 'hit INTEGER UNSIGNED NOT NULL DEFAULT 0 ', 'sch INTEGER UNSIGNED NOT NULL DEFAULT 0 ';
+      #$db->do("UPDATE filelist SET hit=0, sch=0 WHERE hit IS NULL");
 },
     );
     $self->{sql}{$_} //= $_{$_} for keys %_;
@@ -154,7 +153,7 @@ sub new {
                      #'added'  => pssql::row( 'added', ),
                      #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
         'hit' => pssql::row( undef, 'type'        => 'INTEGER UNSIGNED NOT NULL DEFAULT 0 ',  ),
-        'dl' => pssql::row( undef, 'type'        => 'INTEGER UNSIGNED NOT NULL DEFAULT 0',  ),
+        'sch' => pssql::row( undef, 'type'        => 'INTEGER UNSIGNED NOT NULL DEFAULT 0',  ),
       },
     );
     if ( $self->{db} ) {
@@ -199,7 +198,7 @@ sub new {
     my %o;
     my $o = sub{our $n; $o{$_[0]} = ++$n; @_};
 
-    our %table2filelist = ($o->(file=>'Name'), $o->(size => 'Size'), $o->(tth => 'TTH'), $o->(time=>'TS'), $o->(hit=>'HIT'), $o->(dl=>'DL'));
+    our %table2filelist = ($o->(file=>'Name'), $o->(size => 'Size'), $o->(tth => 'TTH'), $o->(time=>'TS'), $o->(hit=>'HIT'), $o->(sch=>'SCH'));
 #warn Dumper   \%o, \%table2filelist;
     my $filelist_line = sub($) {
       for my $f (@_) {
@@ -508,27 +507,27 @@ sub new {
   $self->{search_stat_update} = sub {
     my $self = shift if ref $_[0];
     my $tth = shift or return;
-    
-                  my $updated = $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}hit${rq}=${rq}hit${rq}+1 WHERE "
+    my $field = shift || 'hit'
+                  my $updated = $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field{rq}=${rq}$field{rq}+1 WHERE "
                   . "${rq}tth${rq}="
                   . $self->{db}->quote( $tth  )
                   . ($self->{db}{no_update_limit} ? (): " LIMIT 1") 
                   );
-    $self->log ( 'dev', "counter increased[$updated] on [$tth]") if $updated;
- 
+    $self->log ( 'dev', "counter $field increased[$updated] on [$tth]") if $updated;
+
  };
 
   $self->{handler_int}{Search} //= sub {
     my $self = shift if ref $_[0];
     #$self->log ( 'dev', 'Search stat', Dumper @_) ;
     #$self->log ( 'dev', 'Search stat', Dumper $_[1]{tth}) ;
-    $self->search_stat_update($_[1]{tth});
+    $self->search_stat_update($_[1]{tth}, 'sch');
 
   };  
   $self->{handler_int}{SCH} //= sub {
     my $self = shift if ref $_[0];
     #$self->log ( 'dev', 'SCH stat', Dumper @_) ;
-    $self->search_stat_update($_[-1]{TR});
+    $self->search_stat_update($_[-1]{TR}, 'sch');
   };  
   
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {
