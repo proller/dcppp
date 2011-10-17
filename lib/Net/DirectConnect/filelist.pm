@@ -48,6 +48,8 @@ our %config;
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg trace);
 $config{ 'log_' . $_ } //= 1 for qw (screen default);
 Net::DirectConnect::use_try 'Sys::Sendfile' unless $^O =~ /win/i;
+Net::DirectConnect::use_try 'Sys::Sendfile::FreeBSD' if $^O =~ /freebsd/i;
+#Net::DirectConnect::use_try 'IO::AIO';
 my ( $tq, $rq, $vq );
 
 sub skip ($$) {

@@ -1646,43 +1646,23 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
   my $read = $self->{'file_send_left'};
   $read = $self->{'file_send_by'}
     if $self->{'file_send_by'} < $self->{'file_send_left'};
-  #my $readed =
   my $sent;
+
   if ( $INC{'Sys/Sendfile.pm'} ) {    #works
-        #Sys::Sendfile::sendfile fileno($self->{'socket'}), fileno($self->{'filehandle_send'}), $read;
-    $self->{'file_send_offset'} += $sent =
-      Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
-    #);
-    #$self->log( 'dev', 'ssendfile0', "$read, offset=$self->{'file_send_offset'}, left=$self->{'file_send_left'} sent=$sent" );
-    #$self->{'file_send_offset'} += $sent;
+    $sent = Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
+  $self->{'file_send_offset'} += $sent if $sent > 0;
   }
-#sux
-#elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
-#use Sys::Sendfile::FreeBSD qw(sendfile);
-#use Errno qw(EINTR EIO :POSIX);
-#$self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sent, 'ff=', fileno($self->{'filehandle_send'}), fileno($self->{'socket'}));
-#my $result = sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sent);
-#my $result = sendfile( fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read, $sent);
-#$self->log(      'dev','fsendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, 's=', $sent, 'r=',  $result, $!,
-##Dumper \%!
-#grep {$!{$_}} keys %!
-#);
-#}
-#sux
+elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
+my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sent);
+  $self->{'file_send_offset'} += $sent if $sent > 0;
+}
+#blocking
 #elsif ($INC{'IO/AIO.pm'}) {
-#$self->log(      'dev','sendfile0',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sent);
-#use IO::AIO;
-#$sent = IO::AIO::sendfile(  fileno($self->{'filehandle_send'}), $self->{'socket'}->fileno(),$self->{'file_send_offset'}, $read );
-#$sent = IO::AIO::sendfile(   $self->{'socket'}->fileno(), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
-#$sent = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
-#$sent = IO::AIO::sendfile(   $self->{'socket'}, $self->{'filehandle_send'},$self->{'file_send_offset'}, $read );
-##$self->{'file_send_left'}
-  #
-  #$self->log(      'dev','sendfile1',  $self->{'file_send_offset'}, $read, 'left', $self->{'file_send_left'}, '=', $sent);
-  #$self->{'file_send_offset'} += $sent;
-  #$self->{'file_send_offset'} += $read, $sent = $read,if $sent == 12;
-  #}
+#  $sent = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
+#  $self->{'file_send_offset'} += $sent if $sent > 0;
+#}
   else {
+    #$self->log(      'dev', 'using read send');
     read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
       $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
       unless length $self->{'file_send_buf'};    #$self->{'file_send_by'};
@@ -1691,14 +1671,6 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
                                                  #my $sent;
                                                  #$self->log(      'snd',      length $self->{'file_send_buf'},
     $sent = $self->send_can( $self->{'file_send_buf'} );
-    #eval {
-    #$sent = $self->{'socket'}->send( $self->{'file_send_buf'} );
-    #$_;
-    #length $buf;
-    #$sent;
-    #};                                           # if $self->{'socket'};
-    #$!    );
-    #$self->log( 'err', 'send error', $@ ) if $@;
   }
   schedule(
     10,

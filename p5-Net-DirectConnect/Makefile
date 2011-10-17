@@ -23,6 +23,8 @@ RUN_DEPENDS=	${SITE_PERL}/lib/abs.pm:${PORTSDIR}/devel/p5-lib-abs \
 		${SITE_PERL}/IO/Socket/SSL.pm:${PORTSDIR}/security/p5-IO-Socket-SSL \
 		${SITE_PERL}/IO/Socket/INET6.pm:${PORTSDIR}/net/p5-IO-Socket-INET6
 
+#IO::AIO
+
 PERL_CONFIGURE=	yes
 
 MAN1=		dcget.1 dcshare.1
