@@ -490,7 +490,7 @@ sub select_add {         #$self->{'select_add'} ||= sub {
   $self->{'select'}->add( $self->{'socket'} );
   $self->{'select_send'}->add( $self->{'socket'} );
   $self->{'sockets'}{ $self->{'socket'} } = $self;
-  #$self->log( 'dev', 'current select', $self->{'select'}->handles );
+  #$self->log( 'dev', 'add:', $self->{'socket'},' current select', $self->{'select'}->handles );
 }
 #$self->{'connect_check'} ||= sub {
 sub connect_check {
@@ -944,6 +944,7 @@ sub finished {    #$self->{'finished'} ||= sub {
 
 sub wait_connect {                                                         #$self->{'wait_connect'} ||= sub {
   my $self = shift;
+  #$self->log( 'dev', "wait_connect", $self->{'wait_connect_tries'});
   for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
     #$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
     last if grep { $self->{'status'} eq $_ } qw(connected transfer disconnecting disconnected destroy), '';
@@ -961,7 +962,7 @@ sub wait_finish {                                                          #$sel
     last if $self->finished();
     #$self->wait( undef, $self->{'wait_finish_by'} );
     #$self->log( 'dev', 'wait_finish', $_);
-    $self->wait_sleep();
+    $self->wait();
     #$self->work( undef, $self->{'wait_finish_by'} );
   }
   local @_;
@@ -995,9 +996,9 @@ sub wait_clients {                    #$self->{'wait_clients'} ||= sub {
 #sub wait_sleep {                                                     #$self->{'wait_sleep'} ||= sub {
 sub wait {                                                           #$self->{'wait_sleep'} ||= sub {
   my $self = shift;
-  #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
   my $ret;
   my $time = time() + ( shift || 1 );
+  #$self->log( 'dev', "wait_sleep", $time );
   while ( $time > time() ) {
     last unless $self->active();
     #$ret += $self->wait(@_);
@@ -1174,7 +1175,7 @@ sub work {    #$self->{'work'} ||= sub {
   ) if $self->{dev_auto_dump};
   $self->select();    # maybe send
                       #$self->log( 'dev', "work -> sleep", @params ),
-  return $self->wait_sleep(@params) if @params;
+  return $self->wait(@params) if @params;
   return $self->select( $self->{'work_sleep'}, 1 );
 }
 
@@ -1362,7 +1363,7 @@ sub sendcmd_all {    #$self->{'sendcmd_all'} ||= sub {
 sub rcmd {                                                #$self->{'rcmd'} ||= sub {
   my $self = shift;
   eval {
-    eval { $_->cmd(@_) }, $self->wait_sleep( $self->{'cmd_recurse_sleep'} )
+    eval { $_->cmd(@_) }, $self->wait( $self->{'cmd_recurse_sleep'} )
       for grep { $_ } values( %{ $self->{'clients'} } ), $self;
   };
 }
