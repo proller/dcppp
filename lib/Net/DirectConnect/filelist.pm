@@ -507,8 +507,8 @@ sub new {
   $self->{search_stat_update} = sub {
     my $self = shift if ref $_[0];
     my $tth = shift or return;
-    my $field = shift || 'hit'
-                  my $updated = $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field{rq}=${rq}$field{rq}+1 WHERE "
+    my $field = shift || 'hit';
+                  my $updated = $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+1 WHERE "
                   . "${rq}tth${rq}="
                   . $self->{db}->quote( $tth  )
                   . ($self->{db}{no_update_limit} ? (): " LIMIT 1") 
