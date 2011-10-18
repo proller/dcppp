@@ -238,7 +238,11 @@ sub init {
     $self->{'auto_listen'}          = 1;
     $self->{'status'}               = 'working';
     $self->{'disconnect_recursive'} = 1;
+  } else {
+    $self->module_load('filelist');
+  
   }
+
   #if ($self->{'message_type'} eq 'H') {
   #  $self->{'disconnect_recursive'} = 1;
   #}

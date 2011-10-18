@@ -75,7 +75,7 @@ Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->fileli
 my @dc;
 @dc = map {
   Net::DirectConnect->new(
-    modules            => ['filelist'],
+    #modules            => ['filelist'],
     share              => \@dirs,
     'filelist_builder' => ( join ' ', $^X, $0, 'filelist' ),
     #'filelist_builder' => ( join ' ', $^X, 'dcshare', 'filelist' ),

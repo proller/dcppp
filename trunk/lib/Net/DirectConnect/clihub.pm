@@ -74,6 +74,8 @@ sub init {
          #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
          #You are already in the hub.
          #  $self->{'parse'} ||= {
+$self->module_load('filelist');
+
   local %_ = (
     'chatline' => sub {
       my $self = shift if ref $_[0];
