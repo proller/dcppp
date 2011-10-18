@@ -212,11 +212,12 @@ my @dc;
         $dc
       );
       psmisc::schedule(
-        [ 10, 0, 1 ],
+        [ 1, 0, 1 ],
         our $update_queue_sub__ ||= sub {
           #my $self = $dc;
           my $self = shift;
           #$self->log('dev', 'dlsub once!!');
+          my %partial;
           unless ( $self->{no_auto_load_partial} ) {
             my $dir = $self->{'partial_prefix'};
             #$self->log('dev', 'look', $self->{'partial_prefix'});
@@ -230,12 +231,13 @@ my @dc;
               #$self->log('dev', $_);
               next unless s/\.([A-Z0-9]{39})$//;
               my ($tth) = $1;
-              $self->log( 'warn', 'removing already downloaded partial', $_, $tth ),
-              unlink $file, next if $self->{'share_full'}{$tth};
-              $self->log( 'dev', 'adding to queue', $_, $tth );
+              $self->log( 'warn', 'removing already downloaded partial', $_, $tth ), unlink $file, next if $self->{'share_full'}{$tth};
+              $self->log( 'warn', 'removing already downloading partial', $_, $tth ),unlink $file, next if $partial{$tth} > -s $file;
+              $self->log( 'dev', 'adding to queue', $_, $tth, -s $file, $partial{$tth});
               #$self->{'want_download'}{$tth} //= {};
-              push @todl, $tth;
-              $self->{'want_download_filename'}{$tth}{$_} = 100;
+              push @todl, $tth unless $partial{$tth};
+              $partial{$tth} = -s $file;
+              $self->{'want_download_filename'}{$tth} = {$_ => 100};
             }
             $self->dumper();
           }
