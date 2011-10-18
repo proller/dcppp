@@ -228,7 +228,7 @@ sub new {
       and $self->{charset_console};
   #$self->log( 'dev', 'utf8: УТф восемь');
   #$self->log( 'dev', Dumper $self);
-  $self->log( 'dcdbg', "using encodings console:[$self->{charset_console}] protocol:[$self->{charset_protocol}] fs:[$self->{charset_fs}]" );
+  $self->log( 'dcdbg', "using encodings console:[$self->{charset_console}] protocol:[$self->{charset_protocol}] fs:[$self->{charset_fs}]" ) unless $self->{parent}{parent};
   if ( $self->{'auto_say'} ) {
     for my $cmd ( @{ $self->{'auto_say_cmd'} || [] } ) {
       #$self->log('AS', $cmd);
@@ -1656,14 +1656,13 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
     if $self->{'file_send_by'} < $self->{'file_send_left'};
   my $sent;
 
-  if ( $INC{'Sys/Sendfile.pm'} ) {    #works
+if ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
+my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sent);
+  $self->{'file_send_offset'} += $sent if $sent > 0;
+}elsif ( $INC{'Sys/Sendfile.pm'} ) {    #works
     $sent = Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
   $self->{'file_send_offset'} += $sent if $sent > 0;
   }
-elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
-my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sent);
-  $self->{'file_send_offset'} += $sent if $sent > 0;
-}
 #blocking
 #elsif ($INC{'IO/AIO.pm'}) {
 #  $sent = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
