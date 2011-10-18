@@ -460,7 +460,12 @@ sub init_main {    #$self->{'init_main'} ||= sub {
          #$self->{$_} ||= $self->{'parent'}{$_} ||= {}, for qw(   );
   $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download);
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {},
-    for qw(sockets share_full share_tth want want_download want_download_filename downloading db);
+    for qw(sockets share_full share_tth want want_download want_download_filename downloading);
+
+      $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_},
+    for qw(db);
+
+    
   $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
     for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol);    #dev_adcs
   #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}" );
