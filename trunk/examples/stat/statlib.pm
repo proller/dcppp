@@ -441,7 +441,7 @@ sub is_slow {
 sub make_query {
   my ( $q, $query, $period ) = @_;
   my $sql;
-  #warn Dumper caller(0);
+  #warn Dumper caller(0), $q, $query, $period;
   #(caller(0))[1] eq 'statcgi'
   #return ;
   if ( is_slow($query) and ( caller(0) )[0] eq 'statcgi' and $config{'use_slow'} ) {
@@ -452,7 +452,7 @@ sub make_query {
       . ( ( $config{'queries'}{$query}{'periods'} ? ' AND period=' . $db->quote($period) : '' )
       . " ORDER BY n"
         . " LIMIT $config{'query_default'}{'LIMIT'}" );
-    my $res = $db->query($sql);
+    my $res = $db->query($sql);    
     #print Dumper $res if $param->{'debug'};
     my @ret;
     for my $row (@$res) { push @ret, eval $row->{'result'}; }
@@ -463,10 +463,11 @@ sub make_query {
   #return;
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
   $q->{'WHERE'} = join ' AND ', grep { $_ } $q->{'WHERE'},
-    map { $_ . '=' . $db->quote( $param->{$_} ) } grep { length $param->{$_} } keys %{ $config{'queries'} };    #qw(string tth);
+    map { $_ . ($param->{$_} =~ /%/? ' LIKE ' : '=' ). $db->quote( $param->{$_} ) } grep { length $param->{$_} } keys %{ $config{'queries'} };    #qw(string tth);
   $sql = join ' ', $q->{'sql'},
     map { my $key = ( $q->{$_} || $config{query_default}{$_} ); length $key ? ( $_ . ' ' . $key ) : '' } 'SELECT', 'FROM',
     'LEFT JOIN', 'USING', 'WHERE', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'UNION';
+  #print "sql[$sql]";
   return $db->query($sql);
 }
 $db ||= pssql->new( %{ $config{'sql'} || {} }, );

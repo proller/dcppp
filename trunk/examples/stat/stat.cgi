@@ -132,6 +132,7 @@ $config{'queries'}{'string'}{'desc'} = psmisc::html_chars( $param->{'string'} ),
 @ask = ('tth')      if $param->{'tth'};
 @ask = ('filename') if $param->{'filename'};
 @ask = ( $param->{'query'} ) if $param->{'query'} and $config{'queries'}{ $param->{'query'} };
+@ask = ('q') if $param->{'q'};
 $config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
 my %makegraph;
 my %graphcolors;
@@ -174,10 +175,12 @@ $config{'out'}{'html'}{'header'} = sub {
 qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим <a href="http://en.wikipedia.org/wiki/DC%2B%2B#Client_software_comparison">dc клиент</a></div>};
 };
 part 'header';
+#print Dumper \@ask;
 my @queries = @ask ? @ask : sort { $config{'queries'}{$a}{'order'} <=> $config{'queries'}{$b}{'order'} }
   grep { $config{'queries'}{$_}{'main'} } keys %{ $config{'queries'} };
 for my $query (@queries) {
   my $q = { name => $query, %{ $config{'queries'}{$query} || next } };
+  #print Dumper $q, ;
   next if $q->{'disabled'};
   $q->{'desc'} = $q->{'desc'}{ $config{'lang'} } if ref $q->{'desc'} eq 'HASH';
   $config{'out'}{'rss'}{'table-head'} = sub {
