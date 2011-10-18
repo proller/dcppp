@@ -243,7 +243,7 @@ sub new {
     #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
     $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};# if $self->{'parent'};
     $self->listen();
-    $self->cmd('connect_aft') if $self->{'broadcast'};
+    $self->connect_aft() if $self->{'broadcast'};
   } elsif ( $self->{'auto_connect'} ) {
     #$self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
     $self->connect();
@@ -626,7 +626,7 @@ sub connected {    #$self->{'connected'} ||= sub {
   $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}):$self->{'port'} [me=$self->{'myip'}] ok ", );
   #$self->log( $self, 'connected1 inited', "MT:$self->{'message_type'}", ' with' );
   #$self->log( 'dev',  'ssltry'),IO::Socket::SSL->start_SSL($self->{'socket'}) if $self->{'protocol'} eq 'adcs';
-  $self->cmd('connect_aft');
+  $self->connect_aft();
 }
 
 sub reconnect {    #$self->{'reconnect'} ||= sub {
@@ -1041,7 +1041,7 @@ sub work {    #$self->{'work'} ||= sub {
         {
           $self->log(
             'dev',
-"del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] last active=",
+"del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] listener=[$self->{'listener'}]last active=",
             time - $self->{'clients'}{$_}{activity}
           );
           #(
@@ -1173,7 +1173,7 @@ sub work {    #$self->{'work'} ||= sub {
     },
     $self
   ) if $self->{dev_auto_dump};
-  $self->select();    # maybe send
+  return $self->select($self->{'work_sleep'}) if @{$self->{send_buffer_raw}|| []};    # maybe send
                       #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
   return $self->select( $self->{'work_sleep'}, 1 );
