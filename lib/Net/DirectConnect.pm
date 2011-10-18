@@ -1179,10 +1179,11 @@ sub work {    #$self->{'work'} ||= sub {
     },
     $self
   ) if $self->{dev_auto_dump};
-  return $self->select($self->{'work_sleep'}) if @{$self->{send_buffer_raw}|| []};    # maybe send
+  return $self->select($self->{'work_sleep'});# if @{$self->{send_buffer_raw}|| []};    # maybe send
                       #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
-  return $self->select( $self->{'work_sleep'}, 1 );
+  #return $self->select( $self->{'work_sleep'}, 1 );
+  return $self->select( $self->{'work_sleep'});
 }
 
 sub dumper {          #$self->{'dumper'} ||= sub {
@@ -1656,19 +1657,26 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
     if $self->{'file_send_by'} < $self->{'file_send_left'};
   my $sent;
 
-if ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
-my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sent);
-  $self->{'file_send_offset'} += $sent if $sent > 0;
-}elsif ( $INC{'Sys/Sendfile.pm'} ) {    #works
+if (0) {
+
+
+  
+} elsif ( $INC{'Sys/Sendfile.pm'} ) {    #works
+    #$self->log(      'dev', 'using sys::sendfile ');
     $sent = Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
   $self->{'file_send_offset'} += $sent if $sent > 0;
-  }
+} elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
+    #$self->log(      'dev', 'using sendfile freebsd');
+
+my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sent);
+  $self->{'file_send_offset'} += $sent if $sent > 0;
+
+
 #blocking
 #elsif ($INC{'IO/AIO.pm'}) {
 #  $sent = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
 #  $self->{'file_send_offset'} += $sent if $sent > 0;
-#}
-  else {
+}  else {
     #$self->log(      'dev', 'using read send');
     read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
       $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
@@ -1704,6 +1712,9 @@ my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'})
   #$self->{activity} = time if $sent;
   #$self->{bytes_send} += $sent;
   $self->{'file_send_left'} -= $sent;
+    #$self->log(      'dev', 'send end', $sent, $self->{'file_send_offset'}, $self->{'file_send_total'}, "left=[$self->{'file_send_left'}]");
+
+
   substr( $self->{'file_send_buf'}, 0, $sent ) = undef;
 #if (length $self->{'file_send_buf'}) {         $self->log( 'info', 'sent small', $sent, 'todo', length $self->{'file_send_buf'});    }
 #$readed;
