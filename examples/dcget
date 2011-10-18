@@ -41,7 +41,7 @@ use Net::DirectConnect::filelist;
 #$config{disconnect_after_inf} //= 0;
 psmisc::configure();    #psmisc::lib_init();
 psmisc::lib_init();     #for die handler
-$config{'auto_get_best'}      //= 1;
+#$config{'auto_get_best'}      //= 1;
 $config{'hit_to_ask'}         //= 5;
 $config{'queue_recalc_every'} //= 100;
 $config{'get_every'}          //= 60;
@@ -212,7 +212,7 @@ my @dc;
         $dc
       );
       psmisc::schedule(
-        [ 1, 0, 1 ],
+        [ 10, 0, 1 ],
         our $update_queue_sub__ ||= sub {
           #my $self = $dc;
           my $self = shift;
