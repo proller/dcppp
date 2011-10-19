@@ -160,6 +160,7 @@ sub new {
       #warn 'preFL',Dumper $self->{db}{table}; #$config{'sql'};
 
       $self->{db}{table}{$_} = $table{$_} for keys %table;
+      $self->{db}{upgrade} = $_{upgrade};
     }
     local %_ = ( 'table' => \%table, );
     $self->{sql}{$_} //= $_{$_} for keys %_;
