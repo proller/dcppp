@@ -1526,9 +1526,33 @@ sub file_write {    #$self->{'file_write'} ||= sub {
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
 #$self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );
-    $self->log( 'dcdbg', "recv " . length($$databuf) . " [$$databuf]" )
-      if length $$databuf < 10;
+    #$self->log( 'dcdbg', "recv " . length($$databuf) . " [$$databuf]" ) if length $$databuf < 10;
     print $fh $$databuf;
+
+	
+	schedule(
+    10,
+    $self->{__stat_recv} ||= sub {
+      my $self = shift;
+      my $recv = shift;
+      #my $read = shift;
+      #our ( $lastmark, $lasttime );
+      $self->log(
+        'dev',                   "sent bytes",                      #length $self->{'file_send_buf'},
+        "recv=[$recv] now [", $self->{'filebytes'} ,
+        "] of [$self->{'filetotal'}], now", 's=',
+        ( $self->{'filebytes'} - $self->{__stat_recv_lastmark} ) /
+          ( time - $self->{__stat_recv_lasttime} or 1 ),
+        "status=[$self->{'status'}]",
+        ),
+        $self->{__stat_recv_lastmark} = $self->{'filebytes'}; 
+		$self->{__stat_recv_lasttime} = time;
+        #if time - $lasttime > 1;
+    },
+    $self, length $$databuf,
+  );
+  
+
     $self->log( 'err', "file download error! extra bytes ($self->{'filebytes'}/$self->{'filetotal'}) " )
       if $self->{'filebytes'} > $self->{'filetotal'};
     $self->log(
@@ -1693,18 +1717,19 @@ my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'})
       my $self = shift;
       my $sent = shift;
       my $read = shift;
-      our ( $lastmark, $lasttime );
+      #our ( $lastmark, $lasttime );
       $self->log(
         'dev',                   "sent bytes",                      #length $self->{'file_send_buf'},
         "sent=[$sent] of buf [", length $self->{'file_send_buf'},
         "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now",
         $self->{'file_send_offset'}, 'of',
         $self->{'file_send_total'},  's=',
-        ( $self->{'file_send_offset'} - $lastmark ) /
-          ( time - $lasttime or 1 ),
+        ( $self->{'file_send_offset'} - $self->{__stat_lastmark} ) /
+          ( time - $self->{__stat_lasttime} or 1 ),
         "status=[$self->{'status'}]",
         ),
-        $lastmark = $self->{'file_send_offset'}, $lasttime = time,
+        $self->{__stat_lastmark} = $self->{'file_send_offset'}; 
+		$self->{__stat_lasttime} = time;
         #if time - $lasttime > 1;
     },
     $self, $sent, $read
