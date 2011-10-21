@@ -463,7 +463,7 @@ sub init {
         my $foundshow = ( $found =~ m{^/} ? () : '/' ) . (
           #$self->{chrarset_fs}          ?
           #$self->{charset_fs} ne $self->{charset_protocol} ?
-          Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $found
+          Encode::encode $self->{charset_protocol}, Encode::decode($self->{charset_fs}, $found, Encode::FB_WARN), Encode::FB_WARN
             #: $found
         );
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),

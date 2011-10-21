@@ -84,7 +84,7 @@ sub init {
     #return $self->{lock};
     my ($lock) = @_;
     #$self->{'log'}->( 'dev', 'making lock from', $lock );
-    $lock = Encode::encode $self->{charset_protocol}, $lock if $self->{charset_protocol};
+    $lock = Encode::encode $self->{charset_protocol}, $lock,Encode::FB_WARN if $self->{charset_protocol};
     #$self->{'log'}->( 'dev', 'making lock from2:', $lock );
     my @lock = split( //, $lock );
     my $i;

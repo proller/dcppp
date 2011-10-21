@@ -238,7 +238,7 @@ sub new {
         ( my $dirname = $dir );
         $dirname =
           #Encode::encode 'utf8',
-          Encode::decode $self->{charset_fs}, $dirname if $self->{charset_fs};
+          Encode::decode $self->{charset_fs}, $dirname, Encode::FB_WARNif $self->{charset_fs};
         #$self->log( 'dev','sd', __LINE__,$dh);
         next if skip( $dirname, $self->{skip_dir} ) or ( $self->{skip_symlink} and -l $dirname );
         unless ($level) {
@@ -276,9 +276,9 @@ sub new {
           $f->{size} = -s $f->{full_local} if -f $f->{full_local};
           next if $f->{size} < $self->{file_min};
           $f->{file} =    #Encode::encode 'utf8',
-            Encode::decode $self->{charset_fs}, $f->{file} if $self->{charset_fs};
+            Encode::decode $self->{charset_fs}, $f->{file}, Encode::FB_WARN if $self->{charset_fs};
           $f->{path} =    #Encode::encode 'utf8',
-            Encode::decode $self->{charset_fs}, $f->{path} if $self->{charset_fs};
+            Encode::decode $self->{charset_fs}, $f->{path}, Encode::FB_WARN if $self->{charset_fs};
           next FILE if skip( $f->{file}, $self->{skip_file} ) or ( $self->{skip_symlink} and -l $f->{file} );
           #$self->log( 'encfile', $f->{file} , "chs:$self->{charset_fs}");
           $f->{full} = "$f->{path}/$f->{file}";
@@ -465,7 +465,7 @@ sub new {
         #$full_local = Encode::encode $self->{charset_fs}, $full if $self->{charset_fs};
         $full_local = Encode::encode $self->{charset_fs},
           #Encode::decode 'utf8',
-          $full_local;
+          $full_local, Encode::FB_WARN;
         $self->share_add_file( $full_local, $tth, $file );
         ++$sharefiles;
         $sharesize += $size;

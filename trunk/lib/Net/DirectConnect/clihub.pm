@@ -298,7 +298,7 @@ $self->module_load('filelist');
           $path =~ s{^\w:}{};
           $path =~ s{^\W+}{};
           $path =~ tr{/}{\\};
-          $path = Encode::encode $self->{charset_protocol}, Encode::decode $self->{charset_fs}, $path
+          $path = Encode::encode $self->{charset_protocol}, Encode::decode($self->{charset_fs}, $path, Encode::FB_WARN), Encode::FB_WARN
             if $self->{charset_fs} ne $self->{charset_protocol};
         }
         local @_ = (
