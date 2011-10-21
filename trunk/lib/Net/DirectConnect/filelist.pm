@@ -7,6 +7,7 @@ generate dc++ xml filelist
 perl filelist.pm /path/to/dir
 
 =cut
+
 package    # no cpan
   Net::DirectConnect::filelist;
 use 5.10.0;
@@ -15,10 +16,8 @@ use utf8;
 use warnings;
 no warnings qw(uninitialized);
 use Encode;
-
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
-
 #use Net::DirectConnect;
 use Net::DirectConnect::adc;
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
@@ -37,6 +36,7 @@ use base 'Net::DirectConnect';
       "; #use Net::DirectConnect; 
       #psmisc::use_try ('Net::DirectConnect');
 =cut
+
 use base 'Net::DirectConnect';
 #use lib '../../../examples/stat/pslib';    # REMOVE
 #use lib 'stat/pslib';                      # REMOVE
@@ -83,7 +83,7 @@ sub new {
   $self->{tth_cheat}         //= 1_000_000;         #try find file with same name-size-date
   $self->{tth_cheat_no_date} //= 0;                 #--//-- only name-size
   $self->{file_min}          //= 0;                 #skip files  smaller
-  $self->{filelist_scan}     //= 3600 * 1;         #every seconds, 0 to disable
+  $self->{filelist_scan}     //= 3600 * 1;          #every seconds, 0 to disable
   $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
   $self->{file_send_by}      //= 1024 * 1024 * 1;
   $self->{skip_hidden}       //= 1;
@@ -122,10 +122,12 @@ sub new {
       #nav_all => 1,
       #{}
       #},
-      'upgrade' => sub {    my $db = shift if ref $_[0];
-      $db->do("ALTER TABLE filelist ADD COLUMN $_")for 'hit INTEGER UNSIGNED NOT NULL DEFAULT 0 ', 'sch INTEGER UNSIGNED NOT NULL DEFAULT 0 ';
-      #$db->do("UPDATE filelist SET hit=0, sch=0 WHERE hit IS NULL");
-},
+      'upgrade' => sub {
+        my $db = shift if ref $_[0];
+        $db->do("ALTER TABLE filelist ADD COLUMN $_")
+          for 'hit INTEGER UNSIGNED NOT NULL DEFAULT 0 ', 'sch INTEGER UNSIGNED NOT NULL DEFAULT 0 ';
+        #$db->do("UPDATE filelist SET hit=0, sch=0 WHERE hit IS NULL");
+      },
     );
     $self->{sql}{$_} //= $_{$_} for keys %_;
     my ($short) = $self->{sql}{'driver'} =~ /mysql/;
@@ -152,13 +154,12 @@ sub new {
         'time' => pssql::row( 'time', ), #'index' => 1,
                      #'added'  => pssql::row( 'added', ),
                      #'exists' => pssql::row( undef, 'type' => 'SMALLINT', 'index' => 1, ),
-        'hit' => pssql::row( undef, 'type'        => 'INTEGER UNSIGNED NOT NULL DEFAULT 0 ',  ),
-        'sch' => pssql::row( undef, 'type'        => 'INTEGER UNSIGNED NOT NULL DEFAULT 0',  ),
+        'hit' => pssql::row( undef, 'type' => 'INTEGER UNSIGNED NOT NULL DEFAULT 0 ', ),
+        'sch' => pssql::row( undef, 'type' => 'INTEGER UNSIGNED NOT NULL DEFAULT 0', ),
       },
     );
     if ( $self->{db} ) {
       #warn 'preFL',Dumper $self->{db}{table}; #$config{'sql'};
-
       $self->{db}{table}{$_} = $table{$_} for keys %table;
       $self->{db}{upgrade} = $_{upgrade};
     }
@@ -166,10 +167,8 @@ sub new {
     $self->{sql}{$_} //= $_{$_} for keys %_;
     #warn ('sqlore:',Data::Dumper::Dumper $self->{'sql'}, \%_),
     $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, );
-
-    
     ( $tq, $rq, $vq ) = $self->{db}->quotes();
-  #$self->log('db', Dumper $self->{db});
+    #$self->log('db', Dumper $self->{db});
   }
   $self->{filelist_make} //= sub {
     my $self = shift if ref $_[0];
@@ -178,7 +177,7 @@ sub new {
     $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
       unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
                                                                              #$self->log( 'info',"ntth=[$notth]");    exit;
-    $self->log( 'err', 'forced db upgrade on make'),    $self->{db}->upgrade() if $self->{upgrade_force};
+    $self->log( 'err', 'forced db upgrade on make' ), $self->{db}->upgrade() if $self->{upgrade_force};
     my $stopscan;
     my $level     = 0;
     my $levelreal = 0;
@@ -195,12 +194,18 @@ sub new {
       qq{Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
 };
 #<FileListing Version="1" CID="KIWZDBLTOFWIQOT6NWP7UOPJVDE2ABYPZJGN5TZ" Base="/" Generator="Net::DirectConnect $Net::DirectConnect::VERSION">
-#}; 
+#};
     my %o;
-    my $o = sub{our $n; $o{$_[0]} = ++$n; @_};
-
-    our %table2filelist = ($o->(file=>'Name'), $o->(size => 'Size'), $o->(tth => 'TTH'), $o->(time=>'TS'), $o->(hit=>'HIT'), $o->(sch=>'SCH'));
-#warn Dumper   \%o, \%table2filelist;
+    my $o = sub { our $n; $o{ $_[0] } = ++$n; @_ };
+    our %table2filelist = (
+      $o->( file => 'Name' ),
+      $o->( size => 'Size' ),
+      $o->( tth  => 'TTH' ),
+      $o->( time => 'TS' ),
+      $o->( hit  => 'HIT' ),
+      $o->( sch  => 'SCH' )
+    );
+    #warn Dumper   \%o, \%table2filelist;
     my $filelist_line = sub($) {
       for my $f (@_) {
         next if !length $f->{file} or !length $f->{'tth'};
@@ -209,8 +214,9 @@ sub new {
         #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
         psmisc::file_append $self->{files}, "\t" x $level,
           #qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
-          qq{<File},(map {qq{ $table2filelist{$_}="}.psmisc::html_chars($f->{$_}).qq{"}} sort {$o{$a}<=>$o{$b}} grep {$table2filelist{$_} and $f->{$_} }  keys %$f),qq{/>\n};
-          
+          qq{<File},
+          ( map { qq{ $table2filelist{$_}="} . psmisc::html_chars( $f->{$_} ) . qq{"} }
+            sort { $o{$a} <=> $o{$b} } grep { $table2filelist{$_} and $f->{$_} } keys %$f ), qq{/>\n};
         #$self->{share_full}{ $f->{tth} } = $f->{full} if $f->{tth};    $self->{share_full}{ $f->{file} } ||= $f->{full};
         $f->{'full'} ||= $f->{'path'} . '/' . $f->{'file'};
 
@@ -220,6 +226,7 @@ sub new {
         if $f->{'tth'};
       $self->{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
 =cut
+
   #$self->log 'set share', "[$f->{file}], [$f->{tth}] = [$self->{share_full}{ $f->{tth} }],[$self->{share_full}{ $f->{file} }]";
   #$self->log Dumper $self->{share_full};
       }
@@ -289,9 +296,9 @@ sub new {
 #/^\./ &&     -f "$dir/$_"     }
 #print " ", $file;
 #todo - select not all cols
- #         $self->log('preselect', $self->{no_sql});
+#         $self->log('preselect', $self->{no_sql});
           unless ( $self->{no_sql} ) {
-          #$self->log('select go',);# Dumper $f);
+            #$self->log('select go',);# Dumper $f);
             my $indb =
               $self->{db}->line( "SELECT * FROM ${tq}filelist${tq} WHERE"
                 . " ${rq}path${rq}="
@@ -303,7 +310,7 @@ sub new {
                 . " AND ${rq}time${rq}="
                 . $self->{db}->quote( $f->{time} )
                 . " LIMIT 1" );
-          #$self->log('select', Dumper $indb);
+            #$self->log('select', Dumper $indb);
             #$self->log ('dev', 'already scaned', $indb->{size}),
             $filelist_line->( { %$f, %$indb } ), next, if $indb->{size} ~~ $f->{size};
             #$db->select('filelist', {path=>$f->{path},file=>$f->{file}, });
@@ -423,8 +430,7 @@ sub new {
   };
   $self->{filelist_load} //= sub {    #{'cmd'}
     my $self = shift if ref $_[0];
-
-    $self->log( 'err', 'forced db upgrade on load'),    $self->{db}->upgrade() if $self->{upgrade_force};
+    $self->log( 'err', 'forced db upgrade on load' ), $self->{db}->upgrade() if $self->{upgrade_force};
 
 =old
   if ( $config{filelist} and open my $f, '<', $config{filelist} ) {
@@ -443,6 +449,7 @@ sub new {
     $self->log ".done:", ( scalar keys %{ $self->{share_full} } ), "\n";
   }
 =cut
+
     #$self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
@@ -504,36 +511,30 @@ sub new {
     $self->share_changed();
     return ( $sharesize, $sharefiles );
   };
-
   $self->{search_stat_update} = sub {
     my $self = shift if ref $_[0];
     my $tth = shift or return;
     my $field = shift || 'hit';
-                  my $updated = $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+1 WHERE "
-                  . "${rq}tth${rq}="
-                  . $self->{db}->quote( $tth  )
-                  . ($self->{db}{no_update_limit} ? (): " LIMIT 1") 
-                  );
-    $self->log ( 'dev', "counter $field increased[$updated] on [$tth]") if $updated;
-
- };
-
+    my $updated =
+      $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+1 WHERE "
+        . "${rq}tth${rq}="
+        . $self->{db}->quote($tth)
+        . ( $self->{db}{no_update_limit} ? () : " LIMIT 1" ) );
+    $self->log( 'dev', "counter $field increased[$updated] on [$tth]" ) if $updated;
+  };
   $self->{handler_int}{Search} //= sub {
     my $self = shift if ref $_[0];
     #$self->log ( 'dev', 'Search stat', Dumper @_) ;
     #$self->log ( 'dev', 'Search stat', Dumper $_[1]{tth}) ;
-    $self->search_stat_update($_[1]{tth}, 'sch');
-
-  };  
+    $self->search_stat_update( $_[1]{tth}, 'sch' );
+  };
   $self->{handler_int}{SCH} //= sub {
     my $self = shift if ref $_[0];
     #$self->log ( 'dev', 'SCH stat', Dumper @_) ;
-    $self->search_stat_update($_[-1]{TR}, 'sch');
-  };  
-  
+    $self->search_stat_update( $_[-1]{TR}, 'sch' );
+  };
   $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {
-          my $self = shift if ref $_[0];
-
+    my $self = shift if ref $_[0];
     #$self->log (  'periodic in filelist', $self->{filelist_scan}, caller );
     psmisc::schedule(
       #[10, $self->{filelist_scan}],
@@ -595,6 +596,7 @@ return unless $name;
           if $tth;
         $self->{share_full}{$file} ||= $full_local;
 =cut
+
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth ),
       $self->share_add_file( $full, $tth ), $self->share_changed()
       if !$self->{'file_recv_filelist'} and !$self->{'no_auto_share_downloaded'};  # unless $self->{'no_auto_share_downloaded'};
@@ -611,5 +613,5 @@ eval q{ #do
   print "making\n";
   __PACKAGE__->new(@ARGV)->{db}->upgrade(), exit if $ARGV[0] eq 'upgrade';
   __PACKAGE__->new(@ARGV)->filelist_make(@ARGV),;
-},print $@ unless caller;
+}, print $@ unless caller;
 1;

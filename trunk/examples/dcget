@@ -17,7 +17,6 @@
  $config{dc}{host} = 'myhub.net';
 
 =cut
-
 use 5.10.0;
 use strict;
 use Data::Dumper;
@@ -48,7 +47,7 @@ $config{'get_every'}          //= 60;
 #$config{'get_dir'}            //= './downloads/';
 $config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
 psmisc::printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit
-  if !$ARGV[0] and !($config{dc}{host} || $config{dcget}{host});    # and !$config{dc}{hosts};
+  if !$ARGV[0] and !( $config{dc}{host} || $config{dcget}{host} );    # and !$config{dc}{hosts};
 psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );
 #$SIG{INT} = $SIG{KILL} = sub { printlog 'exiting', exit; };
 #printlog 'dev', 'mkdir', $config{'get_dir'},
@@ -71,7 +70,7 @@ my $filelist = shift @ARGV if $ARGV[0] ~~ 'filelist';
 my @hosts = grep { m{^\w+://} } @ARGV;
 Net::DirectConnect::filelist->new( log => $log, %{ $config{dc} || {} } )->filelist_make(@dirs), exit
   if ( $filelist and !caller )
-  or ( !@hosts and !($config{dc}{host} || $config{dcget}{host}) );
+  or ( !@hosts and !( $config{dc}{host} || $config{dcget}{host} ) );
 my @dc;
 @dc = map {
   Net::DirectConnect->new(
@@ -136,8 +135,7 @@ my @dc;
     #auto_work
     worker => sub {
       my $dc = shift;
-#printlog('worker',  keys %{$dc->{parent}||{}}    );
-
+      #printlog('worker',  keys %{$dc->{parent}||{}}    );
       $dc->{'handler'}{'SCH'} ||= $dc->{'handler'}{'Search'};    #_parse_aft _parse_aft
       psmisc::schedule(
         $config{'queue_recalc_every'},
@@ -154,7 +152,8 @@ my @dc;
           ];
           psmisc::printlog(
             'info', "queue len=", scalar @{ $work{'toask'} },
-            " first hits=", $work{'ask'}{ $work{'toask'}[0]}, "asks=", scalar keys %{ $work{'ask'}  },
+            " first hits=", $work{'ask'}{ $work{'toask'}[0] },
+            "asks=", scalar keys %{ $work{'ask'} },
             $work{'toask'}[0]
           );
         },
@@ -231,13 +230,15 @@ my @dc;
               #$self->log('dev', $_);
               next unless s/\.([A-Z0-9]{39})$//;
               my ($tth) = $1;
-              $self->log( 'warn', 'removing already downloaded partial', $_, $tth ), unlink $file, next if $self->{'share_full'}{$tth};
-              $self->log( 'warn', 'removing already downloading partial', $_, $tth ),unlink $file, next if $partial{$tth} > -s $file;
-              $self->log( 'dev', 'adding to queue', $_, $tth, -s $file, $partial{$tth});
+              $self->log( 'warn', 'removing already downloaded partial', $_, $tth ), unlink $file, next
+                if $self->{'share_full'}{$tth};
+              $self->log( 'warn', 'removing already downloading partial', $_, $tth ), unlink $file, next
+                if $partial{$tth} > -s $file;
+              $self->log( 'dev', 'adding to queue', $_, $tth, -s $file, $partial{$tth} );
               #$self->{'want_download'}{$tth} //= {};
               push @todl, $tth unless $partial{$tth};
               $partial{$tth} = -s $file;
-              $self->{'want_download_filename'}{$tth} = {$_ => 100};
+              $self->{'want_download_filename'}{$tth} = { $_ => 100 };
             }
             $self->dumper();
           }

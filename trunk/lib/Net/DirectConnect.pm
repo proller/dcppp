@@ -203,7 +203,6 @@ sub new {
     #if ( $self->{'module'} ) {
   }
   ++$self->{'module'}{$_} for grep { $self->{'protocol'} eq $_ } qw(adcs http);
-
   #$self->log( 'dev', 'module load', $self->{'module'}, 'p', $self->{'protocol'} );
   my @modules;    #= ($self->{'module'});
   for (qw(module modules)) {
@@ -228,7 +227,9 @@ sub new {
       and $self->{charset_console};
   #$self->log( 'dev', 'utf8: УТф восемь');
   #$self->log( 'dev', Dumper $self);
-  $self->log( 'dcdbg', "using encodings console:[$self->{charset_console}] protocol:[$self->{charset_protocol}] fs:[$self->{charset_fs}]" ) unless $self->{parent}{parent};
+  $self->log( 'dcdbg',
+    "using encodings console:[$self->{charset_console}] protocol:[$self->{charset_protocol}] fs:[$self->{charset_fs}]" )
+    unless $self->{parent}{parent};
   if ( $self->{'auto_say'} ) {
     for my $cmd ( @{ $self->{'auto_say_cmd'} || [] } ) {
       #$self->log('AS', $cmd);
@@ -242,7 +243,7 @@ sub new {
   #$self->log('dev', 'sctp', $self->{'dev_sctp'});
   if ( $self->{'auto_listen'} ) {
     #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
-    $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};# if $self->{'parent'};
+    $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};    # if $self->{'parent'};
     $self->listen();
     $self->connect_aft() if $self->{'broadcast'};
   } elsif ( $self->{'auto_connect'} ) {
@@ -259,7 +260,7 @@ sub new {
     while ( $self->active() ) {
       $self->work();    #forever
                         #$self->{'auto_work'}->($self) if ref $self->{'auto_work'} eq 'CODE';
-      #Time::HiRes::sleep 0.01;
+                        #Time::HiRes::sleep 0.01;
     }
     $self->disconnect();
   }
@@ -461,14 +462,10 @@ sub init_main {    #$self->{'init_main'} ||= sub {
   $self->{$_} //= $self->{'parent'}{$_} ||= [] for qw(queue_download);
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_} ||= {},
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
-
-      $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_},
-    for qw(db);
-
-    
+  $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_}, for qw(db);
   $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
     for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol);    #dev_adcs
-  #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}" );
+      #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}" );
   $self->{$_} //= $_{$_} for keys %_;
   $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
@@ -577,7 +574,13 @@ sub connect {    #$self->{'connect'} ||= sub {
     %{ $self->{'socket_options'} || {} },
   );
   #$self->log('dev', 'connect end');
-  $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $!, Encode::FB_WARN ), "[$self->{'socket'}]" ), return 1
+  $self->log(
+    'err',
+    "connect socket  error: $@,",
+    Encode::decode( $self->{charset_fs}, $!, Encode::FB_WARN ),
+    "[$self->{'socket'}]"
+    ),
+    return 1
     if !$self->{'socket'};
   #$self->log( 'dev',  'timeout to', $self->{'Timeout'});
   $self->{'socket'}->timeout( $self->{'Timeout'} ) if $self->{'Timeout'};    #timeout must be after new, ifyou want nonblocking
@@ -651,7 +654,7 @@ sub listen {       #$self->{'listen'} ||= sub {
   #or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
   $self->{'listener'} = 1;
   $self->myport_generate();
-  #$self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",'sockopts', Dumper $self->{'socket_options'} );
+#$self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",'sockopts', Dumper $self->{'socket_options'} );
   for ( 1 .. $self->{'myport_tries'} ) {
     $self->{'socket'} ||= $self->{'socket_class'}->new(
       'LocalPort' => $self->{'myport'},
@@ -1020,13 +1023,13 @@ sub work {    #$self->{'work'} ||= sub {
   my @params = @_;
   #$self->periodic();
   #$self->log( 'dev', 'work', @params);
-  code_run $self->{'auto_work'}, @params; # if ref $self->{'auto_work'} eq 'CODE';
+  code_run $self->{'auto_work'}, @params;    # if ref $self->{'auto_work'} eq 'CODE';
   schedule(
     1,
     our $___work_every ||= sub {
       my $self = shift;
       $self->connect_check();
-      code_run($_, $self) for values %{ $self->{periodic} || {} };
+      code_run( $_, $self ) for values %{ $self->{periodic} || {} };
       #print ("P:$_\n"),
       #$self->{periodic}{$_}->() for grep {ref$self->{periodic}{$_} eq 'CODE'}keys %{$self->{periodic} || {}};
       #$self->log('dev', 'work for', keys %{$self->{'clients'}});
@@ -1068,14 +1071,13 @@ sub work {    #$self->{'work'} ||= sub {
         next if $self->{'sockets'}{$_} and %{ $self->{'sockets'}{$_} };
         delete $self->{'sockets'}{$_};
       }
-
-      
-
-      if ( !$self->{parent} or !$self->{parent}{parent} ) { # first parent always autocreated on init
-        code_run($self->{$_}, $self) for qw(worker); #auto_work
+      if ( !$self->{parent} or !$self->{parent}{parent} ) {    # first parent always autocreated on init
+        code_run( $self->{$_}, $self ) for qw(worker);         #auto_work
       }
       #$self->log('dev', 'work parent',  scalar keys %{ $self->{parent}} , scalar keys %{ $self->{parent}{parent}}   );
-      for (grep {$self->{'clients'}{$_} ne $self} keys %{ $self->{'clients'} }
+      for (
+        grep { $self->{'clients'}{$_} ne $self }
+        keys %{ $self->{'clients'} }
         #$self->clients_my()
         )
       {
@@ -1179,14 +1181,14 @@ sub work {    #$self->{'work'} ||= sub {
     },
     $self
   ) if $self->{dev_auto_dump};
-  return $self->select($self->{'work_sleep'});# if @{$self->{send_buffer_raw}|| []};    # maybe send
-                      #$self->log( 'dev', "work -> sleep", @params ),
+  return $self->select( $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
+                                                    #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
   #return $self->select( $self->{'work_sleep'}, 1 );
-  return $self->select( $self->{'work_sleep'});
+  return $self->select( $self->{'work_sleep'} );
 }
 
-sub dumper {          #$self->{'dumper'} ||= sub {
+sub dumper {                                        #$self->{'dumper'} ||= sub {
   my $self = shift;
   my $file = $_[0] || $self->{dev_auto_dump_file} || $0 . ( $self->{dev_auto_dump_timed} ? '.' . time : () ) . '.dump';
   open my $fh, '>', $file or return;
@@ -1195,7 +1197,7 @@ sub dumper {          #$self->{'dumper'} ||= sub {
   $self->log( 'dev', "Writed dump", -s $file );
 }
 
-sub parser {          #$self->{'parser'} ||= sub {
+sub parser {                                        #$self->{'parser'} ||= sub {
   my $self = shift;
   for ( local @_ = @_ ) {
     $self->log(
@@ -1490,7 +1492,8 @@ sub file_select {    #$self->{'file_select'} ||= sub {
     "$self->{'file_recv_dest'}" . ( $self->{'file_recv_tth'} ? '.' . $self->{'file_recv_tth'} : () ) . "$self->{'partial_ext'}";
   $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_partial'}
     unless $self->{'file_recv_partial'} =~ m{[/\\]};
-  $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'}, Encode::FB_WARN if $self->{charset_fs};
+  $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'}, Encode::FB_WARN
+    if $self->{charset_fs};
   $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
   $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
     if $self->{'file_recv_size'} and $self->{'file_recv_from'};
@@ -1526,33 +1529,30 @@ sub file_write {    #$self->{'file_write'} ||= sub {
   for my $databuf (@_) {
     $self->{'filebytes'} += length $$databuf;
 #$self->log( 'dcdbg', "($self->{'number'}) recv ".length($$databuf)." [$self->{'filebytes'}] of $self->{'filetotal'} file $self->{'filename'}" );
-    #$self->log( 'dcdbg', "recv " . length($$databuf) . " [$$databuf]" ) if length $$databuf < 10;
+#$self->log( 'dcdbg', "recv " . length($$databuf) . " [$$databuf]" ) if length $$databuf < 10;
     print $fh $$databuf;
-
-	
-	schedule(
-    10,
-    $self->{__stat_recv} ||= sub {
-      my $self = shift;
-      my $recv = shift;
-      #my $read = shift;
-      #our ( $lastmark, $lasttime );
-      $self->log(
-        'dev',                   "sent bytes",                      #length $self->{'file_send_buf'},
-        "recv=[$recv] now [", $self->{'filebytes'} ,
-        "] of [$self->{'filetotal'}], now", 's=',
-        ( $self->{'filebytes'} - $self->{__stat_recv_lastmark} ) /
-          ( time - $self->{__stat_recv_lasttime} or 1 ),
-        "status=[$self->{'status'}]",
-        ),
-        $self->{__stat_recv_lastmark} = $self->{'filebytes'}; 
-		$self->{__stat_recv_lasttime} = time;
+    schedule(
+      10,
+      $self->{__stat_recv} ||= sub {
+        my $self = shift;
+        my $recv = shift;
+        #my $read = shift;
+        #our ( $lastmark, $lasttime );
+        $self->log(
+          'dev',                              "recv bytes",           #length $self->{'file_send_buf'},
+          "recv=[$recv] now [",               $self->{'filebytes'},
+          "] of [$self->{'filetotal'}], now", 's=',
+          ( $self->{'filebytes'} - $self->{__stat_recv_lastmark} ) /
+            ( time - $self->{__stat_recv_lasttime} or 1 ),
+          "status=[$self->{'status'}]",
+          ),
+          $self->{__stat_recv_lastmark} = $self->{'filebytes'};
+        $self->{__stat_recv_lasttime} = time;
         #if time - $lasttime > 1;
-    },
-    $self, length $$databuf,
-  );
-  
-
+      },
+      $self,
+      length $$databuf,
+    );
     $self->log( 'err', "file download error! extra bytes ($self->{'filebytes'}/$self->{'filetotal'}) " )
       if $self->{'filebytes'} > $self->{'filetotal'};
     $self->log(
@@ -1618,7 +1618,7 @@ sub file_send_tth {    #$self->{'file_send_tth'} ||= sub {
     $self->{'share_full'}{$file} =~ tr{\\}{/};
     #$self->log( 'dcdev', 'call send', $self->{'share_full'}{$file}, $start, $size, $as );
     $self->file_send( $self->{'share_full'}{$file}, $start, $size, $as );
-    $self->search_stat_update($file, 'hit');
+    $self->search_stat_update( $file, 'hit' );
   } else {
     $self->log(
       'dcerr', 'send', 'cant find file',
@@ -1680,27 +1680,25 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
   $read = $self->{'file_send_by'}
     if $self->{'file_send_by'} < $self->{'file_send_left'};
   my $sent;
-
-if (0) {
-
-
-  
-} elsif ( $INC{'Sys/Sendfile.pm'} ) {    #works
-    #$self->log(      'dev', 'using sys::sendfile ');
+  if (0) {
+  } elsif ( $INC{'Sys/Sendfile.pm'} ) {    #works
+                                           #$self->log(      'dev', 'using sys::sendfile ');
     $sent = Sys::Sendfile::sendfile( $self->{'socket'}, $self->{'filehandle_send'}, $read, $self->{'file_send_offset'} );
-  $self->{'file_send_offset'} += $sent if $sent > 0;
-} elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'}) {
+    $self->{'file_send_offset'} += $sent if $sent > 0;
+  } elsif ( $INC{'Sys/Sendfile/FreeBSD.pm'} ) {
     #$self->log(      'dev', 'using sendfile freebsd');
-
-my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'}), fileno($self->{'socket'}), $self->{'file_send_offset'}, $read, $sent);
-  $self->{'file_send_offset'} += $sent if $sent > 0;
-
-
+    my $result = Sys::Sendfile::FreeBSD::sendfile(
+      fileno( $self->{'filehandle_send'} ),
+      fileno( $self->{'socket'} ),
+      $self->{'file_send_offset'},
+      $read, $sent
+    );
+    $self->{'file_send_offset'} += $sent if $sent > 0;
 #blocking
 #elsif ($INC{'IO/AIO.pm'}) {
 #  $sent = IO::AIO::sendfile(   fileno($self->{'socket'}), fileno($self->{'filehandle_send'}),$self->{'file_send_offset'}, $read );
 #  $self->{'file_send_offset'} += $sent if $sent > 0;
-}  else {
+  } else {
     #$self->log(      'dev', 'using read send');
     read( $self->{'filehandle_send'}, $self->{'file_send_buf'}, $read ),
       $self->{'file_send_offset'} = tell $self->{'filehandle_send'},
@@ -1728,18 +1726,18 @@ my $result = Sys::Sendfile::FreeBSD::sendfile(fileno($self->{'filehandle_send'})
           ( time - $self->{__stat_lasttime} or 1 ),
         "status=[$self->{'status'}]",
         ),
-        $self->{__stat_lastmark} = $self->{'file_send_offset'}; 
-		$self->{__stat_lasttime} = time;
-        #if time - $lasttime > 1;
+        $self->{__stat_lastmark} = $self->{'file_send_offset'};
+      $self->{__stat_lasttime} = time;
+      #if time - $lasttime > 1;
     },
-    $self, $sent, $read
+    $self,
+    $sent,
+    $read
   );
   #$self->{activity} = time if $sent;
   #$self->{bytes_send} += $sent;
   $self->{'file_send_left'} -= $sent;
-    #$self->log(      'dev', 'send end', $sent, $self->{'file_send_offset'}, $self->{'file_send_total'}, "left=[$self->{'file_send_left'}]");
-
-
+#$self->log(      'dev', 'send end', $sent, $self->{'file_send_offset'}, $self->{'file_send_total'}, "left=[$self->{'file_send_left'}]");
   substr( $self->{'file_send_buf'}, 0, $sent ) = undef;
 #if (length $self->{'file_send_buf'}) {         $self->log( 'info', 'sent small', $sent, 'todo', length $self->{'file_send_buf'});    }
 #$readed;
@@ -2018,7 +2016,7 @@ sub say {    #$self->{'say'} = sub (@) {
   my $self = shift;
   @_ = $_[2] if $_[0] eq 'MSG';
   #local $_ = Encode::encode $self->{charset_console} , join ' ', @_;print $_, "\n";
-  print Encode::encode( $self->{charset_console}, join(' ', @_), Encode::FB_WARN ), "\n";
+  print Encode::encode( $self->{charset_console}, join( ' ', @_ ), Encode::FB_WARN ), "\n";
 }
 #local %_ = (
 sub search {    #'search' => sub {
@@ -2112,8 +2110,9 @@ look at examples for handlers
 
  To install this module type the following:
 
+   cpan DBD::SQLite IO::Socket::INET6 IO::Socket::SSL
    perl Makefile.PL && make install clean
-   
+
 
 =head1 SEE ALSO
 

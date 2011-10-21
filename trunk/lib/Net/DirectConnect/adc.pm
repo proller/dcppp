@@ -73,6 +73,7 @@ sub tiger ($) {
 }
 sub hash ($) { base32( tiger( $_[0] ) ); }
 =cut
+
 #sub init {  my $self = shift;
 
 =cu
@@ -89,7 +90,6 @@ return $self;
 
 }
 =cut
-
 sub func {
   my $self = shift if ref $_[0];
   #warn 'func call';
@@ -209,7 +209,7 @@ sub init {
     'reconnects' => 99999, 'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
     'protocol_connect'   => 'ADC/1.0',
-    'protocol_supported' => { 'ADC/1.0'=>'adc' },    #ADCS/0.10
+    'protocol_supported' => { 'ADC/1.0' => 'adc' },    #ADCS/0.10
     'message_type'       => 'H',
     #@_,
     'incomingclass' => __PACKAGE__,                               #'Net::DirectConnect::adc',
@@ -222,8 +222,10 @@ sub init {
   $self->{$_} //= $_{$_} for keys %_;
   #!exists $self->{$_} ? $self->{$_} ||= $_{$_} : () for keys %_;
   #print 'adc init now=',Dumper $self;
-  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {      my $self = shift if ref $_[0];
- $self->search_buffer() if $self->{'socket'}; };
+  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {
+    my $self = shift if ref $_[0];
+    $self->search_buffer() if $self->{'socket'};
+  };
   #$self->log( $self, 'inited', "MT:$self->{'message_type'}", ' with', Dumper \@_ );
   #$self->baseinit();    #if ref $self eq __PACKAGE__;
   #$self->log( 'inited3', "MT:$self->{'message_type'}", ' with' );
@@ -240,9 +242,7 @@ sub init {
     $self->{'disconnect_recursive'} = 1;
   } else {
     $self->module_load('filelist');
-  
   }
-
   #if ($self->{'message_type'} eq 'H') {
   #  $self->{'disconnect_recursive'} = 1;
   #}
@@ -311,6 +311,7 @@ sub init {
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
+
       #$self->log('adcdev', 'SUPans:', $peerid, $self->{'peers'}{$peerid}{'INF'}{I4}, $self->{'peers'}{$peerid}{'INF'}{U4});
       #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; #can answer direct
       #local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4};
@@ -463,7 +464,8 @@ sub init {
         my $foundshow = ( $found =~ m{^/} ? () : '/' ) . (
           #$self->{chrarset_fs}          ?
           #$self->{charset_fs} ne $self->{charset_protocol} ?
-          Encode::encode $self->{charset_protocol}, Encode::decode($self->{charset_fs}, $found, Encode::FB_WARN), Encode::FB_WARN
+          Encode::encode $self->{charset_protocol}, Encode::decode( $self->{charset_fs}, $found, Encode::FB_WARN ),
+          Encode::FB_WARN
             #: $found
         );
         $self->log( 'adcdev', 'SCH', ( $dst, $peerid, 'F=>', @feature ),
@@ -559,6 +561,7 @@ sub init {
         'auto_connect' => 1,
       );
 =cut
+
     },
     'CTM' => sub {
       my $self = shift if ref $_[0];
@@ -566,12 +569,18 @@ sub init {
       $toid ||= shift;
       my ( $proto, $port, $token ) = @_;
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
-      $self->log( 'dcdev', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'INF'}{'SID'} p=",$self->{'protocol_supported'}{$proto} );
+      $self->log(
+        'dcdev',
+        "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token) me=$self->{'INF'}{'SID'} p=",
+        $self->{'protocol_supported'}{$proto}
+      );
       $self->log( 'dcerr', 'CTM: unknown host', "( $dst, CTM, $peerid, $toid ) - ($proto, $port, $token)" ) unless $host;
       $self->{'clients'}{ $self->{'peers'}{$peerid}{'INF'}{ID} or $host . ':' . $port } = __PACKAGE__->new(
         #%$self, $self->clear(),
-        protocol=>$self->{'protocol_supported'}{$proto}||'adc',
-        parent => $self, 'host' => $host, 'port' => $port,
+        protocol => $self->{'protocol_supported'}{$proto} || 'adc',
+        parent   => $self,
+        'host'   => $host,
+        'port'   => $port,
         #'parse' => $self->{'parse'},
         #'cmd'   => $self->{'cmd'},
         #'want'  => $self->{'want'},
@@ -615,6 +624,7 @@ sub init {
         $self->log( 'dcerr', 'SND', "unknown type", @_ );
       }
 =cut
+
     },
   };
 
@@ -628,6 +638,7 @@ sub init {
 
 
 =cut  
+
   $self->{'cmd'} = {
     #move to main
     'search_send' => sub {
@@ -799,6 +810,7 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
+
   #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
   if ( !$self->{'no_listen'} ) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
@@ -885,6 +897,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'err', "cant listen broadcast (hubless)" ) unless $self->{'clients'}{'listener_udp_broadcast'}{'myport'};
     }
 =cut
+
     if ( $self->{'dev_http'} ) {
       $self->log( 'dev', "making listeners: http" );
       #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
@@ -899,8 +912,10 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
         #'LocalPort'=>$self->{'myport'},
         #'debug'=>1,
         #@_,
-        'incomingclass' => 'Net::DirectConnect::http', 'auto_connect' => 0, 'auto_listen' => 1,
-        'protocol' => 'http',
+        'incomingclass' => 'Net::DirectConnect::http',
+        'auto_connect'  => 0,
+        'auto_listen'   => 1,
+        'protocol'      => 'http',
         #'auto_listen' => 1,
         #'HubName'       => 'Net::DirectConnect test hub',
         #'myport'        => 80,

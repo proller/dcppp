@@ -49,7 +49,6 @@ sub init {
   #$self->log('dev', 'chPROTOcc:',$self->{'charset_protocol'});
   #$self->baseinit();
   #$self->log($self, 'inited2',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
-
   $self->get_peer_addr();
   #$self->log('info', "[$self->{'number'}] Incoming client $self->{'peerip'}") if $self->{'peerip'};
   #$self->{'share_tth'} ||=$self->{'parent'}{'share_tth'};

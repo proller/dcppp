@@ -62,8 +62,10 @@ sub init {
     'disconnect_recursive' => 1,
   );
   $self->{$_} //= $_{$_} for keys %_;
-  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {      my $self = shift if ref $_[0];
- $self->search_buffer() if $self->{'socket'}; };
+  $self->{'periodic'}{ __FILE__ . __LINE__ } = sub {
+    my $self = shift if ref $_[0];
+    $self->search_buffer() if $self->{'socket'};
+  };
   #$self->log($self, 'inited',"MT:$self->{'message_type'}", ' with', Dumper  \@_);
   #$self->baseinit();
   #share_full share_tth want
@@ -74,8 +76,7 @@ sub init {
          #$self->log( $self, 'inited3', "MT:$self->{'message_type'}", ' with' );
          #You are already in the hub.
          #  $self->{'parse'} ||= {
-$self->module_load('filelist');
-
+  $self->module_load('filelist');
   local %_ = (
     'chatline' => sub {
       my $self = shift if ref $_[0];
@@ -298,7 +299,8 @@ $self->module_load('filelist');
           $path =~ s{^\w:}{};
           $path =~ s{^\W+}{};
           $path =~ tr{/}{\\};
-          $path = Encode::encode $self->{charset_protocol}, Encode::decode($self->{charset_fs}, $path, Encode::FB_WARN), Encode::FB_WARN
+          $path = Encode::encode $self->{charset_protocol}, Encode::decode( $self->{charset_fs}, $path, Encode::FB_WARN ),
+            Encode::FB_WARN
             if $self->{charset_fs} ne $self->{charset_protocol};
         }
         local @_ = (
@@ -402,6 +404,7 @@ $self->module_load('filelist');
 
 
 =cut  
+
   #$self->{'cmd'} = {
   local %_ = (
     'connect_aft' => sub {
@@ -509,14 +512,14 @@ $self->module_load('filelist');
     'search_tth' => sub {
       my $self = shift if ref $_[0];
       $self->{'search_last_string'} = undef;
-      $self->search_nmdc( @_ );
+      $self->search_nmdc(@_);
     },
     'search_string' => sub {
       my $self = shift if ref $_[0];
       #my $string = $_[0];
       $self->{'search_last_string'} = $_[0];    #$string;
                                                 #$string =~ tr/ /$/;
-      $self->search_nmdc( @_ );
+      $self->search_nmdc(@_);
     },
     'search_send' => sub {
       my $self = shift if ref $_[0];
@@ -623,6 +626,7 @@ $self->module_load('filelist');
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
+
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
