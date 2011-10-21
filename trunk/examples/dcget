@@ -230,9 +230,9 @@ my @dc;
               #$self->log('dev', $_);
               next unless s/\.([A-Z0-9]{39})$//;
               my ($tth) = $1;
-              $self->log( 'warn', 'removing already downloaded partial', $_, $tth ), unlink $file, next
+              $self->log( 'warn', 'removing already downloaded partial', $_, $tth ), unlink($file), next
                 if $self->{'share_full'}{$tth};
-              $self->log( 'warn', 'removing already downloading partial', $_, $tth ), unlink $file, next
+              $self->log( 'warn', 'removing already downloading partial', $_, $tth ), unlink($file), next
                 if $partial{$tth} > -s $file;
               $self->log( 'dev', 'adding to queue', $_, $tth, -s $file, $partial{$tth} );
               #$self->{'want_download'}{$tth} //= {};
