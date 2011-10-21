@@ -56,7 +56,7 @@ sub send_udp ($$;@) {
     )
     )
   {
-    $s->send( Encode::encode $self->{charset_protocol}, $_[0] );
+    $s->send( Encode::encode $self->{charset_protocol}, $_[0], Encode::FB_WARN );
     $self->{bytes_send} += length $_[0];
     #$s->shutdown(2);
     $s->close();
@@ -577,7 +577,7 @@ sub connect {    #$self->{'connect'} ||= sub {
     %{ $self->{'socket_options'} || {} },
   );
   #$self->log('dev', 'connect end');
-  $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $! ), "[$self->{'socket'}]" ), return 1
+  $self->log( 'err', "connect socket  error: $@,", Encode::decode( $self->{charset_fs}, $!, Encode::FB_WARN ), "[$self->{'socket'}]" ), return 1
     if !$self->{'socket'};
   #$self->log( 'dev',  'timeout to', $self->{'Timeout'});
   $self->{'socket'}->timeout( $self->{'Timeout'} ) if $self->{'Timeout'};    #timeout must be after new, ifyou want nonblocking
@@ -834,7 +834,7 @@ sub recv {                # $self->{'recv'} ||= sub {
       last unless length $_ and length $self->{'cmd_aft'};
       next unless length;
       $self->get_peer_addr_recv() if $self->{'broadcast'};
-      $_ = Encode::decode $self->{charset_protocol}, $_;
+      $_ = Encode::decode $self->{charset_protocol}, $_, Encode::FB_WARN;
       #        $Encode::encode $self->{charset_console},
       $self->parser($_);
       #$self->log( 'dcdbg', "[$self->{'number'}]", "left to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}] now was [$_]" );
@@ -1133,7 +1133,7 @@ sub work {    #$self->{'work'} ||= sub {
           for my $file ( keys %{ $self->{'want_download_filename'}{$tth} } ) {
             my $partial = $file;
             $partial = $self->{'partial_prefix'} . $partial . $self->{'partial_ext'};
-            $partial = Encode::encode $self->{charset_fs}, $file
+            $partial = Encode::encode $self->{charset_fs}, $file, Encode::FB_WARN
               if $self->{charset_fs};
             if ( -s $partial ) {
               $self->log( 'dev', 'already downloading: ', $file, -s $partial );
@@ -1348,7 +1348,7 @@ sub sendcmd {    #$self->{'sendcmd'} ||= sub {
     } else {
       $self->log( 'err', "ERROR! no socket to send" ), return
         unless $self->{'socket'};
-      $self->send( Encode::encode $self->{charset_protocol}, join( '', @{ $self->{'send_buffer'} }, ) );
+      $self->send( Encode::encode $self->{charset_protocol}, join( '', @{ $self->{'send_buffer'} }, ), Encode::FB_WARN );
       #local $_;
       #eval { $_ = $self->{'socket'}->send( join( '', @{ $self->{'send_buffer'} }, ) ); };
       #$self->log( 'err', 'send error', $@ ) if $@;
@@ -1490,7 +1490,7 @@ sub file_select {    #$self->{'file_select'} ||= sub {
     "$self->{'file_recv_dest'}" . ( $self->{'file_recv_tth'} ? '.' . $self->{'file_recv_tth'} : () ) . "$self->{'partial_ext'}";
   $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_partial'}
     unless $self->{'file_recv_partial'} =~ m{[/\\]};
-  $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'} if $self->{charset_fs};
+  $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'}, Encode::FB_WARNif $self->{charset_fs};
   $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
   $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
     if $self->{'file_recv_size'} and $self->{'file_recv_from'};
@@ -1582,7 +1582,7 @@ sub file_close {    #$self->{'file_close'} ||= sub {
     if ( $self->{'filebytes'} == $self->{'filetotal'} ) {
       mkdir_rec $self->{'download_to'} if $self->{'download_to'};
       if ( length $self->{'partial_ext'} ) {
-        local $self->{'file_recv_full'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_full'}
+        local $self->{'file_recv_full'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_full'}, Encode::FB_WARN
           if $self->{charset_fs};    # ne $self->{charset_protocol};
             #$self->log( 'dcdev', 'file_close', 3, $self->{'file_recv_partial'}, $self->{'file_recv_full'} );
         $self->log( 'dcerr', 'cant move finished file', $self->{'file_recv_partial'}, '=>', $self->{'file_recv_full'} )
@@ -2018,7 +2018,7 @@ sub say {    #$self->{'say'} = sub (@) {
   my $self = shift;
   @_ = $_[2] if $_[0] eq 'MSG';
   #local $_ = Encode::encode $self->{charset_console} , join ' ', @_;print $_, "\n";
-  print Encode::encode( $self->{charset_console}, join ' ', @_ ), "\n";
+  print Encode::encode( $self->{charset_console}, join(' ', @_), Encode::FB_WARN ), "\n";
 }
 #local %_ = (
 sub search {    #'search' => sub {

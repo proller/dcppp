@@ -93,7 +93,7 @@ sub init {
         $c .= "try dl [$1]";
       }
       $c .= "<hr/><pre>" . Dumper( $self->{http_headers} );
-      $self->send( Encode::encode 'utf8', $c );
+      $self->send( Encode::encode 'utf8', $c, Encode::FB_WARN );
       $self->destroy();
     },
   };

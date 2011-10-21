@@ -224,7 +224,7 @@ my @dc;
             for my $file (<$dir*>) {
               #$self->log('dev', $_);
               local $_ = $file;
-              $_ = Encode::decode $self->{charset_fs}, $_ if $self->{charset_fs};
+              $_ = Encode::decode $self->{charset_fs}, $_, Encode::FB_WARN if $self->{charset_fs};
               #$self->log('dev', 'U', $_);
               next unless s/$self->{'partial_ext'}$//i;
               next unless s/^$self->{'partial_prefix'}//i;
