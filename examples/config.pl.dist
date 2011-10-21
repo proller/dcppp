@@ -14,13 +14,10 @@ our %config;
 # $config{dc}{dev_ipv6} = 1; #future
 # $config{dc}{dev_adcs} = 1; #future
 # $config{dchub}{myport} = 412; #only for dchub script
-
 #dcget:
 # $config{dcget}{'Nick'}  = 'dcacher';
 # $config{auto_get_best} = 1;          #for dcget : download all popular files
 # $config{'hit_to_ask'}         = 10;  # search hits on tth to download
 # $config{'queue_recalc_every'} = 600; # calculate to-download list every seconds
 # $config{'get_every'}          = 600; # try to get next file every seconds
-
-
 1;

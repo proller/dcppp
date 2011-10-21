@@ -75,16 +75,16 @@ sub init {
     charset_protocol => 'cp1251',
   );
   $self->{$_} = $_{$_} for keys %_;
-  #$self->log('dev', 'chPROTO:',$self->{'charset_protocol'});
-  #print 'adc init now=',Dumper $self;
-  #$self->{'periodic'}{ __FILE__ . __LINE__ } = sub {      my $self = shift if ref $_[0]; $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
-  #http://www.dcpp.net/wiki/index.php/LockToKey :
+#$self->log('dev', 'chPROTO:',$self->{'charset_protocol'});
+#print 'adc init now=',Dumper $self;
+#$self->{'periodic'}{ __FILE__ . __LINE__ } = sub {      my $self = shift if ref $_[0]; $self->cmd( 'search_buffer', ) if $self->{'socket'}; };
+#http://www.dcpp.net/wiki/index.php/LockToKey :
   $self->{'lock2key'} ||= sub {
     my $self = shift if ref $_[0];
     #return $self->{lock};
     my ($lock) = @_;
     #$self->{'log'}->( 'dev', 'making lock from', $lock );
-    $lock = Encode::encode $self->{charset_protocol}, $lock,Encode::FB_WARN if $self->{charset_protocol};
+    $lock = Encode::encode $self->{charset_protocol}, $lock, Encode::FB_WARN if $self->{charset_protocol};
     #$self->{'log'}->( 'dev', 'making lock from2:', $lock );
     my @lock = split( //, $lock );
     my $i;
@@ -151,9 +151,10 @@ sub init {
   };
   $self->{'make_hub'} ||= sub {
     my $self = shift if ref $_[0];
-    $self->{'hub_name'} ||= $self->{'host'}; # . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
+    $self->{'hub_name'} ||=
+      $self->{'host'};    # . ( ( $self->{'port'} and $self->{'port'} != 411 ) ? ':' . $self->{'port'} : '' );
     $self->{'hub_name'} =~ s/:411$//;
-  #$self->log('dev', $self->{'hub_name'});
+    #$self->log('dev', $self->{'hub_name'});
   },;
 }
 1;

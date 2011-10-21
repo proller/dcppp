@@ -19,12 +19,12 @@ sub init {
   local %_ = (
     #
     #'incomingclass' => 'Net:DirectConnect::httpcli',
-    'auto_connect' => 0, 'auto_listen' => 0, 
-    'protocol' => 'http',
-      #);  $self->{$_} = $_{$_} for keys %_;
-
-     # local %_ = (
-     #'myport'        => 80,
+    'auto_connect' => 0,
+    'auto_listen'  => 0,
+    'protocol'     => 'http',
+    #);  $self->{$_} = $_{$_} for keys %_;
+    # local %_ = (
+    #'myport'        => 80,
     #'myport_base'   => 8000,
     #'myport_random' => 99,
     #'myport_tries'  => 5,

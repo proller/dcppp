@@ -6,7 +6,6 @@
 dev hub test
 
 =cut
-
 use strict;
 use Time::HiRes;
 use Data::Dumper;    #dev only
@@ -56,5 +55,4 @@ while ( $dc->active() ) {
 #$dc->wait_finish();
 $dc->disconnect();
 =cut
-
 #$dc = undef;
