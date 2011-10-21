@@ -238,7 +238,7 @@ sub new {
         ( my $dirname = $dir );
         $dirname =
           #Encode::encode 'utf8',
-          Encode::decode $self->{charset_fs}, $dirname, Encode::FB_WARNif $self->{charset_fs};
+          Encode::decode $self->{charset_fs}, $dirname, Encode::FB_WARN if $self->{charset_fs};
         #$self->log( 'dev','sd', __LINE__,$dh);
         next if skip( $dirname, $self->{skip_dir} ) or ( $self->{skip_symlink} and -l $dirname );
         unless ($level) {
