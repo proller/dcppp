@@ -1490,7 +1490,7 @@ sub file_select {    #$self->{'file_select'} ||= sub {
     "$self->{'file_recv_dest'}" . ( $self->{'file_recv_tth'} ? '.' . $self->{'file_recv_tth'} : () ) . "$self->{'partial_ext'}";
   $self->{'file_recv_partial'} = $self->{'partial_prefix'} . $self->{'file_recv_partial'}
     unless $self->{'file_recv_partial'} =~ m{[/\\]};
-  $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'}, Encode::FB_WARNif $self->{charset_fs};
+  $self->{'file_recv_partial'} = Encode::encode $self->{charset_fs}, $self->{'file_recv_partial'}, Encode::FB_WARN if $self->{charset_fs};
   $self->{'filebytes'} = $self->{'file_recv_from'} = -s $self->{'file_recv_partial'};
   $self->{'file_recv_to'} ||= $self->{'file_recv_size'} - $self->{'file_recv_from'}
     if $self->{'file_recv_size'} and $self->{'file_recv_from'};
