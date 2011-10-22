@@ -1,7 +1,7 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
-our $VERSION = '0.10' . '_' . ( split ' ', '$Revision$' )[1];
+our $VERSION = '0.11';# . '_' . ( split ' ', '$Revision$' )[1];
 no warnings qw(uninitialized);
 use utf8;
 use Encode;
