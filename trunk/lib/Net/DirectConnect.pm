@@ -1,7 +1,7 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
-our $VERSION = '0.11';# . '_' . ( split ' ', '$Revision$' )[1];
+our $VERSION = '0.11' . '_' . ( split ' ', '$Revision$' )[1];
 no warnings qw(uninitialized);
 use utf8;
 use Encode;
@@ -734,6 +734,7 @@ sub destroy {
                           #!?  delete $self->{$_} for keys %$self;
   $self->info();
   $self->{'status'} = 'destroy';
+  delete $self->{$_} for grep {ref $self->{$_}} keys %$self;
   #$self = {};
   #!?%$self = ();
 }
