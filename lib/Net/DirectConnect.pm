@@ -907,7 +907,7 @@ sub select {    #$self->{'select'} ||= sub {
   }
   for (@$recv) {
     #next unless $self->{sockets}{$_};
-    $self->log( 'err', 'no object for recv handle', $_, Dumper $self->{sockets}{$_} ), $self->{'select'}->remove($_), next,
+    $self->log( 'err', 'no object for recv handle', $_, Dumper $self->{sockets}{$_} ), can_run($self->{'select'}, 'remove', $_), next,
       #if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
       if !ref $self->{sockets}{$_} or ref $self->{sockets}{$_} eq 'HASH';
     #$self->log( 'dev',ref $self->{sockets}{$_});

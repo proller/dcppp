@@ -240,7 +240,7 @@ my @dc;
               $partial{$tth} = -s $file;
               $self->{'want_download_filename'}{$tth} = { $_ => 100 };
             }
-            $self->dumper();
+            #$self->dumper();
           }
         },
         $dc

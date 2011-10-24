@@ -12,7 +12,7 @@ run dc client with file sharing
  unix adc:
  dcshare adc://dc.hub.com:412 /share
  win nmdc:
- dcshare dc.hub.com c:/pub c:/distr
+ dcshare dchub://dc.hub.com c:/pub c:/distr
 
  manual build filelist:
  dcshare /share /sharemore
