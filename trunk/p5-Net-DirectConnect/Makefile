@@ -9,7 +9,7 @@ PORTNAME=	Net-DirectConnect
 PORTVERSION=	0.11
 CATEGORIES=	net-p2p net perl5
 MASTER_SITES=	CPAN
-MASTER_SITE_SUBDIR=	../../authors/id/P/PR/PRO/
+MASTER_SITE_SUBDIR=	CPAN:PRO
 PKGNAMEPREFIX=	p5-
 
 MAINTAINER=	proler@gmail.com
@@ -21,7 +21,8 @@ RUN_DEPENDS=	${SITE_PERL}/lib/abs.pm:${PORTSDIR}/devel/p5-lib-abs \
 		${SITE_PERL}/${PERL_ARCH}/Net/DirectConnect/TigerHash.pm:${PORTSDIR}/net-p2p/p5-Net-DirectConnect-TigerHash \
 		${SITE_PERL}/${PERL_ARCH}/DBD/SQLite.pm:${PORTSDIR}/databases/p5-DBD-SQLite \
 		${SITE_PERL}/IO/Socket/SSL.pm:${PORTSDIR}/security/p5-IO-Socket-SSL \
-		${SITE_PERL}/IO/Socket/INET6.pm:${PORTSDIR}/net/p5-IO-Socket-INET6
+		${SITE_PERL}/IO/Socket/INET6.pm:${PORTSDIR}/net/p5-IO-Socket-INET6 \
+		${SITE_PERL}/IO/Compress/Bzip2.pm:${PORTSDIR}/archivers/p5-IO-Compress
 
 PERL_CONFIGURE=	yes
 
