@@ -1544,8 +1544,8 @@ sub file_write {    #$self->{'file_write'} ||= sub {
           'dev',                              "recv bytes",           #length $self->{'file_send_buf'},
           "recv=[$recv] now [",               $self->{'filebytes'},
           "] of [$self->{'filetotal'}], now", 's=',
-          ( $self->{'filebytes'} - $self->{__stat_recv_lastmark} ) /
-            ( time - $self->{__stat_recv_lasttime} or 1 ),
+          int(( $self->{'filebytes'} - $self->{__stat_recv_lastmark} ) /
+            ( time - $self->{__stat_recv_lasttime} or 1 )),
           "status=[$self->{'status'}]",
           ),
           $self->{__stat_recv_lastmark} = $self->{'filebytes'};
@@ -1724,8 +1724,8 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
         "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now",
         $self->{'file_send_offset'}, 'of',
         $self->{'file_send_total'},  's=',
-        ( $self->{'file_send_offset'} - $self->{__stat_lastmark} ) /
-          ( time - $self->{__stat_lasttime} or 1 ),
+        int(( $self->{'file_send_offset'} - $self->{__stat_lastmark} ) /
+          ( time - $self->{__stat_lasttime} or 1 )),
         "status=[$self->{'status'}]",
         ),
         $self->{__stat_lastmark} = $self->{'file_send_offset'};
