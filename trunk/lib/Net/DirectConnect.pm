@@ -958,8 +958,8 @@ sub wait_connect {                                                         #$sel
   for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
     #$self->log('dev', 'ws', $self->{'status'}, $_, ( $_[0] , $self->{'wait_connect_tries'}));
     last if grep { $self->{'status'} eq $_ } qw(connected transfer disconnecting disconnected destroy), '';
-    $self->wait(1);
-    #$self->work(1);
+    #$self->wait(1);
+    $self->work(1);
   }
   return $self->{'status'};
 }
@@ -972,7 +972,8 @@ sub wait_finish {                                                          #$sel
     last if $self->finished();
     #$self->wait( undef, $self->{'wait_finish_by'} );
     #$self->log( 'dev', 'wait_finish', $_);
-    $self->wait();
+    #$self->wait();
+    $self->work(1);
     #$self->work( undef, $self->{'wait_finish_by'} );
   }
   local @_;
@@ -1000,7 +1001,7 @@ sub wait_clients {                    #$self->{'wait_clients'} ||= sub {
       int( $time - time() )
     );
     #$self->wait( undef, $self->{'wait_clients_by'} );
-    $self->work(5);
+    $self->work(10);
   }
 }
 #sub wait_sleep {                                                     #$self->{'wait_sleep'} ||= sub {
