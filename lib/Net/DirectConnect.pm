@@ -734,7 +734,7 @@ sub destroy {
                           #!?  delete $self->{$_} for keys %$self;
   $self->info();
   $self->{'status'} = 'destroy';
-  delete $self->{$_} for grep {ref $self->{$_}} keys %$self;
+  delete $self->{$_} for grep {ref $self->{$_} and !ref $self->{$_} eq 'CODE'} keys %$self;
   #$self = {};
   #!?%$self = ();
 }
@@ -1052,8 +1052,8 @@ sub work {    #$self->{'work'} ||= sub {
         {
           $self->log(
             'dev',
-"del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] listener=[$self->{'listener'}]last active=",
-            time - $self->{'clients'}{$_}{activity}
+"del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] listener=[$self->{'listener'}] last active=",
+            int(time - $self->{'clients'}{$_}{activity})
           );
           #(
           #!ref $self->{'clients'}{$_}{destroy} ? () :
