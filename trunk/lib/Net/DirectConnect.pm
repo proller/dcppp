@@ -803,7 +803,7 @@ sub recv {                # $self->{'recv'} ||= sub {
       and !$self->{'incoming'}
       and $self->{'reconnect_tries'}++ < $self->{'reconnects'} )
     {
-      $self->log( 'dcdbg', "recv err, reconnect. d=[$self->{'databuf'}] i=[$self->{'incoming'}]" );
+      $self->log( 'dcdbg', "recv err, reconnect [$self->{'reconnect_tries'}/$self->{'reconnects'}]. d=[$self->{'databuf'}] i=[$self->{'incoming'}]" );
       #$self->log( 'dcdbg',  "recv err, reconnect," );
       $self->reconnect();
     } elsif ( $self->{'status'} ne 'listening' ) {
@@ -1304,7 +1304,7 @@ sub send_can {    #$self->{'send'} ||= sub {
   eval { $size += $self->{'socket'}->$send($_) for @_ ? @_ : @{ $self->{send_buffer_raw} }; } if $self->{'socket'};
   $self->{send_buffer_raw} = [];
   $self->{bytes_send} += $size;
-  $self->log( 'err', 'send error', $@ ) if $@;
+  $self->log( 'err', 'send error', $@ ), $self->reconnect(), return $size if $@;
   $self->{activity} = time;
   return $size;
 }
