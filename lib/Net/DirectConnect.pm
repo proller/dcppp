@@ -862,7 +862,7 @@ sub select {    #$self->{'select'} ||= sub {
   #$self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
   #my ( $readed, $reads );
   #$self->{'databuf'} = '';
-  #$self->log( 'dev', 'select', 'bef', $sleep, $nosend , );
+  #$self->log( 'dev', 'select', 'bef', $sleep, $nosend , caller);
   my ( $recv, $send, $exeption ) =
     IO::Select->select( $self->{'select'}, ( $nosend ? undef : $self->{'select_send'} ), $self->{'select'}, $sleep );
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
@@ -1183,11 +1183,12 @@ sub work {    #$self->{'work'} ||= sub {
     },
     $self
   ) if $self->{dev_auto_dump};
-  return $self->select( $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
+  #return 
+  $self->select( $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
                                                     #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
-  #return $self->select( $self->{'work_sleep'}, 1 );
-  return $self->select( $self->{'work_sleep'} );
+  return $self->select( $self->{'work_sleep'}, 1 );
+  #return $self->select( $self->{'work_sleep'} );
 }
 
 sub dumper {                                        #$self->{'dumper'} ||= sub {
