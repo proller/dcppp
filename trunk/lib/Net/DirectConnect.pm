@@ -1013,7 +1013,7 @@ sub wait {                                                           #$self->{'w
   while ( $time > time() ) {
     last unless $self->active();
     #$ret += $self->wait(@_);
-    $ret += $self->select( 1, 1 );
+    $ret += $self->select() || $self->select( 1, 1 );
   }
   return $ret;
   #$self->log( 'dev', "wait_sleep",$starttime , $how , time(), "==", $starttime + $how),
@@ -1187,7 +1187,7 @@ sub work {    #$self->{'work'} ||= sub {
   $self->select( $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
                                                     #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
-  return $self->select( $self->{'work_sleep'}, 1 );
+  return $self->select() || $self->select( $self->{'work_sleep'}, 1 ); # unless @{$self->{send_buffer_raw}|| []};
   #return $self->select( $self->{'work_sleep'} );
 }
 
