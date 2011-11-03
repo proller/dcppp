@@ -464,8 +464,9 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_}, for qw(db);
   $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
-    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol);    #dev_adcs
-      #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol}" );
+    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol myport_inc)
+    ;   #dev_adcs
+        #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol} inc=$self->{myport_inc}" );
   $self->{$_} //= $_{$_} for keys %_;
   $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
@@ -479,6 +480,7 @@ sub myport_generate {    #$self->{'myport_generate'} ||= sub {
     unless $self->{'myport_base'}
       or $self->{'myport_random'};
   $self->{'myport'} = undef if $_[0];
+  return $self->{'myport'} ||= $self->{'myport_base'} + $self->{'myport_inc'}++ if $self->{'myport_inc'};
   return $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) );
 }
 
@@ -734,7 +736,7 @@ sub destroy {
                           #!?  delete $self->{$_} for keys %$self;
   $self->info();
   $self->{'status'} = 'destroy';
-  delete $self->{$_} for grep {ref $self->{$_} and !ref $self->{$_} eq 'CODE'} keys %$self;
+  delete $self->{$_} for grep { ref $self->{$_} and !ref $self->{$_} eq 'CODE' } keys %$self;
   #$self = {};
   #!?%$self = ();
 }
@@ -803,7 +805,9 @@ sub recv {                # $self->{'recv'} ||= sub {
       and !$self->{'incoming'}
       and $self->{'reconnect_tries'}++ < $self->{'reconnects'} )
     {
-      $self->log( 'dcdbg', "recv err, reconnect [$self->{'reconnect_tries'}/$self->{'reconnects'}]. d=[$self->{'databuf'}] i=[$self->{'incoming'}]" );
+      $self->log( 'dcdbg',
+        "recv err, reconnect [$self->{'reconnect_tries'}/$self->{'reconnects'}]. d=[$self->{'databuf'}] i=[$self->{'incoming'}]"
+      );
       #$self->log( 'dcdbg',  "recv err, reconnect," );
       $self->reconnect();
     } elsif ( $self->{'status'} ne 'listening' ) {
@@ -889,6 +893,7 @@ sub select {    #$self->{'select'} ||= sub {
       if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
   }
 =cut
+
   for (@$send) {
     next unless $self->{sockets}{$_} and $self->{sockets}{$_}{socket};
     $self->{sockets}{$_}->connected(),
@@ -907,7 +912,8 @@ sub select {    #$self->{'select'} ||= sub {
   }
   for (@$recv) {
     #next unless $self->{sockets}{$_};
-    $self->log( 'err', 'no object for recv handle', $_, Dumper $self->{sockets}{$_} ), can_run($self->{'select'}, 'remove', $_), next,
+    $self->log( 'err', 'no object for recv handle', $_, Dumper $self->{sockets}{$_} ),
+      can_run( $self->{'select'}, 'remove', $_ ), next,
       #if !$self->{sockets}{$_} or !ref $self->{sockets}{$_};
       if !ref $self->{sockets}{$_} or ref $self->{sockets}{$_} eq 'HASH';
     #$self->log( 'dev',ref $self->{sockets}{$_});
@@ -1053,7 +1059,7 @@ sub work {    #$self->{'work'} ||= sub {
           $self->log(
             'dev',
 "del client[$self->{'clients'}{$_}{'number'}][$_] socket=[$self->{'clients'}{$_}{'socket'}] status=[$self->{'clients'}{$_}{'status'}] listener=[$self->{'listener'}] last active=",
-            int(time - $self->{'clients'}{$_}{activity})
+            int( time - $self->{'clients'}{$_}{activity} )
           );
           #(
           #!ref $self->{'clients'}{$_}{destroy} ? () :
@@ -1183,15 +1189,15 @@ sub work {    #$self->{'work'} ||= sub {
     },
     $self
   ) if $self->{dev_auto_dump};
-  #return 
+  #return
   $self->select( $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
-                                                    #$self->log( 'dev', "work -> sleep", @params ),
+                                             #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
-  return $self->select() || $self->select( $self->{'work_sleep'}, 1 ); # unless @{$self->{send_buffer_raw}|| []};
-  #return $self->select( $self->{'work_sleep'} );
+  return $self->select() || $self->select( $self->{'work_sleep'}, 1 );    # unless @{$self->{send_buffer_raw}|| []};
+                                                                          #return $self->select( $self->{'work_sleep'} );
 }
 
-sub dumper {                                        #$self->{'dumper'} ||= sub {
+sub dumper {                                                              #$self->{'dumper'} ||= sub {
   my $self = shift;
   my $file = $_[0] || $self->{dev_auto_dump_file} || $0 . ( $self->{dev_auto_dump_timed} ? '.' . time : () ) . '.dump';
   open my $fh, '>', $file or return;
@@ -1200,7 +1206,7 @@ sub dumper {                                        #$self->{'dumper'} ||= sub {
   $self->log( 'dev', "Writed dump", -s $file );
 }
 
-sub parser {                                        #$self->{'parser'} ||= sub {
+sub parser {                                                              #$self->{'parser'} ||= sub {
   my $self = shift;
   for ( local @_ = @_ ) {
     $self->log(
@@ -1219,6 +1225,7 @@ sub parser {                                        #$self->{'parser'} ||= sub {
       $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' );
     }
     s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
+    #$self->log('dev',"cmd[", Dumper($cmd),"]" );
     if ( $self->{'adc'} ) {
       $cmd =~ s/^([BCDEFHIU])//, $dst = $1;
       @param = ( [$dst], split / / );
@@ -1329,7 +1336,6 @@ sub send {    #$self->{'send'} ||= sub {
 	$self->{send_buffer_raw} = undef;
     }
 =cut
-
   #return unless @_;
 }
 
@@ -1545,8 +1551,8 @@ sub file_write {    #$self->{'file_write'} ||= sub {
           'dev',                              "recv bytes",           #length $self->{'file_send_buf'},
           "recv=[$recv] now [",               $self->{'filebytes'},
           "] of [$self->{'filetotal'}], now", 's=',
-          int(( $self->{'filebytes'} - $self->{__stat_recv_lastmark} ) /
-            ( time - $self->{__stat_recv_lasttime} or 1 )),
+          int( ( $self->{'filebytes'} - $self->{__stat_recv_lastmark} ) /
+              ( time - $self->{__stat_recv_lasttime} or 1 ) ),
           "status=[$self->{'status'}]",
           ),
           $self->{__stat_recv_lastmark} = $self->{'filebytes'};
@@ -1725,8 +1731,8 @@ sub file_send_part {    #$self->{'file_send_part'} ||= sub {
         "] by [$read:$self->{'file_send_by'}] left $self->{'file_send_left'}, now",
         $self->{'file_send_offset'}, 'of',
         $self->{'file_send_total'},  's=',
-        int(( $self->{'file_send_offset'} - $self->{__stat_lastmark} ) /
-          ( time - $self->{__stat_lasttime} or 1 )),
+        int( ( $self->{'file_send_offset'} - $self->{__stat_lastmark} ) /
+            ( time - $self->{__stat_lasttime} or 1 ) ),
         "status=[$self->{'status'}]",
         ),
         $self->{__stat_lastmark} = $self->{'file_send_offset'};
@@ -1832,7 +1838,6 @@ sub get_peer_addr {    #$self->{'get_peer_addr'} ||= sub () {
     if $_[1];
   return $self->{'hostip'};
 =cut
-
 }
 
 sub get_peer_addr_recv {    #$self->{'get_peer_addr_recv'} ||= sub (;$) {
@@ -1867,6 +1872,7 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
   return $self->{'myip'} ||= $_[1];
 =cut
+
 }
 
 sub info {    #$self->{'info'} ||= sub {

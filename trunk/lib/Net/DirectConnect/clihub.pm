@@ -132,7 +132,7 @@ sub init {
           /Пожалуйста подождите (\d+) секунд до повторного подключения\./ )
         {
           #sleep $1 + 1;
-          $self->work($1 + 10);
+          $self->work( $1 + 10 );
         } elsif ( $self->{'auto_bug'} and $nick eq 'VerliHub' and $text =~ /^This Hub Is Running Version 0.9.8d/i ) {    #_RC1
           ++$self->{'bug_MyINFO_last'};
           $self->log( 'dev', "possible bug fixed [$self->{'bug_MyINFO_last'}]" );
@@ -405,7 +405,6 @@ sub init {
 
 
 =cut  
-
   #$self->{'cmd'} = {
   local %_ = (
     'connect_aft' => sub {
@@ -627,7 +626,6 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
-
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
