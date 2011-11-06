@@ -424,7 +424,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     'wait_clients'      => 300,    #5 min
                                    #del    'wait_clients_by'    => 0.01,
                                    #'work_sleep'        => 0.01,
-    'work_sleep'        => 1,
+    'work_sleep'        => 0.01,
     'select_timeout'    => 1,
     'cmd_recurse_sleep' => 0,
     #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
@@ -866,7 +866,7 @@ sub select {    #$self->{'select'} ||= sub {
   #$self->{'select'} = IO::Select->new( $self->{'socket'} ) if !$self->{'select'} and $self->{'socket'};
   #my ( $readed, $reads );
   #$self->{'databuf'} = '';
-  #$self->log( 'dev', 'select', 'bef', $sleep, $nosend , caller);
+  #$self->log( 'dev', 'select', 'bef', $sleep, $nosend , ) if $nosend;
   my ( $recv, $send, $exeption ) =
     IO::Select->select( $self->{'select'}, ( $nosend ? undef : $self->{'select_send'} ), $self->{'select'}, $sleep );
 #$self->log( 'traceD', 'DC::select', 'aft' , Dumper ($recv, $send, $exeption));
@@ -1190,7 +1190,7 @@ sub work {    #$self->{'work'} ||= sub {
     $self
   ) if $self->{dev_auto_dump};
   #return
-  $self->select( $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
+  $self->select( 1 || $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
                                              #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
   return $self->select() || $self->select( $self->{'work_sleep'}, 1 );    # unless @{$self->{send_buffer_raw}|| []};
