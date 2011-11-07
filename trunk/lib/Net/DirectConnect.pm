@@ -424,7 +424,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     'wait_clients'      => 300,    #5 min
                                    #del    'wait_clients_by'    => 0.01,
                                    #'work_sleep'        => 0.01,
-    'work_sleep'        => 0.01,
+    'work_sleep'        => 0.005,
     'select_timeout'    => 1,
     'cmd_recurse_sleep' => 0,
     #( $^O eq 'MSWin32' ? () : ( 'nonblocking' => 1 ) ),
@@ -515,7 +515,7 @@ sub connect_check {
   $self->every(
     $self->{'reconnect_sleep'},
     $self->{'reconnect_func'} ||= sub {
-      if ( $self->{'reconnect_tries'}++ <= $self->{'reconnects'} ) {
+      if ( $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
         $self->log(
           'warn',
           "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
@@ -645,8 +645,8 @@ sub reconnect {    #$self->{'reconnect'} ||= sub {
   #$self->log(          'dev', 'reconnect');
   $self->disconnect();
   $self->{'status'} = 'reconnecting';
-  sleep $self->{'reconnect_sleep'};
-  $self->connect();
+  #!sleep $self->{'reconnect_sleep'};
+  #!$self->connect();
 }
 
 sub listen {       #$self->{'listen'} ||= sub {
@@ -803,7 +803,8 @@ sub recv {                # $self->{'recv'} ||= sub {
     #TODO not here
     if (  $self->active()
       and !$self->{'incoming'}
-      and $self->{'reconnect_tries'}++ < $self->{'reconnects'} )
+      #and $self->{'reconnect_tries'}++ < $self->{'reconnects'} 
+      )
     {
       $self->log( 'dcdbg',
         "recv err, reconnect [$self->{'reconnect_tries'}/$self->{'reconnects'}]. d=[$self->{'databuf'}] i=[$self->{'incoming'}]"
@@ -878,7 +879,8 @@ sub select {    #$self->{'select'} ||= sub {
   for (@$exeption) {
     #$self->log( 'dcdbg', 'exeption', $_, $self->{sockets}{$_}{number} ),
     #$self->{'select'}->remove($_);
-    can_run( $self->{sockets}{$_}, 'destroy' );
+    #can_run( $self->{sockets}{$_}, 'destroy' );
+    can_run( $self->{sockets}{$_}, 'reconnect' );
     #$self->{sockets}{$_}->destroy() if ref $self->{sockets}{$_};
     delete $self->{sockets}{$_};
     ++$ret,;

@@ -115,6 +115,6 @@ my @dc;
     $_
     } @hosts ? @hosts : psmisc::array( $config{dc}{host} ),
   );
-while ( @dc = grep { $_ and $_->active() } @dc ) {
-  $_->work() for @dc;
+while ( @_ = grep { $_ and $_->active() } @dc ) {
+  $_->work() for @_;
 }

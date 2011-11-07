@@ -948,10 +948,10 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
     delete $self->{'peers'}{$peerid};
     $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'};
     delete $self->{'INF'}{'SID'} unless $self->{'parent'};
-    $self->log(
-      'dev',  'disconnect int',           #psmisc::caller_trace(30)
-      'hub=', $self->{'parent'}{'hub'},
-    );                                    #if $self and $self->{'log'};
+    #$self->log(
+    #  'dev',  'disconnect int',           #psmisc::caller_trace(30)
+    #  'hub=', $self->{'parent'}{'hub'},
+    #);                                    #if $self and $self->{'log'};
                                           #psmisc::caller_trace 15;
   };
   $self->get_peer_addr() if $self->{'socket'};
