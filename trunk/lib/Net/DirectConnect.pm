@@ -98,6 +98,8 @@ sub schedule($$;@)
     and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
 }
 
+sub notone (@) { @_ = grep {$_ and $_ != 1} @_; wantarray ? @_ : $_[0]}
+
 sub use_try ($;@) {
   my $self = shift if ref $_[0];
   our %tried;
