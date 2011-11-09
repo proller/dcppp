@@ -9,7 +9,10 @@ our %config;
 # $config{dc}{skip_symlink}      = 1;
 # $config{debug} = 1;
 # $config{ 'log_' . $_ } = 1 for qw (dmp dcdmp dcdbg adcdev dev);
-# $config{dc}{dev_http} = 1;
+# $config{dc}{dev_http} = 8000; # port or 1 for default 8000
+# $config{dc}{http_download} = 1; #download files via http. for speed tests. http://127.0.0.1:8000/QT7KX4AROSNRK4MRUTR22PM4H3UR3ELFFHI5N5A http://127.0.0.1:8000/ActivePerl-5.10.1.1008-MSWin32-x86-294165.msi
+# $config{dc}{http_control} = 1; #future: debug [or control interface]
+
 # $config{dc}{dev_sctp} = 1;
 # $config{dc}{dev_ipv6} = 1; #future
 # $config{dc}{dev_adcs} = 1; #future
