@@ -1,4 +1,7 @@
 # $Id$ $URL$
+0.12: 
+small speed fixes
+
 0.11: 
 lot of fixes, better select (cpu usage)
 unfinished adc ipv6 support
