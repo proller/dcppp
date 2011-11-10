@@ -25,15 +25,15 @@
 #include <stdint.h>
 
 #include <string>
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
+//#include <tr1/unordered_map>
+//#include <tr1/unordered_set>
 
 namespace dcpp {
 
 using std::pair;
 using std::string;
-using std::tr1::unordered_map;
-using std::tr1::unordered_set;
+//using std::tr1::unordered_map;
+//using std::tr1::unordered_set;
 using std::vector;
 using std::wstring;
 
@@ -45,10 +45,10 @@ typedef pair<string, string> StringPair;
 typedef vector<StringPair> StringPairList;
 typedef StringPairList::iterator StringPairIter;
 
-typedef unordered_map<string, string> StringMap;
+typedef MAPTYPE<string, string> StringMap;
 typedef StringMap::iterator StringMapIter;
 
-typedef unordered_set<string> StringSet;
+typedef SETTYPE<string> StringSet;
 typedef StringSet::iterator StringSetIter;
 
 typedef vector<wstring> WStringList;
@@ -59,7 +59,7 @@ typedef pair<wstring, wstring> WStringPair;
 typedef vector<WStringPair> WStringPairList;
 typedef WStringPairList::iterator WStringPairIter;
 
-typedef unordered_map<wstring, wstring> WStringMap;
+typedef MAPTYPE<wstring, wstring> WStringMap;
 typedef WStringMap::iterator WStringMapIter;
 
 typedef vector<uint8_t> ByteVector;

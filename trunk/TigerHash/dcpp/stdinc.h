@@ -35,6 +35,7 @@
 
 //msc, mingw
 #if defined(_MSC_VER) || ( defined(__WIN32__) && !defined(__CYGWIN__))
+#if __GNUC__ > 3
 typedef signed __int8 int8_t;
 typedef signed __int16 int16_t;
 typedef signed __int32 int32_t;
@@ -44,6 +45,7 @@ typedef unsigned __int8 uint8_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
+#endif
 #endif
 
 
@@ -137,11 +139,25 @@ typedef unsigned __int64 uint64_t;
 
 #include <unordered_map>
 #include <unordered_set>
+#define MAPTYPE unordered_map
+#define SETTYPE unordered_set
+
+#elif __GNUC__ <= 3
+
+//#include <ext/hash_map>
+//#include <ext/hash_set>
+#include <map>
+#include <set>
+#define MAPTYPE map
+#define SETTYPE set
 
 #elif defined(__GLIBCPP__) || defined(__GLIBCXX__)  // Using GNU C++ library?
 
 #include <tr1/unordered_set>
 #include <tr1/unordered_map>
+#define MAPTYPE tr1::unordered_map
+#define SETTYPE tr1::unordered_set
+
 
 #else
 #error "Unknown STL, please configure accordingly"
@@ -149,7 +165,9 @@ typedef unsigned __int64 uint64_t;
 
 namespace dcpp {
 using namespace std;
-using namespace std::tr1;
+#if __GNUC__ > 3
+//using namespace std::tr1;
+#endif
 }
 
 #endif // !defined(STDINC_H)
