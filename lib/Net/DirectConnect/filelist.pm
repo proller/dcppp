@@ -207,13 +207,16 @@ sub new {
     my $filelist_line = sub($) {
       for my $f (@_) {
         next if !length $f->{file} or !length $f->{'tth'};
-        $sharesize += $f->{size};
+        #$f = {%$f};
+		$sharesize += $f->{size};
         ++$sharefiles if $f->{size};
         #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
         psmisc::file_append $self->{files}, "\t" x $level,
           #qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
           qq{<File}, (
-          map { qq{ $table2filelist{$_}="} . psmisc::html_chars( $f->{$_} ) . qq{"} }
+          map { qq{ $table2filelist{$_}="} . 
+		  psmisc::html_chars
+		  ($a = $f->{$_} ) . qq{"} }
           sort { $o{$a} <=> $o{$b} } grep { $table2filelist{$_} and $f->{$_} } keys %$f
           ),
           qq{/>\n};
