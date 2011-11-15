@@ -20,7 +20,6 @@ bin/dcshare
 @dirrmtry %%SITE_PERL%%/%%PERL_ARCH%%/auto/Net/DirectConnect
 @dirrmtry %%SITE_PERL%%/%%PERL_ARCH%%/auto/Net
 @dirrmtry %%SITE_PERL%%/%%PERL_ARCH%%/auto
-@dirrmtry %%SITE_PERL%%/mach
 @dirrm %%SITE_PERL%%/Net/DirectConnect/pslib
-@dirrm %%SITE_PERL%%/Net/DirectConnect
-@dirrm %%SITE_PERL%%/Net
+@dirrmtry %%SITE_PERL%%/Net/DirectConnect
+@dirrmtry %%SITE_PERL%%/Net

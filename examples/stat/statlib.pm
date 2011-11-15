@@ -153,7 +153,7 @@ $config{'sql'}{'table'}{ 'queries_top_string_' . $_ } = {
   },
   for sort keys %{ $config{'periods'} };
 unless ( $ENV{'SERVER_PORT'} ) {
-  $config{'sql'}{'auto_repair'}  = 1;
+  #$config{'sql'}{'auto_repair'}  = 1;
   $config{'sql'}{'force_repair'} = 1;
 }
 $config{'query_default'}{'LIMIT'} ||= 100;

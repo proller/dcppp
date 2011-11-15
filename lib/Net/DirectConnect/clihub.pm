@@ -227,6 +227,10 @@ sub init {
       my ( $nick, $host, $port ) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
       $self->{'IpList'}{$host}{'port'} = $self->{'PortList'}->{$host} = $port;
       #$self->log('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
+      $self->log("ignore flooding attempt to [$host:$port ] ($self->{flood}{$host})"),
+      $self->{flood}{$host} = time+30,
+      return if $self->{flood}{$host} > time;
+      $self->{flood}{$host} = time+60;
       return if $self->{'clients'}{ $host . ':' . $port }->{'socket'};
       $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
         #!        %$self, $self->clear(),
