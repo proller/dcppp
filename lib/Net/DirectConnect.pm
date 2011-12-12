@@ -2029,7 +2029,7 @@ sub say {    #$self->{'say'} = sub (@) {
   my $self = shift;
   @_ = $_[2] if $_[0] eq 'MSG';
   #local $_ = Encode::encode $self->{charset_console} , join ' ', @_;print $_, "\n";
-  print Encode::encode( $self->{charset_console}, join( ' ', @_ ), Encode::FB_WARN ), "\n";
+  print Encode::encode( $self->{charset_console}, join( ' ', @_ ), Encode::FB_DEFAULT ), "\n";
 }
 #local %_ = (
 sub search {    #'search' => sub {
