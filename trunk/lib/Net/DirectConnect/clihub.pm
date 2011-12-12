@@ -92,6 +92,7 @@ sub init {
 /Минимальный интервал поиска составляет: \(Minimum search interval is:\) (\d+)секунд \(seconds\)/
           or $text =~ /^(?:Minimum search interval is|Минимальный интервал поиска):(\d+)s/
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
+          or $text =~ /Минимальный интервал между поисковыми запросами:(\d+)сек., попробуйте чуть позже/
           )
         {
           $self->{'search_every'} = int( rand(5) + $1 || $self->{'search_every_min'} );
@@ -102,7 +103,9 @@ sub init {
              /(?:Пожалуйста )?подождите (\d+) секунд перед следующим поиском\./i
           or $text =~ /(?:Please )?wait (\d+) seconds before next search\./i
           or $text eq 'Пожалуйста не используйте поиск так часто!'
-          or $text eq "Please don't flood with searches!" )
+          or $text eq "Please don't flood with searches!" 
+          or $text eq 'Sorry Hub is busy now, no search, try later..'
+          )
         {
           $self->{'search_every'} += int( rand(5) + $1 || $self->{'search_every_min'} );
           $self->log( 'warn', "[$nick] oper: increase min interval => $self->{'search_every'}" );
