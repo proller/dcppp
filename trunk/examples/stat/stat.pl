@@ -54,10 +54,11 @@ for my $arg (@ARGV) {
     eval( '$config' . join( '', map { '{$_[' . $_ . ']}' } ( 0 .. $#_ ) ) . ' = $v;' );
   } elsif ( $arg =~ /^calc(\w)?$/i ) {
     my $tim = $1;
-    $ARGV[$n] = undef;
     local $db->{'cp_in'} = 'utf-8';
     #local $config{'log_dmp'}=1;
     my $nowtime = int time();
+    next if !psmisc::lock( $arg, old => 86400, timeout=>60 );
+    $ARGV[$n] = undef;
     for my $query ( sort keys %{ $config{'queries'} } ) {
       next if $config{'queries'}{$query}{'disabled'};
       next unless statlib::is_slow($query);
@@ -515,14 +516,14 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
   psmisc::schedule(
     [ 300, 60 * 19 ],
     our $hubrunhour_ ||= sub {
-      psmisc::printlog( 'err', 'cant lock h' ), return if !psmisc::lock( 'calch', old => 86400 );
+      #psmisc::printlog( 'err', 'cant lock h' ), return if !psmisc::lock( 'calch', old => 86400 );
       psmisc::startme('calch');
     }
     ),
     psmisc::schedule(
     [ 600, 60 * 60 * 6 ],
     our $hubrunrare_ ||= sub {
-      psmisc::printlog( 'err', 'cant lock r' ), return if !psmisc::lock( 'calcr', old => 86400 );
+      #psmisc::printlog( 'err', 'cant lock r' ), return if !psmisc::lock( 'calcr', old => 86400 );
       psmisc::startme('calcr');
     }
     ) if $config{'use_slow'};
