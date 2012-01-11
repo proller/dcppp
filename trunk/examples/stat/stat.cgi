@@ -267,7 +267,7 @@ for my $query (@queries) {
     $row->{'tth_show'} = 'tth' if $config{'view'} eq 'rss';
     unless ( $config{'view'} eq 'json' ) {
       $row->{ $_ . '_html' } = (
-        $param->{$_}
+        $param->{$_} && $param->{$_} !~ /%/
         ? ''
         : qq{<a class="$_" title="}
           . psmisc::html_chars( $row->{$_} )
@@ -292,6 +292,8 @@ for my $query (@queries) {
       #print utf8::is_utf8 ( $row->{string} );
       #print "</td>";
       #printlog('dev', Dumper $row);
+      #printlog('dev', Dumper $q->{'show'});
+    
       print '<td>', $row->{ $_ . '_html' } // $row->{$_}, '</td>' for @{ $q->{'show'} };
       if ( $q->{'graph'} ) {
         print qq{<td style="background-color:$graphcolor;">&nbsp;</td>} if $config{'use_graph'};
@@ -433,7 +435,7 @@ $config{'out'}{'html'}{'graph'} = sub {
 #qq{ <polyline fill="none" stroke="blue" stroke-width="10"              points="50,375                     150,375 150,325 250,325 250,375                     350,375 350,250 450,250 450,375                     550,375 550,175 650,175 650,375                     750,375 750,100 850,100 850,375                     950,375 950,25 1050,25 1050,375                     1150,375" />},
       ;
     #my $color = 0;
-    psmisc::printlog 'dev', $yl, Dumper \%date_max, \%date_min, \%date_step;
+    #psmisc::printlog 'dev', $yl, Dumper \%date_max, \%date_min, \%date_step;
     for my $line ( sort keys %graph ) {
       my $n;
       #$colors[$color] <!-- $line : -->
