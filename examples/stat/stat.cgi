@@ -27,6 +27,7 @@ use Net::DirectConnect::pslib::psmisc
   #qw(%config)
   ;    # qw(:config :log printlog);
 psmisc->import(qw(:log));
+use Net::DirectConnect::pslib::psweb;
 
 sub part ($;@) {
   my $name = shift;
@@ -38,6 +39,9 @@ sub part ($;@) {
 our @colors = qw(black aqua gray navy silver green olive teal blue lime purple magenta maroon red yellow);
 #$param = psmisc::get_params();
 $param = psmisc::get_params_utf8();
+  psweb::config_init($param);
+psmisc::configure();
+
 delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
 $config{'view'} = $param->{'view'} || 'html';
 #$config{'view'} = 'rss';
@@ -205,15 +209,15 @@ for my $query (@queries) {
         ? ( !( $param->{$query} ) ? () : "= " . psmisc::html_chars( $param->{$query} ) )
         : ( '= <a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
       : '<a href="?query=' . psmisc::encode_url($query) . '">' . ( $q->{'desc'} || $query ) . '</a>'
-      )
-      . '<div class="altview">'
+      );
+      print '<div class="altview">'
       . '<a class="rss" href="'
       . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=rss' )
       . '">RSS</a>'
       . ' <a class="json" href="'
       . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=json' )
       . '">JS</a>'
-      . '</div>';
+      . '</div>' unless $config{'client_bot'};
     #print Dumper \%ENV;
     #print Dumper @ask;
     #print " ($q->{'desc'}):" if $q->{'desc'};
