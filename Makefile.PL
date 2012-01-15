@@ -46,7 +46,9 @@ sub MY::postamble {
 
 fullclean: distclean veryclean
 	rm -f \$(DISTNAME)-*.tar.gz *.bak *.old *.core MANIFEST README
-	rm -Rf p5-Net-DirectConnect TigerHash lib/Net/DirectConnect/pslib/*.js lib/Net/DirectConnect/pslib/*.css lib/Net/DirectConnect/pslib/psweb.pm
+	rm -f p5-Net-DirectConnect TigerHash lib/Net/DirectConnect/pslib/*.js lib/Net/DirectConnect/pslib/*.css
+
+# lib/Net/DirectConnect/pslib/psweb.pm
 
 prerelease:
 
