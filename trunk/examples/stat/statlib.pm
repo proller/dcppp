@@ -64,6 +64,7 @@ $config{'web_max_query_time'} ||= 10;
 $config{'sql'}                ||= {
   #'driver'              => 'mysql',
   'driver' => 'sqlite', 'dbname' => 'dcstat', 'auto_connect' => 1, 'log' => sub { shift; psmisc::printlog(@_) },
+  #'table options'    => 'ENGINE = INNODB DELAY_KEY_WRITE=1',
   #'cp_in'               => 'cp1251',
   'connect_tries'       => 0,
   'connect_chain_tries' => 0,
