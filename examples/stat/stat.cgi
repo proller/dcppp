@@ -38,9 +38,11 @@ sub part ($;@) {
 #first is default
 our @colors = qw(black aqua gray navy silver green olive teal blue lime purple magenta maroon red yellow);
 #$param = psmisc::get_params();
-$param = psmisc::get_params_utf8();
-  psweb::config_init($param);
-psmisc::configure();
+#$param = psmisc::get_params_utf8();
+#warn Dumper __FILE__, __LINE__, $param;
+#psweb::config_init($param);
+#psmisc::configure($ENV{'MOD_PERL'} || $ENV{'FCGI_ROLE'});
+#psmisc::conf();
 
 delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
 $config{'view'} = $param->{'view'} || 'html';

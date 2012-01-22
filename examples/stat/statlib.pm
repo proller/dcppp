@@ -17,6 +17,7 @@ $Data::Dumper::Sortkeys = 1;
 #warn $1 . 'DirectConnect/pslib';
 #use lib $1 . 'DirectConnect/pslib/';
 use Net::DirectConnect::pslib::pssql;
+use Net::DirectConnect::pslib::psweb;
 #use lib::abs qw(pslib);
 #use pssql;
 #psmisc->import qw(:log);
@@ -33,7 +34,11 @@ use Exporter 'import';
 our @EXPORT = qw(%config  $param   $db );
 our ( %config, $param, $db, );
 *statlib::config = *main::config;
+*statlib::param = *main::param;
 our ( $tq, $rq, $vq );
+
+$param = psmisc::get_params_utf8();
+
 $config{'log_trace'}  ||= 0;
 $config{'log_dmpbef'} ||= 0;
 $config{'log_dmp'}    ||= 0;
@@ -426,7 +431,13 @@ $config{'queries'}{'filename'} ||= {
   'show'     => [qw(n cnt string filename size tth)],
   'GROUP BY' => 'tth',
 };
+
+#warn "configuring", Dumper $param;
+
+#psweb::config_init($param) if $ENV{'SERVER_PORT'};
 psmisc::configure( 0, 0, 0, 1 );
+#psmisc::conf();
+#warn "configured";
 
 sub is_slow {
   my ($query) = @_;
