@@ -29,8 +29,11 @@ use Net::DirectConnect::pslib::psmisc
 psmisc->import(qw(:log));
 use Net::DirectConnect::pslib::psweb;
 
+#print "Content-type: text/html\n\n";
+
 sub part ($;@) {
   my $name = shift;
+  #print "part[$config{'view'}:$name]\n";
   local $_ = $config{'out'}{ $config{'view'} }{$name} || $config{'out'}{''}{$name};
   return psmisc::code_run( $_, @_ ) if ref eq 'CODE';
   psmisc::printall $_;
@@ -56,7 +59,8 @@ $config{'out'}{'rss'}{'http-header'} = sub {
 };
 my $json;
 $config{'out'}{'json'}{'http-header'} = "Content-type: application/json\n\n";
-$config{'out'}{'html'}{'head'}        = sub {
+#$config{'out'}{'json'}{'http-header'} = "Content-type: text/plain\n\n";
+$config{'out'}{'json'}{'head'}        = sub {
   $json = {};
 };
 $config{'out'}{'json'}{'table-head'} = sub {
@@ -64,9 +68,11 @@ $config{'out'}{'json'}{'table-head'} = sub {
   $json->{table_current} = $q->{name};
   $json->{ $json->{table_current} }{'head'} = $q;
 };
-$config{'out'}{'json'}{'footer'} ||= sub {
-  #$json->{__test} = [qq{-'"-}, qq{-'"`-}];
+$config{'out'}{'json'}{'footer'} = sub {
+  $json->{__test} = [qq{-'"-}, qq{-'"`-}];
   #if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
+  #print 'string',Dumper $json;
+  #print 'stringTR',$json;
   if ( psmisc::use_try 'JSON' ) { return print JSON->new->encode($json); }
   {
     {
@@ -87,6 +93,7 @@ $config{'out'}{'json'}{'table-row'} ||= sub {
   $row = { %$row, %{ $row->{orig} || {} } };
   delete $row->{orig};
   push @{ $json->{ $json->{table_current} }{'rows'} ||= [] }, $row;
+  #print 'stringTR',$json;
 };
 part 'http-header' if $ENV{'SERVER_PORT'};
 $config{'out'}{'rss'}{'footer'} = sub { print '</channel></rss>'; };
