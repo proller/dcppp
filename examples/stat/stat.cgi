@@ -92,6 +92,7 @@ $config{'out'}{'json'}{'table-row'} ||= sub {
   #print 'string',Dumper \@_;
   $row = { %$row, %{ $row->{orig} || {} } };
   delete $row->{orig};
+  delete $row->{$_} for grep {!length $row->{$_}} keys %$row;
   push @{ $json->{ $json->{table_current} }{'rows'} ||= [] }, $row;
   #print 'stringTR',$json;
 };
