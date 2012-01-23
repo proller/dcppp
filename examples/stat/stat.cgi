@@ -69,7 +69,7 @@ $config{'out'}{'json'}{'table-head'} = sub {
   $json->{ $json->{table_current} }{'head'} = $q;
 };
 $config{'out'}{'json'}{'footer'} = sub {
-  $json->{__test} = [qq{-'"-}, qq{-'"`-}];
+  #$json->{__test} = [qq{-'"-}, qq{-'"`-}];
   #if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
   #print 'string',Dumper $json;
   #print 'stringTR',$json;
