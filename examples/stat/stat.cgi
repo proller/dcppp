@@ -73,19 +73,8 @@ $config{'out'}{'json'}{'footer'} = sub {
   #if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
   #print 'string',Dumper $json;
   #print 'stringTR',$json;
-  if ( psmisc::use_try 'JSON' ) { return print JSON->new->encode($json); }
-  {
-    {
-      no warnings 'redefine';
-
-      sub Data::Dumper::qquote {
-        $_[0] =~ s/"/\\"/g;
-        return '"' . $_[0] . '"';
-      }
-    }
-    return print Data::Dumper->new( [$json] )->Pair(':')->Terse(1)->Indent(0)->Useqq(1)->Useperl(1)->Dump();
-  }
-  #
+  print ${psmisc::json_encode($json)};
+  #print ${psmisc::json_encode($json)};
 };
 $config{'out'}{'json'}{'table-row'} ||= sub {
   my ($row) = @_;
@@ -124,7 +113,7 @@ $config{'human'}{'magnet-dl'} = sub {
   return
       '&nbsp;<a class="magnet-darr" href="magnet:?' 
     . $_
-    . '">[&dArr;]</a> <a href="http://dc.proisk.ru/?'
+    . '">[↓]</a> <a href="http://dc.proisk.ru/?'
     . ( $row->{'string'} ? "q=" . $row->{'string'} : "tiger=$row->{'tth'}" )
     . '">P</a>'
     if $_;
@@ -137,7 +126,7 @@ $config{'human'}{'dchub-dl'} = sub {
   return
       '&nbsp;<a class="magnet-darr" href="dchub://'
     . ( join '/', grep { $_ } map { $row->{$_} } qw(hub nick) )
-    . '">[&dArr;]</a>'
+    . '">[↓]</a>'
     if length $row->{'hub'};
 };
 #print '<a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>'  if $param->{'tth'};
@@ -186,7 +175,7 @@ $config{'out'}{'html'}{'header'} = sub {
   part 'header_in_top';
   print '<br/>';
   print
-qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[&dArr;]</a> необходим <a href="http://en.wikipedia.org/wiki/DC%2B%2B#Client_software_comparison">dc клиент</a></div>};
+qq{<div class="main-top-info">Для скачивания файлов по ссылке <a class="magnet-darr">[↓]</a> необходим <a href="http://en.wikipedia.org/wiki/DC%2B%2B#Client_software_comparison">dc клиент</a></div>};
 };
 part 'header';
 #print Dumper \@ask;
