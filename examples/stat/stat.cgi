@@ -4,7 +4,7 @@ package statcgi;
 use strict;
 use utf8;
 use MIME::Base64;
-eval { use Time::HiRes qw(time sleep); };
+use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 our ( %config, $param, $db, );
@@ -142,10 +142,10 @@ my %graphcolors;
 my $rss_link = ( @ask ? '?' . $ENV{'QUERY_STRING'} : '?query=queries+top+tth' );
 $config{'out'}{'html'}{'head'} = sub {
   #print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
-  #print qq{<!DOCTYPE html>
+  #print qq{<!DOCTYPE html>};
   #xmlns:addthis="http://www.addthis.com/help/api-spec"
-  print qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  print qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">};
+print qq{<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <head><title>RU DC stat</title>
 <link href="style.css" rel="stylesheet" type="text/css"/>
 <link rel="alternate" type="application/rss+xml" title="RSS version" href="}, psmisc::html_chars( $rss_link . '&view=rss' ),
@@ -387,7 +387,7 @@ $config{'out'}{'html'}{'graph'} = sub {
       )
     {
       #for my $row ( $db->query("SELECT * FROM $table  " ) ) {
-      psmisc::printlog 'dev', Dumper $row;
+      #psmisc::printlog 'dev', Dumper $row;
       next if $row->{tth} eq 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
       my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string} };
 #print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
