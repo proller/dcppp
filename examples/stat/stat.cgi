@@ -111,7 +111,7 @@ $config{'human'}{'magnet-dl'} = sub {
     ( $string            ? 'kt=' . psmisc::encode_url($string)              : '' ),
     ( ( $row->{'hub'} and $row->{'hub'} ne 'localhost' ) ? 'xs=dchub://' . $row->{'hub'} : '' );
   return
-      ' <a class="magnet-darr" href="magnet:?' 
+      ' <a class="magnet-darr" href="magnet:?' 
     . $_
     . '">[↓]</a> <a href="http://dc.proisk.ru/?'
     . ( $row->{'string'} ? "q=" . $row->{'string'} : "tiger=$row->{'tth'}" )
@@ -124,7 +124,7 @@ $config{'human'}{'dchub-dl'} = sub {
   $row = { 'hub' => $row } unless ref $row eq 'HASH';
   #print "[$row->{'hub'}; $row->{'nick'}]";
   return
-      ' <a class="magnet-darr" href="dchub://'
+      ' <a class="magnet-darr" href="dchub://'
     . ( join '/', grep { $_ } map { $row->{$_} } qw(hub nick) )
     . '">[↓]</a>'
     if length $row->{'hub'};
@@ -299,11 +299,11 @@ for my $query (@queries) {
     
       print '<td>', $row->{ $_ . '_html' } // $row->{$_}, '</td>' for @{ $q->{'show'} };
       if ( $q->{'graph'} ) {
-        print qq{<td style="background-color:$graphcolor;"> </td>} if $config{'use_graph'};
+        print qq{<td style="background-color:$graphcolor;"> </td>} if $config{'use_graph'};
         print qq{<td class='graph' id='$query' rowspan='100' style='min-width:100px;'> </td>} if $n == 1;
 #print qq{<td class='graph' rowspan='100' width='100%'><img id='$query' src='' NOtype='image/svg+xml' width='100%' height='100%'/></td>}    if $n == 1;
 #print qq{<td class='graph' rowspan='100' width='100%'><img id='$query' src='' width='100%' /></td>}    if $n == 1;
-        print qq{<td style="background-color:$graphcolor;"> </td>} if $config{'use_graph'};
+        print qq{<td style="background-color:$graphcolor;"> </td>} if $config{'use_graph'};
       }
       print '</tr>';
     };
