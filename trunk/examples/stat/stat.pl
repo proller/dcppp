@@ -81,7 +81,8 @@ for my $arg (@ARGV) {
         for my $row (@$res) {
           ++$n;
           delete $row->{$_} for grep { !defined $row->{$_} } keys %$row;
-          my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
+          #my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
+	  my $dmp = JSON->new->encode($row);
           #warn "SLOWi:[$config{'use_slow'}][$dmp]";
           $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => $nowtime } )
             if $config{'use_slow'};

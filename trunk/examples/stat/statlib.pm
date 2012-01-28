@@ -7,6 +7,7 @@ use Time::HiRes qw(time sleep);
 use utf8;
 our $root_path;
 use Data::Dumper;
+use JSON;
 $Data::Dumper::Sortkeys = 1;
 #use lib $root_path. './pslib';
 #use Net::DirectConnect::pslib::psmisc;
@@ -373,6 +374,7 @@ $config{'queries'}{'results ext'} ||= {
   'ORDER BY' => 'cnt DESC',
   'order'    => ++$order,
 };
+=no innodb
 $config{'queries'}{'counts'} ||= {
   'main'      => 1,
   'show'      => [qw(n tbl cnt)],
@@ -385,6 +387,7 @@ $config{'queries'}{'counts'} ||= {
   ),
   'order' => ++$order,
 };
+=cut
 $config{'queries'}{'chat top'} ||= {
   'main'     => 1,
   'periods'  => 1,
@@ -467,10 +470,22 @@ sub make_query {
     my $res = $db->query($sql);    
     #print Dumper $res if $param->{'debug'};
     my @ret;
-    for my $row (@$res) { push @ret, eval $row->{'result'}; }
+    #print Dumper $res if $param->{'debug'};
+    for my $row (@$res) {
+	my $unpacked;
+	eval {$unpacked = JSON->decode($row->{'result'});};
+	#print "json:[$@]"  if $param->{'debug'}  and $@;
+	unless ($unpacked){
+	local $SIG{__WARN__} = sub (){};
+	$unpacked = eval $row->{'result'} ;
+	}	
+	push @ret, $unpacked; 
+	#print "eval:[$row->{'result'}] : $@"  if $param->{'debug'};
+
+    }
     #print Dumper @ret if $param->{'debug'};
     return \@ret;
-  }
+  }                                   
   #warn "SLOWcalc";
   #return;
   $q->{'WHERE'} = join ' AND ', grep { $_ } @{ $q->{'WHERE'}, } if ref $q->{'WHERE'} eq 'ARRAY';
