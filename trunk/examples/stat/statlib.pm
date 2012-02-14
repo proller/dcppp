@@ -473,8 +473,8 @@ sub make_query {
     #print Dumper $res if $param->{'debug'};
     for my $row (@$res) {
 	my $unpacked;
-	eval {$unpacked = JSON->decode($row->{'result'});};
-	#print "json:[$@]"  if $param->{'debug'}  and $@;
+	eval {$unpacked = JSON->new->decode($row->{'result'});};
+	#print "json:[$@][$row->{'result'}]"  if $param->{'debug'}  and $@;
 	unless ($unpacked){
 	local $SIG{__WARN__} = sub (){};
 	$unpacked = eval $row->{'result'} ;

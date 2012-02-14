@@ -57,7 +57,8 @@ for my $arg (@ARGV) {
     local $db->{'cp_in'} = 'utf-8';
     #local $config{'log_dmp'}=1;
     my $nowtime = int time();
-    next if !psmisc::lock( $arg, old => 86400, timeout=>60 );
+    psmisc::printlog('warn', 'locked', $arg),
+      next if !psmisc::lock( $arg, old => 86400, timeout=>60 );
     $ARGV[$n] = undef;
     for my $query ( sort keys %{ $config{'queries'} } ) {
       next if $config{'queries'}{$query}{'disabled'};
