@@ -18,6 +18,7 @@ use ExtUtils::MakeMaker;
     'Socket6'                       => 0,
     'IO::Socket::SSL'               => 0,
     'JSON'                          => 0,
+    'JSON::XS'                      => 0,
   },
   NORECURS  => 1,
   EXE_FILES => [qw(examples/dcshare examples/dcget examples/dchub)],
