@@ -21,6 +21,7 @@ use statlib;
 #warn Dumper \%config, \%psmisc::config, \%statlib::config, \%statpl::config, \%main::config, \%pssql::config,;
 #warn Dumper \%INC, \@INC;
 $config{'queue_recalc_every'} ||= 60;
+$config{'lock_old'} ||= 86400;
 $static{'no_sig_log'} = 1;    #test
 print(
   "usage:
@@ -58,7 +59,7 @@ for my $arg (@ARGV) {
     #local $config{'log_dmp'}=1;
     my $nowtime = int time();
     psmisc::printlog('warn', 'locked', $arg),
-      next if !psmisc::lock( $arg, old => 86400, timeout=>60 );
+      next if !psmisc::lock( $arg, old => $config{'lock_old'}, timeout=>60 );
     $ARGV[$n] = undef;
     for my $query ( sort keys %{ $config{'queries'} } ) {
       next if $config{'queries'}{$query}{'disabled'};
