@@ -216,10 +216,11 @@ sub init {
     },
     'ForceMove' => sub {
       my $self = shift if ref $_[0];
-      $self->log( 'warn', "ForceMove to $_[0]" );
+      my ($to) = grep {length $_} split /;/, $_[0];
+      $self->log( 'warn', "ForceMove to $to :: ", @_ );
       $self->disconnect();
       sleep(1);
-      $self->connect(@_) if $self->{'follow_forcemove'} and @_;
+      $self->connect($to) if $self->{'follow_forcemove'} and $to;
     },
     'Quit' => sub {
       my $self = shift if ref $_[0];
