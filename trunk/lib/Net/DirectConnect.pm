@@ -542,9 +542,10 @@ sub connect {    #$self->{'connect'} ||= sub {
     $self->module_load('adcs') if $p eq 'adcs';
     #$self->protocol_init($p) if $p =~ /^adc/;
     $self->{'host'} =~ s{/.*}{}g;
-    #$self->{'port'} = $1 if $self->{'host'} =~ s{:(\d+)}{};
+    ($self->{'host'}, $self->{'port'}) = ($1,$2) if $self->{'host'} =~ m{^\[(\S+)\]:(\d+)}; # [::1]:411
+    ($self->{'host'}, $self->{'port'}) = ($1,$2) if $self->{'host'} =~ s{^([^:]+):(\d+)$}{}; # 1.2.3.4:411
   }
-  #$self->log( 'H:', scalar(@{[$self->{'host'} =~ /(:)/g]}) );
+  #$self->log('dev', 'host, port =', $self->{'host'}, $self->{'port'} );
   #$self->log( 'H:', ((),$self->{'host'} =~ /(:)/g)>1 );
   $self->module_load('ipv6') if ( @{ [ $self->{'host'} =~ /(:)/g ] } > 1 );
   #$self->{'port'} = $_[1] if $_[1];
