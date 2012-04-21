@@ -520,7 +520,7 @@ sub new {
       $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+1 WHERE "
         . "${rq}tth${rq}="
         . $self->{db}->quote($tth)
-        . ( $self->{db}{no_update_limit} ? () : " LIMIT 1" ) );
+        . ( $self->{db}{no_update_limit} ? () : " LIMIT ${vq}1${vq}" ) );
     $self->log( 'dev', "counter $field increased[$updated] on [$tth]" ) if $updated;
   };
   $self->{handler_int}{Search} //= sub {
