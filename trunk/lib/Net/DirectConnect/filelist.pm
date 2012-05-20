@@ -167,6 +167,7 @@ sub new {
     $self->{db} ||= pssql->new( %{ $self->{'sql'} || {} }, );
     ( $tq, $rq, $vq ) = $self->{db}->quotes();
     #$self->log('db', Dumper $self->{db});
+    #$self->log('db', 'flist', $self->{db});
   }
   $self->{filelist_make} //= sub {
     my $self = shift if ref $_[0];
@@ -518,9 +519,12 @@ sub new {
     my $field = shift || 'hit';
     my $updated =
       $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+${vq}1${vq} WHERE "
+      #$self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+1 WHERE "
+      #$self->{db}->do( "UPDATE ${tq}filelist${tq} SET $field=$field+1 WHERE "
         . "${rq}tth${rq}="
         . $self->{db}->quote($tth)
-        . ( $self->{db}{no_update_limit} ? () : " LIMIT ${vq}1${vq}" ) );
+        #. ( $self->{db}{no_update_limit} ? () : " LIMIT ${vq}2${vq}" ) );
+        . ( $self->{db}{no_update_limit} ? () : " LIMIT 1" ) );
     $self->log( 'dev', "counter $field increased[$updated] on [$tth]" ) if $updated;
   };
   $self->{handler_int}{Search} //= sub {
