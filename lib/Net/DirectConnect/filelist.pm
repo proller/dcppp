@@ -7,6 +7,7 @@ generate dc++ xml filelist
 perl filelist.pm /path/to/dir
 
 =cut
+
 package    # no cpan
   Net::DirectConnect::filelist;
 use 5.10.0;
@@ -35,6 +36,7 @@ use base 'Net::DirectConnect';
       "; #use Net::DirectConnect; 
       #psmisc::use_try ('Net::DirectConnect');
 =cut
+
 use base 'Net::DirectConnect';
 #use lib '../../../examples/stat/pslib';    # REMOVE
 #use lib 'stat/pslib';                      # REMOVE
@@ -209,15 +211,13 @@ sub new {
       for my $f (@_) {
         next if !length $f->{file} or !length $f->{'tth'};
         #$f = {%$f};
-		$sharesize += $f->{size};
+        $sharesize += $f->{size};
         ++$sharefiles if $f->{size};
         #$f->{file} = Encode::encode( 'utf8', Encode::decode( $self->{charset_fs}, $f->{file} ) ) if $self->{charset_fs};
         psmisc::file_append $self->{files}, "\t" x $level,
           #qq{<File Name="$f->{file}" Size="$f->{size}" TTH="$f->{tth}" TS="$f->{time}"/>\n};
           qq{<File}, (
-          map { qq{ $table2filelist{$_}="} . 
-		  psmisc::html_chars
-		  ($a = $f->{$_} ) . qq{"} }
+          map { qq{ $table2filelist{$_}="} . psmisc::html_chars( $a = $f->{$_} ) . qq{"} }
           sort { $o{$a} <=> $o{$b} } grep { $table2filelist{$_} and $f->{$_} } keys %$f
           ),
           qq{/>\n};
@@ -230,6 +230,7 @@ sub new {
         if $f->{'tth'};
       $self->{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
 =cut
+
   #$self->log 'set share', "[$f->{file}], [$f->{tth}] = [$self->{share_full}{ $f->{tth} }],[$self->{share_full}{ $f->{file} }]";
   #$self->log Dumper $self->{share_full};
       }
@@ -452,6 +453,7 @@ sub new {
     $self->log ".done:", ( scalar keys %{ $self->{share_full} } ), "\n";
   }
 =cut
+
     #$self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
       if !$self->{files}
@@ -517,14 +519,14 @@ sub new {
     my $self = shift if ref $_[0];
     my $tth = shift or return;
     my $field = shift || 'hit';
-    my $updated =
-      $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+${vq}1${vq} WHERE "
-      #$self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+1 WHERE "
-      #$self->{db}->do( "UPDATE ${tq}filelist${tq} SET $field=$field+1 WHERE "
-        . "${rq}tth${rq}="
-        . $self->{db}->quote($tth)
+    my $updated = $self->{db}->do(
+      "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+${vq}1${vq} WHERE "
+        #$self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+1 WHERE "
+        #$self->{db}->do( "UPDATE ${tq}filelist${tq} SET $field=$field+1 WHERE "
+        . "${rq}tth${rq}=" . $self->{db}->quote($tth)
         #. ( $self->{db}{no_update_limit} ? () : " LIMIT ${vq}2${vq}" ) );
-        . ( $self->{db}{no_update_limit} ? () : " LIMIT 1" ) );
+        . ( $self->{db}{no_update_limit} ? () : " LIMIT 1" )
+    );
     $self->log( 'dev', "counter $field increased[$updated] on [$tth]" ) if $updated;
   };
   $self->{handler_int}{Search} //= sub {
@@ -601,6 +603,7 @@ return unless $name;
           if $tth;
         $self->{share_full}{$file} ||= $full_local;
 =cut
+
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth ),
       $self->share_add_file( $full, $tth ), $self->share_changed()
       if !$self->{'file_recv_filelist'} and !$self->{'no_auto_share_downloaded'};  # unless $self->{'no_auto_share_downloaded'};

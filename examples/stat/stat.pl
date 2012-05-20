@@ -21,7 +21,7 @@ use statlib;
 #warn Dumper \%config, \%psmisc::config, \%statlib::config, \%statpl::config, \%main::config, \%pssql::config,;
 #warn Dumper \%INC, \@INC;
 $config{'queue_recalc_every'} ||= 60;
-$config{'lock_old'} ||= 86400;
+$config{'lock_old'}           ||= 86400;
 $static{'no_sig_log'} = 1;    #test
 print(
   "usage:
@@ -58,8 +58,7 @@ for my $arg (@ARGV) {
     local $db->{'cp_in'} = 'utf-8';
     #local $config{'log_dmp'}=1;
     my $nowtime = int time();
-    psmisc::printlog('warn', 'locked', $arg),
-      next if !psmisc::lock( $arg, old => $config{'lock_old'}, timeout=>60 );
+    psmisc::printlog( 'warn', 'locked', $arg ), next if !psmisc::lock( $arg, old => $config{'lock_old'}, timeout => 60 );
     $ARGV[$n] = undef;
     for my $query ( sort keys %{ $config{'queries'} } ) {
       next if $config{'queries'}{$query}{'disabled'};
@@ -84,7 +83,7 @@ for my $arg (@ARGV) {
           ++$n;
           delete $row->{$_} for grep { !defined $row->{$_} } keys %$row;
           #my $dmp = Data::Dumper->new( [$row] )->Indent(0)->Pair('=>')->Terse(1)->Purity(1)->Dump();
-	  my $dmp = JSON->new->encode($row);
+          my $dmp = JSON->new->encode($row);
           #warn "SLOWi:[$config{'use_slow'}][$dmp]";
           $db->insert_hash( 'slow', { 'name' => $query, 'n' => $n, 'result' => $dmp, 'period' => $time, 'time' => $nowtime } )
             if $config{'use_slow'};
@@ -145,6 +144,7 @@ for my $arg (@ARGV) {
     local $db->{'error_sleep'}  = 0;
     #my ( $tq, $rq, $vq ) = $db->quotes();
     $db->upgrade();
+
 =old 
     $db->do( "DROP TABLE ${_}d")    for qw(queries_top_string_ queries_top_tth_ results_top_);
     $db->do("ALTER TABLE queries_top_string_daily RENAME TO queries_top_string_d");
@@ -160,7 +160,6 @@ for my $arg (@ARGV) {
         for qw(queries_top_string_ queries_top_tth_ results_top_);
     }
 =cut
-
   } elsif ( $arg eq 'stat' ) {
     $ARGV[$n]             = undef;
     $db->{'auto_repair'}  = 1;
@@ -228,7 +227,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
     ++$work{'hubs'}{$hub};
     my $dc = Net::DirectConnect->new(
       #modules     => { 'filelist' => 1 },
-      db => $db, #for filelist
+      db          => $db,                                           #for filelist
       'Nick'      => 'dcstat',
       'sharesize' => 40_000_000_000 + int( rand 10_000_000_000 ),
       #'log'		=>	sub {},	# no logging
@@ -443,7 +442,6 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
             }
           );
 =cut
-
           ++$work{'stat'}{'QUI'};
         },
         'RES' => sub {    #TODO
@@ -482,7 +480,6 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
       $dc->destroy();
     };
 =cut	
-
     push @dc, $dc;
     $_->work() for @dc;
   }
@@ -542,6 +539,7 @@ while ( my @dca = grep { $_ and $_->active() } @dc ) {
     }
   ) if $config{'debug'};
 =cut
+
 }
 psmisc::printlog 'dev', map { $_->{'host'} . ":" . $_->{'status'} } @dc if @dc;
 #psmisc::caller_trace(20);

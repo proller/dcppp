@@ -98,7 +98,10 @@ sub schedule($$;@)
     and ref $schedule{ $p->{'id'} }{'func'} eq 'CODE';
 }
 
-sub notone (@) { @_ = grep {$_ and $_ != 1} @_; wantarray ? @_ : $_[0]}
+sub notone (@) {
+  @_ = grep { $_ and $_ != 1 } @_;
+  wantarray ? @_ : $_[0];
+}
 
 sub use_try ($;@) {
   my $self = shift if ref $_[0];
@@ -422,10 +425,10 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     #'wait_connect_tries' => 600,
     'clients_max' => 50,
     #'wait_clients_tries' => 200,
-    'wait_finish_tries' => 300,    #5 min
-    'wait_clients'      => 300,    #5 min
-                                   #del    'wait_clients_by'    => 0.01,
-                                   #'work_sleep'        => 0.01,
+    'wait_finish_tries' => 300,     #5 min
+    'wait_clients'      => 300,     #5 min
+                                    #del    'wait_clients_by'    => 0.01,
+                                    #'work_sleep'        => 0.01,
     'work_sleep'        => 0.005,
     'select_timeout'    => 1,
     'cmd_recurse_sleep' => 0,
@@ -542,8 +545,8 @@ sub connect {    #$self->{'connect'} ||= sub {
     $self->module_load('adcs') if $p eq 'adcs';
     #$self->protocol_init($p) if $p =~ /^adc/;
     $self->{'host'} =~ s{/.*}{}g;
-    ($self->{'host'}, $self->{'port'}) = ($1,$2) if $self->{'host'} =~ m{^\[(\S+)\]:(\d+)}; # [::1]:411
-    ($self->{'host'}, $self->{'port'}) = ($1,$2) if $self->{'host'} =~ s{^([^:]+):(\d+)$}{}; # 1.2.3.4:411
+    ( $self->{'host'}, $self->{'port'} ) = ( $1, $2 ) if $self->{'host'} =~ m{^\[(\S+)\]:(\d+)};     # [::1]:411
+    ( $self->{'host'}, $self->{'port'} ) = ( $1, $2 ) if $self->{'host'} =~ s{^([^:]+):(\d+)$}{};    # 1.2.3.4:411
   }
   #$self->log('dev', 'host, port =', $self->{'host'}, $self->{'port'} );
   #$self->log( 'H:', ((),$self->{'host'} =~ /(:)/g)>1 );
@@ -552,7 +555,7 @@ sub connect {    #$self->{'connect'} ||= sub {
   #print "Hhohohhhh" ,$self->{'protocol'},$self->{'host'};
   return 0
     if ( $self->{'socket'} and $self->{'socket'}->connected() )
-    or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
+    or grep { $self->{'status'} eq $_ } qw(destroy);                                                 #connected
   $self->log(
     'info',
     "connecting to $self->{'protocol'}://[$self->{'host'}]:$self->{'port'} via $self->{'Proto'} class $self->{'socket_class'}",
@@ -804,9 +807,10 @@ sub recv {                # $self->{'recv'} ||= sub {
     or !length( $self->{'databuf'} ) )
   {
     #TODO not here
-    if (  $self->active()
+    if (
+      $self->active()
       and !$self->{'incoming'}
-      #and $self->{'reconnect_tries'}++ < $self->{'reconnects'} 
+      #and $self->{'reconnect_tries'}++ < $self->{'reconnects'}
       )
     {
       $self->log( 'dcdbg',
@@ -898,7 +902,6 @@ sub select {    #$self->{'select'} ||= sub {
       if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
   }
 =cut
-
   for (@$send) {
     next unless $self->{sockets}{$_} and $self->{sockets}{$_}{socket};
     $self->{sockets}{$_}->connected(),
@@ -1196,7 +1199,7 @@ sub work {    #$self->{'work'} ||= sub {
   ) if $self->{dev_auto_dump};
   #return
   $self->select( 1 || $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
-                                             #$self->log( 'dev', "work -> sleep", @params ),
+                                                  #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
   return $self->select() || $self->select( $self->{'work_sleep'}, 1 );    # unless @{$self->{send_buffer_raw}|| []};
                                                                           #return $self->select( $self->{'work_sleep'} );
@@ -1341,6 +1344,7 @@ sub send {    #$self->{'send'} ||= sub {
 	$self->{send_buffer_raw} = undef;
     }
 =cut
+
   #return unless @_;
 }
 
@@ -1843,6 +1847,7 @@ sub get_peer_addr {    #$self->{'get_peer_addr'} ||= sub () {
     if $_[1];
   return $self->{'hostip'};
 =cut
+
 }
 
 sub get_peer_addr_recv {    #$self->{'get_peer_addr_recv'} ||= sub (;$) {
@@ -1878,7 +1883,6 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
   return $self->{'myip'} ||= $_[1];
 =cut
-
 }
 
 sub info {    #$self->{'info'} ||= sub {

@@ -92,7 +92,8 @@ sub init {
 /Минимальный интервал поиска составляет: \(Minimum search interval is:\) (\d+)секунд \(seconds\)/
           or $text =~ /^(?:Minimum search interval is|Минимальный интервал поиска):(\d+)s/
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
-          or $text =~ /Минимальный интервал между поисковыми запросами:(\d+)сек., попробуйте чуть позже/
+          or $text =~
+/Минимальный интервал между поисковыми запросами:(\d+)сек., попробуйте чуть позже/
           )
         {
           $self->{'search_every'} = int( rand(5) + $1 || $self->{'search_every_min'} );
@@ -103,9 +104,8 @@ sub init {
              /(?:Пожалуйста )?подождите (\d+) секунд перед следующим поиском\./i
           or $text =~ /(?:Please )?wait (\d+) seconds before next search\./i
           or $text eq 'Пожалуйста не используйте поиск так часто!'
-          or $text eq "Please don't flood with searches!" 
-          or $text eq 'Sorry Hub is busy now, no search, try later..'
-          )
+          or $text eq "Please don't flood with searches!"
+          or $text eq 'Sorry Hub is busy now, no search, try later..' )
         {
           $self->{'search_every'} += int( rand(5) + $1 || $self->{'search_every_min'} );
           $self->log( 'warn', "[$nick] oper: increase min interval => $self->{'search_every'}" );
@@ -216,7 +216,7 @@ sub init {
     },
     'ForceMove' => sub {
       my $self = shift if ref $_[0];
-      my ($to) = grep {length $_} split /;/, $_[0];
+      my ($to) = grep { length $_ } split /;/, $_[0];
       $self->log( 'warn', "ForceMove to $to :: ", @_ );
       $self->disconnect();
       sleep(1);
@@ -231,10 +231,9 @@ sub init {
       my ( $nick, $host, $port ) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
       $self->{'IpList'}{$host}{'port'} = $self->{'PortList'}->{$host} = $port;
       #$self->log('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
-      $self->log("ignore flooding attempt to [$host:$port ] ($self->{flood}{$host})"),
-      $self->{flood}{$host} = time+30,
-      return if $self->{flood}{$host} > time;
-      $self->{flood}{$host} = time+60;
+      $self->log("ignore flooding attempt to [$host:$port ] ($self->{flood}{$host})"), $self->{flood}{$host} = time + 30, return
+        if $self->{flood}{$host} > time;
+      $self->{flood}{$host} = time + 60;
       return if $self->{'clients'}{ $host . ':' . $port }->{'socket'};
       $self->{'clients'}{ $host . ':' . $port } = Net::DirectConnect::clicli->new(
         #!        %$self, $self->clear(),
@@ -413,6 +412,7 @@ sub init {
 
 
 =cut  
+
   #$self->{'cmd'} = {
   local %_ = (
     'connect_aft' => sub {
@@ -634,6 +634,7 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
+
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
