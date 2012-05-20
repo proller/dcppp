@@ -517,7 +517,7 @@ sub new {
     my $tth = shift or return;
     my $field = shift || 'hit';
     my $updated =
-      $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+1 WHERE "
+      $self->{db}->do( "UPDATE ${tq}filelist${tq} SET ${rq}$field${rq}=${rq}$field${rq}+${vq}1${vq} WHERE "
         . "${rq}tth${rq}="
         . $self->{db}->quote($tth)
         . ( $self->{db}{no_update_limit} ? () : " LIMIT ${vq}1${vq}" ) );
