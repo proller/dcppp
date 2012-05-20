@@ -1862,7 +1862,8 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   return unless $self->{'socket'};
   #$self->log('dev', 'saddr', $self->{'socket'}->sockhost(),$self->{'socket'}->sockport() );
   $self->{'myport'} ||= $self->{'socket'}->sockport();
-  return $self->{'myip'} = $self->{'socket'}->sockhost();
+  #$self->log('dev', 'myip was:', $self->{'myip'}, '->', $self->{'socket'}->sockhost());
+  return $self->{'myip'} ||= $self->{'socket'}->sockhost();
 
 =no  
   eval { @_ = unpack_sockaddr_in( getsockname( $self->{'socket'} ) || return ); };
