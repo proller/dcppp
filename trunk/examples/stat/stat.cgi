@@ -28,9 +28,7 @@ use Net::DirectConnect::pslib::psmisc
   ;    # qw(:config :log printlog);
 psmisc->import(qw(:log));
 use Net::DirectConnect::pslib::psweb;
-
 #print "Content-type: text/html\n\n";
-
 sub part ($;@) {
   my $name = shift;
   #print "part[$config{'view'}:$name]\n";
@@ -46,7 +44,6 @@ our @colors = qw(black aqua gray navy silver green olive teal blue lime purple m
 #psweb::config_init($param);
 #psmisc::configure($ENV{'MOD_PERL'} || $ENV{'FCGI_ROLE'});
 #psmisc::conf();
-
 delete $param->{'period'} unless exists $config{'periods'}{ $param->{'period'} };
 $config{'view'} = $param->{'view'} || 'html';
 #$config{'view'} = 'rss';
@@ -60,7 +57,7 @@ $config{'out'}{'rss'}{'http-header'} = sub {
 my $json;
 $config{'out'}{'json'}{'http-header'} = "Content-type: application/json\n\n";
 #$config{'out'}{'json'}{'http-header'} = "Content-type: text/plain\n\n";
-$config{'out'}{'json'}{'head'}        = sub {
+$config{'out'}{'json'}{'head'} = sub {
   $json = {};
 };
 $config{'out'}{'json'}{'table-head'} = sub {
@@ -73,7 +70,7 @@ $config{'out'}{'json'}{'footer'} = sub {
   #if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
   #print 'string',Dumper $json;
   #print 'stringTR',$json;
-  print ${psmisc::json_encode($json)};
+  print ${ psmisc::json_encode($json) };
   #print ${psmisc::json_encode($json)};
 };
 $config{'out'}{'json'}{'table-row'} ||= sub {
@@ -81,7 +78,7 @@ $config{'out'}{'json'}{'table-row'} ||= sub {
   #print 'string',Dumper \@_;
   $row = { %$row, %{ $row->{orig} || {} } };
   delete $row->{orig};
-  delete $row->{$_} for grep {!length $row->{$_}} keys %$row;
+  delete $row->{$_} for grep { !length $row->{$_} } keys %$row;
   push @{ $json->{ $json->{table_current} }{'rows'} ||= [] }, $row;
   #print 'stringTR',$json;
 };
@@ -123,10 +120,7 @@ $config{'human'}{'dchub-dl'} = sub {
   my ($row) = @_;
   $row = { 'hub' => $row } unless ref $row eq 'HASH';
   #print "[$row->{'hub'}; $row->{'nick'}]";
-  return
-      ' <a class="magnet-darr" href="dchub://'
-    . ( join '/', grep { $_ } map { $row->{$_} } qw(hub nick) )
-    . '">[↓]</a>'
+  return ' <a class="magnet-darr" href="dchub://' . ( join '/', grep { $_ } map { $row->{$_} } qw(hub nick) ) . '">[↓]</a>'
     if length $row->{'hub'};
 };
 #print '<a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>'  if $param->{'tth'};
@@ -134,9 +128,9 @@ my @ask;
 $config{'queries'}{'string'}{'desc'} = psmisc::html_chars( $param->{'string'} ), @ask = ('string') if $param->{'string'};
 @ask = ('tth')      if $param->{'tth'};
 @ask = ('filename') if $param->{'filename'};
-@ask = ( $param->{'query'} ) if $param->{'query'} and $config{'queries'}{ $param->{'query'} };
-@ask = ('q') if $param->{'q'};
-$config{'query_default'}{'LIMIT'} = 100 if scalar @ask == 1;
+@ask                              = ( $param->{'query'} ) if $param->{'query'} and $config{'queries'}{ $param->{'query'} };
+@ask                              = ('q')                 if $param->{'q'};
+$config{'query_default'}{'LIMIT'} = 100                   if scalar @ask == 1;
 my %makegraph;
 my %graphcolors;
 my $rss_link = ( @ask ? '?' . $ENV{'QUERY_STRING'} : '?query=queries+top+tth' );
@@ -144,7 +138,8 @@ $config{'out'}{'html'}{'head'} = sub {
   #print "Content-type: text/xml; charset=utf-8\n\n" if $ENV{'SERVER_PORT'};
   print qq{<!DOCTYPE html>};
   #print qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">};
-print qq{<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  print
+qq{<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <head><title>RU DC stat</title>
 <link href="style.css" rel="stylesheet" type="text/css"/>
 <link rel="alternate" type="application/rss+xml" title="RSS version" href="}, psmisc::html_chars( $rss_link . '&view=rss' ),
@@ -208,14 +203,15 @@ for my $query (@queries) {
         : ( '= <a>', psmisc::html_chars( $param->{'tth'} ), '</a>', psmisc::human( 'magnet-dl', $param->{'tth'} ), '<br/>' ) )
       : '<a href="?query=' . psmisc::encode_url($query) . '">' . ( $q->{'desc'} || $query ) . '</a>'
       );
-      print '<div class="altview">'
+    print '<div class="altview">'
       . '<a class="rss" href="'
       . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=rss' )
       . '">RSS</a>'
       . ' <a class="json" href="'
       . psmisc::html_chars( ( @queries > 1 ? '?query=' . psmisc::encode_url($query) : $rss_link ) . '&view=json' )
       . '">JS</a>'
-      . '</div>' unless $config{'client_bot'};
+      . '</div>'
+      unless $config{'client_bot'};
     #print Dumper \%ENV;
     #print Dumper @ask;
     #print " ($q->{'desc'}):" if $q->{'desc'};
@@ -295,7 +291,6 @@ for my $query (@queries) {
       #print "</td>";
       #printlog('dev', Dumper $row);
       #printlog('dev', Dumper $q->{'show'});
-    
       print '<td>', $row->{ $_ . '_html' } // $row->{$_}, '</td>' for @{ $q->{'show'} };
       if ( $q->{'graph'} ) {
         print qq{<td style="background-color:$graphcolor;"> </td>} if $config{'use_graph'};

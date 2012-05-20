@@ -30,7 +30,6 @@ emailAddress_max	       = 40
 openssl genrsa -out certs/server-key.pem
 openssl req -new -x509 -key server-key.pem -out certs/server-cert.pem -config cfg
 =cut
-
 package    #hide from cpan
   Net::DirectConnect::adcs;
 use strict;

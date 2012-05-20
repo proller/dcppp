@@ -38,10 +38,10 @@ sub init {
   local %_ = @_;
   $self->{$_} = $_{$_} for keys %_;
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
-  $self->{$_} ||= $self->{'parent'}{$_}  for qw(http_download http_control); #allow
-  #$self->baseinit();
-  #$self->{'parse'} ||= $self->{'parent'}{'parse'};
-  #$self->{'cmd'}   ||= $self->{'parent'}{'cmd'};
+  $self->{$_} ||= $self->{'parent'}{$_} for qw(http_download http_control);    #allow
+                                                                               #$self->baseinit();
+                                                                               #$self->{'parse'} ||= $self->{'parent'}{'parse'};
+                                                                               #$self->{'cmd'}   ||= $self->{'parent'}{'cmd'};
   $self->{'handler_int'}{'unknown'} ||= sub {
     my $self = shift if ref $_[0];
     #$self->log( 'dev', "unknown1", Dumper \@_ );
@@ -67,7 +67,7 @@ sub init {
       #$self->log( 'dev', 'can send2', Dumper $self->{'handler_int'}, $self->{http_headers} );
       ( $self->{'http_geturl'} ) = split ' ', $self->{http_headers}{GET};
       ( $self->{'http_getfile'} ) = $self->{'http_geturl'} =~ m{^/(.+)};
-      my $c = "HTTP/1.1 200 OK"."\nContent-Type: text/html; charset=utf-8\n\n";
+      my $c = "HTTP/1.1 200 OK" . "\nContent-Type: text/html; charset=utf-8\n\n";
       if ( $self->{'http_control'} and $self->{'http_geturl'} eq '/' ) {
         $c .= "<html><body>" . "clients:<br/>" . (
           join ', ',
@@ -88,15 +88,15 @@ sub init {
             } values %{ $self->{peers_cid} }
           )
           . "<pre>"    #.Dumper($self->{peers})
-          #. "<pre>" . Dumper($self) 
+                       #. "<pre>" . Dumper($self)
           . "</html>";
-      } elsif ($self->{'http_download'} and my $full = $self->{"share_full"}{ $self->{'http_getfile'} } ) {
+      } elsif ( $self->{'http_download'} and my $full = $self->{"share_full"}{ $self->{'http_getfile'} } ) {
         my ($name) = $full =~ m{([^/]+)$};
-        my $size  = -s $full;
-        my $sizep = $size + 1;
+        my $size   = -s $full;
+        my $sizep  = $size + 1;
         my ( $from, $to ) = $self->{http_headers}{Range} =~ /^bytes=(\d+)\-(\d*)/;
         $to ||= $size if $from;
-        my $type = {xml=>'text/xml'}->{lc +($name =~ m/\.(\w+)/)[0]} || 'binary/octet-stream';
+        my $type = { xml => 'text/xml' }->{ lc +( $name =~ m/\.(\w+)/ )[0] } || 'binary/octet-stream';
         $c =
             "HTTP/1.1 "
           . ( $from ? "206 Partial Content" : "200 OK" )
@@ -110,7 +110,7 @@ sub init {
         $self->file_send( $self->{"share_full"}{ $self->{'http_getfile'} }, $from, $to );
         return;
         #$c .= "gettii[$self->{'http_getfile'}]";
-      } elsif ($self->{'http_control'} and $self->{'http_geturl'} =~ m{^/dl/(.+)$} ) {
+      } elsif ( $self->{'http_control'} and $self->{'http_geturl'} =~ m{^/dl/(.+)$} ) {
         $self->{parent}{parent}->download($1);
         $c .= "try dl [$1]";
       }
