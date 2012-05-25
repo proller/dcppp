@@ -1,7 +1,7 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
-our $VERSION = '0.12' . '_' . ( split ' ', '$Revision$' )[1];
+our $VERSION = '0.13';    # . '_' . ( split ' ', '$Revision$' )[1];
 no warnings qw(uninitialized);
 use utf8;
 use Encode;
@@ -902,6 +902,7 @@ sub select {    #$self->{'select'} ||= sub {
       if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
   }
 =cut
+
   for (@$send) {
     next unless $self->{sockets}{$_} and $self->{sockets}{$_}{socket};
     $self->{sockets}{$_}->connected(),
@@ -1344,7 +1345,6 @@ sub send {    #$self->{'send'} ||= sub {
 	$self->{send_buffer_raw} = undef;
     }
 =cut
-
   #return unless @_;
 }
 
@@ -1847,7 +1847,6 @@ sub get_peer_addr {    #$self->{'get_peer_addr'} ||= sub () {
     if $_[1];
   return $self->{'hostip'};
 =cut
-
 }
 
 sub get_peer_addr_recv {    #$self->{'get_peer_addr_recv'} ||= sub (;$) {
@@ -1883,6 +1882,7 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
   return $self->{'myip'} ||= $_[1];
 =cut
+
 }
 
 sub info {    #$self->{'info'} ||= sub {

@@ -412,7 +412,6 @@ sub init {
 
 
 =cut  
-
   #$self->{'cmd'} = {
   local %_ = (
     'connect_aft' => sub {
@@ -634,7 +633,6 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
-
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};
