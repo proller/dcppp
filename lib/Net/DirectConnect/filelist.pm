@@ -83,6 +83,7 @@ sub new {
   $self->{file_min}          //= 0;                 #skip files  smaller
   $self->{filelist_scan}     //= 3600 * 1;          #every seconds, 0 to disable
   $self->{filelist_reload}   //= 300;               #check and load filelist if new, every seconds
+  $self->{filelist_fork}     //= 1;
   $self->{file_send_by}      //= 1024 * 1024 * 1;
   $self->{skip_hidden}       //= 1;
   $self->{skip_symlink}      //= 0;
@@ -478,7 +479,7 @@ sub new {
         $sharesize += $size;
         #$self->{'share_tth'}{ $params->{TR} }
         #$file =~ tr{\\}{/};
-      } elsif ( my ($curdir) = m{^Directory Name="([^"]+)">}i ) {
+      } elsif ( my ($curdir) = m{^Directory Name="([^"]+)">}i ) { #"mcedit
         $dir .= ( ( !length $dir and $^O ~~ [ 'MSWin32', 'cygwin' ] ) ? () : '/' ) . $curdir;
         #$self->log 'now in', $dir;
         #$self->{files}
@@ -556,6 +557,7 @@ sub new {
             and $self->{filelist_scan} > time - $^T + 86400 * -M $self->{files};
         #$self->log( 'starter==','$0=',$0, $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
         #$0 !~ m{(.*\W)?share.pl$}
+        !$self->{'filelist_fork'} ? $self->filelist_make() :
         $self->{'filelist_builder'} ? psmisc::start $self->{'filelist_builder'}, @{ $self->{'share'} } : psmisc::start $^X,
           $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} };
         #: psmisc::startme( 'filelist', grep { -d } @ARGV );

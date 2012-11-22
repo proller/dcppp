@@ -137,6 +137,11 @@ for my $arg (@ARGV) {
     local $db->{error_sleep} = 0;
     $db->install();
     $db->create_indexes();
+  } elsif ( $arg eq 'drop' ) {
+    $ARGV[$n] = undef;
+    local $db->{error_sleep} = 0;
+    $db->drop_tables();
+    $db->drop_database();
   } elsif ( $arg eq 'upgrade' ) {
     $ARGV[$n] = undef;
     #$db->do( "DROP TABLE $_")       for qw(queries_top_string_daily queries_top_tth_daily results_top_daily);
