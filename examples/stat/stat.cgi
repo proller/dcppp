@@ -112,7 +112,7 @@ $config{'human'}{'magnet-dl'} = sub {
   return
       ' <a class="magnet-darr" href="magnet:?' 
     . $_
-    . '">[↓]</a> <a href="http://dc.proisk.ru/?'
+    . '">[↓]</a> <a href="http://dc.proisk.com/?'
     . ( $row->{'string'} ? "q=" . $row->{'string'} : "tiger=$row->{'tth'}" )
     . '">P</a>'
     if $_;
