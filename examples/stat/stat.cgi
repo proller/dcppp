@@ -384,7 +384,7 @@ $config{'out'}{'html'}{'graph'} = sub {
     {
       #for my $row ( $db->query("SELECT * FROM $table  " ) ) {
       #psmisc::printlog 'dev', Dumper $row;
-      next if $row->{tth} eq 'LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ';
+      next if $row->{tth} ~~ [qw(LWPNACQDBZRYXW3VHJVCJ64QBZNGHOHHHZWCLNQ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)];
       my $by = $makegraph{$query}{ $row->{tth} } || $makegraph{$query}{ $row->{string} };
 #print " $row->{date}, $row->{n}, $row->{cnt} <br/>" if $makegraph{$query}{$row->{tth}} eq 'tth' or $makegraph{$query}{$row->{string}} eq 'string';
 #$row->{date} .= '-'. (localtime $row->{time})[2];
