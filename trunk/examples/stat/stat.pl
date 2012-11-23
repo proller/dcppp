@@ -245,7 +245,7 @@ for ( grep { length $_ } @ARGV ? @hosts : psmisc::array( $config{dc}{host} ) ) {
         #psmisc::caller_trace(5)
       },
       'myport'      => 41111,
-      'description' => 'http://dc.proisk.ru/dcstat/',
+      'description' => 'http://dcstat.proisk.com/',
       #'auto_connect' => 0,
       'reconnects' => 500,
       'handler'    => {
