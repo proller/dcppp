@@ -463,7 +463,7 @@ $config{'out'}{'html'}{'graph'} = sub {
         #       }
         #      ).
       }
-      $img .= qq{" />};
+      $img .= qq{" />}; #"mcedit
       #++$color;
     }
     my $n;
@@ -484,7 +484,7 @@ $config{'out'}{'html'}{'graph'} = sub {
 #print  qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg+xml;}, psmisc::encode_url($img),
 #print  qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').src='data:image/svg;}, psmisc::encode_url($img),
 #print qq{<script type="text/javascript" language="JavaScript"><![CDATA[},qq{gid('$query').innerHTML='}, $img,
-        qq{"/>},
+        qq{"/>}, #"mcedit
       )
       ),
       qq{';}, qq{]]></script>};
@@ -505,7 +505,7 @@ $config{'out'}{'html'}{'footer'} = sub {
 qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/trunk/examples/stat">dcstat</a> from <a href="http://search.cpan.org/dist/Net-DirectConnect/">Net::DirectConnect</a> vr}
     . ( split( ' ', '$Revision$' ) )[1]
     . qq{</div>};
-  print '<script type="text/javascript" src="http://iekill.proisk.ru/iekill.js"></script>';
+  print '<script type="text/javascript" src="http://iekill.proisk.net/iekill.js"></script>';
   part 'footer_aft';
   print '</body></html>';
 };
