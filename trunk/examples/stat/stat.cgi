@@ -70,7 +70,9 @@ $config{'out'}{'json'}{'footer'} = sub {
   #if ( psmisc::use_try 'JSON::XS' ) { return print JSON::XS->new->encode($json) }
   #print 'string',Dumper $json;
   #print 'stringTR',$json;
-  print ${ psmisc::json_encode($json) };
+  #print ${ psmisc::json_encode($json) };
+  print +($param->{'callback'} ? $param->{'callback'} . '(':'') ,${ psmisc::json_encode($json || {}) }, ($param->{'callback'} ? ');' : '');
+
   #print ${psmisc::json_encode($json)};
 };
 $config{'out'}{'json'}{'table-row'} ||= sub {
