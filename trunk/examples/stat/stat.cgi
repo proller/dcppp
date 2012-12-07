@@ -147,7 +147,13 @@ qq{<html xmlns="http://www.w3.org/1999/xhtml" xmlns:svg="http://www.w3.org/2000/
 <link rel="alternate" type="application/rss+xml" title="RSS version" href="}, psmisc::html_chars( $rss_link . '&view=rss' ),
     qq{"/>
 
-<style></style></head><body><script type="text/javascript" src="pslib/lib.js"></script>};
+<style></style></head><body><script><![CDATA[
+function gid(a) {
+  if (a && typeof a == 'object') return a;
+  return document.getElementById(a) || {};
+}
+]]></script>};
+qq{<script type="text/javascript" src="pslib/lib.js"></script>};
 #print '    <svg:svg version="1.1" baseProfile="full" width="300px" height="200px">      <svg:circle cx="150px" cy="100px" r="50px" fill="#ff0000" stroke="#000000" stroke-width="5px"/>    </svg:svg>';
 };
 part 'head';
@@ -507,6 +513,8 @@ qq{<div class="version"><a href="http://svn.setun.net/dcppp/trac.cgi/browser/tru
     . qq{</div>};
   print '<script type="text/javascript" src="http://iekill.proisk.net/iekill.js"></script>';
   part 'footer_aft';
+
+
   print '</body></html>';
 };
 part 'footer_bef';
@@ -514,3 +522,5 @@ part 'footer';
 #print "<pre>";
 #print Dumper $param;
 #print Dumper \%ENV;
+#print Dumper \%config;
+

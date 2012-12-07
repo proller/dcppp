@@ -94,6 +94,7 @@ sub init {
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
           or $text =~
 /Минимальный интервал между поисковыми запросами:(\d+)сек., попробуйте чуть позже/
+	  or $text =~ /You can do 1 searches in (\d+) seconds/
           )
         {
           $self->{'search_every'} = int( rand(5) + $1 || $self->{'search_every_min'} );
@@ -132,7 +133,9 @@ sub init {
           $self->{'Nick'} = $try if length $try;
         } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i
           or $text =~
-          /Пожалуйста подождите (\d+) секунд до повторного подключения\./ )
+          /Пожалуйста подождите (\d+) секунд до повторного подключения\./ 
+         or $text =~ /Do not reconnect too fast. Wait (\d+) secs before reconnecting./
+          )
         {
           #sleep $1 + 1;
           $self->work( $1 + 10 );

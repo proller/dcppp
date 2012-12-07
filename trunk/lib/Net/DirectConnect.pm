@@ -451,7 +451,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     #};
     'charset_fs' => (
         $^O eq 'MSWin32' ? 'cp1251'
-      : $^O eq 'freebsd' ? 'koi8r'
+      #: $^O eq 'freebsd' ? 'koi8r'
       : 'utf8'
     ),
     'charset_console' => ( $^O eq 'MSWin32' ? 'cp866' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
@@ -523,7 +523,7 @@ sub connect_check {
       if ( $self->{'reconnect_tries'}++ < $self->{'reconnects'} ) {
         $self->log(
           'warn',
-          "reconnecting [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
+          "reconnecting ($self->{'host'}) [$self->{'reconnect_tries'}/$self->{'reconnects'}] every",
           $self->{'reconnect_sleep'}
         );
         $self->connect();
