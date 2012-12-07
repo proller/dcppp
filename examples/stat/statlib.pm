@@ -61,7 +61,7 @@ $config{'browser_ie'} = 1 if $ENV{'HTTP_USER_AGENT'} =~ /MSIE/ and $ENV{'HTTP_US
 #$config{'client'} = $_,
 $config{ 'browser_' . $_ } = 1 for grep { $ENV{'HTTP_USER_AGENT'} =~ /$_/i } @{ $config{'browsers'} };
 $config{'use_graph'} ||= 1;    #  if grep {$config{'browser_'. $_}} qw(firefox safari chrome opera);
-$config{'graph_inner'}        ||= 1 if grep { $config{ 'browser_' . $_ } } qw(firefox safari chrome);
+$config{'graph_inner'}        ||= 1 if grep { $config{ 'browser_' . $_ } } qw(firefox opera ); #  chrome safari 
 $config{'title'}              ||= 'dcstat';
 $config{'web_max_query_time'} ||= 10;
 #warn 'pre',Dumper $config{'sql'};
