@@ -339,17 +339,17 @@ for my $query (@queries) {
       psmisc::html_chars( \$unique );
       $row->{'guid'} ||= $unique;
       #print "UNIQ[$unique]";#, join',',%$row;
-      $row->{'description'} ||= '<![CDATA['
-        . (
-        join ' ', map { $row->{ $_ . '_rss' } || $row->{ $_ . '_html' } || $row->{$_} } grep { $_ ne $title } @{ $q->{'show'} }
-        ) . ']]>';
+      $row->{'description'} ||= 
+         (
+        join ' ', map { $row->{ $_ . '_rss' } || $row->{ $_ . '_html' } || $row->{$_} } grep { $_ ne $title  and !$param->{'no_'.$_}} @{ $q->{'show'} }
+        ) ;
       #$row->{'description'} ||= 'desc';
       #warn "time[$row->{'time'}]";
       $row->{'pubDate'} ||= psmisc::human( 'rfc822_date_time', $row->{'time'} );
       #$row->{'link'} ||= get_param_url_str( $param, ['view'] ), '#n', ( ++$work{'rssn'} );
-      $row->{'link'} ||= "?$key=" . psmisc::encode_url($unique);
+      $row->{'link'} ||= 'http://'.$ENV{SERVER_NAME}."/?$key=" . psmisc::encode_url($unique);
       $row->{'author'} ||= $row->{'nick'} || 'dcstat';
-      print '<', $_, '>', $row->{$_}, '</', $_, ">\n"
+      print '<', $_, '>', '<![CDATA[' , $row->{$_}, ']]>', '</', $_, ">\n"
         for grep { $row->{$_} } qw(title description author category comments guid pubDate link);
       #'<pubDate>', , '</pubDate>',
       #"<guid></guid>"
