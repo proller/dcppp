@@ -345,11 +345,11 @@ sub cmd {
   #$self->{'log'}->($self,'dev', $self->{number},'cmdrun', $cmd, @_, $func) if $cmd ne 'log';
   if ($func) {
     @ret = $func->( $self, @_ );    #$self->{'cmd'}{$cmd}->(@_);
+  } elsif ( $self->{'adc'} and length $dst == 1 and length $cmd == 3 ) {
+    @ret = $self->cmd_adc( $dst, $cmd, @_ );
   } elsif ( exists $self->{$cmd} ) {
     $self->log( 'dev', "cmd call by var name $cmd=$self->{$cmd}" );
     @ret = ( $self->{$cmd} );
-  } elsif ( $self->{'adc'} and length $dst == 1 and length $cmd == 3 ) {
-    @ret = $self->cmd_adc( $dst, $cmd, @_ );
   } else {
     $self->log(
       'dev',

@@ -576,6 +576,11 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       $toid ||= shift;
+      if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
+        return $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'CTM', $peerid, $toid, @_ );
+      }
+
+
       my ( $proto, $port, $token ) = @_;
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
       $self->log(
@@ -605,9 +610,6 @@ sub init {
         'reconnects'   => 0,
         no_listen      => 1,
       ) if $toid eq $self->{'INF'}{'SID'};
-      if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
-        $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'CTM', $peerid, $toid, @_ );
-      }
     },
     'SND' => sub {
       my $self = shift if ref $_[0];
@@ -696,6 +698,7 @@ sub init {
       $self->cmd( $self->{'message_type'}, 'SUP' );
       #}
       if ( $self->{'broadcast'} ) { $self->cmd( $self->{'message_type'}, 'INF' ); }
+      #$self->cmd( $self->{'message_type'}, 'SUP' ) if $self->{'parent'}{'hub'};
       #else
     },
     'cmd_all' => sub {
@@ -957,7 +960,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
     delete $self->{'peers_sid'}{$peerid};
     delete $self->{'peers'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} };
     delete $self->{'peers'}{$peerid};
-    $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'};
+    $self->cmd_all( 'I', 'QUI', $self->{'peerid'}, ) if $self->{'parent'}{'hub'} and $self->{'peerid'};
     delete $self->{'INF'}{'SID'} unless $self->{'parent'};
     #$self->log(
     #  'dev',  'disconnect int',           #psmisc::caller_trace(30)
