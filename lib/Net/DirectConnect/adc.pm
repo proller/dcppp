@@ -276,7 +276,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #for my $feature (split /\s+/, $_[0])
-      $self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid, $self->{'status'}");
+      #$self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid, $self->{'status'}");
       #=z
       #if $self->{''}
       if ( $dst eq 'H' ) {
@@ -449,9 +449,11 @@ sub init {
 #2 	Fatal (disconnect)
 #my $desc = $self->{'codesSTA'}{$code};
       @_ = $self->adc_strings_decode(@_);
-      $self->log( 'adcdev', 'STA', $peerid, $severity, 'c=', $code, 't=',@_, "=[$Net::DirectConnect::adc::codesSTA{$code}]" );
-      if ($code ~~ '20' and $_[0] =~ /Reconnecting too fast, you have to wait (\d+) seconds before reconnecting./) {
+      #$self->log( 'adcdev', 'STA', $peerid, $severity, 'c=', $code, 't=',@_, "=[$Net::DirectConnect::adc::codesSTA{$code}]" );
+      if ($code ~~ '20' and $_[0] =~ /^Reconnecting too fast, you have to wait (\d+) seconds before reconnecting./) {
           $self->work( $1 + 10 );
+      } elsif ($code ~~ '30' and $_[0] =~ /^You are disconnected because: You are disconnected for hammering the hub with connect attempts, stop or you'll be kicked !!!/){
+          $self->work( 30 );
       }
       return $severity, $code, $Net::DirectConnect::adc::codesSTA{$code}, @_;
     },

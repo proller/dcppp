@@ -229,6 +229,9 @@ sub new {
           'dev_sctp' => undef,
           'parent'      => $self,
           auto_work=>0,
+          no_wait_connect=>1,
+          #reconnect_tries=>1,
+          #myport_tries=>1,
           #'Proto'       => 'sctp',
           modules=> [qw(sctp)],
         );
@@ -283,7 +286,7 @@ sub new {
     #$self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
     $self->connect();
     #$self->work();
-    $self->wait_connect();
+    $self->wait_connect() unless $self->{'no_wait_connect'};
   } else {
     $self->get_my_addr();
     $self->get_peer_addr();
@@ -716,7 +719,7 @@ sub listen {       #$self->{'listen'} ||= sub {
     $self->{'socket'} ||= $self->{'socket_class'}->new(@_);
     };
     $self->select_add(), last if $self->{'socket'};
-    $self->log( 'err', "listen($self->{'Listen'}) $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
+    $self->log( 'err', "listen [$_/$self->{'myport_tries'}] ($self->{'Listen'}) $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
       unless $self->{'socket'};
   }
   $self->log( 'err', 'cant listen' ), return unless $self->{'socket'};
