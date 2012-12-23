@@ -34,15 +34,16 @@ openssl req -new -x509 -key server-key.pem -out certs/server-cert.pem -config cf
 package    #hide from cpan
   Net::DirectConnect::adcs;
 use strict;
-#use IO::Socket::SSL;
-use IO::Socket::SSL qw(debug3);
+use IO::Socket::SSL;
+#use IO::Socket::SSL qw(debug3);
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 sub init {
   my $self = shift if ref $_[0];
   $self->module_load('adc');
   $self->{'protocol_supported'}{'ADCS/0.10'} = 'adcs';
-  $self->log( 'dev', 'sslinit', $self->{'protocol'} ), $self->{'socket_class'} = 'IO::Socket::SSL'
+  #$self->log( 'dev', 'sslinit', $self->{'protocol'} ), 
+  $self->{'socket_class'} = 'IO::Socket::SSL'
     if
     #!$self->{hub} and
     $self->{'protocol'} eq 'adcs'
@@ -80,6 +81,23 @@ sub init {
     $self->{'myport_tls'} = $self->{'clients'}{'listener_tls'}{'myport'};
     #$self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
     $self->log( 'err', "cant listen tls" ) unless $self->{'myport_tls'};
+
+      if (
+        $self->{'dev_sctp'}
+        )
+      {
+        $self->log( 'dev', "making listeners: tls sctp", "h=$self->{'hub'}" );
+        $self->{'clients'}{'listener_tls_sctp'} = $self->{'incomingclass'}->new(
+          'parent'      => $self,
+          'Proto'       => 'sctp',
+          'protocol'    => 'adcs',
+          'auto_listen' => 1,
+        );
+        $self->{'myport_tls_sctp'} = $self->{'clients'}{'listener_tls_sctp'}{'myport'};
+        #$self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
+        $self->log( 'err', "cant listen tls sctp" ) unless $self->{'myport_tls_sctp'};
+      }
+
   }
 }
 6;

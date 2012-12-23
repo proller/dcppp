@@ -71,10 +71,23 @@ sub send_udp ($$;@) {
 sub socket_addr ($) {
   my ($socket) = @_;
   local @_;
-  eval { @_ = unpack_sockaddr_in( getpeername($socket) || return ) };
+  #eval { @_ = unpack_sockaddr_in( getpeername($socket) || return ) };
+  eval { @_ = unpack_sockaddr_in( $socket->peername || return ) };
   return unless $_[1];
   return unless $_[1] = inet_ntoa( $_[1] );
   return @_;
+
+=todo
+  my ($err, $hostname, $servicename) = Socket::getnameinfo($socket->peername);
+if ($err) {
+  if (use_try 'Socket6') {
+  #warn "Cannot getnameinfo - $err; $hostname, $servicename" ;
+  $hostname = Socket6::getnameinfo($socket->peername);
+  }
+}
+warn 'getn', $hostname,$servicename;
+  return wantarray ? ($hostname,$servicename) : $hostname;
+=cut
 }
 
 sub schedule($$;@)
@@ -204,9 +217,24 @@ sub new {
     if ( $self->{'protocol'} eq 'nmdc' ) {
       ++$self->{'module'}{ $self->{'hub'} ? 'hubcli' : 'clihub' };
     }
-    ++$self->{'module'}{$_} for grep { $self->{ 'dev_' . $_ } } qw(ipv6 sctp);
+    ++$self->{'module'}{$_} for grep { $self->{ 'dev_' . $_ } } qw(ipv6); 
+    #, ($] < 5.014 ? 'ipv6' : ()); #sctp
     #if ( $self->{'module'} ) {
   }
+
+  if ($self->{ 'dev_sctp' }) {
+    $self->log( 'dev', 'make sctp clone', $class);
+    $self->{'clients'}{'sctp_'. $self->{'number'}} = $class->new(
+          @_,
+          'dev_sctp' => undef,
+          'parent'      => $self,
+          auto_work=>0,
+          #'Proto'       => 'sctp',
+          modules=> [qw(sctp)],
+        );
+    $self->info;  
+  }
+
   ++$self->{'module'}{$_} for grep { $self->{'protocol'} eq $_ } qw(adcs http);
   #$self->log( 'dev', 'module load', $self->{'module'}, 'p', $self->{'protocol'} );
   my @modules;    #= ($self->{'module'});
@@ -216,8 +244,8 @@ sub new {
     push @modules, split /[;,\s]/, $self->{$_} unless ref $self->{$_};
   }
   #$self->log( 'dev', 'modules load', @modules );
-  #$self->log( 'modules load', @modules);
-  $self->module_load($_) for @modules;
+  #$self->log( 'modules load', @modules, @_);
+  $self->module_load($_, @_) for @modules;
   #$self->log( 'now proto', $self->{'Proto'});
   $self->{charset_chat} ||= $self->{charset_protocol};
   #$self->protocol_init();
@@ -458,7 +486,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     'charset_protocol' => 'utf8',
     'charset_internal' => 'utf8',
     #charset_nick => 'utf8',
-    'socket_class' => 'IO::Socket::INET',
+    'socket_class' => ($^O ne 'MSWin32' && use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 'IO::Socket::INET'),
   );
   #$self->log(__LINE__, "Proto=$self->{Proto}");
   $self->{'wait_connect_tries'} //= $self->{'Timeout'};
@@ -550,7 +578,7 @@ sub connect {    #$self->{'connect'} ||= sub {
   }
   #$self->log('dev', 'host, port =', $self->{'host'}, $self->{'port'} );
   #$self->log( 'H:', ((),$self->{'host'} =~ /(:)/g)>1 );
-  $self->module_load('ipv6') if ( @{ [ $self->{'host'} =~ /(:)/g ] } > 1 );
+  $self->module_load('ipv6') if @{ [ $self->{'host'} =~ /(:)/g ] } > 1;
   #$self->{'port'} = $_[1] if $_[1];
   #print "Hhohohhhh" ,$self->{'protocol'},$self->{'host'};
   return 0
@@ -567,6 +595,7 @@ sub connect {    #$self->{'connect'} ||= sub {
   #$self->{'port'}     = $1 if $self->{'host'} =~ s/:(\d+)//;
   delete $self->{'recv_buf'};
   #$self->log('dev', 'conn strt', $self->{'Timeout'}, $self->{'Proto'}, Socket::SOCK_STREAM);
+  eval {
   $self->{'socket'} ||= $self->{'socket_class'}->new(
     'PeerAddr' => $self->{'host'},
     ( $self->{'port'}  ? ( 'PeerPort' => $self->{'port'} )  : () ),
@@ -581,6 +610,7 @@ sub connect {    #$self->{'connect'} ||= sub {
                           #),
     %{ $self->{'socket_options'} || {} },
   );
+  };
   #$self->log('dev', 'connect end');
   $self->log(
     'err',
@@ -664,7 +694,7 @@ sub listen {       #$self->{'listen'} ||= sub {
   $self->myport_generate();
 #$self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",'sockopts', Dumper $self->{'socket_options'} );
   for ( 1 .. $self->{'myport_tries'} ) {
-    $self->{'socket'} ||= $self->{'socket_class'}->new(
+   local @_ = (
       'LocalPort' => $self->{'myport'},
       #'Proto'     => $self->{'Proto'} || 'tcp',
       ( $self->{'Proto'} ? ( 'Proto' => $self->{'Proto'} ) : () ),
@@ -676,9 +706,15 @@ sub listen {       #$self->{'listen'} ||= sub {
       #( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
       #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
       'Blocking' => 0,
+      #Domain    => PF_INET6,
       #SSL_server=>1,
       %{ $self->{'socket_options'} || {} },
     );
+
+#$self->log( 'dev', 'listen', $self->{'socket_class'}, @_);
+    eval {
+    $self->{'socket'} ||= $self->{'socket_class'}->new(@_);
+    };
     $self->select_add(), last if $self->{'socket'};
     $self->log( 'err', "listen($self->{'Listen'}) $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
       unless $self->{'socket'};
@@ -763,7 +799,7 @@ sub recv {                # $self->{'recv'} ||= sub {
         unless $self->{'incomingclass'};
       my ( undef, $host ) = socket_addr $_;
       ;    # || $self->{parent}{'allow'};
-      $self->log( 'info', "incoming [$host] to $self->{'incomingclass'}" );
+      $self->log( 'info', "incoming [$host] to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
       if ( my $allow = $self->{'allow'} ) {
         my ( undef, $host ) = socket_addr $_;
         $self->log( 'warn', "disallowed connect from $host" ), return
@@ -2129,7 +2165,7 @@ look at examples for handlers
 
  To install this module type the following:
 
-   cpan DBD::SQLite IO::Socket::INET6 IO::Socket::SSL
+   cpan DBD::SQLite IO::Socket::IP IO::Socket::INET6 IO::Socket::SSL
    perl Makefile.PL && make install clean
 
 
