@@ -107,7 +107,8 @@ sub func {
       MIME::Base32::decode_rfc3548(@_);
     };
   } else {
-    $self->log( 'err', 'cant use MIME::Base32' );
+    our $warned;
+    $self->log( 'err', 'cant use MIME::Base32' ) unless $warned++;
   }
   if ( Net::DirectConnect::use_try('Net::DirectConnect::TigerHash') ) {
     $self->{hash} ||= sub { shift if ref $_[0]; Net::DirectConnect::TigerHash::tthbin( $_[0] ); };
@@ -199,7 +200,7 @@ sub init {
   #%$self,
   local %_ = (
     'Nick' => 'NetDCBot',
-    #'port'     => 412,
+    'port'     => 1511,
     'host'     => 'localhost',
     'protocol' => 'adc',
     'adc'      => 1,
@@ -275,7 +276,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid ) = @{ shift() };
       #for my $feature (split /\s+/, $_[0])
-      #$self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid");
+      $self->log( 'adcdev', $dst, 'SUP:', @_ , "SID:n=$self->{'number'}; $peerid, $self->{'status'}");
       #=z
       #if $self->{''}
       if ( $dst eq 'H' ) {
@@ -324,6 +325,10 @@ sub init {
       return $self->{'INF'}{'SID'} unless $dst eq 'I';
       $self->{'INF'}{'SID'} = $_[0];
       #$self->log( 'adcdev', 'SID:', $self->{'INF'}{'SID'} );
+      if ( $dst eq 'I' ) {
+        $self->cmd( 'B', 'INF' );
+        $self->{'status'} = 'connected';    #clihub
+      }
       return $self->{'INF'}{'SID'};
     },
     'INF' => sub {
@@ -391,10 +396,11 @@ sub init {
       $self->{'peers_cid'}{ $self->{'peers'}{$peerid}{'INF'}{'ID'} } ||= $self->{'peers'}{$peerid};
       #$self->log( 'adcdev', 'INF:', $peerid, Dumper $params, $self->{'peers'} ) unless $peerid;
       #$self->log('adcdev', 'INF7', $peerid, @_);
-      if ( $dst eq 'I' ) {
-        $self->cmd( 'B', 'INF' );
-        $self->{'status'} = 'connected';    #clihub
-      } elsif ( $dst eq 'C' ) {
+      #if ( $dst eq 'I' ) {
+      #  $self->cmd( 'B', 'INF' );
+      #  $self->{'status'} = 'connected';    #clihub
+      #} els
+      if ( $dst eq 'C' ) {
         $self->{'status'} = 'connected';    #clicli
         $self->cmd( $dst, 'INF' ) unless $self->{count_sendcmd}{CINF};
         if   ( $params->{TO} ) { }
@@ -443,7 +449,10 @@ sub init {
 #2 	Fatal (disconnect)
 #my $desc = $self->{'codesSTA'}{$code};
       @_ = $self->adc_strings_decode(@_);
-      #$self->log( 'adcdev', 'STA', $peerid, $severity, $code, @_, "=[$Net::DirectConnect::adc::codesSTA{$code}]" );
+      $self->log( 'adcdev', 'STA', $peerid, $severity, 'c=', $code, 't=',@_, "=[$Net::DirectConnect::adc::codesSTA{$code}]" );
+      if ($code ~~ '20' and $_[0] =~ /Reconnecting too fast, you have to wait (\d+) seconds before reconnecting./) {
+          $self->work( $1 + 10 );
+      }
       return $severity, $code, $Net::DirectConnect::adc::codesSTA{$code}, @_;
     },
     'SCH' => sub {
@@ -918,7 +927,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
         'myport_random' => 99,
         'myport_tries'  => 5,
         'parent'        => $self,
-        'allow'         => ( $self->{http_allow} || '127.0.0.1' ),
+        #'allow'         => ( $self->{http_allow} || '127.0.0.1' ),
         #'auto_listen' => 0,
       );
       $self->{'myport_http'} = $self->{'clients'}{'listener_http'}{'myport'};
