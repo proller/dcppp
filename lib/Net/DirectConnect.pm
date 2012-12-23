@@ -726,6 +726,7 @@ sub listen {       #$self->{'listen'} ||= sub {
   $self->log( 'info', "listening $self->{'myport'} $self->{'Proto'} with $self->{'socket_class'}" );
   $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
   $self->{'status'} = 'listening';
+
   #$self->select();
 }
 
