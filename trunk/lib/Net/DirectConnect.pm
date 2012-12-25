@@ -224,6 +224,7 @@ sub new {
 
   if ($self->{ 'dev_sctp' }) {
     $self->log( 'dev', 'make sctp clone', $class);
+    unless ($self->{ 'no_sctp_fallback' }) {
     $self->{'clients'}{'sctp_'. $self->{'number'}} = $class->new(
           @_,
           'dev_sctp' => undef,
@@ -235,6 +236,9 @@ sub new {
           #'Proto'       => 'sctp',
           modules=> [qw(sctp)],
         );
+    } else {
+        ++$self->{'module'}{'sctp'};
+    }
     $self->info;  
   }
 
@@ -489,7 +493,8 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     'charset_protocol' => 'utf8',
     'charset_internal' => 'utf8',
     #charset_nick => 'utf8',
-    'socket_class' => ($^O ne 'MSWin32' && use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 'IO::Socket::INET'),
+    'socket_class' => (
+$^O ne 'MSWin32' && use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 'IO::Socket::INET'),
   );
   #$self->log(__LINE__, "Proto=$self->{Proto}");
   $self->{'wait_connect_tries'} //= $self->{'Timeout'};
@@ -500,7 +505,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_}, for qw(db);
   $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
-    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol myport_inc)
+    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol myport_inc no_sctp_fallback)
     ;   #dev_adcs
         #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol} inc=$self->{myport_inc}" );
   $self->{$_} //= $_{$_} for keys %_;
@@ -714,7 +719,7 @@ sub listen {       #$self->{'listen'} ||= sub {
       %{ $self->{'socket_options'} || {} },
     );
 
-#$self->log( 'dev', 'listen', $self->{'socket_class'}, @_);
+$self->log( 'dev', 'listen', $self->{'socket_class'}, @_);
     eval {
     $self->{'socket'} ||= $self->{'socket_class'}->new(@_);
     };
@@ -803,7 +808,7 @@ sub recv {                # $self->{'recv'} ||= sub {
         unless $self->{'incomingclass'};
       my ( undef, $host ) = socket_addr $_;
       ;    # || $self->{parent}{'allow'};
-      $self->log( 'info', "incoming [$host] to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
+      $self->log( 'info', "incoming [$host] (".ref($_).")to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
       if ( my $allow = $self->{'allow'} ) {
         my ( undef, $host ) = socket_addr $_;
         $self->log( 'warn', "disallowed connect from $host" ), return
@@ -833,7 +838,7 @@ sub recv {                # $self->{'recv'} ||= sub {
       #$self->log( 'dev', 'child created',            $_,   $self->{'clients'}{$_});
       #++$ret;
     } else {
-      $self->log( 'err', "Accepting fail! [$self->{'Proto'}]" );
+      $self->log( 'err', "Accepting fail! [$self->{'Proto'}]", $!, $@ );
     }
     #next;
     return;

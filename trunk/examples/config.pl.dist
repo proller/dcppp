@@ -14,6 +14,7 @@ our %config;
 # $config{dc}{http_control} = 1; #future: debug [or control interface]
 
 # $config{dc}{dev_sctp} = 1;
+# $config{dc}{no_sctp_fallback} = 1; #use sctp only (no tcp)
 # $config{dc}{dev_ipv6} = 1; #future
 # $config{dc}{dev_adcs} = 1; #future
 # $config{dchub}{myport} = 412; #only for dchub script
