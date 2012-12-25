@@ -223,8 +223,8 @@ sub new {
   }
 
   if ($self->{ 'dev_sctp' }) {
-    $self->log( 'dev', 'make sctp clone', $class);
     unless ($self->{ 'no_sctp_fallback' }) {
+    $self->log( 'dev', 'make sctp clone', $class);
     $self->{'clients'}{'sctp_'. $self->{'number'}} = $class->new(
           @_,
           'dev_sctp' => undef,
