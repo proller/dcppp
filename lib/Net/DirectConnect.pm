@@ -1,8 +1,11 @@
 #$Id$ $URL$
 package Net::DirectConnect;
 use strict;
-our $VERSION = '0.13';    # . '_' . ( split ' ', '$Revision$' )[1];
+no strict qw(refs);
+use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
+
+our $VERSION = '0.13';    # . '_' . ( split ' ', '$Revision$' )[1];
 use utf8;
 use Encode;
 use Socket;
@@ -70,13 +73,15 @@ sub send_udp ($$;@) {
 
 sub socket_addr ($) {
   my ($socket) = @_;
+  return wantarray ? ($socket->peerhost, $socket->peerport) : $socket->peerhost;
+=old  
   local @_;
   #eval { @_ = unpack_sockaddr_in( getpeername($socket) || return ) };
   eval { @_ = unpack_sockaddr_in( $socket->peername || return ) };
   return unless $_[1];
   return unless $_[1] = inet_ntoa( $_[1] );
   return @_;
-
+=cut
 =todo
   my ($err, $hostname, $servicename) = Socket::getnameinfo($socket->peername);
 if ($err) {
@@ -157,9 +162,11 @@ sub new {
   else                             { bless( $self, $class ) unless ref $class; }
   #print ref $self;
   #$self-
+  #psmisc::printlog('dev', 'new', @_);
   #psmisc::printlog('dev', 'func', Dumper @_);
   $self->{'number'} ||= ++$global{'total'};
   ++$global{'count'};
+  #$self->log('dev', 'new', @_);
   $self->func(@_);    #@param
   eval { $self->{'recv_flags'} = MSG_DONTWAIT; } unless $^O =~ /win/i;
   $self->{'recv_flags'} ||= 0;
@@ -217,7 +224,7 @@ sub new {
     if ( $self->{'protocol'} eq 'nmdc' ) {
       ++$self->{'module'}{ $self->{'hub'} ? 'hubcli' : 'clihub' };
     }
-    ++$self->{'module'}{$_} for grep { $self->{ 'dev_' . $_ } } qw(ipv6); 
+    #++$self->{'module'}{$_} for grep { $self->{ 'dev_' . $_ } } qw(ipv6); 
     #, ($] < 5.014 ? 'ipv6' : ()); #sctp
     #if ( $self->{'module'} ) {
   }
@@ -494,7 +501,9 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     'charset_internal' => 'utf8',
     #charset_nick => 'utf8',
     'socket_class' => (
-$^O ne 'MSWin32' && use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 'IO::Socket::INET'),
+    use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 
+'IO::Socket::INET'
+),
   );
   #$self->log(__LINE__, "Proto=$self->{Proto}");
   $self->{'wait_connect_tries'} //= $self->{'Timeout'};
@@ -586,7 +595,7 @@ sub connect {    #$self->{'connect'} ||= sub {
   }
   #$self->log('dev', 'host, port =', $self->{'host'}, $self->{'port'} );
   #$self->log( 'H:', ((),$self->{'host'} =~ /(:)/g)>1 );
-  $self->module_load('ipv6') if @{ [ $self->{'host'} =~ /(:)/g ] } > 1;
+  #$self->module_load('ipv6') if @{ [ $self->{'host'} =~ /(:)/g ] } > 1;
   #$self->{'port'} = $_[1] if $_[1];
   #print "Hhohohhhh" ,$self->{'protocol'},$self->{'host'};
   return 0
@@ -616,7 +625,8 @@ sub connect {    #$self->{'connect'} ||= sub {
     'MultiHomed' => 1,    #del
                           #) : ()
                           #),
-    %{ $self->{'socket_options'} || {} },
+    %{ $self->{'socket_options'} },
+    %{ $self->{'socket_options_connect'} },
   );
   };
   #$self->log('dev', 'connect end');
@@ -715,11 +725,13 @@ sub listen {       #$self->{'listen'} ||= sub {
       #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
       'Blocking' => 0,
       #Domain    => PF_INET6,
+      #Domain    => PF_INET,
       #SSL_server=>1,
-      %{ $self->{'socket_options'} || {} },
+      %{ $self->{'socket_options'} },
+      %{ $self->{'socket_options_listen'} },
     );
 
-$self->log( 'dev', 'listen', $self->{'socket_class'}, @_);
+#$self->log( 'dev', 'listen', $self->{'socket_class'}, @_);
     eval {
     $self->{'socket'} ||= $self->{'socket_class'}->new(@_);
     };
@@ -728,7 +740,7 @@ $self->log( 'dev', 'listen', $self->{'socket_class'}, @_);
       unless $self->{'socket'};
   }
   $self->log( 'err', 'cant listen' ), return unless $self->{'socket'};
-  $self->log( 'info', "listening $self->{'myport'} $self->{'Proto'} with $self->{'socket_class'}" );
+  $self->log( 'info', "listening", $self->{'socket'}->sockhost,"$self->{'myport'} $self->{'Proto'} with $self->{'socket_class'}" );
   $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
   $self->{'status'} = 'listening';
 
@@ -806,11 +818,14 @@ sub recv {                # $self->{'recv'} ||= sub {
       #$self->log( 'traceDEV', 'DC::recv', 'accept', $self->{'incomingclass'} );
       $self->log( 'err', 'cant accept, no incomingclass' ), return,
         unless $self->{'incomingclass'};
-      my ( undef, $host ) = socket_addr $_;
-      ;    # || $self->{parent}{'allow'};
-      $self->log( 'info', "incoming [$host] (".ref($_).")to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
+      #my $host = $_->peerhost;
+      my ( $host ) = socket_addr $_;
+      #;    # || $self->{parent}{'allow'};
+      #$self->log( 'info', "incoming [$host] (".ref($_).")to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
+      $self->log( 'info', "incoming [$host] (".ref($_).") to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
+
       if ( my $allow = $self->{'allow'} ) {
-        my ( undef, $host ) = socket_addr $_;
+        #my ( undef, $host ) = socket_addr $_;
         $self->log( 'warn', "disallowed connect from $host" ), return
           unless $host eq $allow;
       }
@@ -950,10 +965,13 @@ sub select {    #$self->{'select'} ||= sub {
 
   for (@$send) {
     next unless $self->{sockets}{$_} and $self->{sockets}{$_}{socket};
+#$self->log('connect test', $self->{sockets}{$_}{status}, $self->{sockets}{$_}{socket}->connected(), caller);
+    #$self->{'select'}->remove($_),
     $self->{sockets}{$_}->connected(),
       #can_run($self->{sockets}{$_}, 'connected'),
       ++$ret,
-      if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
+      if $self->{sockets}{$_}{status} eq 'connecting_tcp';
+# and $self->{sockets}{$_}{socket}->connected();
     #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
     #++$self->{sockets}{$_}{send_can};
     #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
@@ -1247,7 +1265,7 @@ sub work {    #$self->{'work'} ||= sub {
   $self->select( 1 || $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
                                                   #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
-  return $self->select() || $self->select( $self->{'work_sleep'}, 1 );    # unless @{$self->{send_buffer_raw}|| []};
+  return $self->select(undef, 1) || $self->select( $self->{'work_sleep'} ) || $self->select( undef, 1 );    # unless @{$self->{send_buffer_raw}|| []};
                                                                           #return $self->select( $self->{'work_sleep'} );
 }
 

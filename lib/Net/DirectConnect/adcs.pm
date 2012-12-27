@@ -34,8 +34,12 @@ openssl req -new -x509 -key server-key.pem -out certs/server-cert.pem -config cf
 package    #hide from cpan
   Net::DirectConnect::adcs;
 use strict;
-use IO::Socket::SSL;
-#use IO::Socket::SSL qw(debug3);
+no strict qw(refs);
+use warnings "NONFATAL" => "all";
+no warnings qw(uninitialized);
+
+#use IO::Socket::SSL;
+use IO::Socket::SSL qw(debug3);
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 sub init {
@@ -58,6 +62,21 @@ sub init {
   #    $self->{'socket_options'}{SSL_cert_file} = 'certs\server-cert.pem';
   $self->{'socket_options'}{SSL_version} = 'TLSv1';
   $self->{'socket_options'}{SSL_server} = 1 if $self->{'auto_listen'};
+  $self->{'socket_options'}{SSL_verify_mode} = SSL_VERIFY_NONE;
+local %_ = (
+
+                 #SSL_server => $is_server,
+                 SSL_use_cert => !!$self->{'auto_listen'},
+                 SSL_check_crl => 0,
+                 #SSL_version     => DEFAULT_VERSION,
+                 #SSL_verify_mode => SSL_VERIFY_NONE,
+                 SSL_verify_callback => undef,
+                 SSL_verifycn_scheme => undef,  # don't verify cn
+                 SSL_verifycn_name => undef,    # use from PeerAddr/PeerHost
+                 SSL_npn_protocols => undef,    # meaning depends whether on server or client side
+                 #SSL_honor_cipher_order => 0,   # client order gets preference
+);
+$self->{'socket_options'}{$_} = $_{$_} for keys %_;
   #$self->{'adcs'}
   #$self->log( 'dev',  'ssltry'),
   IO::Socket::SSL->start_SSL( $self->{'socket'}, %{ $self->{'socket_options'} || {} } )
@@ -74,7 +93,6 @@ sub init {
     $self->log( 'dev', "making listeners: tls", "h=$self->{'hub'}" );
     $self->{'clients'}{'listener_tls'} = $self->{'incomingclass'}->new(
       'parent' => $self,
-      #'Proto'       => 'sctp',
       'protocol'    => 'adcs',
       'auto_listen' => 1,
     );

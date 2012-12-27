@@ -2,6 +2,9 @@
 package    #hide from cpan
   Net::DirectConnect::clihub;
 use strict;
+no strict qw(refs);
+use warnings "NONFATAL" => "all";
+no warnings qw(uninitialized);
 use utf8;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
@@ -9,7 +12,6 @@ $Data::Dumper::Sortkeys = $Data::Dumper::Indent = 1;
 use Net::DirectConnect;
 use Net::DirectConnect::clicli;
 #use Net::DirectConnect::http;
-no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 

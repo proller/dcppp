@@ -1,8 +1,18 @@
 #$Id: adc.pm 858 2011-10-10 22:56:04Z pro $ $URL: svn://svn.setun.net/dcppp/trunk/lib/Net/DirectConnect/adc.pm $
-# DEPRECATED, moving to IO::Socket::IP but it dont work v6 in windows
+# DEPRECATED, NOT USED moving to IO::Socket::IP
+#
+# windows: if IO::Socket::IP does not work with ipv6:
+# upgrade perl to latests
+# AND reinstall Socket module:
+# cpan -f -i Socket
+#
+
 package    #hide from cpan
   Net::DirectConnect::ipv6;
 use strict;
+no strict qw(refs);
+use warnings "NONFATAL" => "all";
+no warnings qw(uninitialized);
 #use Time::HiRes qw(time sleep);
 #use Socket;
 #Net::DirectConnect::use_try 'Socket6' if $] < 5.014;
