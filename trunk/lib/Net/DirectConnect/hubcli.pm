@@ -3,10 +3,12 @@
 package    #hide from cpan
   Net::DirectConnect::hubcli;
 use strict;
+no strict qw(refs);
+use warnings "NONFATAL" => "all";
+no warnings qw(uninitialized);
 use Net::DirectConnect;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
-no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 

@@ -4,6 +4,8 @@ package    #hide from cpan
 use Net::DirectConnect;
 use Net::DirectConnect::hubcli;
 use strict;
+no strict qw(refs);
+use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';

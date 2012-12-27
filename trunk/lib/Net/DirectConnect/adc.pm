@@ -2,6 +2,10 @@
 package    #hide from cpan
   Net::DirectConnect::adc;
 use strict;
+no strict qw(refs);
+use warnings "NONFATAL" => "all";
+no warnings qw(uninitialized);
+
 use Time::HiRes qw(time sleep);
 use Socket;
 use Data::Dumper;    #dev only
@@ -14,7 +18,6 @@ use Net::DirectConnect::http;
 #use Net::DirectConnect::httpcli;
 use lib::abs('pslib');
 use psmisc;          # REMOVE
-no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 our %codesSTA = (
@@ -235,12 +238,15 @@ sub init {
   $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
   $self->{SU}{$_}       = $_ for qw(ADC0 TCP4 UDP4);
   if ( $self->{'broadcast'} ) { $self->{SUPAD}{B} = $self->{SUPAD}{C}; }
-  if ( $self->{'hub'} ) {
+  if ( $self->{'hub'} ) { # hub listener
     #$self->log( 'dev', 'hub settings apply');
     $self->{'auto_connect'}         = 0;
     $self->{'auto_listen'}          = 1;
     $self->{'status'}               = 'working';
     $self->{'disconnect_recursive'} = 1;
+  } elsif ($self->{parent}{hub}) { # hub client
+    $self->log( 'dev', 'hubparent:', $self->{parent}{hub});
+	$self->{message_type} = 'B';
   } else {
     $self->module_load('filelist');
   }
@@ -257,12 +263,12 @@ sub init {
   if ( $self->{dev_sctp} ) {
     $self->{SU}{$_} = $_ for qw(SCTP4);
   }
-  if ( $self->{dev_ipv6} ) {
+  #if ( $self->{dev_ipv6} ) {
     $self->{SU}{$_} = $_ for qw(TCP6 UDP6);
     if ( $self->{dev_sctp} ) {
       $self->{SU}{$_} = $_ for qw(SCTP6);
     }
-  }
+  #}
   #warn "IG:$self->{INF_generate}";
   #$self->log( 'igen', $self->{INF_generate});
   $self->INF_generate();
@@ -693,13 +699,22 @@ sub init {
     'connect_aft' => sub {
       #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
-      #$self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' ');
+      $self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' :', $self->{'broadcast'}, $self->{'parent'}{'hub'});
       #{
       $self->cmd( $self->{'message_type'}, 'SUP' );
       #}
       if ( $self->{'broadcast'} ) { $self->cmd( $self->{'message_type'}, 'INF' ); }
       #$self->cmd( $self->{'message_type'}, 'SUP' ) if $self->{'parent'}{'hub'};
       #else
+    },
+    'accept_aft' => sub {
+      #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
+      my $self = shift if ref $_[0];
+      #$self->log($self, 'accept_aft inited',"MT:$self->{'message_type'}", ' :', $self->{'broadcast'}, $self->{'parent'}{'hub'});
+      #{
+      #$self->cmd( $self->{'message_type'}, 'SUP' );
+      #}
+      #$self->cmd( $self->{'message_type'}, 'INF' ); 
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
@@ -969,7 +984,10 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
     #psmisc::caller_trace 15;
   };
   $self->get_peer_addr() if $self->{'socket'};
-  $self->log( 'err', 'cant load TigerHash module' ) unless $INC{'Net/DirectConnect/TigerHash.pm'};
+  $self->log( 'err', 'cant load TigerHash module' ) if !$INC{'Net/DirectConnect/TigerHash.pm'} and !our $tigerhashreported++;
+
+  $self->accept_aft() if $self->{'incoming'};
+
   return $self;
 }
 1;

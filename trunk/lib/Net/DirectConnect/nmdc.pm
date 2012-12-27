@@ -3,6 +3,9 @@
 package    #hide from cpan
   Net::DirectConnect::nmdc;
 use strict;
+no strict qw(refs);
+use warnings "NONFATAL" => "all";
+no warnings qw(uninitialized);
 use utf8;
 #use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only
@@ -11,7 +14,6 @@ use Net::DirectConnect;
 #use Net::DirectConnect::clicli;
 #use Net::DirectConnect::http;
 #use Net::DirectConnect::httpcli;
-no warnings qw(uninitialized);
 our $VERSION = ( split( ' ', '$Revision: 594 $' ) )[1];
 use base 'Net::DirectConnect';
 

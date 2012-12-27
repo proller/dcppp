@@ -16,7 +16,7 @@ use ExtUtils::MakeMaker;
     'DBD::SQLite'                   => 0,
     'Net::DirectConnect::TigerHash' => 0,
     'IO::Socket::IP'                => 0,
-    'IO::Socket::INET6'             => 0,
+    #'IO::Socket::INET6'             => 0,
     #'Socket6'                       => 0,
     'IO::Socket::SSL'               => 0,
     'JSON'                          => 0,
