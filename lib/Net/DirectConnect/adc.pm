@@ -328,9 +328,10 @@ sub init {
     'SID' => sub {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
+#$self->log('devv', '( $dst, $peerid, $toid ) = ', "( $dst, $peerid, $toid )");
       return $self->{'INF'}{'SID'} unless $dst eq 'I';
       $self->{'INF'}{'SID'} = $_[0];
-      #$self->log( 'adcdev', 'SID:', $self->{'INF'}{'SID'} );
+      #$self->log( 'adcdev', 'SID:', $self->{'INF'}{'SID'}, $dst );
       if ( $dst eq 'I' ) {
         $self->cmd( 'B', 'INF' );
         $self->{'status'} = 'connected';    #clihub
@@ -704,8 +705,7 @@ sub init {
     'connect_aft' => sub {
       #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
-      $self->log( $self, 'connect_aft inited',
-        "MT:$self->{'message_type'}", ' :', $self->{'broadcast'}, $self->{'parent'}{'hub'} );
+      #$self->log( $self, 'connect_aft inited', "MT:$self->{'message_type'}", ' :', $self->{'broadcast'}, $self->{'parent'}{'hub'} );
       #{
       $self->cmd( $self->{'message_type'}, 'SUP' );
       #}

@@ -497,7 +497,9 @@ sub init_main {    #$self->{'init_main'} ||= sub {
         #: $^O eq 'freebsd' ? 'koi8r'
       : 'utf8'
     ),
-    'charset_console' => ( $^O eq 'MSWin32' ? 'cp866' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
+    'charset_console' => ( $^O eq 'MSWin32' ? 'cp866' : 
+        #$^O eq 'freebsd' ? 'koi8r' : 
+        'utf8' ),
     'charset_protocol' => 'utf8',
     'charset_internal' => 'utf8',
     #charset_nick => 'utf8',
@@ -863,8 +865,8 @@ sub recv {    # $self->{'recv'} ||= sub {
   $self->{'databuf'} = '';
   #my $r;
   my $recv = $self->{'recv'};
-  if ( !defined( $self->{'recv_addr'} = $client->$recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
-    or !length( $self->{'databuf'} ) )
+  if ( (!defined( $self->{'recv_addr'} = $client->$recv( $self->{'databuf'}, POSIX::BUFSIZ, $self->{'recv_flags'} ) )
+    or !length( $self->{'databuf'} )) and $recv ~~ 'recv' )
   {
     #TODO not here
     if (
@@ -1298,8 +1300,8 @@ sub parser {                                      #$self->{'parser'} ||= sub {
     if (/^[<*]/) {
       $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' );
     }
-    s/^\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd;
-    #$self->log('dev',"cmd[", Dumper($cmd),"]" );
+    s/^\x00*\$?([\w\-]+)\s*//, $cmd = $1 unless $cmd; # \x00 - ssl bug on recv
+    #$self->log('dev',"cmd[", Dumper($cmd),"], adc=", $self->{'adc'} );
     if ( $self->{'adc'} ) {
       $cmd =~ s/^([BCDEFHIU])//, $dst = $1;
       @param = ( [$dst], split / / );

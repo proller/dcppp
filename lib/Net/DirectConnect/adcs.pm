@@ -51,7 +51,7 @@ use Data::Dumper;    #dev only
 sub init {
   my $self = shift if ref $_[0];
   $self->module_load('adc');
-  $self->log( 'ssl', $self->{'protocol'}, $self->{'auto_listen'} );
+  #$self->log( 'ssl', $self->{'protocol'}, $self->{'auto_listen'} );
   $self->{'protocol_supported'}{'ADCS/0.10'} = 'adcs';
   #$self->log( 'dev', 'sslinit', $self->{'protocol'} ),
   $self->{'socket_class'} = 'IO::Socket::SSL'
