@@ -17,6 +17,7 @@
  $config{dc}{host} = 'myhub.net';
 
 =cut
+
 use 5.10.0;
 use strict;
 no strict qw(refs);
@@ -122,7 +123,7 @@ my @dc;
         #$work{'tthfrom'}{ $s{tth} }{ $s{nick} } = \%s;
         #++$work{'stat'}{'SR'};
       },
-      'RES' => sub {     #_parse_aft
+      'RES' => sub {    #_parse_aft
         my $dc = shift;
         #psmisc::printlog 'RESparsed:', Dumper( \@_ );
         my ( $dst, $peercid ) = @{ $_[0] };
@@ -150,7 +151,7 @@ my @dc;
                       $work{'ask'}{$_} >= $config{'hit_to_ask'}
                   and !exists $work{'asked'}{$_}
                   and !exists $dc->{share_full}{$_}
-                } keys %{ $work{'ask'} }
+              } keys %{ $work{'ask'} }
             )
           ];
           psmisc::printlog(
@@ -238,8 +239,9 @@ my @dc;
                 if $self->{'share_full'}{$tth};
               $self->log( 'warn', 'removing already downloading partial', $_, $tth ), unlink($file), next
                 if $partial{$tth}{size} > -s $file;
-				$self->log( 'warn', 'removing already downloading partial2', $_, $tth , $partial{$tth}{size}),
-			  unlink($partial{$tth}{file}) if $partial{$tth}{size} and $partial{$tth}{size} < -s $file;
+              $self->log( 'warn', 'removing already downloading partial2', $_, $tth, $partial{$tth}{size} ),
+                unlink( $partial{$tth}{file} )
+                if $partial{$tth}{size} and $partial{$tth}{size} < -s $file;
               $self->log( 'dev', 'adding to queue', $_, $tth, -s $file, $partial{$tth} );
               #$self->{'want_download'}{$tth} //= {};
               push @todl, $tth unless $partial{$tth};
@@ -282,5 +284,4 @@ while ( @_ = grep { $_ and $_->active() } @dc ) {
   $_->work() for @_;
   #Time::HiRes::sleep 0.1;
 }
-
 #psmisc::printlog 'dev', 'endst', join ', ', map {$_->status }@dc

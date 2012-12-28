@@ -7,6 +7,7 @@ generate dc++ xml filelist
 perl filelist.pm /path/to/dir
 
 =cut
+
 package    # no cpan
   Net::DirectConnect::filelist;
 use 5.10.0;
@@ -36,6 +37,7 @@ use base 'Net::DirectConnect';
       "; #use Net::DirectConnect; 
       #psmisc::use_try ('Net::DirectConnect');
 =cut
+
 use base 'Net::DirectConnect';
 #use lib '../../../examples/stat/pslib';    # REMOVE
 #use lib 'stat/pslib';                      # REMOVE
@@ -230,6 +232,7 @@ sub new {
         if $f->{'tth'};
       $self->{share_full}{ $f->{'file'} } ||= $f->{'full_local'};
 =cut
+
   #$self->log 'set share', "[$f->{file}], [$f->{tth}] = [$self->{share_full}{ $f->{tth} }],[$self->{share_full}{ $f->{file} }]";
   #$self->log Dumper $self->{share_full};
       }
@@ -452,13 +455,14 @@ sub new {
     $self->log ".done:", ( scalar keys %{ $self->{share_full} } ), "\n";
   }
 =cut
+
     #$self->log( "filelist_load try", $global{shareloaded}, -s $self->{files}, );    #ref $_[0]
     return
-      if !$self->{files}
-        or $Net::DirectConnect::global{shareloaded} == -s $self->{files}
-        or
-        ( $Net::DirectConnect::global{shareloaded} and !psmisc::lock( 'sharescan', readonly => 1, timeout => 0, old => 86400 ) )
-        or !open my $f, '<:encoding(utf8)', $self->{files};
+         if !$self->{files}
+      or $Net::DirectConnect::global{shareloaded} == -s $self->{files}
+      or
+      ( $Net::DirectConnect::global{shareloaded} and !psmisc::lock( 'sharescan', readonly => 1, timeout => 0, old => 86400 ) )
+      or !open my $f, '<:encoding(utf8)', $self->{files};
     my ( $sharesize, $sharefiles );
     #$self->log( 'info', "loading filelist", -s $f );
     $Net::DirectConnect::global{shareloaded} = -s $f;
@@ -480,7 +484,7 @@ sub new {
         $sharesize += $size;
         #$self->{'share_tth'}{ $params->{TR} }
         #$file =~ tr{\\}{/};
-      } elsif ( my ($curdir) = m{^Directory Name="([^"]+)">}i ) { #"mcedit
+      } elsif ( my ($curdir) = m{^Directory Name="([^"]+)">}i ) {    #"mcedit
         $dir .= ( ( !length $dir and $^O ~~ [ 'MSWin32', 'cygwin' ] ) ? () : '/' ) . $curdir;
         #$self->log 'now in', $dir;
         #$self->{files}
@@ -553,13 +557,14 @@ sub new {
           '<', $self->{filelist_scan}
         );
         return
-          if -e $self->{files}
-            and -s $self->{files} > 200
-            and $self->{filelist_scan} > time - $^T + 86400 * -M $self->{files};
+              if -e $self->{files}
+          and -s $self->{files} > 200
+          and $self->{filelist_scan} > time - $^T + 86400 * -M $self->{files};
         #$self->log( 'starter==','$0=',$0, $INC{'Net/DirectConnect/filelist.pm'}, $^X, 'share=', @{ $self->{'share'} } );
         #$0 !~ m{(.*\W)?share.pl$}
-        !$self->{'filelist_fork'} ? $self->filelist_make() :
-        $self->{'filelist_builder'} ? psmisc::start $self->{'filelist_builder'}, @{ $self->{'share'} } : psmisc::start $^X,
+        !$self->{'filelist_fork'}
+          ? $self->filelist_make()
+          : $self->{'filelist_builder'} ? psmisc::start $self->{'filelist_builder'}, @{ $self->{'share'} } : psmisc::start $^X,
           $INC{'Net/DirectConnect/filelist.pm'}, @{ $self->{'share'} };
         #: psmisc::startme( 'filelist', grep { -d } @ARGV );
       },
@@ -602,6 +607,7 @@ return unless $name;
           if $tth;
         $self->{share_full}{$file} ||= $full_local;
 =cut
+
     $self->log( 'dev', 'adding downloaded file to share', $full, $tth ),
       $self->share_add_file( $full, $tth ), $self->share_changed()
       if !$self->{'file_recv_filelist'} and !$self->{'no_auto_share_downloaded'};  # unless $self->{'no_auto_share_downloaded'};

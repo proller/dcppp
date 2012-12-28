@@ -4,7 +4,6 @@ use strict;
 no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
-
 our $VERSION = '0.13' . '_' . ( split ' ', '$Revision$' )[1];
 use utf8;
 use Encode;
@@ -73,7 +72,8 @@ sub send_udp ($$;@) {
 
 sub socket_addr ($) {
   my ($socket) = @_;
-  return wantarray ? ($socket->peerhost, $socket->peerport) : $socket->peerhost;
+  return wantarray ? ( $socket->peerhost, $socket->peerport ) : $socket->peerhost;
+
 =old  
   local @_;
   #eval { @_ = unpack_sockaddr_in( getpeername($socket) || return ) };
@@ -82,6 +82,7 @@ sub socket_addr ($) {
   return unless $_[1] = inet_ntoa( $_[1] );
   return @_;
 =cut
+
 =todo
   my ($err, $hostname, $servicename) = Socket::getnameinfo($socket->peername);
 if ($err) {
@@ -93,6 +94,7 @@ if ($err) {
 warn 'getn', $hostname,$servicename;
   return wantarray ? ($hostname,$servicename) : $hostname;
 =cut
+
 }
 
 sub schedule($$;@)
@@ -212,7 +214,7 @@ sub new {
       $self->{'protocol'} = $p;
       $self->{'protocol'} = 'nmdc'
         if !$self->{'protocol'}
-          or $self->{'protocol'} eq 'dchub';
+        or $self->{'protocol'} eq 'dchub';
       #$self->{'protocol'}
       #$self->log( 'proto ', $self->{'protocol'} );
     }
@@ -224,31 +226,29 @@ sub new {
     if ( $self->{'protocol'} eq 'nmdc' ) {
       ++$self->{'module'}{ $self->{'hub'} ? 'hubcli' : 'clihub' };
     }
-    #++$self->{'module'}{$_} for grep { $self->{ 'dev_' . $_ } } qw(ipv6); 
+    #++$self->{'module'}{$_} for grep { $self->{ 'dev_' . $_ } } qw(ipv6);
     #, ($] < 5.014 ? 'ipv6' : ()); #sctp
     #if ( $self->{'module'} ) {
   }
-
-  if ($self->{ 'dev_sctp' }) {
-    unless ($self->{ 'no_sctp_fallback' }) {
-    $self->log( 'dev', 'make sctp clone', $class);
-    $self->{'clients'}{'sctp_'. $self->{'number'}} = $class->new(
-          @_,
-          'dev_sctp' => undef,
-          'parent'      => $self,
-          auto_work=>0,
-          no_wait_connect=>1,
-          #reconnect_tries=>1,
-          #myport_tries=>1,
-          #'Proto'       => 'sctp',
-          modules=> [qw(sctp)],
-        );
+  if ( $self->{'dev_sctp'} ) {
+    unless ( $self->{'no_sctp_fallback'} ) {
+      $self->log( 'dev', 'make sctp clone', $class );
+      $self->{'clients'}{ 'sctp_' . $self->{'number'} } = $class->new(
+        @_,
+        'dev_sctp'      => undef,
+        'parent'        => $self,
+        auto_work       => 0,
+        no_wait_connect => 1,
+        #reconnect_tries=>1,
+        #myport_tries=>1,
+        #'Proto'       => 'sctp',
+        modules => [qw(sctp)],
+      );
     } else {
-        ++$self->{'module'}{'sctp'};
+      ++$self->{'module'}{'sctp'};
     }
-    $self->info;  
+    $self->info;
   }
-
   ++$self->{'module'}{$_} for grep { $self->{'protocol'} eq $_ } qw(adcs http);
   #$self->log( 'dev', 'module load', $self->{'module'}, 'p', $self->{'protocol'} );
   my @modules;    #= ($self->{'module'});
@@ -259,7 +259,7 @@ sub new {
   }
   #$self->log( 'dev', 'modules load', @modules );
   #$self->log( 'modules load', @modules, @_);
-  $self->module_load($_, @_) for @modules;
+  $self->module_load( $_, @_ ) for @modules;
   #$self->log( 'now proto', $self->{'Proto'});
   $self->{charset_chat} ||= $self->{charset_protocol};
   #$self->protocol_init();
@@ -269,9 +269,9 @@ sub new {
   #eval qq{use encoding $self->{charset_console}};
   eval qq{use encoding '$self->{charset_internal}', STDOUT=> '$self->{charset_console}', STDIN => '$self->{charset_console}'}
     if !$self->{parent}
-      and !$self->{no_charset_console}
-      and $self->{charset_internal}
-      and $self->{charset_console};
+    and !$self->{no_charset_console}
+    and $self->{charset_internal}
+    and $self->{charset_console};
   #$self->log( 'dev', 'utf8: УТф восемь');
   #$self->log( 'dev', Dumper $self);
   $self->log( 'dcdbg',
@@ -408,7 +408,7 @@ sub handler {
   #$self->log('dev', 'handler select', $cmd, $self->{'handler_int'}{$cmd}, $self->{'handler'}{$cmd});
   $self->{'handler_int'}{$cmd}->( $self, @_ )
     if $self->{'handler_int'}
-      and ref $self->{'handler_int'}{$cmd} eq 'CODE';    #internal lib
+    and ref $self->{'handler_int'}{$cmd} eq 'CODE';    #internal lib
   $self->{'handler'}{$cmd}->( $self, @_ )
     if $self->{'handler'} and ref $self->{'handler'}{$cmd} eq 'CODE';
 }
@@ -492,15 +492,16 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     #number => ++$global{'total'},
     #};
     'charset_fs' => (
-        $^O eq 'MSWin32' ? 'cp1251'
-      #: $^O eq 'freebsd' ? 'koi8r'
+      $^O eq 'MSWin32'
+      ? 'cp1251'
+        #: $^O eq 'freebsd' ? 'koi8r'
       : 'utf8'
     ),
     'charset_console' => ( $^O eq 'MSWin32' ? 'cp866' : $^O eq 'freebsd' ? 'koi8r' : 'utf8' ),
     'charset_protocol' => 'utf8',
     'charset_internal' => 'utf8',
     #charset_nick => 'utf8',
-    'socket_class' => (use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 'IO::Socket::INET'),
+    'socket_class' => ( use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 'IO::Socket::INET' ),
   );
   #$self->log(__LINE__, "Proto=$self->{Proto}");
   $self->{'wait_connect_tries'} //= $self->{'Timeout'};
@@ -511,11 +512,11 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     for qw(sockets share_full share_tth want want_download want_download_filename downloading);
   $self->{$_} //= $self->{'parent'}{$_} ||= $global{$_}, for qw(db);
   $self->{'parent'}{$_} ? $self->{$_} //= $self->{'parent'}{$_} : ()
-    for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol myport_inc no_sctp_fallback)
+    for
+    qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol myport_inc no_sctp_fallback)
     ;   #dev_adcs
         #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol} inc=$self->{myport_inc}" );
-  $self->{$_} //= {%{$self->{'parent'}{$_}}} for qw(socket_options); # clone, childs can change
- 
+  $self->{$_} //= { %{ $self->{'parent'}{$_} } } for qw(socket_options);    # clone, childs can change
   $self->{$_} //= $_{$_} for keys %_;
   $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
@@ -527,7 +528,7 @@ sub myport_generate {    #$self->{'myport_generate'} ||= sub {
   #$self->log( 'myport', "$self->{'myport'}: $self->{'myport_base'} or $self->{'myport_random'}" );
   return $self->{'myport'}
     unless $self->{'myport_base'}
-      or $self->{'myport_random'};
+    or $self->{'myport_random'};
   $self->{'myport'} = undef if $_[0];
   return $self->{'myport'} ||= $self->{'myport_base'} + $self->{'myport_inc'}++ if $self->{'myport_inc'};
   return $self->{'myport'} ||= $self->{'myport_base'} + int( rand( $self->{'myport_random'} ) );
@@ -552,13 +553,13 @@ sub connect_check {
   #$self->log('dev', 'connect_check', " s=$self->{'status'}, i=$self->{'incoming'}");
   return 0
     if $self->{'Proto'} eq 'udp'
-      or $self->{'incoming'}
-      #or $self->{'status'} eq 'listening' or
-      or $self->{'listener'}
-      or (
-        $self->{'socket'}
-        #and $self->{'socket'}->connected()
-      ) or !$self->active();
+    or $self->{'incoming'}
+    #or $self->{'status'} eq 'listening' or
+    or $self->{'listener'}
+    or (
+    $self->{'socket'}
+    #and $self->{'socket'}->connected()
+    ) or !$self->active();
 #$self->log(          'warn', 'connect_check: must reconnect', Dumper $self->{'socket'}->connected(), $self->{'socket'}, $self->{'status'});
   $self->{'status'} = 'reconnecting';
   $self->every(
@@ -599,7 +600,7 @@ sub connect {    #$self->{'connect'} ||= sub {
   #print "Hhohohhhh" ,$self->{'protocol'},$self->{'host'};
   return 0
     if ( $self->{'socket'} and $self->{'socket'}->connected() )
-    or grep { $self->{'status'} eq $_ } qw(destroy);                                                 #connected
+    or grep { $self->{'status'} eq $_ } qw(destroy);    #connected
   $self->log(
     'info',
     "connecting to $self->{'protocol'}://[$self->{'host'}]:$self->{'port'} via $self->{'Proto'} class $self->{'socket_class'}",
@@ -612,21 +613,21 @@ sub connect {    #$self->{'connect'} ||= sub {
   delete $self->{'recv_buf'};
   #$self->log('dev', 'conn strt', $self->{'Timeout'}, $self->{'Proto'}, Socket::SOCK_STREAM);
   eval {
-  $self->{'socket'} ||= $self->{'socket_class'}->new(
-    'PeerAddr' => $self->{'host'},
-    ( $self->{'port'}  ? ( 'PeerPort' => $self->{'port'} )  : () ),
-    ( $self->{'Proto'} ? ( 'Proto'    => $self->{'Proto'} ) : () ),
-    #( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
-    #'Timeout'  => $self->{'Timeout'},
-    #(
-    #$self->{'nonblocking'} ? (
-    'Blocking'   => 0,
-    'MultiHomed' => 1,    #del
-                          #) : ()
-                          #),
-    %{ $self->{'socket_options'} },
-    %{ $self->{'socket_options_connect'} },
-  );
+    $self->{'socket'} ||= $self->{'socket_class'}->new(
+      'PeerAddr' => $self->{'host'},
+      ( $self->{'port'}  ? ( 'PeerPort' => $self->{'port'} )  : () ),
+      ( $self->{'Proto'} ? ( 'Proto'    => $self->{'Proto'} ) : () ),
+      #( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
+      #'Timeout'  => $self->{'Timeout'},
+      #(
+      #$self->{'nonblocking'} ? (
+      'Blocking'   => 0,
+      'MultiHomed' => 1,    #del
+                            #) : ()
+                            #),
+      %{ $self->{'socket_options'} },
+      %{ $self->{'socket_options_connect'} },
+    );
   };
   #$self->log('dev', 'connect end');
   $self->log(
@@ -683,8 +684,8 @@ sub connected {    #$self->{'connected'} ||= sub {
   $self->log( 'info', "my internal ip detected, using passive mode", $self->{'myip'}, $self->{'hostip'}, $localmask ),
     $self->{'M'} = 'P'
     if !$self->{'M'}
-      and $is_local_ip->( $self->{'myip'} )
-      and !$is_local_ip->( $self->{'hostip'} );
+    and $is_local_ip->( $self->{'myip'} )
+    and !$is_local_ip->( $self->{'hostip'} );
   $self->{'M'} ||= 'A';
   #$self->log( 'info', "mode set [$self->{'M'}] ");
   $self->log( 'info', "connect to $self->{'host'}($self->{'hostip'}):$self->{'port'} [me=$self->{'myip'}] ok ", );
@@ -702,7 +703,7 @@ sub reconnect {    #$self->{'reconnect'} ||= sub {
   #!$self->connect();
 }
 
-sub listen {       #$self->{'listen'} ||= sub {
+sub listen {    #$self->{'listen'} ||= sub {
   my $self = shift;
   $self->log( 'err', 'listen off', "[$self->{'Listen'}] [$self->{'M'}] [$self->{'allow_passive_ConnectToMe'}]" ), return
     if !$self->{'Listen'};
@@ -711,7 +712,7 @@ sub listen {       #$self->{'listen'} ||= sub {
   $self->myport_generate();
 #$self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",'sockopts', Dumper $self->{'socket_options'} );
   for ( 1 .. $self->{'myport_tries'} ) {
-   local @_ = (
+    local @_ = (
       'LocalPort' => $self->{'myport'},
       #'Proto'     => $self->{'Proto'} || 'tcp',
       ( $self->{'Proto'} ? ( 'Proto' => $self->{'Proto'} ) : () ),
@@ -722,26 +723,23 @@ sub listen {       #$self->{'listen'} ||= sub {
       ),
       #( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
       #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
-      Blocking => 0,
+      Blocking  => 0,
       ReuseAddr => 1,
       %{ $self->{'socket_options'} },
       %{ $self->{'socket_options_listen'} },
     );
-
-#$self->log( 'dev', 'listen', $self->{'socket_class'}, @_);
-    eval {
-    $self->{'socket'} ||= $self->{'socket_class'}->new(@_);
-    };
+    #$self->log( 'dev', 'listen', $self->{'socket_class'}, @_);
+    eval { $self->{'socket'} ||= $self->{'socket_class'}->new(@_); };
     $self->select_add(), last if $self->{'socket'};
-    $self->log( 'err', "listen [$_/$self->{'myport_tries'}] ($self->{'Listen'}) $self->{'myport'} socket error: $@" ), $self->myport_generate(1),
+    $self->log( 'err', "listen [$_/$self->{'myport_tries'}] ($self->{'Listen'}) $self->{'myport'} socket error: $@" ),
+      $self->myport_generate(1),
       unless $self->{'socket'};
   }
   $self->log( 'err', 'cant listen' ), return unless $self->{'socket'};
-  eval {$self->{'listener'} = $self->{'socket'}->sockhost;};
+  eval { $self->{'listener'} = $self->{'socket'}->sockhost; };
   $self->log( 'info', "listening", $self->{'listener'}, "$self->{'myport'} $self->{'Proto'} with $self->{'socket_class'}" );
   $self->{'accept'} = 1 if $self->{'Proto'} ne 'udp';
   $self->{'status'} = 'listening';
-
   #$self->select();
 }
 
@@ -802,7 +800,7 @@ sub destroy {
   #!?%$self = ();
 }
 
-sub recv {                # $self->{'recv'} ||= sub {
+sub recv {    # $self->{'recv'} ||= sub {
   my $self   = shift;
   my $client = shift;
   #my $socket = shift;
@@ -818,11 +816,14 @@ sub recv {                # $self->{'recv'} ||= sub {
       $self->log( 'err', 'cant accept, no incomingclass' ), return,
         unless $self->{'incomingclass'};
       #my $host = $_->peerhost;
-      my ( $host ) = socket_addr $_;
-      #;    # || $self->{parent}{'allow'};
-      #$self->log( 'info', "incoming [$host] (".ref($_).")to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
-      $self->log( 'info', "incoming [$host] (".ref($_).") to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
-
+      my ($host) = socket_addr $_;
+#;    # || $self->{parent}{'allow'};
+#$self->log( 'info', "incoming [$host] (".ref($_).")to $self->{'incomingclass'}", ($self->{'allow'} ? "allow=$self->{'allow'}" : ()) );
+      $self->log(
+        'info',
+        "incoming [$host] (" . ref($_) . ") to $self->{'incomingclass'}",
+        ( $self->{'allow'} ? "allow=$self->{'allow'}" : () )
+      );
       if ( my $allow = $self->{'allow'} ) {
         #my ( undef, $host ) = socket_addr $_;
         $self->log( 'warn', "disallowed connect from $host" ), return
@@ -897,7 +898,7 @@ sub recv {                # $self->{'recv'} ||= sub {
     #$self->log( 'dcdmp', "rawrawbuf:", $self->{'recv_buf'} );
     local $self->{'cmd_aft'} = "\x0A"
       if !$self->{'adc'}
-        and $self->{'recv_buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
+      and $self->{'recv_buf'} =~ /^[BCDEFHITU][A-Z]{,5} /;
 #$self->log( 'dcdbg', "[$self->{'number'}]", "raw to parse [$self->{'buf'}] sep[$self->{'cmd_aft'}]" ) unless $self->{'filehandle'};
     $self->{'recv_buf'} .= $self->{'cmd_aft'}
       if $self->{'Proto'} eq 'udp' and $self->{'status'} eq 'listening';
@@ -917,7 +918,7 @@ sub recv {                # $self->{'recv'} ||= sub {
     }
     $self->file_write( \$self->{'recv_buf'} ), $self->{'recv_buf'} = ''
       if length( $self->{'recv_buf'} )
-        and $self->{'filehandle'};
+      and $self->{'filehandle'};
   }
 }
 
@@ -961,16 +962,15 @@ sub select {    #$self->{'select'} ||= sub {
       if $self->{sockets}{$_}{status} eq 'connecting_tcp' and $self->{sockets}{$_}{socket}->connected();
   }
 =cut
-
   for (@$send) {
     next unless $self->{sockets}{$_} and $self->{sockets}{$_}{socket};
-#$self->log('connect test', $self->{sockets}{$_}{status}, $self->{sockets}{$_}{socket}->connected(), caller);
+    #$self->log('connect test', $self->{sockets}{$_}{status}, $self->{sockets}{$_}{socket}->connected(), caller);
     #$self->{'select'}->remove($_),
     $self->{sockets}{$_}->connected(),
       #can_run($self->{sockets}{$_}, 'connected'),
       ++$ret,
       if $self->{sockets}{$_}{status} eq 'connecting_tcp';
-# and $self->{sockets}{$_}{socket}->connected();
+    # and $self->{sockets}{$_}{socket}->connected();
     #$self->log( 'err', 'no object for send handle',$_,  ) , next , unless $self->{sockets}{$_};
     #++$self->{sockets}{$_}{send_can};
     #$self->log( 'dev', 'can_send', $_, $self->{sockets}{$_}{number}, $self->{sockets}{$_}{send_can} );
@@ -1025,11 +1025,11 @@ sub finished {    #$self->{'finished'} ||= sub {
   local @_;
   $self->log( 'dcdev', 'not finished clients:', @_ ), return 0
     if @_ =
-      grep { !$self->{'clients'}{$_}->finished() } $self->clients_my();    #keys %{ $self->{'clients'} };
+    grep { !$self->{'clients'}{$_}->finished() } $self->clients_my();    #keys %{ $self->{'clients'} };
   return 1;
 }
 
-sub wait_connect {                                                         #$self->{'wait_connect'} ||= sub {
+sub wait_connect {                                                       #$self->{'wait_connect'} ||= sub {
   my $self = shift;
   #$self->log( 'dev', "wait_connect", $self->{'wait_connect_tries'});
   for ( 0 .. ( $_[0] || $self->{'wait_connect_tries'} ) ) {
@@ -1041,7 +1041,7 @@ sub wait_connect {                                                         #$sel
   return $self->{'status'};
 }
 
-sub wait_finish {                                                          #$self->{'wait_finish'} ||= sub {
+sub wait_finish {                                                        #$self->{'wait_finish'} ||= sub {
   my $self = shift;
   my $time = time() + ( shift || $self->{'wait_finish'} );
   while ( $time > time() ) {
@@ -1070,7 +1070,7 @@ sub wait_clients {                    #$self->{'wait_clients'} ||= sub {
     local @_;
     last
       if !$self->{'clients_max'}
-        or $self->{'clients_max'} > ( @_ = $self->clients_my() );    #keys %{ $self->{'clients'} };
+      or $self->{'clients_max'} > ( @_ = $self->clients_my() );    #keys %{ $self->{'clients'} };
     $self->info() unless $_;
     $self->log(
       'info', "wait clients",
@@ -1082,7 +1082,7 @@ sub wait_clients {                    #$self->{'wait_clients'} ||= sub {
   }
 }
 #sub wait_sleep {                                                     #$self->{'wait_sleep'} ||= sub {
-sub wait {                                                           #$self->{'wait_sleep'} ||= sub {
+sub wait {                                                         #$self->{'wait_sleep'} ||= sub {
   my $self = shift;
   my $ret;
   my $time = time() + ( shift || 1 );
@@ -1205,7 +1205,7 @@ sub work {    #$self->{'work'} ||= sub {
           sort {
             $wdls->{$a}{tries} <=> $wdls->{$b}{tries}
               or ( $wdls->{$b}{slotsfree} || $wdls->{$b}{SL} ) <=> ( $wdls->{$a}{slotsfree} || $wdls->{$a}{SL} )
-            } keys %$wdls
+          } keys %$wdls
         );
         #$self->log('dev', 'from can:',     @_   );
         if ( my ($fromk) = $_[0] ) {
@@ -1264,11 +1264,14 @@ sub work {    #$self->{'work'} ||= sub {
   $self->select( 1 || $self->{'work_sleep'} );    # if @{$self->{send_buffer_raw}|| []};    # maybe send
                                                   #$self->log( 'dev', "work -> sleep", @params ),
   return $self->wait(@params) if @params;
-  return $self->select(undef, 1) || $self->select( $self->{'work_sleep'} ) || $self->select( undef, 1 );    # unless @{$self->{send_buffer_raw}|| []};
-                                                                          #return $self->select( $self->{'work_sleep'} );
+  return
+       $self->select( undef, 1 )
+    || $self->select( $self->{'work_sleep'} )
+    || $self->select( undef, 1 );                 # unless @{$self->{send_buffer_raw}|| []};
+                                                  #return $self->select( $self->{'work_sleep'} );
 }
 
-sub dumper {                                                              #$self->{'dumper'} ||= sub {
+sub dumper {                                      #$self->{'dumper'} ||= sub {
   my $self = shift;
   my $file = $_[0] || $self->{dev_auto_dump_file} || $0 . ( $self->{dev_auto_dump_timed} ? '.' . time : () ) . '.dump';
   open my $fh, '>', $file or return;
@@ -1277,7 +1280,7 @@ sub dumper {                                                              #$self
   $self->log( 'dev', "Writed dump", -s $file );
 }
 
-sub parser {                                                              #$self->{'parser'} ||= sub {
+sub parser {                                      #$self->{'parser'} ||= sub {
   my $self = shift;
   for ( local @_ = @_ ) {
     $self->log(
@@ -1325,7 +1328,7 @@ sub parser {                                                              #$self
     #$self->log( 'dcdmp', "P3 $dst$cmd p=",(Dumper \@param));
     $cmd = $dst . $cmd
       if !exists $self->{'parse'}{$cmd}
-        and exists $self->{'parse'}{ $dst . $cmd };
+      and exists $self->{'parse'}{ $dst . $cmd };
     #$self->log( 'dcinf', "UNKNOWN PEERCMD:[$cmd]->($_) : please add \$dc->{'parse'}{'$cmd'} = sub { ... };" ),
     $self->{'parse'}{$cmd} = sub { }, $cmd = ( $self->{'status'} eq 'connected' ? 'chatline' : 'welcome' )
       if $self->{'nmdc'} and !exists $self->{'parse'}{$cmd};
@@ -1407,6 +1410,7 @@ sub send {    #$self->{'send'} ||= sub {
 	$self->{send_buffer_raw} = undef;
     }
 =cut
+
   #return unless @_;
 }
 
@@ -1719,7 +1723,7 @@ sub file_send {    #$self->{'file_send'} ||= sub {
   $size = $filesize - $start if $size <= 0;
   $self->log( 'dcerr', "cant find [$file]" ), $self->disconnect(), return
     if !-e $file
-      or -d $file;
+    or -d $file;
   if ( open $self->{'filehandle_send'}, '<', $file ) {
     binmode( $self->{'filehandle_send'} );
     seek( $self->{'filehandle_send'}, $start, SEEK_SET ) if $start;
@@ -1909,6 +1913,7 @@ sub get_peer_addr {    #$self->{'get_peer_addr'} ||= sub () {
     if $_[1];
   return $self->{'hostip'};
 =cut
+
 }
 
 sub get_peer_addr_recv {    #$self->{'get_peer_addr_recv'} ||= sub (;$) {
@@ -1944,7 +1949,6 @@ sub get_my_addr {           #$self->{'get_my_addr'} ||= sub {
   #$self->{'log'}->('dev', "MYIP($self->{'myip'}) [$self->{'number'}] SOCKNAME $_[0],$_[1];");
   return $self->{'myip'} ||= $_[1];
 =cut
-
 }
 
 sub info {    #$self->{'info'} ||= sub {
@@ -2015,8 +2019,8 @@ sub cmd_adc {            #$self->{'cmd_adc'} ||= sub {
   $self->sendcmd(
     $dst, $cmd,
     #map {ref $_ eq 'ARRAY' ? @$_:ref $_ eq 'HASH' ? each : $_)    }@_
-    (                    #$self->{'broadcast'} ? $self->{'INF'}{'SID'} #$self->{'INF'}{'ID'}
-                         #:
+    (    #$self->{'broadcast'} ? $self->{'INF'}{'SID'} #$self->{'INF'}{'ID'}
+          #:
       ( $dst eq 'C' or !length $self->{'INF'}{'SID'} )
       ? ()
       : $self->{'INF'}{'SID'}

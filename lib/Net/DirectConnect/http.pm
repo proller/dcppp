@@ -37,13 +37,13 @@ sub init {
   );
   $self->{$_} //= $_{$_} for keys %_;
   local %_ = @_;
-#warn "$_=$_{$_}";
+  #warn "$_=$_{$_}";
   $self->{$_} = $_{$_} for keys %_;
   #$self->{$_} ||= $self->{'parent'}{$_} ||= {} for qw(peers peers_sid peers_cid want share_full share_tth);
   $self->{$_} ||= $self->{'parent'}{$_} for qw(http_download http_control http_allow);    #allow
-                                                                               #$self->baseinit();
-                                                                               #$self->{'parse'} ||= $self->{'parent'}{'parse'};
-                                                                               #$self->{'cmd'}   ||= $self->{'parent'}{'cmd'};
+                                                                                          #$self->baseinit();
+        #$self->{'parse'} ||= $self->{'parent'}{'parse'};
+        #$self->{'cmd'}   ||= $self->{'parent'}{'cmd'};
   $self->{'allow'} = $self->{http_allow} if defined $self->{http_allow};
   $self->{'handler_int'}{'unknown'} ||= sub {
     my $self = shift if ref $_[0];
@@ -79,7 +79,7 @@ sub init {
               . (
               !$self->{clients}{$_}{'filebytes'} ? () : ":$self->{clients}{$_}{'filebytes'}/$self->{clients}{$_}{'filetotal'}" )
               . ")"
-            } sort keys %{ $self->{clients} }
+          } sort keys %{ $self->{clients} }
           )
           . "<hr/>peers:<br/>"
           . (
