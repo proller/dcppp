@@ -36,8 +36,8 @@ my $dc = Net::DirectConnect->new(
     #warn('hubwork');
     #Time::HiRes::sleep 0.1;
   },
-  %{ $config{dc}    || {} },
-  %{ $config{dchub} || {} },
+  %{ $config{dc} },
+  %{ $config{dchub} },
 );
 #$dc->work(100);      #seconds
 
