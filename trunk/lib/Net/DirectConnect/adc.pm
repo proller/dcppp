@@ -245,7 +245,7 @@ sub init {
     $self->{'status'}               = 'working';
     $self->{'disconnect_recursive'} = 1;
   } elsif ($self->{parent}{hub}) { # hub client
-    $self->log( 'dev', 'hubparent:', $self->{parent}{hub});
+    #$self->log( 'dev', 'hubparent:', $self->{parent}{hub});
 	$self->{message_type} = 'B';
   } else {
     $self->module_load('filelist');

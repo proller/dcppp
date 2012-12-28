@@ -18,6 +18,8 @@ our %config;
 # $config{dc}{dev_ipv6} = 1; #future
 # $config{dc}{dev_adcs} = 1; #future
 # $config{dchub}{myport} = 412; #only for dchub script
+# $config{dc}{socket_options_listen} = {LocalHost => "0.0.0.0",};# windows bug: if v6only listener by default "::" in netstat -a
+
 #dcget:
 # $config{dcget}{'Nick'}  = 'dcacher';
 # $config{auto_get_best} = 1;          #for dcget : download all popular files
