@@ -5,7 +5,7 @@ no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
 
-our $VERSION = '0.13';    # . '_' . ( split ' ', '$Revision$' )[1];
+our $VERSION = '0.13' . '_' . ( split ' ', '$Revision$' )[1];
 use utf8;
 use Encode;
 use Socket;
@@ -500,10 +500,7 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     'charset_protocol' => 'utf8',
     'charset_internal' => 'utf8',
     #charset_nick => 'utf8',
-    'socket_class' => (
-    use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 
-'IO::Socket::INET'
-),
+    'socket_class' => (use_try('IO::Socket::IP') ? 'IO::Socket::IP' : 'IO::Socket::INET'),
   );
   #$self->log(__LINE__, "Proto=$self->{Proto}");
   $self->{'wait_connect_tries'} //= $self->{'Timeout'};
@@ -517,6 +514,8 @@ sub init_main {    #$self->{'init_main'} ||= sub {
     for qw(log disconnect_recursive  partial_prefix partial_ext download_to Proto dev_ipv6 socket_class protocol myport_inc no_sctp_fallback)
     ;   #dev_adcs
         #$self->log( 'dev', "Proto=$self->{Proto}, Listen=$self->{Listen} protocol=$self->{protocol} inc=$self->{myport_inc}" );
+  $self->{$_} //= {%{$self->{'parent'}{$_}}} for qw(socket_options); # clone, childs can change
+ 
   $self->{$_} //= $_{$_} for keys %_;
   $self->{'partial_prefix'} //= $self->{'download_to'} . 'Incomplete/';
   #$self->log("charset_console=$self->{charset_console} charset_fs=$self->{charset_fs}");
@@ -723,10 +722,8 @@ sub listen {       #$self->{'listen'} ||= sub {
       ),
       #( $self->{'Proto'} eq 'sctp' ? ( 'Type' => Socket::SOCK_STREAM ) : () ),
       #( $self->{'nonblocking'} ? ( 'Blocking' => 0 ) : () ),
-      'Blocking' => 0,
-      #Domain    => PF_INET6,
-      #Domain    => PF_INET,
-      #SSL_server=>1,
+      Blocking => 0,
+      ReuseAddr => 1,
       %{ $self->{'socket_options'} },
       %{ $self->{'socket_options_listen'} },
     );
