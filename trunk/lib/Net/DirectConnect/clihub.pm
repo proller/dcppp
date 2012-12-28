@@ -96,7 +96,7 @@ sub init {
           or $text =~ /Search ignored\.  Please leave at least (\d+) seconds between search attempts\./  #Hub-Security opendchub
           or $text =~
 /Минимальный интервал между поисковыми запросами:(\d+)сек., попробуйте чуть позже/
-	  or $text =~ /You can do 1 searches in (\d+) seconds/
+          or $text =~ /You can do 1 searches in (\d+) seconds/
           )
         {
           $self->{'search_every'} = int( rand(5) + $1 || $self->{'search_every_min'} );
@@ -135,9 +135,8 @@ sub init {
           $self->{'Nick'} = $try if length $try;
         } elsif ( $text =~ /Bad nickname: Wait (\d+)sec before reconnecting/i
           or $text =~
-          /Пожалуйста подождите (\d+) секунд до повторного подключения\./ 
-         or $text =~ /Do not reconnect too fast. Wait (\d+) secs before reconnecting./
-          )
+          /Пожалуйста подождите (\d+) секунд до повторного подключения\./
+          or $text =~ /Do not reconnect too fast. Wait (\d+) secs before reconnecting./ )
         {
           #sleep $1 + 1;
           $self->work( $1 + 10 );
@@ -236,7 +235,8 @@ sub init {
       my ( $nick, $host, $port ) = $_[0] =~ /\s*(\S+)\s+(\S+)\:(\S+)/;
       $self->{'IpList'}{$host}{'port'} = $self->{'PortList'}->{$host} = $port;
       #$self->log('dev', "portlist: $host = $self->{'PortList'}->{$host} :=$port");
-      $self->log("ignore flooding attempt to [$host:$port ] ($self->{flood}{$host})"), $self->{flood}{$host} = time + 30, return
+      $self->log("ignore flooding attempt to [$host:$port ] ($self->{flood}{$host})"), $self->{flood}{$host} = time + 30,
+        return
         if $self->{flood}{$host} > time;
       $self->{flood}{$host} = time + 60;
       return if $self->{'clients'}{ $host . ':' . $port }->{'socket'};
@@ -369,7 +369,7 @@ sub init {
       ( $params->{'nick'}, $params->{'str'} ) = split / /, $_[0], 2;
       $params->{'str'} = [ split /\x05/, $params->{'str'} ];
       $params->{'file'} = shift @{ $params->{'str'} };
-      ( $params->{'filename'} ) = $params->{'file'}     =~ m{([^\\]+)$};
+      ( $params->{'filename'} ) = $params->{'file'} =~ m{([^\\]+)$};
       ( $params->{'ext'} )      = $params->{'filename'} =~ m{[^.]+\.([^.]+)$};
       ( $params->{'size'}, $params->{'slots'} )  = split / /, shift @{ $params->{'str'} };
       ( $params->{'tth'},  $params->{'ipport'} ) = split / /, shift @{ $params->{'str'} };
@@ -417,6 +417,7 @@ sub init {
 
 
 =cut  
+
   #$self->{'cmd'} = {
   local %_ = (
     'connect_aft' => sub {
@@ -638,6 +639,7 @@ sub init {
     $self->log( 'err', "cant listen http" )
       unless $self->{'myport_http'};
 =cut
+
   $self->{'handler_int'}{'disconnect_bef'} = sub {
     #delete $self->{'sid'};
     #$self->log( 'dev', 'disconnect int' ) if $self and $self->{'log'};

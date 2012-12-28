@@ -62,6 +62,7 @@ edit config.pl
 perl dcshare
 
 =cut
+
 use 5.10.0;
 use strict;
 no strict qw(refs);
@@ -116,7 +117,7 @@ my @dc;
   } (
   grep {
     $_
-    } @hosts ? @hosts : psmisc::array( $config{dc}{host} ),
+  } @hosts ? @hosts : psmisc::array( $config{dc}{host} ),
   );
 while ( @_ = grep { $_ and $_->active() } @dc ) {
   $_->work() for @_;

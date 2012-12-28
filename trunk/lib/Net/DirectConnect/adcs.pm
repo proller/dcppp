@@ -38,46 +38,41 @@ openssl s_server -accept 413 -cert certs/cert.pem -key certs/key.pem
 openssl s_client -debug -connect 127.0.0.1:413
 
 =cut
-
 package    #hide from cpan
   Net::DirectConnect::adcs;
 use strict;
 no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
-
 use IO::Socket::SSL;
 #use IO::Socket::SSL qw(debug4);
-
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 sub init {
   my $self = shift if ref $_[0];
   $self->module_load('adc');
-$self->log('ssl', $self->{'protocol'}, $self->{'auto_listen'});
+  $self->log( 'ssl', $self->{'protocol'}, $self->{'auto_listen'} );
   $self->{'protocol_supported'}{'ADCS/0.10'} = 'adcs';
-  #$self->log( 'dev', 'sslinit', $self->{'protocol'} ), 
+  #$self->log( 'dev', 'sslinit', $self->{'protocol'} ),
   $self->{'socket_class'} = 'IO::Socket::SSL'
     if
     #!$self->{hub} and
     $self->{'protocol'} eq 'adcs'
-      #and !$self->{'auto_listen'}
-  ;
+    #and !$self->{'auto_listen'}
+    ;
   local %_ = (
     'recv' => 'read',
     'send' => 'syswrite',
   );
   $self->{$_} = $_{$_} for keys %_;
-local %_ = (
-
-	    SSL_server => $self->{'auto_listen'},
-	    SSL_verify_mode => 0,
-    	SSL_version => 'TLSv1',
-);
-$self->{'socket_options'}{$_} = $_{$_} for keys %_;
-
- # $self->log( 'dev',  'sockopt',      %{$self->{'socket_options'}},);
-  #IO::Socket::SSL->start_SSL( SSL_server => 1, $self->{'socket'}, %{ $self->{'socket_options'} || {} } )    if $self->{'socket'} and $self->{'protocol'} eq 'adcs' and $self->{'incoming'};
+  local %_ = (
+    SSL_server      => $self->{'auto_listen'},
+    SSL_verify_mode => 0,
+    SSL_version     => 'TLSv1',
+  );
+  $self->{'socket_options'}{$_} = $_{$_} for keys %_;
+# $self->log( 'dev',  'sockopt',      %{$self->{'socket_options'}},);
+#IO::Socket::SSL->start_SSL( SSL_server => 1, $self->{'socket'}, %{ $self->{'socket_options'} || {} } )    if $self->{'socket'} and $self->{'protocol'} eq 'adcs' and $self->{'incoming'};
   if (
     !$self->{'no_listen'}    #) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
@@ -89,30 +84,25 @@ $self->{'socket_options'}{$_} = $_{$_} for keys %_;
   {
     $self->log( 'dev', "making listeners: tls", "h=$self->{'hub'}" );
     $self->{'clients'}{'listener_tls'} = $self->{'incomingclass'}->new(
-      'parent' => $self,
+      'parent'      => $self,
       'protocol'    => 'adcs',
       'auto_listen' => 1,
     );
     $self->{'myport_tls'} = $self->{'clients'}{'listener_tls'}{'myport'};
     #$self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
     $self->log( 'err', "cant listen tls" ) unless $self->{'myport_tls'};
-
-      if (
-        $self->{'dev_sctp'}
-        )
-      {
-        $self->log( 'dev', "making listeners: tls sctp", "h=$self->{'hub'}" );
-        $self->{'clients'}{'listener_tls_sctp'} = $self->{'incomingclass'}->new(
-          'parent'      => $self,
-          'Proto'       => 'sctp',
-          'protocol'    => 'adcs',
-          'auto_listen' => 1,
-        );
-        $self->{'myport_tls_sctp'} = $self->{'clients'}{'listener_tls_sctp'}{'myport'};
-        #$self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
-        $self->log( 'err', "cant listen tls sctp" ) unless $self->{'myport_tls_sctp'};
-      }
-
+    if ( $self->{'dev_sctp'} ) {
+      $self->log( 'dev', "making listeners: tls sctp", "h=$self->{'hub'}" );
+      $self->{'clients'}{'listener_tls_sctp'} = $self->{'incomingclass'}->new(
+        'parent'      => $self,
+        'Proto'       => 'sctp',
+        'protocol'    => 'adcs',
+        'auto_listen' => 1,
+      );
+      $self->{'myport_tls_sctp'} = $self->{'clients'}{'listener_tls_sctp'}{'myport'};
+      #$self->log( 'dev', 'nyportgen', $self->{'myport_sctp'} );
+      $self->log( 'err', "cant listen tls sctp" ) unless $self->{'myport_tls_sctp'};
+    }
   }
 }
 6;

@@ -5,7 +5,6 @@ use strict;
 no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
-
 use Time::HiRes qw(time sleep);
 use Socket;
 use Data::Dumper;    #dev only
@@ -17,7 +16,7 @@ use Net::DirectConnect;
 use Net::DirectConnect::http;
 #use Net::DirectConnect::httpcli;
 use lib::abs('pslib');
-use psmisc;          # REMOVE
+use psmisc;    # REMOVE
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 use base 'Net::DirectConnect';
 our %codesSTA = (
@@ -76,6 +75,7 @@ sub tiger ($) {
 }
 sub hash ($) { base32( tiger( $_[0] ) ); }
 =cut
+
 #sub init {  my $self = shift;
 
 =cu
@@ -92,7 +92,6 @@ return $self;
 
 }
 =cut
-
 sub func {
   my $self = shift if ref $_[0];
   #warn 'func call';
@@ -202,7 +201,7 @@ sub init {
   #%$self = (
   #%$self,
   local %_ = (
-    'Nick' => 'NetDCBot',
+    'Nick'     => 'NetDCBot',
     'port'     => 1511,
     'host'     => 'localhost',
     'protocol' => 'adc',
@@ -238,15 +237,15 @@ sub init {
   $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
   $self->{SU}{$_}       = $_ for qw(ADC0 TCP4 UDP4);
   if ( $self->{'broadcast'} ) { $self->{SUPAD}{B} = $self->{SUPAD}{C}; }
-  if ( $self->{'hub'} ) { # hub listener
-    #$self->log( 'dev', 'hub settings apply');
+  if ( $self->{'hub'} ) {    # hub listener
+                             #$self->log( 'dev', 'hub settings apply');
     $self->{'auto_connect'}         = 0;
     $self->{'auto_listen'}          = 1;
     $self->{'status'}               = 'working';
     $self->{'disconnect_recursive'} = 1;
-  } elsif ($self->{parent}{hub}) { # hub client
-    #$self->log( 'dev', 'hubparent:', $self->{parent}{hub});
-	$self->{message_type} = 'B';
+  } elsif ( $self->{parent}{hub} ) {    # hub client
+                                        #$self->log( 'dev', 'hubparent:', $self->{parent}{hub});
+    $self->{message_type} = 'B';
   } else {
     $self->module_load('filelist');
   }
@@ -264,10 +263,10 @@ sub init {
     $self->{SU}{$_} = $_ for qw(SCTP4);
   }
   #if ( $self->{dev_ipv6} ) {
-    $self->{SU}{$_} = $_ for qw(TCP6 UDP6);
-    if ( $self->{dev_sctp} ) {
-      $self->{SU}{$_} = $_ for qw(SCTP6);
-    }
+  $self->{SU}{$_} = $_ for qw(TCP6 UDP6);
+  if ( $self->{dev_sctp} ) {
+    $self->{SU}{$_} = $_ for qw(SCTP6);
+  }
   #}
   #warn "IG:$self->{INF_generate}";
   #$self->log( 'igen', $self->{INF_generate});
@@ -318,6 +317,7 @@ sub init {
         $self->{'peers'}{$peerid}{'SUP'}{ $params->{$_} } = 1 if $_ eq 'AD';
       }
 =cut      
+
       #$self->log('adcdev', 'SUPans:', $peerid, $self->{'peers'}{$peerid}{'INF'}{I4}, $self->{'peers'}{$peerid}{'INF'}{U4});
       #local $self->{'host'} = $self->{'peers'}{$peerid}{'INF'}{I4}; #can answer direct
       #local $self->{'port'} = $self->{'peers'}{$peerid}{'INF'}{U4};
@@ -371,11 +371,11 @@ sub init {
       my $v = $self->{hostip} =~ /:/ ? '6' : '4';
       $self->log( 'adcdev', "ip change from [$params->{qq{I$v}}] to [$self->{hostip}] " ), $params->{"I$v"} = $self->{hostip}
         if $dst eq 'B'
-          and $self->{parent}{hub}
-          and $params->{"I$v"}
-          and $params->{"I$v"} ne $self->{hostip};    #!$self->{parent}{hub}
+        and $self->{parent}{hub}
+        and $params->{"I$v"}
+        and $params->{"I$v"} ne $self->{hostip};    #!$self->{parent}{hub}
       $v = $self->{recv_hostip} =~ /:/ ? '6' : '4';
-      if (                                            #$dst eq 'B' and
+      if (                                          #$dst eq 'B' and
         $self->{broadcast}
         )
       {
@@ -456,10 +456,14 @@ sub init {
 #my $desc = $self->{'codesSTA'}{$code};
       @_ = $self->adc_strings_decode(@_);
       #$self->log( 'adcdev', 'STA', $peerid, $severity, 'c=', $code, 't=',@_, "=[$Net::DirectConnect::adc::codesSTA{$code}]" );
-      if ($code ~~ '20' and $_[0] =~ /^Reconnecting too fast, you have to wait (\d+) seconds before reconnecting./) {
-          $self->work( $1 + 10 );
-      } elsif ($code ~~ '30' and $_[0] =~ /^You are disconnected because: You are disconnected for hammering the hub with connect attempts, stop or you'll be kicked !!!/){
-          $self->work( 30 );
+      if ( $code ~~ '20' and $_[0] =~ /^Reconnecting too fast, you have to wait (\d+) seconds before reconnecting./ ) {
+        $self->work( $1 + 10 );
+      } elsif ( $code ~~ '30'
+        and $_[0] =~
+/^You are disconnected because: You are disconnected for hammering the hub with connect attempts, stop or you'll be kicked !!!/
+        )
+      {
+        $self->work(30);
       }
       return $severity, $code, $Net::DirectConnect::adc::codesSTA{$code}, @_;
     },
@@ -577,6 +581,7 @@ sub init {
         'auto_connect' => 1,
       );
 =cut
+
     },
     'CTM' => sub {
       my $self = shift if ref $_[0];
@@ -585,8 +590,6 @@ sub init {
       if ( $dst eq 'D' and $self->{'parent'}{'hub'} and ref $self->{'peers'}{$toid}{'object'} ) {
         return $self->{'peers'}{$toid}{'object'}->cmd( 'D', 'CTM', $peerid, $toid, @_ );
       }
-
-
       my ( $proto, $port, $token ) = @_;
       my $host = $self->{'peers'}{$peerid}{'INF'}{'I4'};
       $self->log(
@@ -641,6 +644,7 @@ sub init {
         $self->log( 'dcerr', 'SND', "unknown type", @_ );
       }
 =cut
+
     },
   };
 
@@ -654,6 +658,7 @@ sub init {
 
 
 =cut  
+
   $self->{'cmd'} = {
     #move to main
     'search_send' => sub {
@@ -699,7 +704,8 @@ sub init {
     'connect_aft' => sub {
       #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
-      $self->log($self, 'connect_aft inited',"MT:$self->{'message_type'}", ' :', $self->{'broadcast'}, $self->{'parent'}{'hub'});
+      $self->log( $self, 'connect_aft inited',
+        "MT:$self->{'message_type'}", ' :', $self->{'broadcast'}, $self->{'parent'}{'hub'} );
       #{
       $self->cmd( $self->{'message_type'}, 'SUP' );
       #}
@@ -710,11 +716,11 @@ sub init {
     'accept_aft' => sub {
       #print "RUNADC![$self->{'protocol'}:$self->{'adc'}]";
       my $self = shift if ref $_[0];
-      #$self->log($self, 'accept_aft inited',"MT:$self->{'message_type'}", ' :', $self->{'broadcast'}, $self->{'parent'}{'hub'});
-      #{
-      #$self->cmd( $self->{'message_type'}, 'SUP' );
-      #}
-      #$self->cmd( $self->{'message_type'}, 'INF' ); 
+     #$self->log($self, 'accept_aft inited',"MT:$self->{'message_type'}", ' :', $self->{'broadcast'}, $self->{'parent'}{'hub'});
+     #{
+     #$self->cmd( $self->{'message_type'}, 'SUP' );
+     #}
+     #$self->cmd( $self->{'message_type'}, 'INF' );
     },
     'cmd_all' => sub {
       my $self = shift if ref $_[0];
@@ -835,6 +841,7 @@ sub init {
       $self->cmd_adc( $dst, 'SND', @_ );
     },
 =cut    
+
   #$self->log( 'dev', "0making listeners [$self->{'M'}]:$self->{'no_listen'}; auto=$self->{'auto_listen'}" );
   if ( !$self->{'no_listen'} ) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );
@@ -921,6 +928,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
       $self->log( 'err', "cant listen broadcast (hubless)" ) unless $self->{'clients'}{'listener_udp_broadcast'}{'myport'};
     }
 =cut
+
     if ( $self->{'dev_http'} ) {
       $self->log( 'dev', "making listeners: http" );
       #$self->{'clients'}{'listener_http'} = Net::DirectConnect::http->new(
@@ -985,9 +993,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
   };
   $self->get_peer_addr() if $self->{'socket'};
   $self->log( 'err', 'cant load TigerHash module' ) if !$INC{'Net/DirectConnect/TigerHash.pm'} and !our $tigerhashreported++;
-
   $self->accept_aft() if $self->{'incoming'};
-
   return $self;
 }
 1;
