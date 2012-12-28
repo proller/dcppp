@@ -17,7 +17,6 @@ sub init {
   #$self->log( 'dev', 'httpcli init' );
   #%$self = (    %$self,
   local %_ = (
-    #
     #'incomingclass' => 'Net:DirectConnect::httpcli',
     'auto_connect' => 0,
     'auto_listen'  => 0,
@@ -25,6 +24,8 @@ sub init {
     #);  $self->{$_} = $_{$_} for keys %_;
     # local %_ = (
     #'myport'        => 80,
+    'myport'        => 443,
+    modules => [],
     #'myport_base'   => 8000,
     #'myport_random' => 99,
     #'myport_tries'  => 5,

@@ -815,7 +815,8 @@ sub recv {                # $self->{'recv'} ||= sub {
     #and $client eq $self->{'socket'}
     )
   {
-    if ( local $_ = $self->{'socket'}->accept() ) {
+    local $_ = $self->{'socket'}->accept();
+    if ($_) {
       #$self->log( 'traceDEV', 'DC::recv', 'accept', $self->{'incomingclass'} );
       $self->log( 'err', 'cant accept, no incomingclass' ), return,
         unless $self->{'incomingclass'};
@@ -854,7 +855,7 @@ sub recv {                # $self->{'recv'} ||= sub {
       #$self->log( 'dev', 'child created',            $_,   $self->{'clients'}{$_});
       #++$ret;
     } else {
-      $self->log( 'err', "Accepting fail! [$self->{'Proto'}]", $!, $@ );
+      $self->log( 'err', "Accepting fail! ($_) [$self->{'Proto'}]", $!, $@ );
     }
     #next;
     return;
