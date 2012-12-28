@@ -4,11 +4,11 @@
 
 mkdir certs
 
-add to certs/cfg:
+windows-only: add to certs/cfg:
 ------------------------
 [ req ]
 default_bits	       = 1024
-default_keyfile	       = server-key.pem
+default_keyfile	       = certs/key.pem
 distinguished_name     = req_distinguished_name
 
 [ req_distinguished_name ]
@@ -27,13 +27,12 @@ commonName_max		       = 64
 emailAddress		       = Email Address
 emailAddress_max	       = 40
 -------------------------
-#openssl genrsa -out certs/server-key.pem
-openssl req -new -x509 -key certs/server-key.pem -out certs/server-cert.pem -config certs/cfg
-openssl genrsa -out certs/client-key.pem
-openssl req -new -x509 -key certs/server-key.pem -out certs/client-cert.pem -config certs/cfg
+for non-windows delete -config certs/cfg :
+openssl req -new -x509 -out certs/cert.pem -config certs/cfg
 
 debug:
 openssl s_server -accept 413 -cert certs/server-cert.pem -key certs/server-key.pem
+openssl s_server -accept 413 -cert certs/cert.pem -key certs/key.pem
 openssl s_client -debug -connect 127.0.0.1:413
 
 =cut
@@ -81,27 +80,37 @@ local %_ = (
 	    #SSL_startHandshake => !!$self->{'incoming'},
 	    SSL_server => !!$self->{'auto_listen'},
 	    #SSL_verify_mode => 0x00,
-($self->{'incoming'} || $self->{'auto_listen'} ? 
-	    (
 	SSL_version => 'TLSv1',
+	#SSL_cipher_list => 'ALL',
 	#SSL_cipher_list => 'HIGH',
 	SSL_verify_mode => 0,
+($self->{'incoming'} || $self->{'auto_listen'} ? 
+	    (
+	#SSL_cipher_list => 'HIGH',
 
         #SSL_ca_file => "certs/server-cert.pem",
         #SSL_key_file  => "certs/server-key.pem",
 ($Net::SSLeay::VERSION>=1.16 ?
 	(
 	    #SSL_key_file => "certs/server-key.enc", 
-	    SSL_passwd_cb => sub { return "qwer" },
+	    #SSL_passwd_cb => sub { return "qwer" },
 #	    SSL_verify_callback => \&verify_sub
 	) : (
-	    SSL_key_file => "certs/server-key.pem"
+	    #SSL_key_file => "certs/server-key.pem"
 	))
 ) :
 (
-        SSL_ca_file => "certs/client-cert.pem",
-        SSL_key_file  => "certs/client-key.pem",
+        #SSL_ca_file => "certs/client-cert.pem",
+        #SSL_key_file  => "certs/client-key.pem",
 )),
+        SSL_ca_file => "certs/cert.pem",
+        SSL_key_file  => "certs/key.pem",
+	    SSL_passwd_cb => sub { return "1234" },
+
+        #SSL_ca_file => "certs.works/server-cert.pem",
+        #SSL_key_file  => "certs.works/server-key.pem",
+	    #SSL_passwd_cb => sub { return "qwer" },
+
 	    #SSL_use_cert => 1,
 	    #SSL_cert_file => "certs/client-cert.pem",
 
