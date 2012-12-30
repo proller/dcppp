@@ -624,7 +624,7 @@ sub connect {    #$self->{'connect'} ||= sub {
       #(
       #$self->{'nonblocking'} ? (
       'Blocking'   => 0,
-      'MultiHomed' => 1,    #del
+      #'MultiHomed' => 1,    #del
                             #) : ()
                             #),
       %{ $self->{'socket_options'} },
