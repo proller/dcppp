@@ -20,6 +20,7 @@ our %global;
 sub is_code ($) { UNIVERSAL::isa( $_[0], 'CODE' ) }
 sub code_run ($;@) { my $f = shift; return $f->(@_) if is_code $f }
 sub can_run ($$;@) { my $c = shift || return; my $f = shift || return; my $r = $c->can($f); return $r->( $c, @_ ) if $r; }
+sub is_object ($) { ref $_[0] and !UNIVERSAL::isa( $_[0], 'HASH' ) }
 
 sub float {    #v1
   my $self = shift if ref $_[0];
@@ -1101,6 +1102,8 @@ sub wait {                                                         #$self->{'wai
 
 sub work {    #$self->{'work'} ||= sub {
   my $self   = shift;
+  #$self->log( 'dev', 'work', ref $self->{parent}, $self->{parent});
+  return $self->{parent}->work(@_) if is_object($self->{parent});
   my @params = @_;
   #$self->periodic();
   #$self->log( 'dev', 'work', @params);
