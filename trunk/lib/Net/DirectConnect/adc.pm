@@ -172,16 +172,18 @@ sub func {
       . $Net::DirectConnect::VERSION . '_'
       . $VERSION;    #. '_' . ( split( ' ', '$Revision$' ) )[1];    #'++\s0.706';
     $self->{'INF'}{'US'} ||= 10000;
-    my $domain    = '4';
+    #my $domain    = '4';
     my $domaindel = '4';
 
-    if ( $self->{'myip'} =~ /:/ ) {
-      $domain    = '6';
-      $domaindel = '4';
-    }
+    #if ( $self->{'myip'} =~ /:/ ) {
+      #$domain    = '6';
+      #$domaindel = '4';
+    #}
+    for my $domain ($self->{dev_ipv6} || $self->{'myip'} =~ /:/ ? (qw(4 6)) : (4)) {
     $self->{'INF'}{ 'U' . $domain } = $self->{'myport_udp'} || $self->{'myport'};    #maybe if broadcast only
     $self->{'INF'}{ 'I' . $domain } = $self->{'myip'};
     $self->{'INF'}{ 'S' . $domain } = $self->{'myport_sctp'};                        # if $self->{'myport_sctp'};
+    }
     delete $self->{'INF'}{ $_ . $domaindel } for qw(I);
     if ( $self->{'ipv6_only'} ) {
       delete $self->{'INF'}{ $_ . $domaindel } for qw(U S);
@@ -236,7 +238,10 @@ sub init {
   $self->{SUPAD}{I}{$_} = $_ for qw(BASE TIGR BZIP);
   $self->{SUPAD}{C}{$_} = $_ for qw(BASE TIGR BZIP);
   $self->{SU}{$_}       = $_ for qw(ADC0 TCP4 UDP4);
-  if ( $self->{'broadcast'} ) { $self->{SUPAD}{B} = $self->{SUPAD}{C}; }
+  if ( $self->{'broadcast'} ) { $self->{SUPAD}{B} = $self->{SUPAD}{C}; 
+    $self->{'myport'} = $self->{'port'};
+
+}
   if ( $self->{'hub'} ) {    # hub listener
                              #$self->log( 'dev', 'hub settings apply');
     $self->{'auto_connect'}         = 0;

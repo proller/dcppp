@@ -65,6 +65,7 @@ my $log = sub (@) {
 };
 my @todl = grep { /^[A-Z0-9]{39}$/ or /^-/ } @ARGV;
 s/^-// for @todl;
+$log->('info', 'todl:', @todl)if @todl;
 @ARGV = grep { !( /^[A-Z0-9]{39}$/ or /^-/ ) } @ARGV;
 $SIG{PIPE} = sub { printlog( 'sig', 'PIPE' ) };
 my @dirs = grep { -d } @ARGV;

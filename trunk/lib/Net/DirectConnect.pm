@@ -20,7 +20,7 @@ our %global;
 sub is_code ($) { UNIVERSAL::isa( $_[0], 'CODE' ) }
 sub code_run ($;@) { my $f = shift; return $f->(@_) if is_code $f }
 sub can_run ($$;@) { my $c = shift || return; my $f = shift || return; my $r = $c->can($f); return $r->( $c, @_ ) if $r; }
-sub is_object ($) { ref $_[0] and !UNIVERSAL::isa( $_[0], 'HASH' ) }
+sub is_object ($) { ref $_[0] and ref $_[0] ne 'HASH' }
 
 sub float {    #v1
   my $self = shift if ref $_[0];
@@ -158,7 +158,7 @@ sub module_load {
 }
 
 sub new {
-  #print Dumper \@_;
+  #print 'NEW:',Dumper \@_;
   my $class = shift;
   my $self  = {};
   if ( ref $class eq __PACKAGE__ ) { $self = $class; }
@@ -186,23 +186,32 @@ sub new {
 #$self->{'parent'}{$_} ||= {} ,  $self->{$_} ||= $self->{'parent'}{$_},
 #$self->log( 'dev', '2uphandler my=',$self->{handler},Dumper($self->{handler}) , 'p=',Dumper($self->{'parent'}{handler}),$self->{'parent'}{handler},);
 #$self->log( 'dev', "my number=$self->{'number'} total=$global{'total'} count=$global{'count'}" );
+#$self->log( 'dev', $class ,' eq ', __PACKAGE__);
   if ( $class eq __PACKAGE__ ) {
-    #local %_ = (@param);
+    #local %_ = (@_);
+#$self->log( 'dev', $class ,' eq ', __PACKAGE__, Dumper @_);
+
     #for keys
     #$self->{$_} = $_{$_} for keys %_;
     #$self->log( 'init00', $self, "h=$self->{'host'}", 'p=', $self->{'protocol'}, 'm=', $self->{'module'} );
-    if ( $self->{'host'} eq 'broadcast' or $self->{'host'} =~ /^255\./ ) {
+    if ( $self->{'host'} ~~ m{^(?:\w+://)?broadcast} or $self->{'host'} =~ /^(?:255\.|\[?ff)/i ) {
+      #if (use_try 'Socket::Multicast6', 'ipv6') {
+        #IPV6_JOIN_GROUP
+      #}
       $self->{'protocol'} ||= 'adc';
       $self->{'auto_listen'}                 = 1;
+      delete $self->{'auto_connect'};
       $self->{'Proto'}                       = 'udp';
       $self->{'socket_options'}{'Broadcast'} = 1;
       $self->{'socket_options'}{'ReuseAddr'} = 1;
-      $self->{'host'}                        = inet_ntoa(INADDR_BROADCAST)
-        if $self->{'host'} !~ /^255\./;
+      #$self->{'host'} = $self->{dev_ipv6} ? 'ff02::1' : inet_ntoa(INADDR_BROADCAST) if $self->{'host'} !~ /^(?:255\.|\[?ff)/i;
+      $self->{'host'} = inet_ntoa(INADDR_BROADCAST) if $self->{'host'} !~ /^(?:255\.|\[?ff)/i;
+      #$self->{socket_options_listen}{'LocalHost'} = 'ff02::1';
       #$self->{'port'},
       #$self->log( 'dev',  "send to", );
       $self->{'broadcast'} = 1;
       #$self->{'lis'} = 1;
+      #$self->log('dev', "broadcast=$self->{'host'}, auto_listen=$self->{'auto_listen'} auto_connect=$self->{'auto_connect'}");
     }
     if (
       #!$self->{'module'} and
@@ -289,10 +298,12 @@ sub new {
     }
   }
   #$self->log('dev', 'sctp', $self->{'dev_sctp'});
+  #$self->log('dev', "auto_listen=$self->{'auto_listen'} auto_connect=$self->{'auto_connect'}");
   if ( $self->{'auto_listen'} ) {
     #$self->{'disconnect_recursive'} = $self->{'parent'}{'disconnect_recursive'};
     $self->{'incomingclass'} ||= $self->{'parent'}{'incomingclass'};    # if $self->{'parent'};
     $self->listen();
+    #$self->log('go conaft');
     $self->connect_aft() if $self->{'broadcast'};
   } elsif ( $self->{'auto_connect'} ) {
     #$self->log( $self, 'new inited', "auto_connect MT:$self->{'message_type'}", ' with' );
@@ -354,7 +365,7 @@ sub cmd {
   }
   $self->{'last_cmd_time'} = time;
   $self->handler( $cmd . $handler . '_bef', \@_ );
-  #$self->{'log'}->($self,'dev', $self->{number},'cmdrun', $cmd, @_, $func) if $cmd ne 'log';
+  #$self->{'log'}->($self,'dev', $self->{number},'cmdrun', $dst, $cmd, @_, $func) if $cmd ne 'log';
   if ($func) {
     @ret = $func->( $self, @_ );    #$self->{'cmd'}{$cmd}->(@_);
   } elsif ( $self->{'adc'} and length $dst == 1 and length $cmd == 3 ) {
@@ -713,7 +724,7 @@ sub listen {    #$self->{'listen'} ||= sub {
   #or ( $self->{'M'} eq 'P' and !$self->{'allow_passive_ConnectToMe'} );    #RENAME
   $self->{'listener'} = 1;
   $self->myport_generate();
-#$self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",'sockopts', Dumper $self->{'socket_options'} );
+  #$self->log( 'dev', 'listen', "p=$self->{'myport'}; proto=$self->{'Proto'} cl=$self->{'socket_class'}",'sockopts', Dumper $self->{'socket_options'}, $self->{'socket_options_listen'} );
   for ( 1 .. $self->{'myport_tries'} ) {
     local @_ = (
       'LocalPort' => $self->{'myport'},
@@ -1155,6 +1166,7 @@ sub work {    #$self->{'work'} ||= sub {
         next if $self->{'sockets'}{$_} and %{ $self->{'sockets'}{$_} };
         delete $self->{'sockets'}{$_};
       }
+#$self->log('dev', 'parent:', $self->{parent}, $self->{parent}{parent}, is_object($self->{parent}));
       if ( !$self->{parent} or !$self->{parent}{parent} ) {    # first parent always autocreated on init
         code_run( $self->{$_}, $self ) for qw(worker);         #auto_work
       }
@@ -1422,7 +1434,7 @@ sub send {    #$self->{'send'} ||= sub {
 sub sendcmd {    #$self->{'sendcmd'} ||= sub {
   my $self = shift;
   return if $self->connect_check();
-  return if $self->{'listener'};
+  return if $self->{'listener'} and !$self->{'broadcast'};
   #$self->{'log'}->( $self,'sendcmd0', @_);
   local @_ = @_, $_[0] .= splice @_, 1, 1
     if $self->{'adc'} and length $_[0] == 1;
