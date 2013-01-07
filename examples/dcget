@@ -261,7 +261,7 @@ my @dc;
           return unless @todl;
           #$dc->search('lost');
           #$dc->search($_) for @ARGV;
-          $dc->download( shift @todl );
+          $dc->download( shift @todl ) if $dc->{status} ~~ 'connected';
         },
         $dc
       );
