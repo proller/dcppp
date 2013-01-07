@@ -63,8 +63,10 @@ sub init {
   local %_ = (
     'recv' => 'read',
     'send' => 'syswrite',
+    'protocol_connect'   => 'ADCS/0.10',
   );
   $self->{$_} = $_{$_} for keys %_;
+  #$self->log( 'dev', 'adcsset', $self->{'protocol_connect'});
   local %_ = (
     SSL_server      => $self->{'auto_listen'},
     SSL_verify_mode => 0,
@@ -72,7 +74,7 @@ sub init {
   );
   $self->{'socket_options'}{$_} = $_{$_} for keys %_;
 # $self->log( 'dev',  'sockopt',      %{$self->{'socket_options'}},);
-#IO::Socket::SSL->start_SSL( SSL_server => 1, $self->{'socket'}, %{ $self->{'socket_options'} || {} } )    if $self->{'socket'} and $self->{'protocol'} eq 'adcs' and $self->{'incoming'};
+#IO::Socket::SSL->start_SSL( SSL_server => 1, $self->{'socket'}, %{ $self->{'socket_options'} || {} } )    if $self->{'socket'} and $self->{'proto}col'} eq 'adcs' and $self->{'incoming'};
   if (
     !$self->{'no_listen'}    #) {
 #$self->log( 'dev', 'nyportgen',"$self->{'M'} eq 'A' or !$self->{'M'} ) and !$self->{'auto_listen'} and !$self->{'incoming'}" );

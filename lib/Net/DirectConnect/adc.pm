@@ -214,7 +214,7 @@ sub init {
     'reconnects' => 99999, 'search_every' => 10, 'search_every_min' => 10, 'auto_connect' => 1,
     #ADC
     'protocol_connect'   => 'ADC/1.0',
-    'protocol_supported' => { 'ADC/1.0' => 'adc' },    #ADCS/0.10
+    'protocol_supported' => { 'ADC/1.0' => 'adc' },
     'message_type'       => 'H',
     #@_,
     'incomingclass' => __PACKAGE__,                               #'Net::DirectConnect::adc',
@@ -563,7 +563,7 @@ sub init {
       my $self = shift if ref $_[0];
       my ( $dst, $peerid, $toid ) = @{ shift() };
       $toid ||= shift;
-      #$self->log( 'dcdev', "( $dst, RCM, $peerid, $toid  me=[$self->{'INF'}{'SID'}:$self->{'myport'}] )", @_ );
+      #$self->log( 'dcdev', "RCM( $dst, RCM, $peerid, $toid  me=[$self->{'INF'}{'SID'}:$self->{'myport'}] )", @_ );
       $self->cmd( $dst, 'CTM', $peerid, $self->{'protocol_supported'}{ $_[0] } || $self->{'protocol_connect'},
         $self->{'myport'}, $_[1], )
         if $toid eq $self->{'INF'}{'SID'};
@@ -866,6 +866,7 @@ sub init {
       $self->log( 'dev', "making listeners: tcp; class=", $self->{'incomingclass'} );
       $self->{'clients'}{'listener_tcp'} = $self->{'incomingclass'}->new(
         'parent'      => $self,
+        'protocol'    => 'adc',
         'auto_listen' => 1,
       );
       #$self->log( 'dev', __FILE__, __LINE__, "  myptr");
@@ -881,6 +882,7 @@ sub init {
       $self->{'clients'}{'listener_udp'} = $self->{'incomingclass'}->new(
         'parent'      => $self,
         'Proto'       => 'udp',
+        'protocol'    => 'adc',
         'auto_listen' => 1,
 #$self->{'clients'}{''} = $self->{'incomingclass'}->new( %$self, $self->clear(),
 #'LocalPort'=>$self->{'myport'},
@@ -912,6 +914,7 @@ sub init {
         $self->{'clients'}{'listener_sctp'} = $self->{'incomingclass'}->new(
           'parent'      => $self,
           'Proto'       => 'sctp',
+          'protocol'    => 'adc',
           'auto_listen' => 1,
         );
         $self->{'myport_sctp'} = $self->{'clients'}{'listener_sctp'}{'myport'};
