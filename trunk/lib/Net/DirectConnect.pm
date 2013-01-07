@@ -19,8 +19,8 @@ our $AUTOLOAD;
 our %global;
 sub is_code ($) { UNIVERSAL::isa( $_[0], 'CODE' ) }
 sub code_run ($;@) { my $f = shift; return $f->(@_) if is_code $f }
-sub can_run ($$;@) { my $c = shift || return; my $f = shift || return; my $r = $c->can($f); return $r->( $c, @_ ) if $r; }
 sub is_object ($) { ref $_[0] and ref $_[0] ne 'HASH' }
+sub can_run ($$;@) { my $c = shift || return; return unless is_object $c; my $f = shift || return; my $r = $c->can($f); return $r->( $c, @_ ) if $r; }
 
 sub float {    #v1
   my $self = shift if ref $_[0];
@@ -1916,9 +1916,11 @@ sub get_peer_addr {    #$self->{'get_peer_addr'} ||= sub () {
   my $self = shift if ref $_[0];
   my ($recv) = @_;
   return unless $self->{'socket'};
+  eval {
   $self->{'port'}   = $self->{'socket'}->peerport();
   $self->{'hostip'} = $self->{'socket'}->peerhost();
   $self->{'host'} ||= $self->{'hostip'};
+  };
   return $self->{'hostip'};
 
 =no
