@@ -2218,6 +2218,8 @@ look at examples for handlers
    cpan DBD::SQLite IO::Socket::IP IO::Socket::INET6 IO::Socket::SSL
    perl Makefile.PL && make install clean
 
+ debian:
+ apt-get install libdbd-sqlite3-perl libio-socket-ip-perl libjson-xs-perl libjson-perl libmime-base32-perl liblib-abs-perl
 
 =head1 SEE ALSO
 
