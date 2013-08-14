@@ -3,6 +3,7 @@
 package statcgi;
 use strict;
 use utf8;
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use MIME::Base64;
 use Time::HiRes qw(time sleep);
 use Data::Dumper;    #dev only

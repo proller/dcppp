@@ -2,6 +2,7 @@
 #$Id$ $URL$
 use strict;
 no warnings qw(uninitialized);
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use Data::Dumper;    #dev only
 $Data::Dumper::Sortkeys = 1;
 use lib::abs '../lib';

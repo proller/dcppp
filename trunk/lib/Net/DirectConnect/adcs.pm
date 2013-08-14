@@ -44,6 +44,7 @@ use strict;
 no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use IO::Socket::SSL;
 #use IO::Socket::SSL qw(debug4);
 use Data::Dumper;    #dev only

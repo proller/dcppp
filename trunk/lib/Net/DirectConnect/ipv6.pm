@@ -12,6 +12,7 @@ use strict;
 no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 #use Time::HiRes qw(time sleep);
 #use Socket;
 #Net::DirectConnect::use_try 'Socket6' if $] < 5.014;
