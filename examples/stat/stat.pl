@@ -3,6 +3,7 @@
 package statpl;
 use strict;
 no warnings qw(uninitialized);
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 our ( %config, %static, $param, $db, );
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;

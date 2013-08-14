@@ -3,6 +3,7 @@
 package    #hide from cpan
   statlib;
 use strict;
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use Time::HiRes qw(time sleep);
 use utf8;
 our $root_path;

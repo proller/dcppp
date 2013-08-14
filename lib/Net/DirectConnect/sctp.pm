@@ -5,6 +5,7 @@ use strict;
 no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use Socket;
 use Data::Dumper;    #dev only
 #$Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;

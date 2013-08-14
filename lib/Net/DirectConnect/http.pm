@@ -8,6 +8,7 @@ use Net::DirectConnect;
 #use Net::DirectConnect::hubcli;
 use strict;
 no warnings qw(uninitialized);
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 our $VERSION = ( split( ' ', '$Revision$' ) )[1];
 #our @ISA = ('Net::DirectConnect');
 use base 'Net::DirectConnect';

@@ -23,6 +23,7 @@ use strict;
 no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use Data::Dumper;
 $Data::Dumper::Sortkeys = $Data::Dumper::Useqq = $Data::Dumper::Indent = 1;
 use Time::HiRes qw(time sleep);
@@ -49,7 +50,7 @@ $config{'hit_to_ask'}         //= 5;
 $config{'queue_recalc_every'} //= 100;
 $config{'get_every'}          //= 60;
 #$config{'get_dir'}            //= './downloads/';
-$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg);
+$config{ 'log_' . $_ } //= 0 for qw (dmp dcdmp dcdbg dcdev adcdev);
 psmisc::printlog("usage: $1 [adc|dchub://]host[:port] [hub..]\n"), exit
   if !$ARGV[0] and !( $config{dc}{host} || $config{dcget}{host} );    # and !$config{dc}{hosts};
 psmisc::printlog( 'info', 'started:', $^X, $0, join ' ', @ARGV );

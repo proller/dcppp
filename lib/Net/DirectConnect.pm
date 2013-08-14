@@ -4,6 +4,7 @@ use strict;
 no strict qw(refs);
 use warnings "NONFATAL" => "all";
 no warnings qw(uninitialized);
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 our $VERSION = '0.13' . '_' . ( split ' ', '$Revision$' )[1];
 use utf8;
 use Encode;
