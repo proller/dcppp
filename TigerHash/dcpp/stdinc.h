@@ -151,6 +151,14 @@ typedef unsigned __int64 uint64_t;
 #define MAPTYPE map
 #define SETTYPE set
 
+#elif __cplusplus >= 201103L
+
+#include <unordered_set>
+#include <unordered_map>
+#define MAPTYPE unordered_map
+#define SETTYPE unordered_set
+
+
 #elif defined(__GLIBCPP__) || defined(__GLIBCXX__)  // Using GNU C++ library?
 
 #include <tr1/unordered_set>
