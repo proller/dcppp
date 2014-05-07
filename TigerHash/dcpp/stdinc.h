@@ -168,7 +168,12 @@ typedef unsigned __int64 uint64_t;
 
 
 #else
-#error "Unknown STL, please configure accordingly"
+
+#include <unordered_set>
+#include <unordered_map>
+#define MAPTYPE unordered_map
+#define SETTYPE unordered_set
+
 #endif
 
 namespace dcpp {

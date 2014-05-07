@@ -100,6 +100,16 @@ sub func {
   $self->SUPER::func(@_);
   %_ = ( 'ID_file' => 'ID', );
   $self->{$_} //= $_{$_} for keys %_;
+  if ( Net::DirectConnect::use_try('Crypt::Rhash') ) {
+   eval q{
+    $self->{hash} ||= sub { shift if ref $_[0];
+      Crypt::Rhash->new(Crypt::Rhash::RHASH_TTH)->update($_[0])->hash(Crypt::Rhash::RHASH_TTH, Crypt::Rhash::RHPR_BASE32 | Crypt::Rhash::RHPR_UPPERCASE);
+    };
+    $self->{hash_file} ||= sub { shift if ref $_[0];
+      Crypt::Rhash->new(Crypt::Rhash::RHASH_TTH)->update_file($_[0])->hash(Crypt::Rhash::RHASH_TTH, Crypt::Rhash::RHPR_BASE32 | Crypt::Rhash::RHPR_UPPERCASE);
+    };
+   };
+  }
   if ( Net::DirectConnect::use_try( 'MIME::Base32', 'RFC' ) ) {
     $self->{base_encode} ||= sub {
       shift if ref $_[0];
@@ -115,6 +125,9 @@ sub func {
   }
   if ( Net::DirectConnect::use_try('Net::DirectConnect::TigerHash') ) {
     $self->{hash} ||= sub { shift if ref $_[0]; Net::DirectConnect::TigerHash::tthbin( $_[0] ); };
+    $self->{hash_file} ||= sub { shift if ref $_[0];
+      Net::DirectConnect::TigerHash::tthfile($_[0]);
+    };
     $self->{base_encode} ||= sub {
       shift if ref $_[0];
       Net::DirectConnect::TigerHash::toBase32( $_[0] );
@@ -124,7 +137,7 @@ sub func {
       Net::DirectConnect::TigerHash::fromBase32( $_[0] );
     };
   } else {
-    $self->log( 'err', 'cant use Net::DirectConnect::TigerHash' );
+    #$self->log( 'err', 'cant use Net::DirectConnect::TigerHash' );
   }
   $self->{hash_base} ||= sub { shift if ref $_[0]; $self->base_encode( $self->hash( $_[0] ) ) };
   #sub hash ($) { base32( tiger( $_[0] ) ); }
@@ -467,7 +480,7 @@ sub init {
         $self->work( $1 + 10 );
       } elsif ( $code ~~ '30'
         and $_[0] =~
-/^You are disconnected because: You are disconnected for hammering the hub with connect attempts, stop or you'll be kicked !!!/
+/^You are disconnected because: You are disconnected for hammering the hub with connect attempts, stop or you'll be kicked !!!/ # 'mc
         )
       {
         $self->work(30);
@@ -1001,7 +1014,7 @@ $self->log( 'info', 'listening broadcast ', $self->{'dev_broadcast'} || $self->{
     #psmisc::caller_trace 15;
   };
   $self->get_peer_addr() if $self->{'socket'};
-  $self->log( 'err', 'cant load TigerHash module' ) if !$INC{'Net/DirectConnect/TigerHash.pm'} and !our $tigerhashreported++;
+  #$self->log( 'err', 'cant load TigerHash module' ) if !$INC{'Net/DirectConnect/TigerHash.pm'} and !our $tigerhashreported++;
   $self->accept_aft() if $self->{'incoming'};
   return $self;
 }
