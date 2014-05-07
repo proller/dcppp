@@ -178,8 +178,8 @@ sub new {
     my $self = shift if ref $_[0];
     my $notth;
     return unless psmisc::lock( 'sharescan', timeout => 0, old => 86400 );
-    $self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
-      unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
+    #$self->log( 'err', "sorry, cant load Net::DirectConnect::TigerHash for hashing" ), $notth = 1,
+    #  unless Net::DirectConnect::use_try 'Net::DirectConnect::TigerHash';    #( $INC{"Net/DirectConnect/TigerHash.pm"} );
                                                                              #$self->log( 'info',"ntth=[$notth]");    exit;
     $self->log( 'err', 'forced db upgrade on make' ), $self->{db}->upgrade() if $self->{upgrade_force};
     my $stopscan;
@@ -345,7 +345,7 @@ sub new {
           if ( !$notth and !$f->{tth} ) {
             #$self->log 'calc', $f->{full}, "notth=[$notth]";
             my $time = time();
-            $f->{tth} = Net::DirectConnect::TigerHash::tthfile( $f->{full_local} );
+            $f->{tth} = $self->hash_file( $f->{full_local} );
             my $per = time - $time;
             $self->log(
               'time', $f->{full}, psmisc::human( 'size', $f->{size} ),

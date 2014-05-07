@@ -1,6 +1,6 @@
 #$Id$ $URL$
 package Net::DirectConnect::TigerHash;
-our $VERSION = '0.07';# . '_' . ( split( ' ', '$Revision$' ) )[1];
+our $VERSION = '0.08';# . '_' . ( split( ' ', '$Revision$' ) )[1];
 use 5.006001;
 use strict;
 use warnings;
