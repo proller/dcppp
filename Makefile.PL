@@ -14,7 +14,8 @@ use ExtUtils::MakeMaker;
     'IO::Compress::Bzip2'           => 0,    #preparing filelists
     'DBI'                           => 0,
     'DBD::SQLite'                   => 0,
-    'Net::DirectConnect::TigerHash' => 0,
+    #'Net::DirectConnect::TigerHash' => 0,
+    'Crypt::RHash'                  => 0,
     'IO::Socket::IP'                => 0,
     #'IO::Socket::INET6'             => 0,
     #'Socket6'                       => 0,
