@@ -21,10 +21,10 @@ Net::DirectConnect::TigerHash - Perl extension for calculating tiger hashes from
 =head1 SYNOPSIS
 
   use Net::DirectConnect::TigerHash qw(tthbin tth tthfile);
-  print tthbin('somestring'); #24 bytes
-  print tth('somestring'); #base32 encoded, 39 chars
-  print tthfile('/etc/passwd'); #base32 encoded
-  print tthfile('__NOT_eXisted_file___'); #undef
+  print tthbin('somestring');             # 24 bytes
+  print tth('somestring');                # base32 encoded, 39 chars
+  print tthfile('/etc/passwd');           # base32 encoded
+  print tthfile('__NOT_eXisted_file___'); # undef
 
 
  cmdline usage:
@@ -32,7 +32,7 @@ Net::DirectConnect::TigerHash - Perl extension for calculating tiger hashes from
 
 =head1 DESCRIPTION
 
- ported from eiskaltdc
+ Hashing code ported from eiskaltdc ( https://github.com/eiskaltdcpp/eiskaltdcpp )
 
 =head2 EXPORT
 
@@ -46,11 +46,9 @@ None by default.
 
 =head1 SEE ALSO
 
- http://code.google.com/p/eiskaltdc/
+ Crypt::Rhash http://search.cpan.org/~rhash/Crypt-RHash/Rhash.pm
 
 =head1 BUGS
-
- cant compile with gcc <=3
 
 =head1 AUTHOR
 
@@ -58,7 +56,7 @@ Oleg Alexeenkov, E<lt>pro@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2010 Oleg Alexeenkov, eiskaltdc authors
+Copyright (C) 2009-2016 Oleg Alexeenkov, eiskaltdc authors
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.1 or,

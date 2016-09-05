@@ -12,17 +12,13 @@ use ExtUtils::MakeMaker;
     ?    ## Add these new keywords supported since 5.005
       (
       ABSTRACT_FROM => 'lib/Net/DirectConnect/TigerHash.pm',    # retrieve abstract from module
-      AUTHOR        => 'Charlie & <proler@gmail.com>'
+      AUTHOR        => '<proler@gmail.com>'
       )
     : ()
   ),
-  #LIBS   => [''],                                               # e.g., '-lm'
-  DEFINE => '-std=c++11 -I./dcpp/ -I../dcpp/',                             # e.g., '-DHAVE_SOMETHING'
-                                                                #Insert -I. if you add *.h files later:
-  INC    => '-I.',                                              # e.g., '-I/usr/include/other'
-                                                                #Un-comment this if you add C files to link with later:
-                                                                #OBJECT            => '$(O_FILES)', # link all the C files too
-  'CC'   => 'g++',
+  DEFINE => '-std=c++11 -I./dcpp/ -I../dcpp/',
+  INC    => '-I.',
+  'CC'   => 'c++',
   'LD'   => '$(CC)',
 );
 $_{dist} = {
