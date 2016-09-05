@@ -18,26 +18,28 @@
 
 #pragma once
 
-#include <string>
+#include <cstdio>
 
-namespace dcpp {
+#ifdef _DEBUG
 
-using std::string;
+#include <cassert>
 
-class Encoder
-{
-public:
-    static string& toBase32(const uint8_t* src, size_t len, string& tgt);
-    static string toBase32(const uint8_t* src, size_t len) {
-        string tmp;
-        return toBase32(src, len, tmp);
-    }
-    static void fromBase32(const char* src, uint8_t* dst, size_t len);
+#define dcdebug printf
+#ifdef _MSC_VER
 
-    static void fromBase16(const char* src, uint8_t *dst, size_t len);
-private:
-    static const int8_t base32Table[];
-    static const char base32Alphabet[];
-};
+#include <crtdbg.h>
 
-} // namespace dcpp
+#define dcassert(exp) \
+do { if (!(exp)) { \
+    dcdebug("Assertion hit in %s(%d): " #exp "\n", __FILE__, __LINE__); \
+    if(1 == _CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, NULL, #exp)) \
+_CrtDbgBreak(); } } while(false)
+#else
+#define dcassert(exp) assert(exp)
+#endif
+#define dcdrun(exp) exp
+#else //_DEBUG
+#define dcdebug if (false) printf
+#define dcassert(exp)
+#define dcdrun(exp)
+#endif //_DEBUG

@@ -19,25 +19,43 @@
 #pragma once
 
 #include <string>
+#include "debug.h"
 
 namespace dcpp {
 
 using std::string;
 
-class Encoder
+class Exception : public std::exception
 {
 public:
-    static string& toBase32(const uint8_t* src, size_t len, string& tgt);
-    static string toBase32(const uint8_t* src, size_t len) {
-        string tmp;
-        return toBase32(src, len, tmp);
-    }
-    static void fromBase32(const char* src, uint8_t* dst, size_t len);
+    Exception() { }
+    Exception(const string& aError) : error(aError) { dcdrun(if(!error.empty())) dcdebug("Thrown: %s\n", error.c_str()); }
 
-    static void fromBase16(const char* src, uint8_t *dst, size_t len);
-private:
-    static const int8_t base32Table[];
-    static const char base32Alphabet[];
+    virtual const char* what() const throw() { return getError().c_str(); }
+
+    virtual ~Exception() throw() { }
+    virtual const string& getError() const { return error; }
+protected:
+    string error;
 };
+
+#ifdef _DEBUG
+
+#define STANDARD_EXCEPTION(name) class name : public Exception { \
+public:\
+        name() : Exception(#name) { } \
+        name(const string& aError) : Exception(#name ": " + aError) { } \
+        virtual ~name() throw() { } \
+}
+
+#else // _DEBUG
+
+#define STANDARD_EXCEPTION(name) class name : public Exception { \
+public:\
+        name() : Exception() { } \
+        name(const string& aError) : Exception(aError) { } \
+        virtual ~name() throw() { } \
+}
+#endif
 
 } // namespace dcpp

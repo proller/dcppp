@@ -17,7 +17,6 @@ extern "C" {
 #include "getpagesize.c"
 
 #include "stdinc.h"
-#include "DCPlusPlus.h"
 #include "TigerHash.cpp"
 #include "Encoder.cpp"
 #include "MerkleTree.h"

@@ -17,7 +17,7 @@ use ExtUtils::MakeMaker;
     : ()
   ),
   #LIBS   => [''],                                               # e.g., '-lm'
-  DEFINE => '-I./dcpp/ -I../dcpp/',                             # e.g., '-DHAVE_SOMETHING'
+  DEFINE => '-std=c++11 -I./dcpp/ -I../dcpp/',                             # e.g., '-DHAVE_SOMETHING'
                                                                 #Insert -I. if you add *.h files later:
   INC    => '-I.',                                              # e.g., '-I/usr/include/other'
                                                                 #Un-comment this if you add C files to link with later:
@@ -33,7 +33,7 @@ $_{dist} = {
 WriteMakefile(%_);
 
 sub MY::postamble {
-  my @dcppfiles = qw(DCPlusPlus.h Encoder.cpp Encoder.h HashValue.h MerkleTree.h TigerHash.cpp TigerHash.h stdinc.h typedefs.h);
+  my @dcppfiles = qw(Encoder.cpp Encoder.h Exception.h HashValue.h MerkleTree.h TigerHash.cpp TigerHash.h stdinc.h typedefs.h compiler.h debug.h);
   my $dcppfiles = join ' ', map { './eiskaltdcpp/dcpp/' . $_ } @dcppfiles;
   #config.h DCPlusPlus.cpp  stdinc.h
   qq{
@@ -51,7 +51,7 @@ release: test fullclean manifest metafile dist
     ? ()
     : qq{
 download:
-	[ -d eiskaltdcpp ] || git clone git://github.com/negativ/eiskaltdcpp.git
+	[ -d eiskaltdcpp ] || git clone --depth 1 https://github.com/eiskaltdcpp/eiskaltdcpp.git
 	cp $dcppfiles ./dcpp
 
 patchmake:

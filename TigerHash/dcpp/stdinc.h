@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2011 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2001-2012 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,29 +13,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef DCPLUSPLUS_DCPP_STDINC_H
-#define DCPLUSPLUS_DCPP_STDINC_H
+#pragma once
 
-// This enables stlport's debug mode (and slows it down to a crawl...)
-//#define _STLP_DEBUG 1
-//#define _STLP_USE_NEWALLOC 1
-
-// --- Shouldn't have to change anything under here...
-
-#ifndef _REENTRANT
-# define _REENTRANT 1
-#endif
+#include "compiler.h"
 
 #ifndef BZ_NO_STDIO
 #define BZ_NO_STDIO 1
 #endif
 
-//msc, mingw
-#if defined(_MSC_VER) || ( defined(__WIN32__) && !defined(__CYGWIN__))
-#if __GNUC__ > 3
+#ifdef _MSC_VER
+
+//disable the deprecated warnings for the CRT functions.
+#define _CRT_SECURE_NO_DEPRECATE 1
+#define _ATL_SECURE_NO_DEPRECATE 1
+#define _CRT_NON_CONFORMING_SWPRINTFS 1
+
+
 typedef signed __int8 int8_t;
 typedef signed __int16 int16_t;
 typedef signed __int32 int32_t;
@@ -45,16 +41,6 @@ typedef unsigned __int8 uint8_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
-#endif
-#endif
-
-
-#ifdef _MSC_VER
-
-//disable the deprecated warnings for the CRT functions.
-#define _CRT_SECURE_NO_DEPRECATE 1
-#define _ATL_SECURE_NO_DEPRECATE 1
-#define _CRT_NON_CONFORMING_SWPRINTFS 1
 
 # ifndef CDECL
 #  define CDECL _cdecl
@@ -69,31 +55,7 @@ typedef unsigned __int64 uint64_t;
 #endif // _MSC_VER
 
 #ifdef _WIN32
-
-#ifndef _WIN32_WINNT
-# define _WIN32_WINNT 0x0501
-#endif
-
-# define _WIN32_IE      0x0501
-
-#ifndef WINVER
-# define WINVER 0x501
-#endif
-
-#ifndef STRICT
-#define STRICT
-#endif
-
-#define WIN32_LEAN_AND_MEAN
-
-#include <winsock2.h>
-
-#include <windows.h>
-#include <mmsystem.h>
-
-#include <tchar.h>
-//#include <shlobj.h>
-
+#include "w.h"
 #else
 #include <unistd.h>
 #endif
@@ -115,7 +77,9 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
+/*
 #include <algorithm>
+*/
 #include <vector>
 #include <string>
 #include <map>
@@ -127,60 +91,18 @@ typedef unsigned __int64 uint64_t;
 #include <memory>
 #include <numeric>
 #include <limits>
-/*
 #include <libintl.h>
 
+/*
 #include <boost/format.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/noncopyable.hpp>
 */
 
-#if defined(_MSC_VER) || defined(_STLPORT_VERSION)
-
-#include <unordered_map>
-#include <unordered_set>
-#define MAPTYPE unordered_map
-#define SETTYPE unordered_set
-
-#elif __GNUC__ <= 3
-
-//#include <ext/hash_map>
-//#include <ext/hash_set>
-#include <map>
-#include <set>
-#define MAPTYPE map
-#define SETTYPE set
-
-#elif __cplusplus >= 201103L
 
 #include <unordered_set>
 #include <unordered_map>
-#define MAPTYPE unordered_map
-#define SETTYPE unordered_set
-
-
-#elif defined(__GLIBCPP__) || defined(__GLIBCXX__)  // Using GNU C++ library?
-
-#include <tr1/unordered_set>
-#include <tr1/unordered_map>
-#define MAPTYPE tr1::unordered_map
-#define SETTYPE tr1::unordered_set
-
-
-#else
-
-#include <unordered_set>
-#include <unordered_map>
-#define MAPTYPE unordered_map
-#define SETTYPE unordered_set
-
-#endif
 
 namespace dcpp {
 using namespace std;
-#if __GNUC__ > 3
-//using namespace std::tr1;
-#endif
 }
-
-#endif // !defined(STDINC_H)

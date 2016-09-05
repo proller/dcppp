@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2011 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2001-2012 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,27 +13,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef DCPLUSPLUS_DCPP_TYPEDEFS_H_
-#define DCPLUSPLUS_DCPP_TYPEDEFS_H_
+#pragma once
+
 /*
 #include "forward.h"
 */
-
 #include <stdint.h>
-
 #include <string>
-//#include <tr1/unordered_map>
-//#include <tr1/unordered_set>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace dcpp {
 
 using std::pair;
 using std::string;
-//using std::tr1::unordered_map;
-//using std::tr1::unordered_set;
+using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 using std::wstring;
 
@@ -45,10 +43,10 @@ typedef pair<string, string> StringPair;
 typedef vector<StringPair> StringPairList;
 typedef StringPairList::iterator StringPairIter;
 
-typedef MAPTYPE<string, string> StringMap;
+typedef unordered_map<string, string> StringMap;
 typedef StringMap::iterator StringMapIter;
 
-typedef SETTYPE<string> StringSet;
+typedef unordered_set<string> StringSet;
 typedef StringSet::iterator StringSetIter;
 
 typedef vector<wstring> WStringList;
@@ -59,7 +57,7 @@ typedef pair<wstring, wstring> WStringPair;
 typedef vector<WStringPair> WStringPairList;
 typedef WStringPairList::iterator WStringPairIter;
 
-typedef MAPTYPE<wstring, wstring> WStringMap;
+typedef unordered_map<wstring, wstring> WStringMap;
 typedef WStringMap::iterator WStringMapIter;
 
 typedef vector<uint8_t> ByteVector;
@@ -106,6 +104,5 @@ typedef vector<UserPtr> UserList;
 typedef vector<UserConnectionPtr> UserConnectionList;
 typedef vector<uint16_t> PartsInfo;
 */
-}
 
-#endif /* TYPEDEFS_H_ */
+}
